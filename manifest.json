@@ -1,52 +1,52 @@
 {
   "name": "ChromeLL",
-  "version": "2.0.133",
+  "version": "2.0.134",
   "manifest_version": 2,
   "description": "Enhancements for the forums at the End of the Internet",
   "options_page": "options.html",
   "minimum_chrome_version": "20.0.0.0",
-  "web_accessible_resources": [ "Style/images/lueshi_48.png", "Style/images/lueshi_128.png", "App/src/like.js", "App/src/topicPostTemplate.js" ],
+  "web_accessible_resources": [ "src/images/lueshi_48.png", "src/images/lueshi_128.png", "src/js/like.js", "src/js/topicPostTemplate.js" ],
   "icons": {
- 	"16": "Style/images/favicon.ico",
- 	"48": "Style/images/lueshi_48.png",
-	"128":	"Style/images/lueshi_128.png"
+ 	"16": "src/images/ll.png",
+ 	"48": "src/images/lueshi_48.png",
+	"128":	"src/images/lueshi_128.png"
   },
   "browser_action": {
-    "default_icon": "Style/images/lueshi.png",
+    "default_icon": "src/images/lueshi.png",
     "default_title": "ChromeLL",
-    "default_popup": "App/src/popup.html"
+    "default_popup": "src/html/popup.html"
   },
   "background": {
-    "scripts": ["App/src/vars.json", "App/src/allBg.js", "App/src/transloader.js", "background.js"]
+    "scripts": ["src/json/vars.json", "src/js/allBg.js", "src/js/transloader.js", "background.js"]
   },
   "content_scripts": [
   {
     "matches": ["*://boards.endoftheinter.net/showmessages.php*", "*://archives.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
-    "js": ["App/src/allPages.js", "App/src/messageList.js"]
+    "js": ["src/js/messageList.js"]
   },
   {
     "matches": ["*://boards.endoftheinter.net/topics/*", "*://boards.endoftheinter.net/showfavorites.php*", "*://archives.endoftheinter.net/search.php*", "*://endoftheinter.net/inbox.php*", "*://boards.endoftheinter.net/search.php*", "*://endoftheinter.net/main.php"],
-    "js": ["App/src/allPages.js", "App/src/topicList.js"] 
+    "js": ["src/js/topicList.js"] 
   },
   {
     "matches": ["*://*.endoftheinter.net/postmsg.php*"],
-    "js": ["App/src/allPages.js", "App/src/postMsg.js"] 
+    "js": ["src/js/postMsg.js"] 
   },
   {
     "matches": ["*://boards.endoftheinter.net/boardlist.php*"],
-    "js": ["App/src/allPages.js", "App/src/boardList.js"] 
+    "js": ["src/js/boardList.js"] 
   },
   {
     "matches": ["*://endoftheinter.net/profile.php*"],
-    "js": ["App/src/allPages.js", "App/src/profile.js"] 
+    "js": ["src/js/profile.js"] 
   },
   {
-    "matches": ["*://endoftheinter.net/userlist.php*", "*://endoftheinter.net/stats.php*", "*://endoftheinter.net/userpic_queue.php*"],
-    "js": ["App/src/allPages.js"]
+    "matches": ["*://*.endoftheinter.net/*"],
+    "js": ["src/js/allPages.js"]
   },
   {
     "matches": ["*://boards.endoftheinter.net/search.php*"],
-    "js": ["App/src/search.js"]
+    "js": ["src/js/search.js"]
   }],
 	
   "permissions": [ "tabs", "clipboardWrite", "notifications", "http://*/*", "https://*/*", "contextMenus", "webRequest", "webRequestBlocking", "storage"]

@@ -106,7 +106,7 @@ var messageList = {
         document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
     },
     quickpost_on_pgbottom: function(){
-        chrome.extension.sendRequest({need: "insertcss", file:"Style/css/quickpost_on_pgbottom.css"});
+        chrome.extension.sendRequest({need: "insertcss", file:"src/css/quickpost_on_pgbottom.css"});
     },
     resize_imgs: function(){
         for(var i = 0; document.getElementsByTagName('img')[i]; i++){
@@ -371,7 +371,7 @@ var messageList = {
         var headID = document.getElementsByTagName("head")[0];         
 		var newScript = document.createElement('script');
 		newScript.type = 'text/javascript';
-		newScript.src = chrome.extension.getURL('App/src/like.js');
+		newScript.src = chrome.extension.getURL('src/js/like.js');
 		headID.appendChild(newScript);
 		for(var i = 0; document.getElementsByClassName('message-top').item(i); i++){
 			if(document.getElementsByClassName('message-top').item(i).getElementsByTagName('a')[2]){
@@ -428,7 +428,7 @@ var messageList = {
         messageListHelper.postEvent.initEvent('postTemplateInsert', true, true);
         var newScript = document.createElement('script');
 		newScript.type = 'text/javascript';
-		newScript.src = chrome.extension.getURL('App/src/topicPostTemplate.js');
+		newScript.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
 		document.getElementsByTagName('head')[0].appendChild(newScript);
         for(var i = 0; document.getElementsByClassName('message-top')[i]; i++){
             if(document.getElementsByClassName('message-top')[i].parentNode.className != 'quoted-message'){

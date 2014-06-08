@@ -46,7 +46,7 @@ function imageTransloader(info) {
                             type: "basic",
                             title: "Image transloading failed",
                             message: "This gif is too big (>2MB)",
-                            iconUrl: "Style/images/lueshi_48_i.png"
+                            iconUrl: "src/images/lueshi_48_i.png"
                         },
                         function () {}
                     );
@@ -88,7 +88,7 @@ function imageTransloader(info) {
                                         type: "basic",
                                         title: "Image transloaded",
                                         message: "The img code is now in your clipboard",
-                                        iconUrl: "Style/images/lueshi_48.png"
+                                        iconUrl: "src/images/lueshi_48.png"
                                     },
                                     function () {}
                                 );

@@ -57,7 +57,7 @@ var allPages = {
         document.title = document.title.replace(/End of the Internet - /i, '');
     },
     user_info_popup: function(){
-        chrome.extension.sendRequest({need: "insertcss", file:"Style/css/arrowbox.css"}, function(r){
+        chrome.extension.sendRequest({need: "insertcss", file:"src/css/arrowbox.css"}, function(r){
             var links = ["PM", "GT", "BT", "STATS", "HIGHLIGHT", "UNHIGHLIGHT", "IGNORATE"];
             var popup = document.createElement('div');
             popup.id = "user-popup-div";

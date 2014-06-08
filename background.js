@@ -108,7 +108,7 @@ if(localStorage['ChromeLL-Version'] != app.version && localStorage['ChromeLL-Ver
 		        type: "basic",
 		        title: "ChromeLL has been updated",
 		        message: "Old v: " + localStorage['ChromeLL-Version'] + " New v: " + app.version,
-		        iconUrl: "Style/images/lueshi_48.png"
+		        iconUrl: "src/images/lueshi_48.png"
 		    },
 		    function () {}
 		);
@@ -341,7 +341,7 @@ chrome.extension.onRequest.addListener(
 								type: "basic",
 								title: request.title,
 								message: request.message,
-								iconUrl: "Style/images/lueshi_48.png"
+								iconUrl: "src/images/lueshi_48.png"
 								},
 								function () {}
 								);
