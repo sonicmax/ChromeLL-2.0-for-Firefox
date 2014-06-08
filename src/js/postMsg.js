@@ -108,7 +108,7 @@ var postMsg = {
 										.asyncUpload(evt.dataTransfer.files[i]);
 							}
 						});
-	},
+	}
 }
 
 var postMsgHelper = {

@@ -1,9 +1,37 @@
 ChromeLL-2.0 is an extension for Google Chrome / Chromium
 
-Install by downloading the source, unpacking it to a folder, then loading it in chrome with "Load Unpacked Extension"
-
-
-
+Install by downloading the source, unpacking it to a folder, then loading it in chrome with 
+"Load Unpacked Extension".
 
 NOTE this is the development version and may not always work.
 Please download the stable release at https://chairface.org/ext for normal use
+
+==================
+BUILD INSTRUCTIONS
+==================
+This extension is now set up to use google's closure compiler before distribution, which opens us
+up to optimize the code in many ways, as well as makes the extension smaller and
+(theoretically) faster.
+
+When developing, you can load the unpacked extension per usual. However, before a pull request is
+made, you should test with a compiled version of the js. Run the compile process by running the make
+command in the root directory, then import the unpacked extension from the build/ directory created.
+make clean will delete intermediate builds from build/ when you need.
+
+The Makefile requires a few *nix-like commands including make (obviously), mkdir, cp, and rm to be
+included in your PATH. The Closure compiler also requires that you have Java 7 or above installed. 
+The Cygwin, gnuwin32, and MinGW versions of these programs have been successfully tested.
+
+Don't forget to add new targets to the Makefile if you add a new file to the extension.
+
+Multiple untested pull requests will result in you being blacklisted from working on the extension.
+
+Seriously, test.
+
+SUMMARY:
+  1) to build run
+		make
+	in the ChromeLL-2.0 directory.
+  2) to clean run
+		make clean
+	in the ChromeLL-2.0 directory.
