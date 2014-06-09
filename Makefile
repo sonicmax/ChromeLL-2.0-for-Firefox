@@ -14,12 +14,18 @@ all: copy_files allBg.js allPages.js boardList.js like.js messageList.js options
 	
 copy_files:
 	-mkdir build
-	-mkdir dist #this isn't used yet
-	cp background.js manifest.json options.html $(BUILD_DIR) #copy files in root dir
-	cp -r lib/ $(BUILD_DIR) #copy lib
-	-mkdir $(BUILD_SRC) #make src dir
-	cp -r src/css src/html src/images src/json $(BUILD_SRC) #copy static src files
-	-mkdir $(BUILD_JS) #make js dir
+	# this isn't used yet
+	-mkdir dist 
+	# copy files in root dir
+	cp background.js manifest.json options.html $(BUILD_DIR) 
+	# copy lib
+	cp -r lib/ $(BUILD_DIR) 
+	# make src dir
+	-mkdir $(BUILD_SRC) 
+	# copy static src files
+	cp -r src/css src/html src/images src/json $(BUILD_SRC) 
+	# make js dir
+	-mkdir $(BUILD_JS) 
 
 # Compile js file targets
 allBg.js:
