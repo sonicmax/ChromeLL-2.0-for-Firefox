@@ -9,12 +9,10 @@ var allPages = {
 			link.href = '//boards.endoftheinter.net/topics/Posted';
 		if (document.body.className === 'regular') {
 			var sep = document.createElement('span');
+			var menubar = document.getElementsByClassName('menubar')[0];
 			sep.innerHTML = ' | ';
-			document.getElementsByClassName('menubar')[0].insertBefore(link,
-					document.getElementsByClassName('menubar')[0]
-							.getElementsByTagName('br')[0]);
-			document.getElementsByClassName('menubar')[0].insertBefore(sep,
-					link);
+			menubar.insertBefore(link, menubar.getElementsByTagName('br')[0]);
+			menubar.insertBefore(sep, link);
 		} else if (document.body.className === 'classic') {
 			var br = document.createElement('br');
 			document.getElementsByClassName('classic3')[0].insertBefore(link,
@@ -51,17 +49,19 @@ var allPages = {
 		document.getElementsByClassName('body')[0].insertBefore(id, null);
 	},
 	float_userbar_bottom : function() {
-		document.getElementsByClassName('menubar')[0].style.position = "fixed";
-		document.getElementsByClassName('menubar')[0].style.width = "99%";
-		document.getElementsByClassName('menubar')[0].style.bottom = "-2px";
-		document.getElementsByClassName('userbar')[0].style.position = "fixed";
-		document.getElementsByClassName('userbar')[0].style.borderTopLeftRadius = '5px';
-		document.getElementsByClassName('userbar')[0].style.borderTopRightRadius = '5px';
-		document.getElementsByClassName('userbar')[0].style.width = "99%";
-		document.getElementsByClassName('userbar')[0].style.bottom = "33px";
-		document.getElementsByClassName('menubar')[0].style.marginRight = "20px";
-		document.getElementsByClassName('menubar')[0].style.zIndex = '2';
-		document.getElementsByClassName('userbar')[0].style.zIndex = '2';
+		var menubar = document.getElementsByClassName('menubar')[0];
+		var userbar = document.getElementsByClassName('userbar')[0];
+		menubar.style.position = "fixed";
+		menubar.style.width = "99%";
+		menubar.style.bottom = "-2px";
+		userbar.style.position = "fixed";
+		userbar.style.borderTopLeftRadius = '5px';
+		userbar.style.borderTopRightRadius = '5px';
+		userbar.style.width = "99%";
+		userbar.style.bottom = "33px";
+		menubar.style.marginRight = "20px";
+		menubar.style.zIndex = '2';
+		userbar.style.zIndex = '2';
 	},
 	short_title : function() {
 		document.title = document.title.replace(/End of the Internet - /i, '');
@@ -79,7 +79,7 @@ var allPages = {
 			info.id = 'popup_info';
 			var user = document.createElement('div');
 			user.id = 'popup_user';
-			for (var i = 0; links[i]; i++) {
+			for ( var i = 0; links[i]; i++) {
 				var ins = document.createElement('span');
 				ins.className = 'popup_link';
 				ins.innerHTML = links[i];
@@ -122,21 +122,23 @@ var commonFunctions = {
 		var mcol = "#" + config['foxlinks_quotes_color'];
 		var m = document.getElementsByClassName('quoted-message');
 		var n;
-		for (var i = 0; m[i]; i++) {
-			m[i].style.borderStyle = 'solid';
-			m[i].style.borderWidth = '2px';
-			m[i].style.borderRadius = '5px';
-			m[i].style.marginRight = '30px';
-			m[i].style.marginLeft = '10px';
-			m[i].style.paddingBottom = '10px';
-			m[i].style.marginTop = '0px';
-			m[i].style.borderColor = mcol;
-			n = m[i].getElementsByClassName('message-top')[0];
+		for ( var i = 0; m[i]; i++) {
+			var quot_msg = m[i];
+			var quot_msg_style = quot_msg.style;
+			quot_msg_style.borderStyle = 'solid';
+			quot_msg_style.borderWidth = '2px';
+			quot_msg_style.borderRadius = '5px';
+			quot_msg_style.marginRight = '30px';
+			quot_msg_style.marginLeft = '10px';
+			quot_msg_style.paddingBottom = '10px';
+			quot_msg_style.marginTop = '0px';
+			quot_msg_style.borderColor = mcol;
+			n = quot_msg.getElementsByClassName('message-top')[0];
 			if (n) {
 				if (n.style.background == '') {
 					n.style.background = mcol;
 				} else {
-					m[i].style.borderColor = n.style.background;
+					quot_msg_style.borderColor = n.style.background;
 				}
 				n.style.marginTop = '0px';
 				n.style.paddingBottom = '2px';
@@ -163,14 +165,11 @@ var commonFunctions = {
 				}
 				var current = update_ul.innerHTML
 						.match(/Uploading: (\d+)\/(\d+)\)/);
-				if (tmp.getElementsByClassName('img')[0]
-						.getElementsByTagName('input')[0].value) {
-					if (tmp.getElementsByClassName('img')[0]
-							.getElementsByTagName('input')[0].value.substring(
-							0, 4) == '<img') {
-						commonFunctions.quickReplyInsert(tmp
-								.getElementsByClassName('img')[0]
-								.getElementsByTagName('input')[0].value);
+				var tmp_input = tmp.getElementsByClassName('img')[0]
+						.getElementsByTagName('input')[0];
+				if (tmp_input.value) {
+					if (tmp_input.value.substring(0, 4) == '<img') {
+						commonFunctions.quickReplyInsert(tmp_input.value);
 						if ((i + 1) == current[2]) {
 							update_ul.innerHTML = "Your Message";
 						} else {
@@ -225,11 +224,10 @@ var commonFunctions = {
 					+ commonFunctions.currentID + '</span>';
 			var mTop = 10;
 			var mLeft = -35;
-			document.getElementById('user-popup-div').style.top = (evt.pageY + mTop)
-					+ "px";
-			document.getElementById('user-popup-div').style.left = (evt.pageX + mLeft)
-					+ "px";
-			document.getElementById('user-popup-div').style.display = 'block';
+			var popup_div_style = document.getElementById('user-popup-div').style;
+			popup_div_style.top = (evt.pageY + mTop) + "px";
+			popup_div_style.left = (evt.pageX + mLeft) + "px";
+			popup_div_style.display = 'block';
 			if (document.selection)
 				document.selection.empty();
 			else if (window.getSelection)
@@ -330,26 +328,26 @@ var commonFunctions = {
 			});
 			commonFunctions.hidePopup();
 			if (typeof (messageList) != 'undefined') {
-				for (var i = 0; document.getElementsByClassName('message-top')[i]; i++) {
-					document.getElementsByClassName('message-top')[i].style.background = '';
-					document.getElementsByClassName('message-top')[i].style.color = '';
-					for (var j = 0; document
-							.getElementsByClassName('message-top')[i]
-							.getElementsByTagName('a')[j]; j++)
-						document.getElementsByClassName('message-top')[i]
-								.getElementsByTagName('a')[j].style.color = '';
+				var message_tops = document
+						.getElementsByClassName('message-top');
+				for ( var i = 0; i < message_tops.length; i++) {
+					message_tops[i].style.background = '';
+					message_tops[i].style.color = '';
+					var top_atags = message_tops[i].getElementsByTagName('a');
+					for ( var j = 0; j < curr_top_atags.length; j++)
+						top_atags[j].style.color = '';
 				}
 				messageList.userhl_messagelist();
 				if (config.foxlinks_quotes)
 					commonFunctions.foxlinks_quote();
 			} else {
-				for (var i = 0; document.getElementsByTagName('td')[i]; i++) {
-					document.getElementsByTagName('td')[i].style.background = '';
-					document.getElementsByTagName('td')[i].style.color = '';
-					for (var j = 0; document.getElementsByTagName('td')[i]
-							.getElementsByTagName('a')[j]; j++)
-						document.getElementsByTagName('td')[i]
-								.getElementsByTagName('a')[j].style.color = '';
+				var tds = document.getElementsByTagName('td');
+				for ( var i = 0; i < tds.length; i++) {
+					tds[i].style.background = '';
+					tds[i].style.color = '';
+					var td_atags = tds[i].getElementsByTagName('a');
+					for ( var j = 0; j < td_atags.length; j++)
+						td_atags[j].style.color = '';
 				}
 				topicList.userhl_topiclist();
 				if (config.zebra_tables)
@@ -363,7 +361,7 @@ var commonFunctions = {
 		var qrtext = quickreply.value;
 		var oldtxt = qrtext.split('---');
 		var newtxt = '';
-		for (var i = 0; i < oldtxt.length - 1; i++) {
+		for ( var i = 0; i < oldtxt.length - 1; i++) {
 			newtxt += oldtxt[i];
 		}
 		newtxt += text + "\n---" + oldtxt[oldtxt.length - 1];
@@ -383,8 +381,9 @@ var commonFunctions = {
 		var t = document.getElementById("dramalinks_ticker");
 		try {
 			var color = t.getElementsByTagName('div')[0].style.background;
-			document.getElementsByTagName('h1')[0].style.color = color;
-			document.getElementsByTagName('h1')[0].ondblclick = commonFunctions.switchDrama;
+			var hone = document.getElementsByTagName('h1')[0];
+			hone.style.color = color;
+			hone.ondblclick = commonFunctions.switchDrama;
 		} catch (e) {
 			// dramalinks ticker did not load for some reason, ignore it
 		}
