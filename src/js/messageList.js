@@ -945,6 +945,31 @@ var messageListHelper = {
 					break;
 				}
 			});
+
+			if (config.new_page_notify) {
+				if (config.debug) {
+					console.log('listening for new page');
+				}
+
+				var target = document.getElementById('nextpage');
+				var observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(mutation) {
+						if (mutation.type === 'attributes' && target.style.display === 'block') {
+							chrome.extension.sendRequest({
+								need: "notify",
+								title: "New Page Created",
+								message: document.title
+							});
+						}
+					});
+				});
+
+				var config = {
+					attributes: true
+				};
+
+				observer.observe(target, config);
+			}
 		});
 	},
 	loadNextPage : function() {
@@ -1111,13 +1136,6 @@ var messageListLivelinks = {
 		var ud = '';
 		if (document.getElementsByClassName('message-container')[49]) {
 			ud = ud + "+";
-			if (config.new_page_notify) {
-				chrome.extension.sendRequest({
-					need : "notify",
-					title : "New Page Created",
-					message : document.title
-				});
-			}
 		}
 		if (document.title.match(/\(\d+\)/)) {
 			posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
