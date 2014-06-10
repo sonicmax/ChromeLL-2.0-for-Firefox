@@ -1124,13 +1124,6 @@ var messageListLivelinks = {
 		var ud = '';
 		if (document.getElementsByClassName('message-container')[49]) {
 			ud = ud + "+";
-			if (config.new_page_notify) {
-				chrome.extension.sendRequest({
-					need : "notify",
-					title : "New Page Created",
-					message : document.title
-				});
-			}
 		}
 		if (document.title.match(/\(\d+\)/)) {
 			posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
