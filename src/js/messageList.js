@@ -739,6 +739,18 @@ var messageListHelper = {
 	expandThumbnail : function(evt) {
 		if (config.debug)
 			console.log("in expandThumbnail");
+		/*
+		 * ugly hack to avoid the kludgey way thumbnails are marked by the
+		 * script. this quick conditional checks if we're in a quoted msg and
+		 * leaves if we're not. this prevents normal posts from being hidden by
+		 * accident. xdvsx
+		 */
+		if (evt.target.parentNode.parentNode.parentNode.parentNode
+				.getAttribute('class') !== "quoted-message") {
+			if (config.debug)
+				console.log("not a quoted message - exiting");
+			return;
+		}
 		var num_children = evt.target.parentNode.parentNode.childNodes.length;
 		// first time expanding - only span
 		if (num_children == 1) {
