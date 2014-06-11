@@ -7,29 +7,46 @@ var ignorated = {
 };
 var messageList = {
 	click_expand_thumbnail : function() {
-		for (var j = 0; document.getElementsByClassName('imgs')[j]; j++) {
-			for (var k = 0; document.getElementsByClassName('imgs')[j]
-					.getElementsByTagName('a')[k]; k++) {
-				if (document.getElementsByClassName('imgs')[j]
-						.getElementsByTagName('a')[k].className === ''
-						&& parseInt(document.getElementsByClassName('imgs')[j]
-								.getElementsByTagName('a')[k]
-								.getElementsByTagName('span')[0].style.width) <= 150) {
-					document.getElementsByClassName('imgs')[j]
-							.addEventListener("click",
-									messageListHelper.expandThumbnail);
-					document.getElementsByClassName('imgs')[j]
-							.getElementsByTagName('a')[k].className = 'thumbnailed_image';
-					document.getElementsByClassName('imgs')[j]
-							.getElementsByTagName('a')[k].setAttribute(
-							'oldHref',
-							document.getElementsByClassName('imgs')[j]
-									.getElementsByTagName('a')[k].href);
-					document.getElementsByClassName('imgs')[j]
-							.getElementsByTagName('a')[k]
-							.removeAttribute('href');
+		// rewritten by xdrvonscottx
+
+		if( config.debug ) console.log("finding thumbnails...");
+		
+		// find all the placeholders before the images are loaded
+		var phold = document.getElementsByClassName("img-placeholder");
+		// set up an observer for when they get populated
+		var observer = new MutationObserver(function(mutations) {
+			mutations.forEach(function(mutation) {
+				if (mutation.type === 'attributes') {
+					// once they're loaded, thumbnails have /i/t/ in their
+					// url where fullsize have /i/n/
+					if (mutation.attributeName == "class"
+					    && mutation.target.getAttribute('class') == "img-loaded"
+							&& mutation.target.childNodes[0].src
+									.match(/.*\/i\/t\/.*/)) {
+						if(config.debug) console.log("found thumbnail");
+						/*
+						 * set up the onclick and do some dom manip that the
+						 * script originally did - i think only removing href
+						 * actually matters
+						 */
+						mutation.target.parentNode.addEventListener('click',
+								messageListHelper.expandThumbnail);
+						mutation.target.parentNode.setAttribute('class',
+								'thumbnailed_image');
+						mutation.target.parentNode
+								.setAttribute('oldHref',
+										mutation.target.parentNode
+												.getAttribute('href'));
+						mutation.target.parentNode.removeAttribute('href');
+					}
 				}
-			}
+			});
+		})
+
+		for ( var i = 0; i < phold.length; i++) {
+			observer.observe(phold[i], {
+				attributes : true
+			});
 		}
 	},
 	drag_resize_image : function() {
@@ -739,18 +756,6 @@ var messageListHelper = {
 	expandThumbnail : function(evt) {
 		if (config.debug)
 			console.log("in expandThumbnail");
-		/*
-		 * ugly hack to avoid the kludgey way thumbnails are marked by the
-		 * script. this quick conditional checks if we're in a quoted msg and
-		 * leaves if we're not. this prevents normal posts from being hidden by
-		 * accident. xdvsx
-		 */
-		
-		if (evt.target.tagName !== "IMG") {
-			if (config.debug)
-				console.log("not an image - exiting");
-			return;
-		}
 		var num_children = evt.target.parentNode.parentNode.childNodes.length;
 		// first time expanding - only span
 		if (num_children == 1) {
