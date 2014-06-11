@@ -745,10 +745,10 @@ var messageListHelper = {
 		 * leaves if we're not. this prevents normal posts from being hidden by
 		 * accident. xdvsx
 		 */
-		if (evt.target.parentNode.parentNode.parentNode.parentNode
-				.getAttribute('class') !== "quoted-message") {
+		
+		if (evt.target.tagName !== "IMG") {
 			if (config.debug)
-				console.log("not a quoted message - exiting");
+				console.log("not an image - exiting");
 			return;
 		}
 		var num_children = evt.target.parentNode.parentNode.childNodes.length;
