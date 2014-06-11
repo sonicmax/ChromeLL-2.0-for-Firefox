@@ -969,11 +969,11 @@ var messageListHelper = {
 					});
 				});
 
-				var config = {
+				var obsconfig = {
 					attributes: true
 				};
 
-				observer.observe(target, config);
+				observer.observe(target, obsconfig);
 			}
 		});
 	},
