@@ -41,7 +41,7 @@ var messageList = {
 					}
 				}
 			});
-		})
+		});
 
 		for ( var i = 0; i < phold.length; i++) {
 			observer.observe(phold[i], {
@@ -1053,30 +1053,39 @@ var messageListHelper = {
 }
 var messageListLivelinks = {
 	click_expand_thumbnail : function(el) {
-		if (el.getElementsByClassName('imgs')[0]
-				&& el.getElementsByClassName('quoted-message')[0]) {
-			var qm = el.getElementsByClassName('quoted-message');
-			for (var i = 0; qm[i]; i++) {
-				for (var j = 0; qm[i].getElementsByClassName('imgs')[j]; j++) {
-					if (qm[i].getElementsByClassName('imgs')[j]
-							.getElementsByTagName('a')[0].className === '') {
-						qm[i].getElementsByClassName('imgs')[j]
-								.addEventListener("click",
-										messageListHelper.expandThumbnail);
-						qm[i].getElementsByClassName('imgs')[j]
-								.getElementsByTagName('a')[0].className = qm[i]
-								.getElementsByClassName('imgs')[j]
-								.getElementsByTagName('a')[0].href
-								.match(/imap\/.*\/(.*)$/)[1];
-						qm[i].getElementsByClassName('imgs')[j]
-								.getElementsByTagName('a')[0]
-								.removeAttribute('target');
-						qm[i].getElementsByClassName('imgs')[j]
-								.getElementsByTagName('a')[0]
-								.removeAttribute('href');
+		if(config.debug) console.log('livelinks message received - checking for thumbnails');
+		var observer = new MutationObserver(function(mutations) {
+			mutations.forEach(function(mutation) {
+				if (mutation.type === 'attributes') {
+					// once they're loaded, thumbnails have /i/t/ in their
+					// url where fullsize have /i/n/
+					if (mutation.attributeName == "class"
+					    && mutation.target.getAttribute('class') == "img-loaded"
+							&& mutation.target.childNodes[0].src
+									.match(/.*\/i\/t\/.*/)) {
+						if(config.debug) console.log("found thumbnail");
+						/*
+						 * set up the onclick and do some dom manip that the
+						 * script originally did - i think only removing href
+						 * actually matters
+						 */
+						mutation.target.parentNode.addEventListener('click',
+								messageListHelper.expandThumbnail);
+						mutation.target.parentNode.setAttribute('class',
+								'thumbnailed_image');
+						mutation.target.parentNode
+								.setAttribute('oldHref',
+										mutation.target.parentNode
+												.getAttribute('href'));
+						mutation.target.parentNode.removeAttribute('href');
 					}
 				}
-			}
+			});
+		});
+		
+		var phold = el.getElementsByClassName("img-placeholder");
+		for(i = 0; i<phold.length; i++){
+			observer.observe(phold[i], {attributes:true});
 		}
 	},
 	ignorator_messagelist : function(el) {
