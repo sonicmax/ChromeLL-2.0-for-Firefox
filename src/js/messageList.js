@@ -5,6 +5,37 @@ var ignorated = {
 		users : {}
 	}
 };
+
+// set up an observer for when img-placeholders get populated
+var img_observer = new MutationObserver(function(mutations) {
+	mutations.forEach(function(mutation) {
+		if (mutation.type === 'attributes') {
+			// once they're loaded, thumbnails have /i/t/ in their
+			// url where fullsize have /i/n/
+			if (mutation.attributeName == "class"
+			    && mutation.target.getAttribute('class') == "img-loaded"
+					&& mutation.target.childNodes[0].src
+							.match(/.*\/i\/t\/.*/)) {
+				if(config.debug) console.log("found thumbnail");
+				/*
+				 * set up the onclick and do some dom manip that the
+				 * script originally did - i think only removing href
+				 * actually matters
+				 */
+				mutation.target.parentNode.addEventListener('click',
+						messageListHelper.expandThumbnail);
+				mutation.target.parentNode.setAttribute('class',
+						'thumbnailed_image');
+				mutation.target.parentNode
+						.setAttribute('oldHref',
+								mutation.target.parentNode
+										.getAttribute('href'));
+				mutation.target.parentNode.removeAttribute('href');
+			}
+		}
+	});
+});
+
 var messageList = {
 	click_expand_thumbnail : function() {
 		// rewritten by xdrvonscottx
@@ -13,40 +44,13 @@ var messageList = {
 		
 		// find all the placeholders before the images are loaded
 		var phold = document.getElementsByClassName("img-placeholder");
-		// set up an observer for when they get populated
-		var observer = new MutationObserver(function(mutations) {
-			mutations.forEach(function(mutation) {
-				if (mutation.type === 'attributes') {
-					// once they're loaded, thumbnails have /i/t/ in their
-					// url where fullsize have /i/n/
-					if (mutation.attributeName == "class"
-					    && mutation.target.getAttribute('class') == "img-loaded"
-							&& mutation.target.childNodes[0].src
-									.match(/.*\/i\/t\/.*/)) {
-						if(config.debug) console.log("found thumbnail");
-						/*
-						 * set up the onclick and do some dom manip that the
-						 * script originally did - i think only removing href
-						 * actually matters
-						 */
-						mutation.target.parentNode.addEventListener('click',
-								messageListHelper.expandThumbnail);
-						mutation.target.parentNode.setAttribute('class',
-								'thumbnailed_image');
-						mutation.target.parentNode
-								.setAttribute('oldHref',
-										mutation.target.parentNode
-												.getAttribute('href'));
-						mutation.target.parentNode.removeAttribute('href');
-					}
-				}
-			});
-		});
 
 		for ( var i = 0; i < phold.length; i++) {
-			observer.observe(phold[i], {
-				attributes : true
-			});
+			if(phold[i].parentNode.parentNode.getAttribute('class') !== 'userpic-holder') {
+				img_observer.observe(phold[i], {
+					attributes : true
+				});
+			}
 		}
 	},
 	drag_resize_image : function() {
@@ -1054,38 +1058,12 @@ var messageListHelper = {
 var messageListLivelinks = {
 	click_expand_thumbnail : function(el) {
 		if(config.debug) console.log('livelinks message received - checking for thumbnails');
-		var observer = new MutationObserver(function(mutations) {
-			mutations.forEach(function(mutation) {
-				if (mutation.type === 'attributes') {
-					// once they're loaded, thumbnails have /i/t/ in their
-					// url where fullsize have /i/n/
-					if (mutation.attributeName == "class"
-					    && mutation.target.getAttribute('class') == "img-loaded"
-							&& mutation.target.childNodes[0].src
-									.match(/.*\/i\/t\/.*/)) {
-						if(config.debug) console.log("found thumbnail");
-						/*
-						 * set up the onclick and do some dom manip that the
-						 * script originally did - i think only removing href
-						 * actually matters
-						 */
-						mutation.target.parentNode.addEventListener('click',
-								messageListHelper.expandThumbnail);
-						mutation.target.parentNode.setAttribute('class',
-								'thumbnailed_image');
-						mutation.target.parentNode
-								.setAttribute('oldHref',
-										mutation.target.parentNode
-												.getAttribute('href'));
-						mutation.target.parentNode.removeAttribute('href');
-					}
-				}
-			});
-		});
 		
 		var phold = el.getElementsByClassName("img-placeholder");
 		for(i = 0; i<phold.length; i++){
-			observer.observe(phold[i], {attributes:true});
+			if(phold[i].parentNode.parentNode.getAttribute('class') !== "userpic-holder") {
+				img_observer.observe(phold[i], {attributes:true});
+			}
 		}
 	},
 	ignorator_messagelist : function(el) {
