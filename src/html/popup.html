@@ -60,12 +60,6 @@ h1{
     margin-bottom: 5px;
     font-style: italic;
 }
-#doptions{
-    position: fixed;
-    left: 2%;
-    bottom: 2%;
-    width: 100%;
-}
 .line{
 	margin-top:2px;
 	z-index:999;
@@ -83,77 +77,40 @@ h1{
     font-style: normal;
     padding-right: 5px;
 }
+.button{ 
+		width: 100%; 
+}
 </style>
 <script type="text/javascript" src="/src/js/popup.js"></script>
 </head>
 <body>
-<div class="info">search LUE</div>
-<form name="lue_search" action="http://boards.endoftheinter.net/topics/LUE?q=" method="get" target="_new">
-<input type="text" name="q" style="width: 100%">
-</form>
-<div class="info">Tag Control Panel</div>
-<form name="lue_search" action="http://endoftheinter.net/tag.php?tag=" method="get" target="_new">
-<input type="text" name="tag" min="1" style="width: 100%">
-</form>
-<span id="info_test_display"></span>
-<form name="boards"><!--action="http://boards.endoftheinter.net/" method="get" target="_new"-->
-<select id="board_select" name="board" style="width: 100%">
-<option value="-1">
-Select a Tag</option>
-<option value="topics/LUE">
-LUE </option>
-<option value="topics/Anonymous">
-Anonymous </option>
-<option value="topics/Serious">
-Serious </option>
-<option value="topics/News">
-News </option>
-<option value="topics/Politics">
-Politics </option>
-<option value="topics/Technology">
-Technology </option>
-<option value="topics/Gaming">
-Gaming </option>
-<option value="topics/Pipe_Mania">
-Pipe Mania </option>
-<option value="topics/Fitness">
-Fitness </option>
-<option value="topics/Marketplace">
-Marketplace </option>
-<option value="topics/Music">
-Music </option>
-<option value="topics/Sports">
-Sports </option>
-<option value="topics/Strong_Homo">
-Strong Homo </option>
-<option value="topics/Anime">
-Anime </option>
-<option value="topics/Pornography">
-Pornography </option>
-<option value="topics/Complaints">
-Complaints</option>
-<option value="topics/Site_Suggestions">
-Site Suggestions </option>
-<option value="topics/Flower_Power">
-Flower Power </option>
-<option value="topics/Arcade">
-Arcade </option>
-<option value="showmessages.php?topic=8377893">
-Suicide </option>
-<option value="tag.php?tag=">
-Tag Control Panel</option>
+<center><a href="#" id="options"><input type="button" class="button" value="ChromeLL Options"/></a></center>
+<br>
+<form name="savedtags">
+<select id="bookmarks" name="bookmark" style="width: 100%">
+    <option>Bookmarks:</option>
 </select>
 </form>
+<form name="tagcontrol">
+<select id="tags" name="tag" style="width: 100%">
+    <option>Tag Control Panels:</option>
+</select>
+</form>
+<div class="info">search LUE</div>
+<form name="lue_search" action="http://boards.endoftheinter.net/topics/LUE?q=" method="get" target="_new">
+<input type="text" name="q" style="width: 100%" placeholder="search text">
+</form>
+<span id="info_test_display"></span>
 <div id="js_insert"></div>
 <br />
-<div class="info">quick links</div><center><div class="links"><br>
-<a href="http://endoftheinter.net/inbox.php" target="_new">Inbox</a> |
-<a href="http://endoftheinter.net/shop.php" target="_new">Shop</a> |
-<a href="http://images.endoftheinter.net/imagemap.php" target="_new">Images</a> |
-<a href="http://boards.endoftheinter.net/history.php" id="a_msg_history" target="_new">Hist.</a>
+<center><div class="links"><br>
+<u><a href="http://endoftheinter.net/inbox.php" target="_new">Inbox</a></u> |
+<u><a href="http://endoftheinter.net/shop.php" target="_new">Shop</a></u> |
+<u><a href="http://images.endoftheinter.net/imagemap.php" target="_new">Images</a></u> |
+<u><a href="http://boards.endoftheinter.net/history.php" id="a_msg_history" target="_new">Hist.</a></u>
 </div>
+<div class="line"></div>
 </center>
-<center><div id="doptions"><div class="line"></div><a href="#" id="options">Options</a></div></center>
 <!--
 <hr>
 <div class="clisttitle">online:</div>

@@ -35,7 +35,7 @@ $(document)
 					if (localStorage['ChromeLL-Config'] == ''
 							|| localStorage['ChromeLL-Config'] == undefined) {
 						console.log("Blank Config. Rebuilding");
-						localStorage['ChromeLL-Config'] = '{"float_userbar":false,"short_title":true,"show_secret_boards":true,"dramalinks":false,"hide_dramalinks":false,"hide_dramalinks_topiclist":false,"user_info_popup":true,"zebra_tables":false,"force_https":false,"sys_notifications":true,"close_notifications":false,"ignorator":false,"enable_user_highlight":false,"ignorator_topiclist":false,"userhl_topiclist":false,"page_jump_buttons":true,"ignore_keyword":false,"enable_keyword_highlight":false,"click_expand_thumbnail":true,"imagemap_new_tab":true,"copy_in_context":false,"imagemap_on_infobar":false,"resize_imgs":false,"user_notes":true,"ignorator_messagelist":false,"userhl_messagelist":false,"no_user_highlight_quotes":false,"notify_userhl_post":false,"notify_quote_post":false,"new_page_notify":false,"number_posts":true,"like_button":true,"loadquotes":true,"post_title_notification":true,"filter_me":false,"expand_spoilers":false,"highlight_tc":false,"label_tc":true,"foxlinks_quotes":false,"quickpost_tag_buttons":false,"quickpost_on_pgbottom":false,"post_before_preview":false,"batch_uploader":false,"drop_batch_uploader":true,"sort_history":false,"history_expand_search":false,"ignorator_topiclist_pm":false,"userhl_topiclist_pm":false,"page_jump_buttons_pm":true,"click_expand_thumbnail_pm":true,"user_notes_pm":false,"userhl_messagelist_pm":false,"pm_title_pm":true,"number_posts_pm":true,"loadquotes_pm":true,"post_title_notification_pm":true,"quickpost_tag_buttons_pm":false,"quickpost_on_pgbottom_pm":false,"post_before_preview_pm":false,"batch_uploader_pm":false,"drop_batch_uploader_pm":true,"debug":false,"zebra_tables_color":"D7DEE8","close_notification_time":"5","ignorator_list":"","ignore_keyword_list":"","":"0","img_max_width":"1440","tc_highlight_color":"ffff00","tc_label_color":"","foxlinks_quotes_color":"","user_highlight_data":{},"keyword_highlight_data":{}, "tag_highlight_data":{}}';
+						localStorage['ChromeLL-Config'] = '{"float_userbar":false,"short_title":true,"show_secret_boards":true,"dramalinks":false,"hide_dramalinks":false,"hide_dramalinks_topiclist":false,"user_info_popup":true,"zebra_tables":false,"force_https":false,"sys_notifications":true,"close_notifications":false,"ignorator":false,"enable_user_highlight":false,"ignorator_topiclist":false,"userhl_topiclist":false,"page_jump_buttons":true,"ignore_keyword":false,"enable_keyword_highlight":false,"click_expand_thumbnail":true,"imagemap_new_tab":true,"copy_in_context":false,"imagemap_on_infobar":false,"resize_imgs":false,"user_notes":true,"ignorator_messagelist":false,"userhl_messagelist":false,"no_user_highlight_quotes":false,"notify_userhl_post":false,"notify_quote_post":false,"new_page_notify":false,"number_posts":true,"like_button":true,"loadquotes":true,"post_title_notification":true,"filter_me":false,"expand_spoilers":false,"highlight_tc":false,"label_tc":true,"foxlinks_quotes":false,"quickpost_tag_buttons":false,"quickpost_on_pgbottom":false,"post_before_preview":false,"batch_uploader":false,"drop_batch_uploader":true,"sort_history":false,"history_expand_search":false,"ignorator_topiclist_pm":false,"userhl_topiclist_pm":false,"page_jump_buttons_pm":true,"click_expand_thumbnail_pm":true,"user_notes_pm":false,"userhl_messagelist_pm":false,"pm_title_pm":true,"number_posts_pm":true,"loadquotes_pm":true,"post_title_notification_pm":true,"quickpost_tag_buttons_pm":false,"quickpost_on_pgbottom_pm":false,"post_before_preview_pm":false,"batch_uploader_pm":false,"drop_batch_uploader_pm":true,"debug":false,"zebra_tables_color":"D7DEE8","close_notification_time":"5","ignorator_list":"","ignore_keyword_list":"","":"0","img_max_width":"1440","tc_highlight_color":"ffff00","tc_label_color":"","foxlinks_quotes_color":"","user_highlight_data":{},"keyword_highlight_data":{}, "tag_admin":[], "bookmark_data":{"Serious":"Serious","Work Safe":"LUE-NWS-NLS","IRL Stuff":"Current Events+News+Politics","Cute Cats Only":"Cute&Cats"}, "tag_highlight_data":{}, "user_id",""}';
 						if (localStorage['chromeLL_userhighlight']
 								&& localStorage['chromeLL_userhighlight'] != '')
 							restoreV1Cfg();
@@ -53,10 +53,11 @@ function restoreConfig() {
 	for ( var i in checkboxes) {
 		checkboxes[i].checked = config[checkboxes[i].id];
 	}
+	//ignores empty textboxes so that null values don't appear
 	var textboxes = $(":text");
 	for ( var i in textboxes) {
-		if (textboxes[i].name
-				&& (textboxes[i].name.match('(user|keyword|tag)_highlight_') || textboxes[i].name
+				if (textboxes[i].name
+				&& (textboxes[i].name.match('(user|keyword|tag)_highlight_') || textboxes[i].name.match('user_book') || textboxes[i].name
 						.match('post_template'))) {
 			// console.log('found a textbox to ignore: ' + textboxes[i]);
 		} else if (config[textboxes[i].id]) {
@@ -71,6 +72,14 @@ function restoreConfig() {
 		document.getElementsByClassName('header_color')[document
 				.getElementsByClassName('header_color').length - 1].value = config.user_highlight_data[j].color;
 		addUserHighlightDiv();
+	}
+		//load bookmark data from config file
+	for ( var j in config.bookmark_data) {
+		document.getElementsByClassName('bookmark_name')[document
+				.getElementsByClassName('bookmark_name').length - 1].value = j;
+		document.getElementsByClassName('bookmark_tag')[document
+				.getElementsByClassName('bookmark_tag').length - 1].value = config.bookmark_data[j];
+		addBookmarkNameDiv();
 	}
 	for (var j = 0; config.keyword_highlight_data[j]; j++) {
 		document.getElementsByClassName('keyword')[document
@@ -111,6 +120,18 @@ function restoreConfig() {
 			}
 			if (!empty)
 				addUserHighlightDiv();
+		}
+		 //add listener to bookmark boxes
+		if (evt.target.name == "user_book_name") {
+		    var datas = document.getElementById('bookmarked_tags')
+		        .getElementsByClassName('bookmark_name');
+		    var empty = false;
+		    for (var i = 1; datas[i]; i++) {
+		        if (datas[i].value == '')
+		            empty = true;
+		    }
+		    if (!empty)
+		        addBookmarkNameDiv();
 		}
 		if (evt.target.name == "post_template_title") {
 			var datas = document.getElementById('post_template')
@@ -189,6 +210,14 @@ function addUserHighlightDiv() {
 	document.getElementById('user_highlight').insertBefore(ins, null);
 	setColorPicker();
 }
+//Add div to bookmark form
+function addBookmarkNameDiv() {
+	var ins = document.getElementById('bookmarked_tags').getElementsByClassName(
+			'bookmark_name')[0].parentNode.parentNode.cloneNode(true);
+	ins.className = "bookmark_data";
+	ins.style.display = "block";
+	document.getElementById('bookmarked_tags').insertBefore(ins, null);
+}
 function addKeywordHighlightDiv() {
 	var ins = document.getElementById('keyword_highlight')
 			.getElementsByClassName('keyword')[0].parentNode.parentNode
@@ -244,6 +273,17 @@ function saveConfig() {
 					.getElementsByClassName('header_color')[0].value;
 			userhlData[i].getElementsByClassName('user_name')[0].style.color = '#'
 					+ cfg.user_highlight_data[name].color;
+		}
+	}
+	//get bookmark data from options, save to config
+	var userhlData = document.getElementById('bookmarked_tags')
+			.getElementsByClassName('bookmark_data');
+	cfg.bookmark_data = {};
+	for (var i = 0; userhlData[i]; i++) {
+		name = userhlData[i].getElementsByClassName('bookmark_name')[0].value;
+		if (name != '') {
+			cfg.bookmark_data[name] = userhlData[i]
+					.getElementsByClassName('bookmark_tag')[0].value;
 		}
 	}
 	userhlData = document.getElementById('keyword_highlight')

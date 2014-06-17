@@ -71,7 +71,7 @@ var allPages = {
 			need : "insertcss",
 			file : "src/css/arrowbox.css"
 		}, function(r) {
-			var links = [ "PM", "GT", "BT", "STATS", "HIGHLIGHT",
+			var links = [ "PM", "GT", "BT", "HIGHLIGHT",
 					"UNHIGHLIGHT", "IGNORATE" ];
 			var popup = document.createElement('div');
 			popup.id = "user-popup-div";
@@ -286,14 +286,6 @@ var commonFunctions = {
 			chrome.extension.sendRequest({
 				need : "opentab",
 				url : "http://endoftheinter.net/token.php?type=1&user="
-						+ commonFunctions.currentID
-			});
-			commonFunctions.hidePopup();
-			break;
-		case "STATS":
-			chrome.extension.sendRequest({
-				need : "opentab",
-				url : "http://endoftheinter.net/loser.php?userid="
 						+ commonFunctions.currentID
 			});
 			commonFunctions.hidePopup();

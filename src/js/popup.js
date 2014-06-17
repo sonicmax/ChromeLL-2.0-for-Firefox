@@ -1,11 +1,21 @@
-//edited to work with tags
-function openBoard(evt) {
-	window.open("http://boards.endoftheinter.net/"
-			+ document.boards.board.value);
+//get user config for later
+var cfg = JSON.parse(localStorage['ChromeLL-Config']);
+
+//functions for dropdown menus
+function openBookmark(evt) {
+	window.open("http://boards.endoftheinter.net/topics/"
+			+ document.savedtags.bookmark.value);
+}	
+
+function openControl(evt) {
+	window.open("http://endoftheinter.net/tag.php?tag="
+			+ document.tagcontrol.tag.value);
 }
+
 function openOptions() {
 	window.open(chrome.extension.getURL('options.html'));
 }
+
 function showHidden(i, el) {
 	console.log(ignoratorData.users[i].trs);
 	chrome.extension.sendRequest({
@@ -16,9 +26,47 @@ function showHidden(i, el) {
 }
 var ignoratorData = {};
 window.onload = function() {
-	document.getElementById('board_select').addEventListener('change',
-			openBoard);
+//get saved tags from config file
+var tags = cfg.saved_tags;
+var userTags = cfg.bookmark_data;
+var menu = document.getElementById("bookmarks");
+
+//populate dropdown list with cfg.saved_tags
+for (var x in tags) {
+    var name = x;
+    var link = tags[x];
+    var opt = document.createElement("option");
+    opt.textContent = name;
+    opt.value = link;
+    menu.appendChild(opt);
+}
+//populate list with cfg.user_bookmarks
+for (var x in userTags) {
+    var name = x;
+    var link = userTags[x];
+    var opt = document.createElement("option");
+    opt.textContent = name;
+    opt.value = link;
+    menu.appendChild(opt);
+}
+
+//get tag admin list from config file
+var tagcps = cfg.tag_admin;
+var menu = document.getElementById("tags");
+
+//populate dropdown list with admin/mod tags
+for(var i=0, len=tagcps.length; i < len; i++){
+    var name = tagcps[i];
+    var opt = document.createElement("option");
+    opt.textContent = name;
+    menu.appendChild(opt);
+}
+
+//EventListeners for popup.html
+	document.getElementById('bookmarks').addEventListener('change', openBookmark);
+	document.getElementById('tags').addEventListener('change', openControl);
 	document.getElementById('options').addEventListener('click', openOptions);
+	
 	chrome.extension
 			.sendRequest(
 					{
@@ -38,6 +86,7 @@ window.onload = function() {
 						need : "getIgnored"
 					},
 					function(response) {
+						// this gives "undefined" errors in console if no ignorator list exists
 						// console.log(response.ignorator);
 						// console.log(response.ignorator.data.users);
 						ignoratorData = response.ignorator.data;
