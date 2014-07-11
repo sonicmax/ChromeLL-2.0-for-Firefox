@@ -35,7 +35,7 @@ $(document)
 					if (localStorage['ChromeLL-Config'] == ''
 							|| localStorage['ChromeLL-Config'] == undefined) {
 						console.log("Blank Config. Rebuilding");
-						localStorage['ChromeLL-Config'] = '{"float_userbar":false,"short_title":true,"show_secret_boards":true,"dramalinks":false,"hide_dramalinks":false,"hide_dramalinks_topiclist":false,"user_info_popup":true,"zebra_tables":false,"force_https":false,"sys_notifications":true,"close_notifications":false,"ignorator":false,"enable_user_highlight":false,"ignorator_topiclist":false,"userhl_topiclist":false,"page_jump_buttons":true,"ignore_keyword":false,"enable_keyword_highlight":false,"click_expand_thumbnail":true,"imagemap_new_tab":true,"copy_in_context":false,"imagemap_on_infobar":false,"resize_imgs":false,"user_notes":true,"ignorator_messagelist":false,"userhl_messagelist":false,"no_user_highlight_quotes":false,"notify_userhl_post":false,"notify_quote_post":false,"new_page_notify":false,"number_posts":true,"like_button":true,"loadquotes":true,"post_title_notification":true,"filter_me":false,"expand_spoilers":false,"highlight_tc":false,"label_tc":true,"foxlinks_quotes":false,"quickpost_tag_buttons":false,"quickpost_on_pgbottom":false,"post_before_preview":false,"batch_uploader":false,"drop_batch_uploader":true,"sort_history":false,"history_expand_search":false,"ignorator_topiclist_pm":false,"userhl_topiclist_pm":false,"page_jump_buttons_pm":true,"click_expand_thumbnail_pm":true,"user_notes_pm":false,"userhl_messagelist_pm":false,"pm_title_pm":true,"number_posts_pm":true,"loadquotes_pm":true,"post_title_notification_pm":true,"quickpost_tag_buttons_pm":false,"quickpost_on_pgbottom_pm":false,"post_before_preview_pm":false,"batch_uploader_pm":false,"drop_batch_uploader_pm":true,"debug":false,"zebra_tables_color":"D7DEE8","close_notification_time":"5","ignorator_list":"","ignore_keyword_list":"","":"0","img_max_width":"1440","tc_highlight_color":"ffff00","tc_label_color":"","foxlinks_quotes_color":"","user_highlight_data":{},"keyword_highlight_data":{}, "tag_admin":[], "bookmark_data":{"Serious":"Serious","Work Safe":"LUE-NWS-NLS","IRL Stuff":"Current Events+News+Politics","Cute Cats Only":"Cute&Cats"}, "tag_highlight_data":{}, "user_id",""}';
+						localStorage['ChromeLL-Config'] = '{"float_userbar":false,"short_title":true,"show_secret_boards":true,"dramalinks":false,"hide_dramalinks":false,"hide_dramalinks_topiclist":false,"user_info_popup":true,"zebra_tables":false,"force_https":false,"sys_notifications":true,"close_notifications":false,"ignorator":false,"enable_user_highlight":false,"ignorator_topiclist":false,"userhl_topiclist":false,"page_jump_buttons":true,"ignore_keyword":false,"enable_keyword_highlight":false,"click_expand_thumbnail":true,"imagemap_new_tab":true,"copy_in_context":false,"imagemap_on_infobar":false,"resize_imgs":false,"user_notes":true,"ignorator_messagelist":false,"userhl_messagelist":false,"no_user_highlight_quotes":false,"notify_userhl_post":false,"notify_quote_post":false,"new_page_notify":false,"number_posts":true,"like_button":true,"loadquotes":true,"post_title_notification":true,"filter_me":false,"expand_spoilers":false,"highlight_tc":false,"label_tc":true,"foxlinks_quotes":false,"quickpost_tag_buttons":false,"quickpost_on_pgbottom":false,"post_before_preview":false,"batch_uploader":false,"drop_batch_uploader":true,"sort_history":false,"history_expand_search":false,"ignorator_topiclist_pm":false,"userhl_topiclist_pm":false,"page_jump_buttons_pm":true,"click_expand_thumbnail_pm":true,"user_notes_pm":false,"userhl_messagelist_pm":false,"pm_title_pm":true,"number_posts_pm":true,"loadquotes_pm":true,"post_title_notification_pm":true,"quickpost_tag_buttons_pm":false,"quickpost_on_pgbottom_pm":false,"post_before_preview_pm":false,"batch_uploader_pm":false,"drop_batch_uploader_pm":true,"debug":false,"zebra_tables_color":"D7DEE8","close_notification_time":"5","ignorator_list":"","ignore_keyword_list":"","":"0","img_max_width":"1440","tc_highlight_color":"ffff00","tc_label_color":"","foxlinks_quotes_color":"","user_highlight_data":{},"keyword_highlight_data":{}, "tag_admin":[], "bookmark_data":{"Serious":"Serious","Work Safe":"LUE-NWS-NLS","IRL Stuff":"Current Events+News+Politics","Cute Cats Only":"Cute&Cats"}, "tag_highlight_data":{}, "rep_callout":false, "show_old_name":true, "hide_gs":false, "clean_ignorator":false, "ignorator_backup":"", "auto_clean":false, "last_clean":0, "user_id",""}';
 						if (localStorage['chromeLL_userhighlight']
 								&& localStorage['chromeLL_userhighlight'] != '')
 							restoreV1Cfg();
@@ -121,18 +121,18 @@ function restoreConfig() {
 			if (!empty)
 				addUserHighlightDiv();
 		}
-		 //add listener to bookmark boxes
-		if (evt.target.name == "user_book_name") {
-		    var datas = document.getElementById('bookmarked_tags')
-		        .getElementsByClassName('bookmark_name');
-		    var empty = false;
-		    for (var i = 1; datas[i]; i++) {
-		        if (datas[i].value == '')
-		            empty = true;
-		    }
-		    if (!empty)
-		        addBookmarkNameDiv();
-		}
+				//add listener to bookmark boxes
+						if (evt.target.name == "user_book_name") {
+			var datas = document.getElementById('bookmarked_tags')
+					.getElementsByClassName('bookmark_name');
+			var empty = false;
+			for (var i = 1; datas[i]; i++) {
+				if (datas[i].value == '')
+					empty = true;
+			}
+			if (!empty)
+				addBookmarkNameDiv();
+		}	
 		if (evt.target.name == "post_template_title") {
 			var datas = document.getElementById('post_template')
 					.getElementsByClassName('template_title');
@@ -177,9 +177,160 @@ function restoreConfig() {
 			highlightClick);
 	document.getElementById('showcfg').addEventListener('click', showcfg);
 	document.getElementById('loadcfg').addEventListener('click', loadcfg);
+	document.getElementById('forceignorator').addEventListener('click', forceIgnorator);
+	document.getElementById('restoreignorator').addEventListener('click', restoreIgnorator);
 	setColorPicker();
 	saveConfig();
 }
+
+function updateIgnorator() {
+    var cfg = JSON.parse(localStorage['ChromeLL-Config']);
+    cfg.ignorator_backup = cfg.ignorator_list;
+    //prepare ignorator list
+    var cleanIgnorator = cfg.clean_ignorator;
+    var list = cfg.ignorator_list;
+    var oldIgnorator = list.split(',');
+    for (var i = 1; oldIgnorator[i]; i++) {
+        oldIgnorator[i] = oldIgnorator[i].trim();
+    }
+    var json = {
+        "userList": [],
+        "removeBanned": ""
+    }
+    json.userList = oldIgnorator;
+    json.removeBanned = cleanIgnorator;
+    //post to eti-stats
+    var xhr = new XMLHttpRequest();
+    var url = 'http://eti-stats.herokuapp.com/tools/api/clean_ignorator/'
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function () {
+        if (xhr.status == 503) {
+            document.getElementById('ignorateinfo').innerText = "eti-stats is down - try again later";
+            console.log("eti-stats is down - try again later");
+            return;
+        }
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            //parse response
+            var temp = JSON.parse(xhr.responseText);
+            var users = temp.userList;
+            var newIgnorator = users.toString();
+            cfg.ignorator_list = newIgnorator;
+            localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
+            console.log("ignorator cleaned - reloading page in 3 seconds...");
+            document.getElementById('ignorateinfo').innerText = "ignorator cleaned - reloading page in 3 seconds...";
+            setTimeout(function () {
+                location.reload();
+            }, 3000);
+        }
+    }
+    xhr.send(JSON.stringify(json));
+    //save config
+    var currentTime = new Date().getTime();
+    cfg.last_clean = currentTime;
+    localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
+}
+
+function forceIgnorator() {
+    var cfg = JSON.parse(localStorage['ChromeLL-Config']);
+    if (cfg.ignorator_list == "") {
+        document.getElementById('ignorateinfo').innerText = "no ignorator list found..."
+        return;
+    }
+    var currentTime = new Date().getTime();
+    var timeLeft = currentTime - cfg.last_clean;
+    //allows forced update every 24 hours
+    if (timeLeft > 86400000) {
+        document.getElementById('ignorateinfo').innerText = "running ignorator cleaner..."
+        updateIgnorator();
+    } else {
+        var totalseconds = ((86400000 - timeLeft) / 1000);
+        var hours = Math.floor(totalseconds / 3600);
+        var totalminutes = Math.floor(totalseconds / 60);
+        var minutes = totalminutes - (hours * 60);
+        var seconds = Math.floor(totalseconds - (totalminutes * 60))
+				if (hours == 1) {
+				    hours = hours + " hour, ";
+				} else if (hours != 1) {
+				    hours = hours + " hours, ";
+				}
+				if (minutes == 1) {
+				    minutes = minutes + " minute, and ";
+				} else if (minutes != 1) {
+				    minutes = minutes + " minutes, and ";
+				}
+				if (seconds == 1) {
+				    seconds = seconds + " second.";
+				} else if (seconds != 1) {
+				    seconds = seconds + " seconds."
+				}	
+				document.getElementById('ignorateinfo').innerText = "try again in " + hours + minutes + seconds;
+        //for testing only
+				/*
+        cfg.last_clean = 0;
+        localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
+				//*/
+    }
+}
+
+function autoClean() {
+    var cfg = JSON.parse(localStorage['ChromeLL-Config']);
+    //check for ignorator list
+    if (cfg.ignorator_list == "") {
+        console.log("no ignorator list found...")
+        return;
+    }
+    //runs only if 48 hours have passed since last clean
+    var currentTime = new Date().getTime();
+    var timeLeft = currentTime - cfg.last_clean;
+    if (timeLeft > 172800000) {
+        console.log("running ignorator cleaner...");
+				document.getElementById('ignorateinfo').innerText = "running ignorator cleaner...";
+        updateIgnorator();
+    } else {
+        var totalseconds = ((172800000 - timeLeft) / 1000);
+        var hours = Math.floor(totalseconds / 3600);
+        var totalminutes = Math.floor(totalseconds / 60);
+        var minutes = totalminutes - (hours * 60);
+        var seconds = Math.floor(totalseconds - (totalminutes * 60))
+				if (hours == 1) {
+				    hours = hours + " hour, ";
+				} else if (hours != 1) {
+				    hours = hours + " hours, ";
+				}
+				if (minutes == 1) {
+				    minutes = minutes + " minute, and ";
+				} else if (minutes != 1) {
+				    minutes = minutes + " minutes, and ";
+				}
+				if (seconds == 1) {
+				    seconds = seconds + " second.";
+				} else if (seconds != 1) {
+				    seconds = seconds + " seconds."
+				}	
+				console.log("running ignorator cleaner in " + hours + minutes + seconds);
+    }
+}
+var cfg = JSON.parse(localStorage['ChromeLL-Config']);
+if (cfg.auto_clean){
+autoClean();
+}
+
+function restoreIgnorator() {
+    var cfg = JSON.parse(localStorage['ChromeLL-Config']);
+    var backup = cfg.ignorator_backup;
+    if (confirm('Are you sure you want to restore last ignorator backup?')) {
+        cfg.ignorator_list = backup;
+        localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
+        document.getElementById('ignorateinfo').innerHTML = "backup restored - reloading page in 3 seconds...";
+        setTimeout(function () {
+            location.reload();
+        }, 3000);
+    } else {
+        return;
+    }
+}
+
 function setColorPicker() {
 	$('.color').ColorPicker({
 		onChange : function(hsb, hex, rgb, el) {
@@ -275,7 +426,7 @@ function saveConfig() {
 					+ cfg.user_highlight_data[name].color;
 		}
 	}
-	//get bookmark data from options, save to config
+		//get bookmark data from options, save to config
 	var userhlData = document.getElementById('bookmarked_tags')
 			.getElementsByClassName('bookmark_data');
 	cfg.bookmark_data = {};

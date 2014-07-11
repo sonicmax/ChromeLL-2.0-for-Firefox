@@ -585,6 +585,7 @@ span.desc {
 		
 		<ul id="navbar">
 			<li class="navbar-item navbar-item-selected options_navigation_link" id="general_link">General</li>
+			<li class="navbar-item options_navigation_link" id="highlighter_link">Highlights</li>
 			<li class="navbar-item options_navigation_link" id="bookmarks_link">Bookmarks</li>
 			<li class="navbar-item options_navigation_link" id="topiclist_link">Topic List</li>
 			<li class="navbar-item options_navigation_link" id="messagelist_link">Message List</li>
@@ -668,9 +669,28 @@ span.desc {
                             <div class="checkbox">
                                 <label>
                                     <input type="checkbox" id="user_info_popup" />
-                                    <span>Double click box surrounding username for settings popup</span>
+                                    <span>Double click box surrounding username for settings/info popup</span>
                                 </label>
                             </div>
+														<!--<div class="checkbox subbox">
+                                <label>
+                                    <input type="checkbox" id="rep_callout" />
+                                    <span>Automatically copy rep to clipboard</span>
+                                </label>
+                            </div>-->
+														<div class="checkbox subbox">
+                                <label>
+                                    <input type="checkbox" id="show_old_name" />
+                                    <span>Show username history in popup</span>
+                                </label>
+														</div>
+														<div class="checkbox subbox">
+                                <label>
+                                    <input type="checkbox" id="hide_gs" />
+                                    <span>Hide "gs" in popup</span>
+                                </label>
+                            </div>		
+														<br>
                             <div class="checkbox">
 									<input type="checkbox" id="zebra_tables" />
 									<span>Zebra tables color <input type="text" id="zebra_tables_color" class="color" style="width: 70px" value="D7DEE8" /></span>
@@ -741,16 +761,38 @@ span.desc {
 							</div>
                             <input type="text" style="width: 550px;" id="ignorator_list" />
 						</div>
-					</section>
-                    <section>
-						<h3>User Highlighting</h3>
+						</section>
+						<section>
+                        <h3>Ignorator cleaner</h3>
+                        <div>
+												<div class="checkbox">
+								<label>
+									<input type="checkbox" id="auto_clean" />
+									<span>Automatically clean ignorator list?</span>
+								</label>
+								<br>
+									<input type="button" value="Restore backup" id="restoreignorator" />
+									<input type="button" value="Force ignorator clean" id="forceignorator" />
+									<input type="checkbox" id="clean_ignorator" /> Remove banned users?
+									<span style="color:#ff0000"><div class="checkbox" id = "ignorateinfo"></div></span>
+                        </div>
+                    </section>					
+				</div>
+				<div class="page hidden" id="highlighter_page">
+						<h1>User Highlighting</h1>
+						<section>
+						<h3></h3>
 						<div>
-							<div class="checkbox">
+							<br>
+							<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+												<div class="columns" style="overflow: hidden;">
+								<br>
 								<label>
 									<input type="checkbox" id="enable_user_highlight" />
-									<span>Highlight users listed below</span>
+									<span>Highlight users listed below:</span>
 								</label>
-                                <br />
+                                <br>
+																<br>
                                 <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
 									<div class="columns" style="overflow: hidden;">
 										<div style="float: left; width: 157px; margin-right: 20px;">
@@ -793,7 +835,8 @@ span.desc {
 								</div>
 							</div>
 						</div>
-					</section>					
+					</section>	
+				</div>
 				</div>
 				<div class="page hidden" id="bookmarks_page">
 						<h1>Bookmarks</h1>

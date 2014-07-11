@@ -205,6 +205,7 @@ var commonFunctions = {
 			commonFunctions.currentUser = user.innerHTML;
 			commonFunctions.currentID = user.href.match(/user=(\d+)/)[1];
 			var gs = '';
+			if (!config.hide_gs) {
 			if (commonFunctions.currentID > 22682) {
 				gs = ' (gs)\u2076';
 			} else if (commonFunctions.currentID > 21289) {
@@ -218,10 +219,110 @@ var commonFunctions = {
 			} else if (commonFunctions.currentID > 10088) {
 				gs = ' (gs)';
 			}
-			document.getElementById('popup_user').innerHTML = commonFunctions.currentUser
-					+ gs
-					+ ' <span class="popup_uid">'
-					+ commonFunctions.currentID + '</span>';
+			}
+			//get rep and online status from user profile
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", user, true);
+			xhr.onreadystatechange = function () {
+			    if (xhr.readyState == 4 && xhr.status == 200) {
+			        var html = document.createElement('html');
+			        html.innerHTML = xhr.responseText;
+			        //check for top bar menu
+			        if (html.getElementsByTagName('body')[0].className == 'regular') {
+			            //check for user name change
+			            var checkName = html.getElementsByTagName('td')[2].innerText;
+			            if (checkName.indexOf("Formerly") > -1) {
+			                //name change exists, get data
+			                commonFunctions.oldName = html.getElementsByTagName('td')[3].innerText;
+			                var checkStatus = html.getElementsByTagName('td')[4].innerText;
+			                //check if account is banned or suspended
+			                if (checkStatus.indexOf("Status") == -1) {
+			                    commonFunctions.rep = html.getElementsByTagName('td')[7].innerText;
+			                    commonFunctions.punish = html.getElementsByTagName('td')[5].innerText;
+			                } else if (checkStatus.indexOf("Status") > -1) {
+			                    commonFunctions.rep = html.getElementsByTagName('td')[9].innerText;
+			                    commonFunctions.punish = html.getElementsByTagName('td')[5].innerText;
+			                }
+			            } else if (checkName.indexOf("Formerly") == -1) {
+			                var checkStatus = html.getElementsByTagName('td')[2].innerText;
+			                if (checkStatus.indexOf("Status") == -1) {
+			                    commonFunctions.rep = html.getElementsByTagName('td')[5].innerText;
+			                    commonFunctions.punish = html.getElementsByTagName('td')[3].innerText;
+			                } else if (checkStatus.indexOf("Status") > -1) {
+			                    commonFunctions.rep = html.getElementsByTagName('td')[7].innerText;
+			                    commonFunctions.punish = html.getElementsByTagName('td')[3].innerText;
+			                }
+			            }
+			        }
+			        //check for classic menu
+			        if (html.getElementsByTagName('body')[0].className == 'classic') {
+			            //check for user name change
+			            var checkName = html.getElementsByTagName('td')[3].innerText;
+			            if (checkName.indexOf("Formerly") > -1) {
+			                //name change exists, get data
+			                commonFunctions.oldName = html.getElementsByTagName('td')[4].innerText;
+			                var checkStatus = html.getElementsByTagName('td')[5].innerText;
+			                //check if account is banned or suspended
+			                if (checkStatus.indexOf("Status") == -1) {
+			                    commonFunctions.rep = html.getElementsByTagName('td')[8].innerText;
+			                    commonFunctions.punish = html.getElementsByTagName('td')[6].innerText;
+			                } else if (checkStatus.indexOf("Status") > -1) {
+			                    commonFunctions.rep = html.getElementsByTagName('td')[10].innerText;
+			                    commonFunctions.punish = html.getElementsByTagName('td')[6].innerText;
+			                }
+			            } else if (checkName.indexOf("Formerly") == -1) {
+			                var checkStatus = html.getElementsByTagName('td')[3].innerText;
+			                if (checkStatus.indexOf("Status") == -1) {
+			                    commonFunctions.rep = html.getElementsByTagName('td')[6].innerText;
+			                    commonFunctions.punish = html.getElementsByTagName('td')[4].innerText;
+			                } else if (checkStatus.indexOf("Status") > -1) {
+			                    commonFunctions.rep = html.getElementsByTagName('td')[8].innerText;
+			                    commonFunctions.punish = html.getElementsByTagName('td')[4].innerText;
+			                }
+			            }
+			        }
+			        //prepare popup menu for updates
+			        var formerly = document.getElementById("namechange");
+			        var displayOnline = document.getElementById('online');
+			        var displayPunish = document.getElementById('punish');
+			        var displayRep = document.getElementById('rep');
+			        //update popup menu elements
+			        displayRep.innerHTML = '<br>' + commonFunctions.rep;
+			        //check cfg, copy rep to clipboard (needs workaround)
+			        /*if (config.rep_callout) {
+							//window.prompt('Ctrl-C to copy', commonFunctions.rep);
+							var input = document.createElement("input");
+							input.setAttribute("type", "hidden");
+							input.setAttribute("name", "clipboard");
+							input.setAttribute("value", commonFunctions.rep);
+							document.getElementById("bookmarks").appendChild(input);
+							input.select();
+							input.focus();
+							document.execCommand('copy');
+							}*/
+			        //update popup menu with data
+			        if (config.show_old_name) {
+			            if (checkName.indexOf("Formerly") > -1) {
+			                formerly.innerHTML = "<br>Formerly known as: <b>" + commonFunctions.oldName + '</b>';
+			            }
+			        }
+			        if (html.innerHTML.indexOf('online now') > -1) {
+			            displayOnline.innerHTML = '(online now)';
+			        }
+			        if (commonFunctions.punish.indexOf('Suspended') > -1) {
+			            displayPunish.innerHTML = '<b>Suspended until: </b>' + commonFunctions.punish.substring(17);
+			        }
+			        if (commonFunctions.punish.indexOf('Banned') > -1) {
+			            displayPunish.innerHTML = '<b>Banned</b>';
+			        }
+			    }
+			}
+			xhr.send();
+			//create popup menu
+			document.getElementById('popup_user').innerHTML = '<div id="username">' + commonFunctions.currentUser + " " + gs + ' <span class="popup_uid">' + commonFunctions.currentID + '</div>'
+			+ '<span class="popup_uid"><div id="namechange"> </div>'
+			+ '<span class="popup_uid"><p><div id="rep"><br>loading...</div></p>' 
+			+ '<div id="online"></div><div id="punish"></div><div id="clip"></div></span>';
 			var mTop = 10;
 			var mLeft = -35;
 			var popup_div_style = document.getElementById('user-popup-div').style;
@@ -232,7 +333,6 @@ var commonFunctions = {
 				document.selection.empty();
 			else if (window.getSelection)
 				window.getSelection().removeAllRanges();
-
 		} catch (e) {
 			// ignore - element not useful for user data
 		}

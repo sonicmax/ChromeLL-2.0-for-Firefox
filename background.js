@@ -1,10 +1,11 @@
+var text;
 var board = Array();
 var cfg, currentTab;
 var drama = {};
 var tabPorts = {};
 var ignoratorInfo = {};
 var scopeInfo = {};
-var defaultConfig = '{"float_userbar":false,"short_title":true,"show_secret_boards":true,"dramalinks":false,"hide_dramalinks":false,"hide_dramalinks_topiclist":false,"user_info_popup":true,"zebra_tables":false,"force_https":false,"sys_notifications":true,"close_notifications":false,"ignorator":false,"enable_user_highlight":false,"ignorator_topiclist":false,"userhl_topiclist":false,"page_jump_buttons":true,"ignore_keyword":false,"enable_keyword_highlight":false,"click_expand_thumbnail":true,"imagemap_new_tab":true,"copy_in_context":false,"imagemap_on_infobar":false,"resize_imgs":false,"user_notes":true,"ignorator_messagelist":false,"userhl_messagelist":false,"no_user_highlight_quotes":false,"notify_userhl_post":false,"notify_quote_post":false,"new_page_notify":false,"number_posts":true,"like_button":true,"loadquotes":true,"post_title_notification":true,"filter_me":false,"expand_spoilers":false,"highlight_tc":false,"label_tc":true,"foxlinks_quotes":false,"quickpost_tag_buttons":false,"quickpost_on_pgbottom":false,"post_before_preview":false,"batch_uploader":false,"drop_batch_uploader":true,"sort_history":false,"history_expand_search":false,"ignorator_topiclist_pm":false,"userhl_topiclist_pm":false,"page_jump_buttons_pm":true,"click_expand_thumbnail_pm":true,"user_notes_pm":false,"userhl_messagelist_pm":false,"pm_title_pm":true,"number_posts_pm":true,"loadquotes_pm":true,"post_title_notification_pm":true,"quickpost_tag_buttons_pm":false,"quickpost_on_pgbottom_pm":false,"post_before_preview_pm":false,"batch_uploader_pm":false,"drop_batch_uploader_pm":true,"debug":false,"zebra_tables_color":"D7DEE8","close_notification_time":"5","ignorator_list":"","ignore_keyword_list":"","":"0","img_max_width":"1440","tc_highlight_color":"ffff00","tc_label_color":"","foxlinks_quotes_color":"","user_highlight_data":{},"keyword_highlight_data":{},"tag_highlight_data":{},"context_menu":true, "tag_admin":[], "bookmark_data":{"Serious":"Serious","Work Safe":"LUE-NWS-NLS","IRL Stuff":"Current Events+News+Politics","Cute Cats Only":"Cute&Cats"}, "user_id":"", "last_saved":0 }';
+var defaultConfig = '{"float_userbar":false,"short_title":true,"show_secret_boards":true,"dramalinks":false,"hide_dramalinks":false,"hide_dramalinks_topiclist":false,"user_info_popup":true,"zebra_tables":false,"force_https":false,"sys_notifications":true,"close_notifications":false,"ignorator":false,"enable_user_highlight":false,"ignorator_topiclist":false,"userhl_topiclist":false,"page_jump_buttons":true,"ignore_keyword":false,"enable_keyword_highlight":false,"click_expand_thumbnail":true,"imagemap_new_tab":true,"copy_in_context":false,"imagemap_on_infobar":false,"resize_imgs":false,"user_notes":true,"ignorator_messagelist":false,"userhl_messagelist":false,"no_user_highlight_quotes":false,"notify_userhl_post":false,"notify_quote_post":false,"new_page_notify":false,"number_posts":true,"like_button":true,"loadquotes":true,"post_title_notification":true,"filter_me":false,"expand_spoilers":false,"highlight_tc":false,"label_tc":true,"foxlinks_quotes":false,"quickpost_tag_buttons":false,"quickpost_on_pgbottom":false,"post_before_preview":false,"batch_uploader":false,"drop_batch_uploader":true,"sort_history":false,"history_expand_search":false,"ignorator_topiclist_pm":false,"userhl_topiclist_pm":false,"page_jump_buttons_pm":true,"click_expand_thumbnail_pm":true,"user_notes_pm":false,"userhl_messagelist_pm":false,"pm_title_pm":true,"number_posts_pm":true,"loadquotes_pm":true,"post_title_notification_pm":true,"quickpost_tag_buttons_pm":false,"quickpost_on_pgbottom_pm":false,"post_before_preview_pm":false,"batch_uploader_pm":false,"drop_batch_uploader_pm":true,"debug":false,"zebra_tables_color":"D7DEE8","close_notification_time":"5","ignorator_list":"","ignore_keyword_list":"","":"0","img_max_width":"1440","tc_highlight_color":"ffff00","tc_label_color":"","foxlinks_quotes_color":"","user_highlight_data":{},"keyword_highlight_data":{},"tag_highlight_data":{},"context_menu":true, "tag_admin":[], "bookmark_data":{"Serious":"Serious","Work Safe":"LUE-NWS-NLS","IRL Stuff":"Current Events+News+Politics","Cute Cats Only":"Cute&Cats"}, "user_id":"", "rep_callout":false, "show_old_name":true, "hide_gs":false, "clean_ignorator":false, "ignorator_backup":"", "auto_clean":false, "last_clean":0, "last_saved":0 }';
 
 if(localStorage['ChromeLL-Config'] === undefined){
     localStorage['ChromeLL-Config'] = defaultConfig;
@@ -166,7 +167,6 @@ function buildContextMenu(){
         }
     }
 }
-
 function imageMap(info) {
     var str = info.srcUrl,
         tokens = str.split('/').slice(-2),
@@ -412,7 +412,7 @@ function getUserID() {
             }
         }
         xhr.send();
-}
+    }
 		
 //gets tags from profile, saves to cfg
 function scrapeUserProf() {
@@ -431,15 +431,31 @@ function scrapeUserProf() {
             html.innerHTML = xhr.responseText;
             //check for classic menu
             if (html.getElementsByTagName('body')[0].className == 'classic') {
-                var tagsAdmin = html.getElementsByTagName('td')[8].innerText;
-                var tagsAll = tagsAdmin + html.getElementsByTagName('td')[10].innerText;
-                console.log("classic menu detected...");
+                //check for name changes
+                var testChange = html.getElementsByTagName('td')[3].innerText;
+                if (testChange.indexOf("Formerly") > -1) {
+                    var tagsAdmin = html.getElementsByTagName('td')[10].innerText;
+                    var tagsAll = tagsAdmin + html.getElementsByTagName('td')[12].innerText;
+                    console.log("name change & classic menu detected...");
+                } else {
+                    var tagsAdmin = html.getElementsByTagName('td')[8].innerText;
+                    var tagsAll = tagsAdmin + html.getElementsByTagName('td')[10].innerText;
+                    console.log("classic menu detected...");
+                }
             }
             //check for top bar menu
             else if (html.getElementsByTagName('body')[0].className == 'regular') {
-                var tagsAdmin = html.getElementsByTagName('td')[7].innerText;
-                var tagsAll = tagsAdmin + html.getElementsByTagName('td')[9].innerText;
-                console.log("top bar menu detected...");
+                //check for name changes
+                var testChange = html.getElementsByTagName('td')[2].innerText;
+                if (testChange.indexOf("Formerly") > -1) {
+                    var tagsAdmin = html.getElementsByTagName('td')[9].innerText;
+                    var tagsAll = tagsAdmin + html.getElementsByTagName('td')[11].innerText;
+                    console.log("name change & top bar menu detected...");
+                } else {
+                    var tagsAdmin = html.getElementsByTagName('td')[7].innerText;
+                    var tagsAll = tagsAdmin + html.getElementsByTagName('td')[9].innerText;
+                    console.log("top bar menu detected...");
+                }
             }
             //create tag array
             while ((tag = pattern.exec(tagsAll)) != null) {
