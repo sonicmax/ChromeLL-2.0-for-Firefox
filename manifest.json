@@ -17,7 +17,7 @@
     "default_popup": "src/html/popup.html"
   },
   "background": {
-    "scripts": ["src/json/vars.json", "src/js/allBg.js", "src/js/transloader.js", "background.js"]
+    "scripts": ["lib/jquery.js", "src/json/vars.json", "src/js/allBg.js", "src/js/transloader.js", "background.js"]
   },
   "content_scripts": [
   {

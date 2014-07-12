@@ -414,56 +414,43 @@ function getUserID() {
         xhr.send();
     }
 		
-//gets tags from profile, saves to cfg
+// gets tags from profile, saves to cfg
 function scrapeUserProf() {
     var cfg = JSON.parse(localStorage['ChromeLL-Config']);
     var me = cfg.user_id;
-    var tagsA = [];
-    var xhr = new XMLHttpRequest();
-    var pattern = /\[(.*?)\]/g;
-    var tag;
-    var url = "http://endoftheinter.net/profile.php?user=" + me;
+		var url = "http://endoftheinter.net/profile.php?user=" + me;
+		var xhr;
+		var tag;
+    var tagsArray;
     console.log("User Profile = " + url);
     xhr.open("GET", url, true);
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
             var html = document.createElement('html');
             html.innerHTML = xhr.responseText;
-            //check for classic menu
-            if (html.getElementsByTagName('body')[0].className == 'classic') {
-                //check for name changes
-                var testChange = html.getElementsByTagName('td')[3].innerText;
-                if (testChange.indexOf("Formerly") > -1) {
-                    var tagsAdmin = html.getElementsByTagName('td')[10].innerText;
-                    var tagsAll = tagsAdmin + html.getElementsByTagName('td')[12].innerText;
-                    console.log("name change & classic menu detected...");
-                } else {
-                    var tagsAdmin = html.getElementsByTagName('td')[8].innerText;
-                    var tagsAll = tagsAdmin + html.getElementsByTagName('td')[10].innerText;
-                    console.log("classic menu detected...");
-                }
-            }
-            //check for top bar menu
-            else if (html.getElementsByTagName('body')[0].className == 'regular') {
-                //check for name changes
-                var testChange = html.getElementsByTagName('td')[2].innerText;
-                if (testChange.indexOf("Formerly") > -1) {
-                    var tagsAdmin = html.getElementsByTagName('td')[9].innerText;
-                    var tagsAll = tagsAdmin + html.getElementsByTagName('td')[11].innerText;
-                    console.log("name change & top bar menu detected...");
-                } else {
-                    var tagsAdmin = html.getElementsByTagName('td')[7].innerText;
-                    var tagsAll = tagsAdmin + html.getElementsByTagName('td')[9].innerText;
-                    console.log("top bar menu detected...");
-                }
-            }
-            //create tag array
+            var htmlobj = ($(html.innerHTML).find("td"));
+
+						// scrape information from profile
+						var profileAdmin = $(htmlobj).filter(function () {
+								return $(this).text() == "Administrator of";
+						}).closest("tr").text();
+						var tagsAdmin = profileAdmin.replace("Administrator of", "");
+						
+						var profileMod = $(htmlobj).filter(function () {
+								return $(this).text() == "Moderator of";
+						}).closest("tr").text();
+						var tagsMod = profileMod.replace("Moderator of", "");	
+						
+						var tagsAll = tagsAdmin + tagsMod;				
+						
+            // create tag array
+						var pattern = /\[(.*?)\]/g;
             while ((tag = pattern.exec(tagsAll)) != null) {
-                tagsA.push(tag[1]);
+                tagsArray.push(tag[1]);
             }
-            console.log(tagsA);
+            console.log(tagsArray);
             delete cfg.tag_admin;
-            cfg.tag_admin = tagsA;
+            cfg.tag_admin = tagsArray;
             localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
             console.log("scraped profile for tag information");
         }

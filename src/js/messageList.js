@@ -36,7 +36,7 @@ var img_observer = new MutationObserver(function(mutations) {
 	});
 });
 
-//wiki link fix
+// wiki link fix
 var links = document.getElementsByClassName("l");
 for (var i = 0; links[i]; i++) {
     if (links[i].title.indexOf("/index.php") == 0) {
