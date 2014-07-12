@@ -21,11 +21,11 @@
   },
   "content_scripts": [
   {
-    "matches": ["*endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
+    "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
     "js": ["lib/jquery.js", "src/js/messageList.js"]
   },
   {
-    "matches": ["*://boards.endoftheinter.net/topics/*", "*://boards.endoftheinter.net/showfavorites.php*", "*://archives.endoftheinter.net/search.php*", "*://endoftheinter.net/inbox.php*", "*://boards.endoftheinter.net/search.php*", "*://endoftheinter.net/main.php"],
+    "matches": ["*://boards.endoftheinter.net/topics/*", "*://boards.endoftheinter.net/showfavorites.php*", "*://*.endoftheinter.net/search.php*", "*://endoftheinter.net/inbox.php*", "*://endoftheinter.net/main.php"],
     "js": ["src/js/topicList.js"] 
   },
   {
