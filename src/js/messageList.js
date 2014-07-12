@@ -36,6 +36,25 @@ var img_observer = new MutationObserver(function(mutations) {
 	});
 });
 
+//wiki link fix
+var links = document.getElementsByClassName("l");
+for (var i = 0; links[i]; i++) {
+    if (links[i].title.indexOf("/index.php") == 0) {
+        var wikiLink = links[i];
+        wikiLink.className = "wiki";
+        $(document).ready(function () {
+            $("a.wiki").click(function (event) {
+                event.preventDefault();
+            });
+        });
+
+        function wikiFix() {
+            window.open(this.href.replace("boards", "wiki"));
+        }
+        wikiLink.addEventListener("click", wikiFix);
+    }
+}
+
 var messageList = {
 	click_expand_thumbnail : function() {
 		// rewritten by xdrvonscottx
