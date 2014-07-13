@@ -186,7 +186,6 @@ function restoreConfig() {
 function updateIgnorator() {
     var cfg = JSON.parse(localStorage['ChromeLL-Config']);
     cfg.ignorator_backup = cfg.ignorator_list;
-    //prepare ignorator list
     var cleanIgnorator = cfg.clean_ignorator;
     var list = cfg.ignorator_list;
     var oldIgnorator = list.split(',');
@@ -199,7 +198,7 @@ function updateIgnorator() {
     }
     json.userList = oldIgnorator;
     json.removeBanned = cleanIgnorator;
-    //post to eti-stats
+
     var xhr = new XMLHttpRequest();
     var url = 'http://eti-stats.herokuapp.com/tools/api/clean_ignorator/'
     xhr.open("POST", url, true);
@@ -211,7 +210,6 @@ function updateIgnorator() {
             return;
         }
         if (xhr.readyState == 4 && xhr.status == 200) {
-            //parse response
             var temp = JSON.parse(xhr.responseText);
             var users = temp.userList;
             var newIgnorator = users.toString();
@@ -225,7 +223,7 @@ function updateIgnorator() {
         }
     }
     xhr.send(JSON.stringify(json));
-    //save config
+
     var currentTime = new Date().getTime();
     cfg.last_clean = currentTime;
     localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
@@ -239,7 +237,6 @@ function forceIgnorator() {
     }
     var currentTime = new Date().getTime();
     var timeLeft = currentTime - cfg.last_clean;
-    //allows forced update every 24 hours
     if (timeLeft > 86400000) {
         document.getElementById('ignorateinfo').innerText = "running ignorator cleaner..."
         updateIgnorator();
@@ -265,55 +262,7 @@ function forceIgnorator() {
 				    seconds = seconds + " seconds."
 				}	
 				document.getElementById('ignorateinfo').innerText = "try again in " + hours + minutes + seconds;
-        //for testing only
-				/*
-        cfg.last_clean = 0;
-        localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
-				//*/
     }
-}
-
-function autoClean() {
-    var cfg = JSON.parse(localStorage['ChromeLL-Config']);
-    //check for ignorator list
-    if (cfg.ignorator_list == "") {
-        console.log("no ignorator list found...")
-        return;
-    }
-    //runs only if 48 hours have passed since last clean
-    var currentTime = new Date().getTime();
-    var timeLeft = currentTime - cfg.last_clean;
-    if (timeLeft > 172800000) {
-        console.log("running ignorator cleaner...");
-				document.getElementById('ignorateinfo').innerText = "running ignorator cleaner...";
-        updateIgnorator();
-    } else {
-        var totalseconds = ((172800000 - timeLeft) / 1000);
-        var hours = Math.floor(totalseconds / 3600);
-        var totalminutes = Math.floor(totalseconds / 60);
-        var minutes = totalminutes - (hours * 60);
-        var seconds = Math.floor(totalseconds - (totalminutes * 60))
-				if (hours == 1) {
-				    hours = hours + " hour, ";
-				} else if (hours != 1) {
-				    hours = hours + " hours, ";
-				}
-				if (minutes == 1) {
-				    minutes = minutes + " minute, and ";
-				} else if (minutes != 1) {
-				    minutes = minutes + " minutes, and ";
-				}
-				if (seconds == 1) {
-				    seconds = seconds + " second.";
-				} else if (seconds != 1) {
-				    seconds = seconds + " seconds."
-				}	
-				console.log("running ignorator cleaner in " + hours + minutes + seconds);
-    }
-}
-var cfg = JSON.parse(localStorage['ChromeLL-Config']);
-if (cfg.auto_clean){
-autoClean();
 }
 
 function restoreIgnorator() {

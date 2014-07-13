@@ -414,14 +414,13 @@ function getUserID() {
         xhr.send();
     }
 		
-// gets tags from profile, saves to cfg
 function scrapeUserProf() {
     var cfg = JSON.parse(localStorage['ChromeLL-Config']);
     var me = cfg.user_id;
 		var url = "http://endoftheinter.net/profile.php?user=" + me;
-		var xhr;
+		var xhr = new XMLHttpRequest();
 		var tag;
-    var tagsArray;
+    var tagsArray = [];
     console.log("User Profile = " + url);
     xhr.open("GET", url, true);
     xhr.onreadystatechange = function () {
@@ -430,7 +429,6 @@ function scrapeUserProf() {
             html.innerHTML = xhr.responseText;
             var htmlobj = ($(html.innerHTML).find("td"));
 
-						// scrape information from profile
 						var profileAdmin = $(htmlobj).filter(function () {
 								return $(this).text() == "Administrator of";
 						}).closest("tr").text();
@@ -443,7 +441,6 @@ function scrapeUserProf() {
 						
 						var tagsAll = tagsAdmin + tagsMod;				
 						
-            // create tag array
 						var pattern = /\[(.*?)\]/g;
             while ((tag = pattern.exec(tagsAll)) != null) {
                 tagsArray.push(tag[1]);

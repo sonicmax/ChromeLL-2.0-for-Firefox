@@ -42,7 +42,7 @@
   },
   {
     "matches": ["*://*.endoftheinter.net/*"],
-    "js": ["src/js/allPages.js"]
+    "js": ["lib/jquery.js", "src/js/allPages.js"]
   },
   {
     "matches": ["*://boards.endoftheinter.net/search.php*"],
