@@ -269,13 +269,23 @@ function restoreIgnorator() {
     var cfg = JSON.parse(localStorage['ChromeLL-Config']);
     var backup = cfg.ignorator_backup;
     if (confirm('Are you sure you want to restore last ignorator backup?')) {
-        cfg.ignorator_list = backup;
-        localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
-        document.getElementById('ignorateinfo').innerHTML = "backup restored - reloading page in 3 seconds...";
-        setTimeout(function () {
-            location.reload();
-        }, 3000);
-    } else {
+        if (backup == "") {
+            document.getElementById('ignorateinfo').innerHTML = "no backup found...";
+            return;
+        } else if (backup == cfg.ignorator_list) {
+            document.getElementById('ignorateinfo').innerHTML = "current list and backup are identical...";
+            return;
+        } else {
+            cfg.ignorator_list = backup;
+            localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
+            document.getElementById('ignorateinfo').innerHTML = "backup restored - reloading page in 3 seconds...";
+            setTimeout(function () {
+                location.reload();
+            }, 3000);
+        }
+		}
+		
+		else {
         return;
     }
 }
