@@ -64,3 +64,59 @@ var profileHelper = {
 	}
 }
 profileHelper.init();
+
+function addControlPanel() {
+    var profile = document.documentElement.innerText;
+    if (profile.indexOf("Edit My Profile") > -1) {
+        if (document.getElementsByTagName('body')[0].className == 'regular') {
+            var testChange = document.getElementsByTagName('td')[2].innerHTML;
+            if (testChange.indexOf("Formerly") > -1) {
+                var adminTags = document.getElementsByTagName('td')[9].getElementsByTagName('a');
+                var modTags = document.getElementsByTagName('td')[11].getElementsByTagName('a');
+            } else {
+                var adminTags = document.getElementsByTagName('td')[7].getElementsByTagName('a');
+                var modTags = document.getElementsByTagName('td')[9].getElementsByTagName('a');
+            }
+        } else if (document.getElementsByTagName('body')[0].className == 'classic') {
+            var testChange = document.getElementsByTagName('td')[3].innerHTML;
+            if (testChange.indexOf("Formerly") > -1) {
+                var adminTags = document.getElementsByTagName('td')[10];
+                var modTags = document.getElementsByTagName('td')[12];
+            } else {
+                var adminTags = document.getElementsByTagName('td')[8];
+                var modTags = document.getElementsByTagName('td')[10];
+            }
+        }
+
+        var adminArray = [];
+        for (var i = 0; i < adminTags.length; i++) {
+            adminArray[i] = adminTags[i];
+            adminArray[i].classList.add('control');
+        }
+
+        var modArray = [];
+        for (var i = 0; i < modTags.length; i++) {
+            modArray[i] = modTags[i];
+            modArray[i].classList.add('control');
+        }
+
+        var timeout;
+        $("a.control").hover(
+            function () {
+                var that = this;
+                timeout = setTimeout(function () {
+                    var color = $("table.grid tr td").css("background-color");
+                    var tag = that.innerText;
+                    var url = "http://endoftheinter.net/tag.php?tag=" + tag;
+                    $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
+										+ color + ";'><a href='" + url + "'>&nbsp<b>[Edit Tag]</b></a></span>"));
+                }, 400);
+
+            }, function () {
+                clearTimeout(timeout);
+                $(this).find("span:last").remove();
+            }
+        );
+    }
+}
+addControlPanel();
