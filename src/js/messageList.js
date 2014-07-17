@@ -41,7 +41,7 @@ function wikiFix() {
 }
 
 var links = document.getElementsByClassName("l");
-for (var i = 0; links[i]; i++) {
+for (var i = links.length - 1; i >= 0; i--) {
     if (links[i].title.indexOf("/index.php") == 0) {
         var wikiLink = links[i];
         wikiLink.className = "wiki";
@@ -65,36 +65,37 @@ $("a.youtube").hover(
         timeout = setTimeout(function () {
             var color = $("table.message-body tr td.message").css("background-color");
             var url = that.href;
-            if (!that.embed) {
-                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-								+ color + ";'><a class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
-            } else if (that.embed) {
-                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-								+ color + ";'><a class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>"));
+            if (that.className == "youtube") {
+                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'><a id='" + url + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+            } else if (that.className == "hideme") {
+                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'><a id='" + url + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>"));
             }
-            $("table.message-body").one("click", "a.embed", function () {
-                if (!that.embed) {
-                    var tokens = url.split('=').slice(-1);
-                    var videoCode = tokens.join('=');
-                    var embed = "<iframe id='ytplayer' type='text/html' width='640' height='390' src='http://www.youtube.com/embed/" 
-										+ videoCode + "?autoplay='0' frameborder='0'/>";
-                    that.innerHTML = embed;
-                    that.embed = true;
-                }
-            });
-            $("table.message-body").one("click", "a.hide", function () {
-                if (that.embed) {
-                    that.innerHTML = "<a class='youtube' target='_blank' title='" + url + "' href='" + url + "'>" + url + "</a>";
-                    that.embed = false;
-                }
-            });
         }, 400);
 
     }, function () {
         clearTimeout(timeout);
         $(this).find("span:last").remove();
     }
-);		
+);
+
+$("table.message-body").on("click", "a.embed", function () {
+    var that = this;
+    var toEmbed = document.getElementById(that.id);
+    var url = that.id;
+    var tokens = url.split('=').slice(-1);
+    var videoCode = tokens.join('=');
+    var embed = "<iframe id='ytplayer' type='text/html' width='640' height='390' src='http://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>";
+    toEmbed.className = "hideme";
+    toEmbed.innerHTML = embed;
+});
+
+$("table.message-body").on("click", "a.hide", function () {
+    var that = this;
+    var toEmbed = document.getElementById(that.id);
+    var url = that.id;
+    toEmbed.className = "youtube";
+    toEmbed.innerHTML = "<a class='youtube' target='_blank' title='" + url + "' href='" + url + "'>" + url + "</a>";
+});
 
 var messageList = {
 	click_expand_thumbnail : function() {
