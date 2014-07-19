@@ -42,6 +42,7 @@ function wikiFix() {
 
 function embedYoutube() {
     var that = this;
+		if (!that.embedded) {
     var toEmbed = document.getElementById(that.id);
     var url = that.id;
     var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -56,6 +57,8 @@ function embedYoutube() {
     embedHTML = "<iframe id='ytplayer' type='text/html' width='640' height='390' src='http://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>";
     toEmbed.className = "hideme";
     toEmbed.innerHTML = embedHTML;
+		that.embedded = true;
+		}
 }
 
 function hideYoutube() {
@@ -64,6 +67,7 @@ function hideYoutube() {
     var url = that.id;
     toEmbed.className = "youtube";
     toEmbed.innerHTML = "<a class='youtube' target='_blank' title='" + url + "' href='" + url + "'>" + url + "</a>";
+		that.embedded = false;
 }
 
 var linkObserver = new MutationObserver(function (mutations) {
