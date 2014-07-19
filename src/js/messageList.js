@@ -40,8 +40,35 @@ function wikiFix() {
     window.open(this.href.replace("boards", "wiki"));
 }
 
+function embedYoutube() {
+    var that = this;
+    var toEmbed = document.getElementById(that.id);
+    var url = that.id;
+    var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    var match = url.match(regExp);
+    var videoCode;
+    var embedHTML;
+    if (match && match[2].length == 11) {
+        videoCode = match[2];
+    } else {
+        videoCode = match;
+    }
+    embedHTML = "<iframe id='ytplayer' type='text/html' width='640' height='390' src='http://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>";
+    toEmbed.className = "hideme";
+    toEmbed.innerHTML = embedHTML;
+}
+
+function hideYoutube() {
+    var that = this;
+    var toEmbed = document.getElementById(that.id);
+    var url = that.id;
+    toEmbed.className = "youtube";
+    toEmbed.innerHTML = "<a class='youtube' target='_blank' title='" + url + "' href='" + url + "'>" + url + "</a>";
+}
+
 var linkObserver = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
+		// todo - exclude quoted messages, or find better way to deal with them
         if (mutation.type == "childList" && mutation.target.getAttribute("class") == "message-top" 
 				&& mutation.target.nextSibling.nodeName == "TABLE") {
             var posts = mutation.target.nextSibling;
@@ -61,61 +88,31 @@ var linkObserver = new MutationObserver(function (mutations) {
                     var vidLink = links[i];
                     vidLink.className = "youtube";
                     vidLink.id = vidLink.href;
-										var timeout;
-										// bug - moving mouse quickly over multiple links in same post stops the mouseleave event from firing correctly
-                    $("a.youtube").hover(
-                        function () {
-												console.log(vidLink);
-                            var that = this;
-                            timeout = setTimeout(function () {
-                                var color = $("table.message-body tr td.message").css("background-color");
-                                var url = that.href;
-                                if (that.className == "youtube") {
-                                    $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-																		+ color + ";'><a id='" + url + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
-                                } else if (that.className == "hideme") {
-                                    $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-																		+ color + ";'><a id='" + url + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>"));
-                                }
-                            }, 400);
-
-                        }, function () {
-                            clearTimeout(timeout);
-                            $(this).find("span:last").remove();
-                        }
-                    );
-
-                    $("table.message-body").on("click", "a.embed", function () {
-                        var that = this;
-                        var toEmbed = document.getElementById(that.id);
-                        var url = that.id;
-												//*/
-                        var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-                        var match = url.match(regExp);
-												var videoCode;
-												var embedHTML;
-                        if (match && match[2].length == 11) {
-                            videoCode = match[2];
-                        } else {
-                            videoCode = match;
-                        }
-                        embedHTML = "<iframe id='ytplayer' type='text/html' width='640' height='390' src='http://www.youtube.com/embed/" 
-												+ videoCode + "?autoplay='0' frameborder='0'/>";
-                        toEmbed.className = "hideme";
-                        toEmbed.innerHTML = embedHTML;
-                    });
-
-                    $("table.message-body").on("click", "a.hide", function () {
-                        var that = this;
-                        var toEmbed = document.getElementById(that.id);
-                        var url = that.id;
-                        toEmbed.className = "youtube";
-                        toEmbed.innerHTML = "<a class='youtube' target='_blank' title='" + url + "' href='" + url + "'>" + url + "</a>";
-                    });
                 }
             }
         }
     });
+		
+    $("a.youtube").hoverIntent(
+        function () {
+            var that = this;
+            var color = $("table.message-body tr td.message").css("background-color");
+            var url = that.href;
+            if (that.className == "youtube") {
+                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
+								+ color + ";'><a id='" + url + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+						// todo - hide link should be automatically displayed after embedding video
+            } else if (that.className == "hideme") {
+                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
+								+ color + ";'><a id='" + url + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>"));
+            }
+
+        }, function () {
+            $(this).find("span:last").remove();
+        }
+    );
+    $("table.message-body").on("click", "a.embed", embedYoutube);
+    $("table.message-body").on("click", "a.hide", hideYoutube);
 });
 
 linkObserver.observe(document, {
@@ -124,7 +121,7 @@ linkObserver.observe(document, {
     childList: true,
     attributes: true
 });
-
+			
 var messageList = {
 	click_expand_thumbnail : function() {
 		// rewritten by xdrvonscottx

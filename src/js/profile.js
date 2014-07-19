@@ -10,8 +10,8 @@ var profile = {
 	},
 	history_expand_search : function() {
 		document.getElementById('search_bar').style.display = 'block';
-	},
-	page_jump_buttons : function() {
+	}
+	/*page_jump_buttons : function() {
 		var trs = document.getElementsByTagName('table')[0]
 				.getElementsByTagName('tr');
 		var insert;
@@ -27,9 +27,9 @@ var profile = {
 					+ '" id="jumpLast">&gt;</a>';
 			trs[i].getElementsByTagName('td')[1].insertBefore(insert, null);
 		}
-	}
+	}*/
 }
-var profileHelper = {
+/*var profileHelper = {
 	jumpHandler : function(ev) {
 		var a = ev.srcElement.parentNode.parentNode.parentNode
 				.getElementsByTagName('td')[2]
@@ -63,7 +63,7 @@ var profileHelper = {
 		});
 	}
 }
-profileHelper.init();
+profileHelper.init();*/
 
 function addControlPanel() {
     var profile = document.documentElement.innerText;
@@ -100,20 +100,15 @@ function addControlPanel() {
             modArray[i].classList.add('control');
         }
 
-        var timeout;
-        $("a.control").hover(
+        $("a.control").hoverIntent(
             function () {
                 var that = this;
-                timeout = setTimeout(function () {
                     var color = $("table.grid tr td").css("background-color");
                     var tag = that.innerText;
                     var url = "http://endoftheinter.net/tag.php?tag=" + tag;
                     $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
 										+ color + ";'><a href='" + url + "'>&nbsp<b>[Edit Tag]</b></a></span>"));
-                }, 400);
-
             }, function () {
-                clearTimeout(timeout);
                 $(this).find("span:last").remove();
             }
         );
