@@ -63,11 +63,13 @@ function embedYoutube() {
 
 function hideYoutube() {
     var that = this;
+    if (!that.hidden) {
     var toEmbed = document.getElementById(that.id);
     var url = that.id;
     toEmbed.className = "youtube";
     toEmbed.innerHTML = "<a class='youtube' target='_blank' title='" + url + "' href='" + url + "'>" + url + "</a>";
-		that.embedded = false;
+    that.hidden = true;
+    }
 }
 
 var linkObserver = new MutationObserver(function (mutations) {
@@ -91,7 +93,7 @@ var linkObserver = new MutationObserver(function (mutations) {
                 if ((links[i].title.indexOf("youtube.com/watch?v=") > -1) || (links[i].title.indexOf("youtu.be/") > -1)) {
                     var vidLink = links[i];
                     vidLink.className = "youtube";
-                    vidLink.id = vidLink.href;
+                    vidLink.id = vidLink.href + "&" + Math.random().toString(16).slice(2);
                 }
             }
         }
