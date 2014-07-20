@@ -66,48 +66,39 @@ var profile = {
 profileHelper.init();*/
 
 function addControlPanel() {
+    var tds;
+    var td;
+    var adminTags;
+    var modTags;
+    var adminArray = [];
+    var modArray = [];
+    var tagArray = [];
     var profile = document.documentElement.innerText;
     if (profile.indexOf("Edit My Profile") > -1) {
-        if (document.getElementsByTagName('body')[0].className == 'regular') {
-            var testChange = document.getElementsByTagName('td')[2].innerHTML;
-            if (testChange.indexOf("Formerly") > -1) {
-                var adminTags = document.getElementsByTagName('td')[9].getElementsByTagName('a');
-                var modTags = document.getElementsByTagName('td')[11].getElementsByTagName('a');
-            } else {
-                var adminTags = document.getElementsByTagName('td')[7].getElementsByTagName('a');
-                var modTags = document.getElementsByTagName('td')[9].getElementsByTagName('a');
+        tds = document.getElementsByTagName("td");
+        for (var i = 0; i < tds.length; i++) {
+            td = tds[i];
+            if (td.innerText.indexOf("Administrator of") > -1) {
+                adminTags = tds[i + 1].getElementsByTagName('a');
             }
-        } else if (document.getElementsByTagName('body')[0].className == 'classic') {
-            var testChange = document.getElementsByTagName('td')[3].innerHTML;
-            if (testChange.indexOf("Formerly") > -1) {
-                var adminTags = document.getElementsByTagName('td')[10];
-                var modTags = document.getElementsByTagName('td')[12];
-            } else {
-                var adminTags = document.getElementsByTagName('td')[8];
-                var modTags = document.getElementsByTagName('td')[10];
+            if (td.innerText.indexOf("Moderator of") > -1) {
+                modTags = tds[i + 1].getElementsByTagName('a');
             }
         }
-
-        var adminArray = [];
-        for (var i = 0; i < adminTags.length; i++) {
-            adminArray[i] = adminTags[i];
-            adminArray[i].classList.add('control');
-        }
-
-        var modArray = [];
-        for (var i = 0; i < modTags.length; i++) {
-            modArray[i] = modTags[i];
-            modArray[i].classList.add('control');
+        adminArray = Array.prototype.slice.call(adminTags);
+        modArray = Array.prototype.slice.call(modTags);
+        tagArray = adminArray.concat(modArray);
+        for (var i = 0; i < tagArray.length; i++) {
+            tagArray[i].classList.add('control');
         }
 
         $("a.control").hoverIntent(
             function () {
                 var that = this;
-                    var color = $("table.grid tr td").css("background-color");
-                    var tag = that.innerText;
-                    var url = "http://endoftheinter.net/tag.php?tag=" + tag;
-                    $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-										+ color + ";'><a href='" + url + "'>&nbsp<b>[Edit Tag]</b></a></span>"));
+                var color = $("table.grid tr td").css("background-color");
+                var tag = that.innerText;
+                var url = "http://endoftheinter.net/tag.php?tag=" + tag;
+                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'><a href='" + url + "'>&nbsp<b>[Edit Tag]</b></a></span>"));
             }, function () {
                 $(this).find("span:last").remove();
             }
