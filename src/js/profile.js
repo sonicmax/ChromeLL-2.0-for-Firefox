@@ -73,6 +73,8 @@ function addControlPanel() {
     var adminArray = [];
     var modArray = [];
     var tagArray = [];
+    var isAdmin;
+    var isMod;
     var profile = document.documentElement.innerText;
     if (profile.indexOf("Edit My Profile") > -1) {
         tds = document.getElementsByTagName("td");
@@ -80,13 +82,19 @@ function addControlPanel() {
             td = tds[i];
             if (td.innerText.indexOf("Administrator of") > -1) {
                 adminTags = tds[i + 1].getElementsByTagName('a');
+                isAdmin = true;
             }
             if (td.innerText.indexOf("Moderator of") > -1) {
                 modTags = tds[i + 1].getElementsByTagName('a');
+                isMod = true;
             }
         }
+        if (isAdmin) {
         adminArray = Array.prototype.slice.call(adminTags);
+        }
+        if (isMod) {
         modArray = Array.prototype.slice.call(modTags);
+        }
         tagArray = adminArray.concat(modArray);
         for (var i = 0; i < tagArray.length; i++) {
             tagArray[i].classList.add('control');
