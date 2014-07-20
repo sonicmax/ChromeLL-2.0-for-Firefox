@@ -80,7 +80,7 @@ for(var i=0, len=tagcps.length; i < len; i++){
             },
             function (response) {
             // prevents "Cannot read property 'data' of undefined" error if no users are currently being ignored
-                if (!response.noIgnores)
+                if (!response.noIgnores) {
                     chrome.extension
                     .sendRequest({
                             need: "getIgnored"
@@ -121,6 +121,7 @@ for(var i=0, len=tagcps.length; i < len; i++){
                                 }
                             }
                         });
+                }
             });
 	}
 };
