@@ -42,41 +42,49 @@ function wikiFix() {
 
 function embedYoutube() {
     var that = this;
-		if (!that.embedded) {
-    var toEmbed = document.getElementById(that.id);
-    var url = that.id;
-    var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    var match = url.match(regExp);
-    var videoCode;
-    var embedHTML;
-    if (match && match[2].length == 11) {
-        videoCode = match[2];
-    } else {
-        videoCode = match;
+    if (!that.embedded) {
+        var toEmbed = document.getElementById(that.id);
+        if (toEmbed.className == "youtube") {
+            var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            var match = that.id.match(regExp);
+            var color = $("table.message-body tr td.message").css("background-color");
+            var videoCode;
+            var embedHTML;
+            if (match && match[2].length == 11) {
+                videoCode = match[2];
+            } else {
+                videoCode = match;
+            }
+            embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
+                      + "<a id='" + that.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
+                      + "<br><div>" 
+                      + "<iframe id='" + "yt" + that.id + "' type='text/html' width='640' height='390'" 
+                      + "src='http://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>" 
+                      + "</div>";
+            $(toEmbed).find("span:last").remove();
+            toEmbed.className = "hideme";
+            toEmbed.innerHTML += embedHTML;
+            that.embedded = true;
+        }
     }
-    embedHTML = "<iframe id='ytplayer' type='text/html' width='640' height='390' src='http://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>";
-    toEmbed.className = "hideme";
-    toEmbed.innerHTML = embedHTML;
-		that.embedded = true;
-		}
 }
 
 function hideYoutube() {
     var that = this;
     if (!that.hidden) {
-    var toEmbed = document.getElementById(that.id);
-    var url = that.id;
-    toEmbed.className = "youtube";
-    toEmbed.innerHTML = "<a class='youtube' target='_blank' title='" + url + "' href='" + url + "'>" + url + "</a>";
-    that.hidden = true;
+        var toEmbed = document.getElementById(that.id);
+        $(toEmbed).find("iframe:last").remove();
+        $(toEmbed).find("br:last").remove();
+        $(toEmbed).find("div:last").remove();
+        toEmbed.className = "youtube";
+        that.hidden = true;
     }
 }
 
 var linkObserver = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
-		// todo - exclude quoted messages, or find better way to deal with them
         if (mutation.type == "childList" && mutation.target.getAttribute("class") == "message-top" 
-				&& mutation.target.nextSibling.nodeName == "TABLE") {
+        && mutation.target.nextSibling.nodeName == "TABLE") {
             var posts = mutation.target.nextSibling;
             var links = posts.getElementsByClassName("l");
             for (var i = links.length - 1; i >= 0; i--) {
@@ -93,28 +101,25 @@ var linkObserver = new MutationObserver(function (mutations) {
                 if ((links[i].title.indexOf("youtube.com/watch?v=") > -1) || (links[i].title.indexOf("youtu.be/") > -1)) {
                     var vidLink = links[i];
                     vidLink.className = "youtube";
+                    // give each video link a unique id
                     vidLink.id = vidLink.href + "&" + Math.random().toString(16).slice(2);
                 }
             }
         }
     });
-		
     $("a.youtube").hoverIntent(
         function () {
             var that = this;
             var color = $("table.message-body tr td.message").css("background-color");
-            var url = that.href;
             if (that.className == "youtube") {
                 $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-								+ color + ";'><a id='" + url + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
-						// todo - hide link should be automatically displayed after embedding video
-            } else if (that.className == "hideme") {
-                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-								+ color + ";'><a id='" + url + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>"));
+                + color + ";'><a id='" + that.id + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
             }
-
         }, function () {
-            $(this).find("span:last").remove();
+            var that = this;
+            if (that.className == "youtube") {
+                $(that).find("span").remove();
+            }
         }
     );
     $("table.message-body").on("click", "a.embed", embedYoutube);
