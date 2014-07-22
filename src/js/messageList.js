@@ -59,7 +59,7 @@ function embedYoutube() {
                       + "<a id='" + that.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
                       + "<br><div>" 
                       + "<iframe id='" + "yt" + that.id + "' type='text/html' width='640' height='390'" 
-                      + "src='http://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>" 
+                      + "src='https://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>" 
                       + "</div>";
             $(toEmbed).find("span:last").remove();
             toEmbed.className = "hideme";
@@ -107,23 +107,25 @@ var linkObserver = new MutationObserver(function (mutations) {
             }
         }
     });
-    $("a.youtube").hoverIntent(
-        function () {
-            var that = this;
-            var color = $("table.message-body tr td.message").css("background-color");
-            if (that.className == "youtube") {
-                $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-                + color + ";'><a id='" + that.id + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
-            }
-        }, function () {
-            var that = this;
-            if (that.className == "youtube") {
-                $(that).find("span").remove();
-            }
-        }
-    );
-    $("table.message-body").on("click", "a.embed", embedYoutube);
-    $("table.message-body").on("click", "a.hide", hideYoutube);
+    if (config.embed_on_hover) {
+      $("a.youtube").hoverIntent(
+          function () {
+              var that = this;
+              var color = $("table.message-body tr td.message").css("background-color");
+              if (that.className == "youtube") {
+                  $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
+                  + color + ";'><a id='" + that.id + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+              }
+          }, function () {
+              var that = this;
+              if (that.className == "youtube") {
+                  $(that).find("span").remove();
+              }
+          }
+      );
+      $("table.message-body").on("click", "a.embed", embedYoutube);
+      $("table.message-body").on("click", "a.hide", hideYoutube);
+    }
 });
 
 linkObserver.observe(document, {
