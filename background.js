@@ -467,13 +467,15 @@ function scrapeUserProf() {
 }
 
 chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-    if (request.quote)
-    var quote = request.quote;
-    clipboard = document.getElementById('clipboard');
-    clipboard.value = quote;
-    clipboard.select();
-    document.execCommand("copy");
-    $(background).find("textarea:last").remove();
-      sendResponse({clipboard: "copied to clipboard"});
-  });
+    function(request, sender, sendResponse) {
+        if (request.quote) {
+            var quote = request.quote;
+            var clipboard = document.getElementById('clipboard');
+            clipboard.value = quote;
+            clipboard.select();
+            document.execCommand("copy");
+            sendResponse({
+                clipboard: "copied to clipboard"
+            });
+        }
+    });
