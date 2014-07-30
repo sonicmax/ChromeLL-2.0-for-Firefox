@@ -585,6 +585,7 @@ span.desc {
 		
 		<ul id="navbar">
 			<li class="navbar-item navbar-item-selected options_navigation_link" id="general_link">General</li>
+			<li class="navbar-item options_navigation_link" id="ignorator_link">Ignorator</li>
 			<li class="navbar-item options_navigation_link" id="highlighter_link">Highlights</li>
 			<li class="navbar-item options_navigation_link" id="bookmarks_link">Bookmarks</li>
 			<li class="navbar-item options_navigation_link" id="topiclist_link">Topic List</li>
@@ -770,9 +771,71 @@ span.desc {
 									<input type="button" value="Clean ignorator" id="forceignorator" />
 									<input type="checkbox" id="clean_ignorator" /> Remove banned users?
 									<span style="color:#ff0000"><div class="checkbox" id = "ignorateinfo"></div></span>
+                        </div>			
                         </div>
-                    </section>					
-				</div>
+                        </section>                       
+        </div>
+        
+<div class="page hidden" id="ignorator_page">
+    <section>
+        <h3>Rep ignorator</h3>
+        <div>
+            <div class="checkbox">
+                <input type="button" value="Register filter" id="registerfilter" />
+                <input type="checkbox" id="ignorate_by_rep" />
+                <span>Ignorate by rep</span>
+                <form>
+                    Token: <input type="text" name="token" id="token">
+                </form>
+            </div>
+        </div>
+    </section>
+    <h1>Reps to ignorate:</h1>
+    <section>
+        <h3></h3>
+        <div>
+            <br>
+            <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+                <div class="columns" style="overflow: hidden;">
+                    <br>
+                    <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+                        <div class="columns" style="overflow: hidden;">
+                            <div style="float: left; width: 157px; margin-right: 20px;">
+                                Tag:
+                                <br />
+
+                            </div>
+                            <div style="float: left; width: 80px; margin-right: 20px;">
+                                Rep:
+                                <br />
+
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: small!important; margin-left: 17px;" id="rep_ignore">
+                        <div class="columns" style="overflow: hidden; display: none;" class="rep_ignore_data_blank">
+                            <div style="float: left; margin-right: 20px;">
+                                <input type="text" style="width: 150px;" class="tag_to_ignore" name="rep_ignore_tag" value="" />
+                            </div>
+                            <div style="float: left; margin-right: 20px;">
+                                <input type="number" style="width: 70px;" class="rep_to_ignore" name="rep_ignore_rep" value="" />
+                            </div>
+                        </div>
+                        <div class="columns rep_ignore_data" style="overflow: hidden;">
+                            <div style="float: left; margin-right: 20px;">
+                                <input type="text" style="width: 150px;" class="tag_to_ignore" name="rep_ignore_tag" />
+                            </div>
+                            <div style="float: left; margin-right: 20px;">
+                                <input type="number" style="width: 70px;" class="rep_to_ignore" name="rep_ignore_rep" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </section>
+    </div>
+</div>
+                        
 				<div class="page hidden" id="highlighter_page">
 						<h1>User Highlighting</h1>
 						<section>
@@ -788,7 +851,7 @@ span.desc {
 								</label>
                                 <br>
 																<br>
-                                <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+                <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
 									<div class="columns" style="overflow: hidden;">
 										<div style="float: left; width: 157px; margin-right: 20px;">
 											Username:<br />
@@ -833,6 +896,7 @@ span.desc {
 					</section>	
 				</div>
 				</div>
+        
 				<div class="page hidden" id="bookmarks_page">
 						<h1>Bookmarks</h1>
 						<section>
@@ -869,7 +933,7 @@ span.desc {
 																<input type="text" style="width: 150px;" class="bookmark_name" maxlength="25" name="user_book_name" />
 														</div>
 														<div style="float: left; margin-right: 20px;">
-																<input type="text" style="width: 200px;" class="bookmark_tag" name="user_bookk_tag" />
+																<input type="text" style="width: 200px;" class="bookmark_tag" name="user_book_tag" />
 														</div>
 														<div style="float: left; margin-right: 20px;">
 														</div>
@@ -1024,7 +1088,7 @@ span.desc {
 				<div class="page hidden" id="messagelist_page">
 					<h1>Message List Enhancements</h1>
                     <!--
-					<section>
+                    <section>
                         <h3>Notifications</h3>
                         <div>
                             <div class="checkbox">
@@ -1257,7 +1321,7 @@ span.desc {
 											
                                         </div>
 									</div>
-								</div>
+                            </div>
                                 <div style="font-size: small!important; margin-left: 17px;" id="post_template" >
 									<div class="columns post_template_data_blank" style="overflow: hidden; display: none;">
 										<div style="float: left; margin-right: 20px;">
@@ -1274,12 +1338,11 @@ span.desc {
                                         <div style="float: left; margin-right: 20px;">
 											<input type="text" style="width: 70px;" class="template_title" name="post_template_title" value="" />
                                         </div>
-									</div>
-								</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
-				</div>
                 <div class="page hidden" id="profile_page">
                     <h1>Profile</h1>
                     <section>
@@ -1321,14 +1384,14 @@ span.desc {
                         <h3>Messages</h3>
                         <div>
                             <div class="checkbox">
-								<label>
+                  <label>
 									<input type="checkbox" id="page_jump_buttons_pm" />
 									<span>Show page jump buttons</span>
-								</label>
+                  </label>
                             </div>
                         </div>
                     </section>
-					<h1>PM Threads</h1>
+                  <h1>PM Threads</h1>
                     <section>
                         <h3>Images</h3>
                         <div>
@@ -1421,7 +1484,7 @@ span.desc {
                             </div>
                         </div>
                     </section>
-				</div>
+                </div>
                 <div class="page hidden" id="about_page">
                 <h1>Version: <span id="version"></span></h1>
                 <h1>Development Options</h1>
@@ -1446,7 +1509,8 @@ span.desc {
                             Remove unneeded links from the menubar based on code by <a href="https://endoftheinter.net/profile.php?user=5563">citizenray</a><br />
 														Notifications update and various features by <a href="https://endoftheinter.net/profile.php?user=5599">sonicmax</a><br />
 							Thumbnail expansion (and other bugs) fixed and enhanced by <a href="https://endoftheinter.net/profile.php?user=1332">xDrVonScottx</a><br />
-							Special thanks to <a href="https://endoftheinter.net/profile.php?user=3968">Letters</a> for creating the <a href="http://eti-stats.herokuapp.com/tools/clean_ignorator/">Ignorator Cleaner</a> API
+							Special thanks to <a href="https://endoftheinter.net/profile.php?user=3968">Letters</a> for creating the <a href="http://eti-stats.herokuapp.com/tools/clean_ignorator/">Ignorator Cleaner</a> API<br />
+							Special thanks to <a href="https://endoftheinter.net/profile.php?user=25111">chrls</a> for hosting the rep ignorator backend
                         </div>
                     </section>
                     <section>
