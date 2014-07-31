@@ -457,11 +457,24 @@ var commonFunctions = {
 			h1.parentNode.insertBefore(update, h1.nextSibling);
 			if (hide) {
 				document.getElementById("dramalinks_ticker").style.display = 'none';
-			}
-			document.getElementById("dramalinks_ticker").innerHTML = dramas;
+      }
+			if (!dramas) {
+          dramas = "Dramalinks loading...";
+          // give dramalinks xhr more time to complete
+          setTimeout(commonFunctions.updateDramaTicker, 400);
+      }
+      document.getElementById("dramalinks_ticker").innerHTML = dramas;
 		} catch (e) {
 		}
-	}
+  },
+  updateDramaTicker: function() {
+    chrome.extension.sendRequest({
+            need : "dramalinks"
+            }, function(response) {
+              dramas = response.data,
+              document.getElementById("dramalinks_ticker").innerHTML = dramas;
+            });
+  }
 }
 
 chrome.extension.sendRequest({

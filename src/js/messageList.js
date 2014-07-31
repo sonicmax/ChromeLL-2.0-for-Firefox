@@ -1425,7 +1425,7 @@ var messageListHelper = {
       userFilter = config.rep_ignorator_userids;
       checkedUsers = config.rep_ignorator_checked;
       token = config.rep_ignorator_token;
-      if (!token && !userFilter && !token) {
+      if (!userFilter && !checkedUsers && !token) {
           // wait for config
           configTimeout = setTimeout(repIgnorator.checkUserIds, 100);
           return;
