@@ -5,6 +5,7 @@ var ignorated = {
 		users : {}
 	}
 };
+// for rep ignorator
 var usersFromPage = [];
 var cachedResponses = [];
 var userFilter;
@@ -14,7 +15,9 @@ var configTimeout;
 
 // set up an observer for when img-placeholders get populated
 var img_observer = new MutationObserver(function(mutations) {
-	mutations.forEach(function(mutation) {
+var mutation;
+	for (i in mutations) {
+  mutation = mutations[i];
 		if (mutation.type === 'attributes') {
 			// once they're loaded, thumbnails have /i/t/ in their
 			// url where fullsize have /i/n/
@@ -39,30 +42,43 @@ var img_observer = new MutationObserver(function(mutations) {
 				mutation.target.parentNode.removeAttribute('href');
 			}
 		}
-	});
+	}
 });
 
-var linkObserver = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.type == "childList" && mutation.target.getAttribute("class") == "message-top" 
-        && mutation.target.nextSibling.nodeName == "TABLE") {
+var link_observer = new MutationObserver(function(mutations) {
+var mutation;
+    for (i in mutations) {
+        mutation = mutations[i];
+        if (mutation.type == "childList" 
+          && mutation.target.getAttribute("class") == "message-top" 
+          && mutation.target.nextSibling.nodeName == "TABLE") {
             var posts = mutation.target.nextSibling;
             var links = posts.getElementsByClassName("l");
+            var link;
+            var wikiLink;
+            var vidLink;
+            var imageLink;
             for (var i = links.length - 1; i >= 0; i--) {
-                if (links[i].title.indexOf("/index.php") == 0) {
-                    var wikiLink = links[i];
+            link = links[i];
+                if (link.title.indexOf("/index.php") == 0) {
+                    wikiLink = link;
                     wikiLink.className = "wiki";
                     wikiLink.addEventListener("click", messageListHelper.wikiFix);
                 }
-                else if ((links[i].title.indexOf("youtube.com/watch?v=") > -1) || (links[i].title.indexOf("youtu.be/") > -1)) {
-                    var vidLink = links[i];
+                else if ((link.title.indexOf("youtube.com/watch?v=") > -1) || (link.title.indexOf("youtu.be/") > -1)) {
+                    vidLink = link;
                     vidLink.className = "youtube";
                     // give each video link a unique id for embed/hide functions
                     vidLink.id = vidLink.href + "&" + Math.random().toString(16).slice(2);
                 }
+                else if (link.title.indexOf("/imap/") == 0) {
+                imageLink = link;
+                imageLink.className = "imap";
+                imageLink.addEventListener("click", messageListHelper.imageFix);
+                }
             }
         }
-    });
+    }
     if (config.embed_on_hover) {
         $("a.youtube").hoverIntent(
             function() {
@@ -81,15 +97,21 @@ var linkObserver = new MutationObserver(function(mutations) {
         );
         $("table.message-body").on("click", "a.embed", messageListHelper.embedYoutube);
         $("table.message-body").on("click", "a.hide", messageListHelper.hideYoutube);
+        }
         $(document).ready(function() {
             $("a.wiki").click(function(event) {
                 event.preventDefault();
             });
+            $("a.imap").click(function(event) {
+                event.preventDefault();
+            });
+            $("div.youtube").click(function(event) {
+                event.preventDefault();
+            });
         });
-    }
 });
 
-linkObserver.observe(document, {
+link_observer.observe(document, {
     subtree: true,
     characterData: true,
     childList: true,
@@ -531,8 +553,10 @@ var messageList = {
 		if (!tcs)
 			return;
 		for (var i = 0; i < tcs.length; i++) {
+    if (config.tc_highlight_color) {
 			tcs[i].getElementsByTagName('a')[0].style.color = '#'
 					+ config.tc_highlight_color;
+    }
 		}
 	},
 	label_tc : function() {
@@ -1323,30 +1347,33 @@ var messageListHelper = {
 		ta.scrollTop = st;
 		ta.focus();
 	},
-	livelinks : function(evt) {
-		if (!evt.target.getElementsByClassName)
-			return;
+	livelinks : function(mutation) {
 		var pm = '';
 		if (window.location.href.match('inboxthread'))
 			pm = "_pm";
-		if (evt.target.getElementsByClassName("message-top")[0]) {
-			for ( var i in messageListLivelinks) {
+		if (mutation.previousSibling.firstChild) {
+			for (var i in messageListLivelinks) {
 				if (config[i + pm]) {
 					try {
-						messageListLivelinks[i](evt.target);
+						messageListLivelinks[i](mutation.target);
 					} catch (err) {
 						console.log("error in livelinks " + i + ":", err);
 					}
 				}
 			}
-		} else if (evt.target.width) {
+		} 
+    // todo - add this to img_observer
+    /*else if (mutation.target.width) {
 			if (config.resize_imgs) {
-				messageListLivelinks.resize_imgs(evt.target.parentNode);
+				messageListLivelinks.resize_imgs(mutation.target.parentNode);
 			}
-		}
+		}*/
 	},
   wikiFix: function() {
       window.open(this.href.replace("boards", "wiki"));
+  },
+  imageFix: function () {
+      window.open(this.href.replace("boards", "images"));
   },
   embedYoutube: function() {
       var that = this;
@@ -1492,18 +1519,27 @@ var messageListLivelinks = {
 			}
 		}
 	},
-	ignorator_messagelist : function(el) {
-		if (!config.ignorator)
-			return;
-		var m = el.getElementsByClassName('message-top');
-		for (var i = 0; m[i]; i++) {
-			for (var f = 0; messageListHelper.ignores[f]; f++) {
-				if (m[i].getElementsByTagName('a')[0].innerHTML.toLowerCase() == messageListHelper.ignores[f]) {
-					el.style.display = "none";
-					if (config.debug)
+	ignorator_messagelist : function(mutation) {
+		if (!config.ignorator) { 
+    return;
+    }
+    // might need this later
+    /*if (mutation.style.display == "none") {
+    console.log("already ignorated - ignoring");
+    return;
+    }*/
+    var tops = mutation.getElementsByClassName('message-top'); 
+    var top;
+    for (var e = 0, len = tops.length; e < len; e++) {
+    top = tops[e];
+			for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
+				if (top.getElementsByTagName('a')[0].innerHTML.toLowerCase() == messageListHelper.ignores[f]) {
+					top.parentNode.style.display = "none";
+					if (config.debug) {
 						console.log('removed livelinks post by '
 								+ messageListHelper.ignores[f]);
 					ignorated.total_ignored++;
+          }
 					if (!ignorated.data.users[messageListHelper.ignores[f]]) {
 						ignorated.data.users[messageListHelper.ignores[f]] = 1;
 					} else {
@@ -1515,7 +1551,7 @@ var messageListLivelinks = {
 					});
 				}
 			}
-		}
+    }
 	},
 	resize_imgs : function(el) {
 		for (var i = 0; el.getElementsByTagName('img')[i]; i++) {
@@ -1523,22 +1559,32 @@ var messageListLivelinks = {
 		}
 	},
 	user_notes : function(el) {
+    if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('notebook') == -1) {
 		messageListHelper.addNotebox(el.getElementsByClassName('message-top'));
+    }
 	},
-	autoscroll_livelinkss : function(el) {
-  // todo - fix this function?
-		var page = 1;
-		if (window.location.href.match('page='))
-			page = window.location.href.match(/page=(\d+)/)[1];
-		var pages = document.getElementById('u0_2')
-				.getElementsByTagName('span')[0].innerHTML;
-		if (page != pages) {
-			window.location.href.match('page=') ? document.location = document.location
-					.replace('page=' + page, 'page=' + pages)
-					: document.location = document.location + '&page=' + pages;
-		}
-		messageListHelper.hasJustScrolled = true;
-		window.scrollTo(0, (document.body.scrollHeight - 1000));
+	autoscroll_livelinks: function(el) {
+      var index = window.location.href.indexOf('#');
+      var lastindex;
+      var href = window.location.href.substring(0, index);
+      var tops = el.getElementsByClassName('message-top');
+      var toplinks = tops[0].getElementsByTagName('a');
+      var toplink;
+      var messagedetail;
+      var messageid;
+      for (var i = 0, len = toplinks.length; i < len; i++) {
+          toplink = toplinks[i];
+          if (toplink.innerText.indexOf('Message Detail') > -1) {
+              index = toplink.href.indexOf('?');
+              lastindex = toplink.href.indexOf('&');
+              messagedetail = toplink.href.substring(index, lastindex);
+              messageid = messagedetail.replace('?id=', '');
+          }
+      }
+      // todo - detect if window is active - use mouse movement/etc
+	    if (messageid) {
+	        window.location.replace(href + '#m' + messageid);
+	    }
 	},
 	post_title_notification : function(el) {
 		if (el.style.display === "none") {
@@ -1606,43 +1652,61 @@ var messageListLivelinks = {
 		}
 	},
 	label_tc : function(el) {
-		var topic = window.location.href.match(/topic=(\d+)/)[1];
-		if (el.getElementsByClassName('message-top')[0]
-				.getElementsByTagName('a')[0].innerHTML.toLowerCase() == config.tcs[topic].tc) {
-			ipx = document.createElement('span');
-			inner = ' | <b>TC</b>';
-			if (config.tc_label_color && config.tc_label_color != '')
-				inner = ' | <font color="#' + config.tc_label_color
-						+ '"><b>TC</b></font>';
-			ipx.innerHTML = inner;
-			el.getElementsByClassName('message-top')[0].insertBefore(ipx, el
-					.getElementsByClassName('message-top')[0]
-					.getElementsByTagName('a')[0].nextSibling);
-		}
+    var tcs = messageListHelper.getTcMessages();
+    if (!tcs) {
+        return;
+    }
+    var ipx, inner, tops, top, tcname, elname;
+    tcname = tcs[0].getElementsByTagName('a')[0].innerText;
+    tops = el.getElementsByClassName('message-top');
+    for (var i = 0; tops[i]; i++) {
+        top = tops[i];
+        console.log(top);
+        elname = top.getElementsByTagName('a')[0].innerText;
+        if (tcname == elname && el.innerHTML.indexOf('TC') == -1) {
+            ipx = document.createElement('span');
+            inner = ' | <b>TC</b>';
+            if (config.tc_label_color != '') {
+                inner = ' | <font color="#' + config.tc_label_color + '"><b>TC</b></font>';
+                ipx.innerHTML = inner;
+                top.insertBefore(ipx, top.getElementsByTagName('a')[0].nextSibling);
+                }
+            else {
+            // to avoid error where user has ticked option but not selected text color
+                inner = ' | <b>TC</b>';
+                ipx.innerHTML = inner;
+                top.insertBefore(ipx, top.getElementsByTagName('a')[0].nextSibling);
+            }
+        }
+    }
 	},
 	like_button : function(el) {
-		if (el.getElementsByClassName('message-top')[0]
-				.getElementsByTagName('a')[2]) {
-			el.getElementsByClassName('message-top')[0].innerHTML += ' | <a href="##like" onclick="like(this);">Like</a>';
-		}
+    if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('Like') == -1) {
+      if (el.getElementsByClassName('message-top')[0]
+          .getElementsByTagName('a')[2]); {
+          el.getElementsByClassName('message-top')[0].innerHTML += ' | <a href="##like" onclick="like(this);">Like</a>';
+      }
+      }
 	},
 	number_posts : function(el) {
-		var lastPost = document.getElementsByClassName('PostNumber')[document
-				.getElementsByClassName('PostNumber').length - 1];
-		var number = lastPost.innerHTML.match(/#(\d+)/)[1];
-		var post = document.createElement('span');
-		var id = (parseInt(number, 10) + 1);
-		if (id < 1000)
-			id = "0" + id;
-		if (id < 100)
-			id = "0" + id;
-		if (id < 10)
-			id = "0" + id;
-		post.className = "PostNumber";
-		post.innerHTML = " | #" + id;
-		el.getElementsByClassName('message-container')[0]
-				.getElementsByClassName('message-top')[0].insertBefore(post,
-				null);
+    if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('PostNumber') == -1) {
+      var lastPost = document.getElementsByClassName('PostNumber')[document
+          .getElementsByClassName('PostNumber').length - 1];
+      var number = lastPost.innerHTML.match(/#(\d+)/)[1];
+      var post = document.createElement('span');
+      var id = (parseInt(number, 10) + 1);
+      if (id < 1000)
+        id = "0" + id;
+      if (id < 100)
+        id = "0" + id;
+      if (id < 10)
+        id = "0" + id;
+      post.className = "PostNumber";
+      post.innerHTML = " | #" + id;
+      el.getElementsByClassName('message-container')[0]
+          .getElementsByClassName('message-top')[0].insertBefore(post,
+          null);
+      }
 	},
 	userhl_messagelist : function(el) {
 		if (!config.enable_user_highlight)
@@ -1734,6 +1798,22 @@ var messageListLivelinks = {
 	}
 }
 messageListHelper.init();
-// this should be rewritten to use mutation observers in order to prevent possible problems in future
-// if/when support for mutation events is removed from chrome
-document.addEventListener('DOMNodeInserted', messageListHelper.livelinks);
+var livelinks = new MutationObserver(function(mutations) {
+    var mutation;
+    var check;
+    for (i in mutations) {
+        mutation = mutations[i];
+        if (!mutation.previousSibling) {
+            return;
+        }
+        if (mutation.previousSibling.getAttribute('class') == 'message-container' 
+          && mutation.target.childElementCount == 1) {
+            messageListHelper.livelinks(mutation);
+        }
+    }
+});
+
+livelinks.observe(document, {
+    subtree: true,
+    childList: true
+});

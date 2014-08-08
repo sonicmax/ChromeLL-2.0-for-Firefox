@@ -467,6 +467,7 @@ function scrapeUserProf() {
 }
 
 chrome.runtime.onMessage.addListener(
+// allows text content to be copied to clipboard from content scripts
     function(request, sender, sendResponse) {
         if (request.quote) {
             var quote = request.quote;

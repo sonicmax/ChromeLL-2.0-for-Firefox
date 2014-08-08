@@ -302,7 +302,7 @@ function restoreIgnorator() {
 }
 
 function getIgnoratorToken() {
-    // gets rep info from options & generates token
+    // gets rep info from options html & generates token
     var cfg = JSON.parse(localStorage['ChromeLL-Config']);
     var tagsInput = document.getElementsByClassName("tag_to_ignore");
     var repsInput = document.getElementsByClassName("rep_to_ignore");
