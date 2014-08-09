@@ -40,7 +40,14 @@ var mutation;
 								mutation.target.parentNode
 										.getAttribute('href'));
 				mutation.target.parentNode.removeAttribute('href');
-			}
+      }
+      if (mutation.attributeName == "class"
+          && mutation.target.getAttribute('class') == "img-loaded"
+          && mutation.target.childNodes[0].src
+              .match(/.*\/i\/n\/.*/)) {
+        // pass fullsize images to resize_imgs method
+        messageListLivelinks.resize_imgs(mutation.target.parentNode);
+      }
 		}
 	}
 });
@@ -65,7 +72,8 @@ var mutation;
                     wikiLink.className = "wiki";
                     wikiLink.addEventListener("click", messageListHelper.wikiFix);
                 }
-                else if ((link.title.indexOf("youtube.com/watch?v=") > -1) || (link.title.indexOf("youtu.be/") > -1)) {
+                else if ((link.title.indexOf("youtube.com/watch?v=") > -1) 
+                    || (link.title.indexOf("youtu.be/") > -1)) {
                     vidLink = link;
                     vidLink.className = "youtube";
                     // give each video link a unique id for embed/hide functions
@@ -120,7 +128,7 @@ link_observer.observe(document, {
 
 function repIgnorator() {
     // called from messageListHelper.init
-    var messageObserver = new MutationObserver(function(mutations) {
+    var msg_observer = new MutationObserver(function(mutations) {
         var childNodes;
         var color;
         userFilter = config.rep_ignorator_userids;
@@ -142,7 +150,7 @@ function repIgnorator() {
                                 // hide post & add button/rep info to message-top
                                 color = $(mutation.target).css('background-color');
                                 mutation.target.nextSibling.parentNode.style.opacity = 0.15;
-                                mutation.target.nextSibling.parentNode.lastChild.hidden = true;
+                                mutation.target.nextSibling.parentNode.lastChild.style.display = 'none';
                                 $(mutation.target).append(' | ' + '<span style="z-index: 1; background: ' + color 
                                 + ';"><a class="showpost" id ="' + mutation.target.parentNode.getAttribute('id') 
                                 + '" href="javascript:void(0)"><b>[Show Post?]</b></a>' + ' | ' + repFilter + '</span>');
@@ -155,7 +163,7 @@ function repIgnorator() {
         });
     });
 
-    messageObserver.observe(document, {
+    msg_observer.observe(document, {
         subtree: true,
         characterData: true,
         childList: true,
@@ -289,9 +297,11 @@ var messageList = {
 				ulButton, ulBox);
 	},
 	post_title_notification : function() {
-		document.addEventListener('scroll', messageListHelper.clearUnreadPosts);
-		document.addEventListener('mousemove',
-				messageListHelper.clearUnreadPosts);
+    // uses html5 page visibility api to clear unread post count
+    document.addEventListener("visibilitychange", messageListHelper.visibilityChange, false);
+    // keep old event listeners for backup
+    document.addEventListener('scroll', messageListHelper.clearUnreadPosts);
+		document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
 	},
 	quickpost_on_pgbottom : function() {
 		chrome.extension.sendRequest({
@@ -771,6 +781,11 @@ var messageList = {
 
 var messageListHelper = {
 	ignores : {},
+  visibilityChange : function() {
+    if (!document.hidden) {
+      messageListHelper.clearUnreadPosts();
+    }
+  },
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
 		if (chosen.files.length == 0) {
@@ -1064,7 +1079,7 @@ var messageListHelper = {
     // iterates through elements in document, finds & replaces relevant parts of copied html
     // so that formatting is maintained in quoted post
     if (nestedQuotes) {
-        console.log(nestedQuotes);
+        //console.log(nestedQuotes);
         for (var i = 0, len = nestedQuotes.length; i < len; i++) {
             nestedQuote = nestedQuotes[i];
             nestedQuote.Id = nestedQuote.attributes.msgid.value;
@@ -1085,8 +1100,18 @@ var messageListHelper = {
             html = html.replace(nestedQuote.outerHTML, nestedQuote.text);
         }
     }
+    if (spans) {
+        for (var i = 0, len = spans.length; i < len; i++) {
+            span = spans[i];
+            if (span.className == 'pr') {
+                span.content = span.outerHTML.replace('<span class="pr">', '<pre>');
+                span.content = span.content.replace('</span>', '</pre>');
+                html = html.replace(span.outerHTML, span.content);
+            }
+        }
+    }
     if (spoilers) {
-        console.log(spoilers);
+        //console.log(spoilers);
         for (var i = 0, len = spoilers.length; i < len; i++) {
             spoiler = spoilers[i];
             if ((spoiler) && (spoiler.id)) {
@@ -1117,7 +1142,7 @@ var messageListHelper = {
         }
     }
     if (links) {
-        console.log(links);
+        //console.log(links);
         for (var i = 0, len = links.length; i < len; i++) {
             link = links[i];
             if (link.firstChild.className == 'img-loaded') {
@@ -1144,8 +1169,9 @@ var messageListHelper = {
                 link.content = '<img src="' + link.content + ' />' + "\n";
             } else if (link.title.indexOf("/showmessages.php") > -1) {
                 link.content = link.title.replace('/showmessages.php', 'http://boards.endoftheinter.net/showmessages.php');
-            } else if (link.className == 'jump-arrow' || link.id == 'notebook' || link.attributes.className == 'jump-arrow' 
-            || link.parentElement.attributes.className == 'spoiler_on_close' || link.parentElement.attributes.className == 'spoiler_on_open') {
+            } else if (link.className == 'jump-arrow' || link.id == 'notebook' 
+              || link.parentElement.attributes.className == 'spoiler_on_close' 
+              || link.parentElement.attributes.className == 'spoiler_on_open') {
                 link.content = '';
             } else {
                 link.content = link.href;
@@ -1154,6 +1180,9 @@ var messageListHelper = {
                 first = html.indexOf('<a');
                 last = html.indexOf('</a>');
                 htmlToRemove = html.substring(first, last);
+                console.log("html to remove iteration " + i + "\n");
+                console.log(htmlToRemove + "\n");
+                console.log(link.content + "\n");
                 html = html.replace(htmlToRemove, '');
                 html = html.replace('</a>', link.content);
             }
@@ -1348,26 +1377,19 @@ var messageListHelper = {
 		ta.focus();
 	},
 	livelinks : function(mutation) {
+  console.log(mutation);
 		var pm = '';
 		if (window.location.href.match('inboxthread'))
 			pm = "_pm";
-		if (mutation.previousSibling.firstChild) {
 			for (var i in messageListLivelinks) {
 				if (config[i + pm]) {
 					try {
-						messageListLivelinks[i](mutation.target);
+						messageListLivelinks[i](mutation);
 					} catch (err) {
 						console.log("error in livelinks " + i + ":", err);
 					}
 				}
 			}
-		} 
-    // todo - add this to img_observer
-    /*else if (mutation.target.width) {
-			if (config.resize_imgs) {
-				messageListLivelinks.resize_imgs(mutation.target.parentNode);
-			}
-		}*/
 	},
   wikiFix: function() {
       window.open(this.href.replace("boards", "wiki"));
@@ -1392,7 +1414,7 @@ var messageListHelper = {
               }
               embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
                         + "<a id='" + that.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
-                        + "<br><div>" 
+                        + "<br><div class='youtube'>" 
                         + "<iframe id='" + "yt" + that.id + "' type='text/html' width='640' height='390'" 
                         + "src='https://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>" 
                         + "</div>";
@@ -1425,11 +1447,9 @@ var messageListHelper = {
   if (messageBody.style.display = 'none') {
       messageContainer.style.opacity = 1;
       messageBody.style.display = 'inline';
-      messageBody.hidden = false;
-  } else {
+  } else if (messageBody.style.display = 'inline') {
       messageContainer.style.opacity = 0.15;
       messageBody.style.display = 'none';
-      messageBody.hidden = true;
   }
   },
   getUserIds: function() {
@@ -1553,50 +1573,39 @@ var messageListLivelinks = {
 			}
     }
 	},
-	resize_imgs : function(el) {
-		for (var i = 0; el.getElementsByTagName('img')[i]; i++) {
-			messageListHelper.resizeImg(el.getElementsByTagName('img')[i]);
-		}
+	resize_imgs : function(mutation) {
+      for (var i = 0; mutation.getElementsByTagName('img')[i]; i++) {
+        messageListHelper.resizeImg(mutation.getElementsByTagName('img')[i]);
+      }
 	},
 	user_notes : function(el) {
     if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('notebook') == -1) {
-		messageListHelper.addNotebox(el.getElementsByClassName('message-top'));
+      messageListHelper.addNotebox(el.getElementsByClassName('message-top'));
     }
 	},
 	autoscroll_livelinks: function(el) {
-      var index = window.location.href.indexOf('#');
-      var lastindex;
-      var href = window.location.href.substring(0, index);
-      var tops = el.getElementsByClassName('message-top');
-      var toplinks = tops[0].getElementsByTagName('a');
-      var toplink;
-      var messagedetail;
-      var messageid;
-      for (var i = 0, len = toplinks.length; i < len; i++) {
-          toplink = toplinks[i];
-          if (toplink.innerText.indexOf('Message Detail') > -1) {
-              index = toplink.href.indexOf('?');
-              lastindex = toplink.href.indexOf('&');
-              messagedetail = toplink.href.substring(index, lastindex);
-              messageid = messagedetail.replace('?id=', '');
-          }
-      }
-      // todo - detect if window is active - use mouse movement/etc
-	    if (messageid) {
-	        window.location.replace(href + '#m' + messageid);
+	    if (document.hidden && el.style.display != 'none') {
+        // jumps to new post
+          $.scrollTo(el);
+	    }
+	    if (!document.hidden && el.style.display != 'none') {
+        // scrolls to new post
+          $.scrollTo((el), 800);
 	    }
 	},
 	post_title_notification : function(el) {
-		if (el.style.display === "none") {
-			if (config.debug)
-				console.log('not updating for ignorated post');
-			return;
-		}
+    if (el.style.display === "none") {
+      if (config.debug) {
+        console.log('not updating for ignorated post');
+      }
+      return;
+    }
 		if (el.getElementsByClassName('message-top')[0]
 				.getElementsByTagName('a')[0].innerHTML == document
 				.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
-				.replace(/ \((\d+)\)$/, ""))
-			return;
+				.replace(/ \((\d+)\)$/, "")) {
+      return;
+    }
 		var posts = 1;
 		var ud = '';
 		if (document.getElementsByClassName('message-container')[49]) {
@@ -1690,6 +1699,7 @@ var messageListLivelinks = {
 	},
 	number_posts : function(el) {
     if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('PostNumber') == -1) {
+      var top = el.getElementsByClassName('message-top')[0];
       var lastPost = document.getElementsByClassName('PostNumber')[document
           .getElementsByClassName('PostNumber').length - 1];
       var number = lastPost.innerHTML.match(/#(\d+)/)[1];
@@ -1703,10 +1713,8 @@ var messageListLivelinks = {
         id = "0" + id;
       post.className = "PostNumber";
       post.innerHTML = " | #" + id;
-      el.getElementsByClassName('message-container')[0]
-          .getElementsByClassName('message-top')[0].insertBefore(post,
-          null);
-      }
+      top.insertBefore(post, null);
+    }
 	},
 	userhl_messagelist : function(el) {
 		if (!config.enable_user_highlight)
@@ -1803,16 +1811,16 @@ var livelinks = new MutationObserver(function(mutations) {
     var check;
     for (i in mutations) {
         mutation = mutations[i];
-        if (!mutation.previousSibling) {
+        if (!mutation.target.lastChild.firstChild 
+        || !mutation.target.lastChild.firstChild.className) {
             return;
         }
-        if (mutation.previousSibling.getAttribute('class') == 'message-container' 
-          && mutation.target.childElementCount == 1) {
-            messageListHelper.livelinks(mutation);
+        if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
+            // send new message to livelinks method
+            messageListHelper.livelinks(mutation.target.lastChild.firstChild);
         }
     }
 });
-
 livelinks.observe(document, {
     subtree: true,
     childList: true
