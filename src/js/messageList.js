@@ -17,7 +17,14 @@ var configTimeout;
 var img_observer = new MutationObserver(function(mutations) {
 var mutation;
 	for (i in mutations) {
-  mutation = mutations[i];
+    mutation = mutations[i];
+    // find all fullsize imgs
+    if (mutation.addedNodes.length > 0
+        && mutation.addedNodes[0].src
+          .match(/.*\/i\/n\/.*/)) {
+        // pass to resize_imgs method
+      messageListLivelinks.resize_imgs(mutation.target.parentNode);
+    }
 		if (mutation.type === 'attributes') {
 			// once they're loaded, thumbnails have /i/t/ in their
 			// url where fullsize have /i/n/
@@ -41,15 +48,8 @@ var mutation;
 										.getAttribute('href'));
 				mutation.target.parentNode.removeAttribute('href');
       }
-      if (mutation.attributeName == "class"
-          && mutation.target.getAttribute('class') == "img-loaded"
-          && mutation.target.childNodes[0].src
-              .match(/.*\/i\/n\/.*/)) {
-        // pass fullsize images to resize_imgs method
-        messageListLivelinks.resize_imgs(mutation.target.parentNode);
-      }
 		}
-	}
+  }
 });
 
 var link_observer = new MutationObserver(function(mutations) {
@@ -183,7 +183,8 @@ var messageList = {
 		for ( var i = 0; i < phold.length; i++) {
 			if(phold[i].parentNode.parentNode.getAttribute('class') !== 'userpic-holder') {
 				img_observer.observe(phold[i], {
-					attributes : true
+					attributes : true,
+          childList: true
 				});
 			}
 		}
