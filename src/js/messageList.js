@@ -16,20 +16,20 @@ var configTimeout;
 // set up an observer for when img-placeholders get populated
 var img_observer = new MutationObserver(function(mutations) {
 var mutation;
-	for (i in mutations) {
-    mutation = mutations[i];
-    // find all fullsize imgs
-    if (mutation.addedNodes.length > 0
-        && mutation.addedNodes[0].src
-          .match(/.*\/i\/n\/.*/)) {
-        // pass to resize_imgs method
-      messageListLivelinks.resize_imgs(mutation.target.parentNode);
-    }
+	for (var i = 0, len = mutations.length; i < len; i++) {
+		mutation = mutations[i];
+		// find all fullsize imgs
+		if (mutation.addedNodes.length > 0
+				&& mutation.addedNodes[0].src
+					.match(/.*\/i\/n\/.*/)) {
+			// pass to resize_imgs method
+			messageListLivelinks.resize_imgs(mutation.target.parentNode);
+		}
 		if (mutation.type === 'attributes') {
 			// once they're loaded, thumbnails have /i/t/ in their
 			// url where fullsize have /i/n/
 			if (mutation.attributeName == "class"
-			    && mutation.target.getAttribute('class') == "img-loaded"
+					&& mutation.target.getAttribute('class') == "img-loaded"
 					&& mutation.target.childNodes[0].src
 							.match(/.*\/i\/t\/.*/)) {
 				if(config.debug) console.log("found thumbnail");
@@ -47,128 +47,125 @@ var mutation;
 								mutation.target.parentNode
 										.getAttribute('href'));
 				mutation.target.parentNode.removeAttribute('href');
-      }
+			}
 		}
-  }
+	}
 });
 
 var link_observer = new MutationObserver(function(mutations) {
-var mutation;
-    for (i in mutations) {
-        mutation = mutations[i];
-        if (mutation.type == "childList" 
-          && mutation.target.getAttribute("class") == "message-top" 
-          && mutation.target.nextSibling.nodeName == "TABLE") {
-            var posts = mutation.target.nextSibling;
-            var links = posts.getElementsByClassName("l");
-            var link;
-            var wikiLink;
-            var vidLink;
-            var imageLink;
-            for (var i = links.length - 1; i >= 0; i--) {
-            link = links[i];
-                if (link.title.indexOf("/index.php") == 0) {
-                    wikiLink = link;
-                    wikiLink.className = "wiki";
-                    wikiLink.addEventListener("click", messageListHelper.wikiFix);
-                }
-                else if ((link.title.indexOf("youtube.com/watch?v=") > -1) 
-                    || (link.title.indexOf("youtu.be/") > -1)) {
-                    vidLink = link;
-                    vidLink.className = "youtube";
-                    // give each video link a unique id for embed/hide functions
-                    vidLink.id = vidLink.href + "&" + Math.random().toString(16).slice(2);
-                }
-                else if (link.title.indexOf("/imap/") == 0) {
-                imageLink = link;
-                imageLink.className = "imap";
-                imageLink.addEventListener("click", messageListHelper.imageFix);
-                }
-            }
-        }
-    }
-    if (config.embed_on_hover) {
-        $("a.youtube").hoverIntent(
-            function() {
-                var that = this;
-                var color = $("table.message-body tr td.message").css("background-color");
-                if (that.className == "youtube") {
-                    $(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " 
-                    + color + ";'><a id='" + that.id + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
-                }
-            }, function() {
-                var that = this;
-                if (that.className == "youtube") {
-                    $(that).find("span").remove();
-                }
-            }
-        );
-        $("table.message-body").on("click", "a.embed", messageListHelper.embedYoutube);
-        $("table.message-body").on("click", "a.hide", messageListHelper.hideYoutube);
-        }
-        $(document).ready(function() {
-            $("a.wiki").click(function(event) {
-                event.preventDefault();
-            });
-            $("a.imap").click(function(event) {
-                event.preventDefault();
-            });
-            $("div.youtube").click(function(event) {
-                event.preventDefault();
-            });
-        });
+	var mutation;
+	for (var h = 0, len = mutations.length; h < len; h++) {
+		mutation = mutations[h];
+		if (mutation.type == "childList" 
+				&& mutation.target.getAttribute("class") == "message-top" 
+				&& mutation.target.nextSibling.nodeName == "TABLE") {
+			var link, wikiLink, vidLink, imageLink;
+			var posts = mutation.target.nextSibling;
+			var links = posts.getElementsByClassName("l");
+			for (var i = links.length - 1; i >= 0; i--) {
+				link = links[i];
+				if (link.title.indexOf("/index.php") == 0) {
+					wikiLink = link;
+					wikiLink.className = "wiki";
+					wikiLink.addEventListener("click", messageListHelper.wikiFix);
+				}
+				else if ((link.title.indexOf("youtube.com/watch?v=") > -1) 
+						|| (link.title.indexOf("youtu.be/") > -1)) {
+					vidLink = link;
+					vidLink.className = "youtube";
+					// give each video link a unique id for embed/hide functions
+					vidLink.id = vidLink.href + "&" + Math.random().toString(16).slice(2);
+				}
+				else if (link.title.indexOf("/imap/") == 0) {
+					imageLink = link;
+					imageLink.className = "imap";
+					imageLink.addEventListener("click", messageListHelper.imageFix);
+				}
+			}
+		}
+	}
+	if (config.embed_on_hover) {
+		$("a.youtube").hoverIntent(
+			function() {
+				var that = this;
+				var color = $("table.message-body tr td.message").css("background-color");
+				if (that.className == "youtube") {
+					$(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'><a id='" + that.id + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+				}
+			}, function() {
+				var that = this;
+				if (that.className == "youtube") {
+					$(that).find("span").remove();
+				}
+			}
+		);
+		$("table.message-body").on("click", "a.embed", messageListHelper.embedYoutube);
+		$("table.message-body").on("click", "a.hide", messageListHelper.hideYoutube);
+	}
+	$(document).ready(function() {
+		$("a.wiki").click(function(event) {
+			event.preventDefault();
+		});
+		$("a.imap").click(function(event) {
+			event.preventDefault();
+		});
+		$("div.youtube").click(function(event) {
+			event.preventDefault();
+		});
+	});
 });
 
 link_observer.observe(document, {
-    subtree: true,
-    characterData: true,
-    childList: true,
-    attributes: true
+		subtree: true,
+		characterData: true,
+		childList: true,
+		attributes: true
 });
 
 function repIgnorator() {
-    // called from messageListHelper.init
-    var msg_observer = new MutationObserver(function(mutations) {
-        var childNodes;
-        var color;
-        userFilter = config.rep_ignorator_userids;
-        repFilter = JSON.stringify(config.rep_ignorator_filter).replace(/"|{|}/g, '');
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length == 1 
-              && mutation.target.getAttribute('class') == 'message-top' 
-                && mutation.addedNodes[0].innerHTML.indexOf('Notes') > -1) {
-                // loop through childNodes of message-top to find profile link
-                childNodes = mutation.target.childNodes;
-                for (var i = 0, len = childNodes.length; i < len; i++) {
-                    childNode = childNodes[i];
-                    if (childNode.nodeName == 'A' && childNode.href.indexOf('profile.php?user=') > -1) {
-                        // get user id, compare against filter array
-                        userId = childNode.href.match(/\?user=([0-9]+)/)[1];
-                        for (var i = 0, len = userFilter.length; i < len; i++) {
-                            filterId = userFilter[i];
-                            if (userId == filterId) {
-                                // hide post & add button/rep info to message-top
-                                color = $(mutation.target).css('background-color');
-                                mutation.target.nextSibling.parentNode.style.opacity = 0.15;
-                                mutation.target.nextSibling.parentNode.lastChild.style.display = 'none';
-                                $(mutation.target).append(' | ' + '<span style="z-index: 1; background: ' + color 
-                                + ';"><a class="showpost" id ="' + mutation.target.parentNode.getAttribute('id') 
-                                + '" href="javascript:void(0)"><b>[Show Post?]</b></a>' + ' | ' + repFilter + '</span>');
-                                $(mutation.target).on("click", "a.showpost", messageListHelper.showHiddenPost);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    });
-
-    msg_observer.observe(document, {
-        subtree: true,
-        characterData: true,
-        childList: true,
-        attributes: true
-    });
+	// called from messageListHelper.init
+	var msg_observer = new MutationObserver(function(mutations) {
+		var childNodes;
+		var color;
+		var mutation;
+		// todo - stop using global vars
+		userFilter = config.rep_ignorator_userids;
+		repFilter = JSON.stringify(config.rep_ignorator_filter).replace(/"|{|}/g, '');
+		for (var h = 0, len = mutations.length; h < len; h++) {
+			mutation = mutations[h];
+			if (mutation.addedNodes.length == 1 && mutation.target.getAttribute('class') == 'message-top' 
+					&& mutation.addedNodes[0].innerHTML.indexOf('Notes') > -1) {
+				// loop through childNodes of message-top to find profile link
+				childNodes = mutation.target.childNodes;
+				for (var i = 0, len = childNodes.length; i < len; i++) {
+					childNode = childNodes[i];
+					if (childNode.nodeName == 'A' && childNode.href.indexOf('profile.php?user=') > -1) {
+						// get user id, compare against filter array
+						userId = childNode.href.match(/\?user=([0-9]+)/)[1];
+						for (var i = 0, len = userFilter.length; i < len; i++) {
+							filterId = userFilter[i];
+							if (userId == filterId) {
+								// hide post & add button/rep info to message-top
+								color = $(mutation.target).css('background-color');
+								mutation.target.nextSibling.parentNode.style.opacity = 0.15;
+								mutation.target.nextSibling.parentNode.lastChild.style.display = 'none';
+								$(mutation.target).append(' | ' + '<span style="z-index: 1; background: ' + color 
+								+ ';"><a class="showpost" id ="' + mutation.target.parentNode.getAttribute('id') 
+								+ '" href="javascript:void(0)"><b>[Show Post?]</b></a>' + ' | ' + repFilter + '</span>');
+								$(mutation.target).on("click", "a.showpost", messageListHelper.showHiddenPost);
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+	msg_observer.observe(document, {
+		subtree: true,
+		characterData: true,
+		childList: true,
+		attributes: true
+	});
 }
 
 var messageList = {
@@ -184,7 +181,7 @@ var messageList = {
 			if(phold[i].parentNode.parentNode.getAttribute('class') !== 'userpic-holder') {
 				img_observer.observe(phold[i], {
 					attributes : true,
-          childList: true
+					childList: true
 				});
 			}
 		}
@@ -298,10 +295,10 @@ var messageList = {
 				ulButton, ulBox);
 	},
 	post_title_notification : function() {
-    // uses html5 page visibility api to clear unread post count
-    document.addEventListener("visibilitychange", messageListHelper.visibilityChange, false);
-    // keep old event listeners for backup
-    document.addEventListener('scroll', messageListHelper.clearUnreadPosts);
+		// uses page visibility api to clear unread post count
+		document.addEventListener("visibilitychange", messageListHelper.visibilityChange, false);
+		// keep old event listeners for backup
+		document.addEventListener('scroll', messageListHelper.clearUnreadPosts);
 		document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
 	},
 	quickpost_on_pgbottom : function() {
@@ -564,10 +561,10 @@ var messageList = {
 		if (!tcs)
 			return;
 		for (var i = 0; i < tcs.length; i++) {
-    if (config.tc_highlight_color) {
-			tcs[i].getElementsByTagName('a')[0].style.color = '#'
-					+ config.tc_highlight_color;
-    }
+			if (config.tc_highlight_color) {
+				tcs[i].getElementsByTagName('a')[0].style.color = '#'
+						+ config.tc_highlight_color;
+			}
 		}
 	},
 	label_tc : function() {
@@ -578,9 +575,10 @@ var messageList = {
 		for (var i = 0; i < tcs.length; i++) {
 			ipx = document.createElement('span');
 			inner = ' | <b>TC</b>';
-			if (config.tc_label_color && config.tc_label_color != '')
+			if (config.tc_label_color != '') {
 				inner = ' | <font color="#' + config.tc_label_color
 						+ '"><b>TC</b></font>';
+			}
 			ipx.innerHTML = inner;
 			tcs[i].insertBefore(ipx,
 					tcs[i].getElementsByTagName('a')[0].nextSibling);
@@ -782,11 +780,11 @@ var messageList = {
 
 var messageListHelper = {
 	ignores : {},
-  visibilityChange : function() {
-    if (!document.hidden) {
-      messageListHelper.clearUnreadPosts();
-    }
-  },
+	visibilityChange : function() {
+		if (!document.hidden) {
+			messageListHelper.clearUnreadPosts();
+		}
+	},
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
 		if (chosen.files.length == 0) {
@@ -1050,204 +1048,204 @@ var messageListHelper = {
 			// }, 500);
 		}
 	},
-  quoteHandler: function() {
-    var that = this;
-    // create hidden notification so we can use fadeIn() later
-    // todo - get text colour from page to match user highlights/
-    var bgColor = $(event.target.parentNode).css('background-color');
-    $(that).append($('<span id="copied" style="display: none; position: absolute; z-index: 1; left: 100; background: ' 
-    + bgColor + ';"><a href="javascript.void(0)">&nbsp<b>[copied to clipboard]</b></a></span>'));
-    var quoteId = that.id;
-    var quotedMsg = document.querySelector('[msgid="' + quoteId + '"]');
-    var html = quotedMsg.innerHTML;
-    var htmlToRemove;
-    var links = quotedMsg.getElementsByTagName('a');
-    var link;
-    // todo - iterate over spans to find pre tags
-    var spans = quotedMsg.getElementsByTagName('span');
-    var spoilers = quotedMsg.getElementsByClassName('spoiler_closed');
-    var spoiler;
-    var nestedQuotes = quotedMsg.getElementsByClassName('quoted-message');
-    var nestedQuote;
-    var first;
-    var last;
-    // remove sig from html
-    if (html.indexOf('---') > -1) {
-        html = '<quote msgid="' + quoteId + '">' + html.substring(0, (html.lastIndexOf('---'))) + '</quote>';
-    } else {
-        html = '<quote msgid="' + quoteId + '">' + html + '</quote>';
-    }
-    // iterates through elements in document, finds & replaces relevant parts of copied html
-    // so that formatting is maintained in quoted post
-    if (nestedQuotes) {
-        //console.log(nestedQuotes);
-        for (var i = 0, len = nestedQuotes.length; i < len; i++) {
-            nestedQuote = nestedQuotes[i];
-            nestedQuote.Id = nestedQuote.attributes.msgid.value;
-            // avoid duplicates by only checking quotes without id
-            if (!nestedQuote.id) {
-                nestedQuote.text = '<quote>' + nestedQuote.innerText + '</quote>';
-            } else if (nestedQuote.lastChild.data) {
-                nestedQuote.text = '<quote msgid="' + nestedQuote.id + '">' + nestedQuote.lastChild.data + '</quote>';
-            } else {
-                nestedQuote.html = nestedQuote.lastChild.innerHTML;
-                first = nestedQuote.html.indexOf('imgsrc="');
-                last = nestedQuote.html.indexOf('lass="');
-                nestedQuote.img = nestedQuote.html.substring(first, last);
-                nestedQuote.img = nestedQuote.img.replace('imgsrc', '<img src');
-                nestedQuote.img = nestedQuote.img.replace('" c', '" />');
-                nestedQuote.text = '<quote msgid="' + nestedQuote.id + '">' + nestedQuote.img + '</quote>';
-            }
-            html = html.replace(nestedQuote.outerHTML, nestedQuote.text);
-        }
-    }
-    if (spans) {
-        for (var i = 0, len = spans.length; i < len; i++) {
-            span = spans[i];
-            if (span.className == 'pr') {
-                span.content = span.outerHTML.replace('<span class="pr">', '<pre>');
-                span.content = span.content.replace('</span>', '</pre>');
-                html = html.replace(span.outerHTML, span.content);
-            }
-        }
-    }
-    if (spoilers) {
-        //console.log(spoilers);
-        for (var i = 0, len = spoilers.length; i < len; i++) {
-            spoiler = spoilers[i];
-            if ((spoiler) && (spoiler.id)) {
-                spoiler.contents = '';
-                spoiler.toReplace = spoiler.outerHTML;
-                spoiler.closed = spoiler.getElementsByClassName('spoiler_on_close');
-                spoiler.open = spoiler.closed[0].nextSibling.innerText;
-                spoiler.title = spoiler.closed[0].innerText.replace(/<|\/>/g, '');
-                first = spoiler.closed[0].innerText.replace(' />', '>');
-                last = first.replace('<', '</');
-                if (spoiler.closed[0].nextSibling.innerHTML.indexOf('<div class="imgs"><a target="_blank" imgsrc="') > -1) {
-                    spoiler.imgs = spoiler.getElementsByClassName('imgs');
-                    for (var j = 0, len = spoiler.imgs.length; j < len; j++) {
-                        spoiler.img = spoiler.imgs[j];
-                        spoiler.imgurl = spoiler.img.firstChild.getAttribute('imgsrc');
-                        spoiler.contents += '<img src="' + spoiler.imgurl + '" />' + '\n';
-                    }
-                    spoiler.finished = '<spoiler caption="' + spoiler.title + '">' + spoiler.contents + '</spoiler>';
-                } else {
-                    spoiler.contents = spoiler.open.replace(first, '');
-                    spoiler.contents = spoiler.contents.replace(last, '');
-                    spoiler.finished = '<spoiler caption="' + spoiler.title + '">' + spoiler.contents + '</spoiler>';
-                }
-                if (html.indexOf(spoiler.toReplace) > -1) {
-                    html = html.replace(spoiler.toReplace, spoiler.finished);
-                }
-            }
-        }
-    }
-    if (links) {
-        //console.log(links);
-        for (var i = 0, len = links.length; i < len; i++) {
-            link = links[i];
-            if (link.firstChild.className == 'img-loaded') {
-                link.content = link.firstChild.innerHTML;
-                link.content = link.content.replace('<img src="', '');
-                link.first = link.content.indexOf('"');
-                link.last = link.content.indexOf('">');
-                link.toRemove = link.content.substring(link.first, link.last);
-                link.content = link.content.replace(link.toRemove, '');
-                link.content = link.content.replace('">', '');
-                link.content = link.content.replace('//', 'http://');
-                link.content = link.content.replace('dealtwith.it', 'endoftheinter.net');
-                link.content = '<img src="' + link.content + '" />' + "\n";
-            } else if (link.firstChild.className == 'img-placeholder') {
-                link.content = link.outerHTML;
-                link.first = link.content.indexOf('imgsrc="');
-                link.last = link.content.indexOf('" href');
-                link.toRemove = link.content.substring(0, link.first);
-                link.content = link.content.replace(link.toRemove, '');
-                link.toRemove = link.content.substring(link.last, link.content.length);
-                link.content = link.content.replace(link.toRemove, '');
-                link.content = link.content.replace('imgsrc="', '');
-                link.content = link.content.replace(' href="//images.en', '');
-                link.content = '<img src="' + link.content + ' />' + "\n";
-            } else if (link.title.indexOf("/showmessages.php") > -1) {
-                link.content = link.title.replace('/showmessages.php', 'http://boards.endoftheinter.net/showmessages.php');
-            } else if (link.className == 'jump-arrow' || link.id == 'notebook' 
-              || link.parentElement.attributes.className == 'spoiler_on_close' 
-              || link.parentElement.attributes.className == 'spoiler_on_open') {
-                link.content = '';
-            } else {
-                link.content = link.href;
-            }
-            if (link.content) {
-                first = html.indexOf('<a');
-                last = html.indexOf('</a>');
-                htmlToRemove = html.substring(first, last);
-                console.log("html to remove iteration " + i + "\n");
-                console.log(htmlToRemove + "\n");
-                console.log(link.content + "\n");
-                html = html.replace(htmlToRemove, '');
-                html = html.replace('</a>', link.content);
-            }
-        }
-    }
-    // clean up html
-    html = html.replace(/<div class="imgs">/g, '');
-    html = html.replace(/<div style="clear:both">/g, '');
-    html = html.replace(/<\/div>/g, '');
-    html = html.replace(/<br>/g, '');
-    html = html.replace(/&lt;/g, '<');
-    html = html.replace(/&gt;/g, '>');
-    // plain text quoting - needs separate option/button
-    /*var text = quotedMsg.innerText;
-    var quotedText = '<quote msgid="' + quoteId + '">' + text.substring(0, (text.lastIndexOf('---') - 1)) + '</quote>';*/
-    var json = {
-        "quote": ""
-    };
-    json.quote = html;
-    chrome.runtime.sendMessage(json, function(response) {
-        if (config.debug) console.log(response.clipboard);
-    });
-    $("#copied").fadeIn(200);
-    setTimeout(function() {
-        $(that).find("span:last").fadeOut(400);
-    }, 1500);
-    setTimeout(function() {
-        $(that).find("span:last").remove();
-    }, 2000);
-  },
-  archiveQuoteButtons: function() {
-      var hostname = window.location.hostname;
-      var topicId = window.location.search.replace("?topic=", "");
-      var links;
-      var msgs;
-      var containers;
-      var container;
-      var tops = [];
-      var msgId;
-      var quote;
-      if (hostname.indexOf("archives") > -1) {
-          links = document.getElementsByTagName("a");
-          msgs = document.getElementsByClassName("message");
-          containers = document.getElementsByClassName("message-container");
-          for (var i = 0, len = containers.length; i < len; i++) {
-              container = containers[i];
-              tops[i] = container.getElementsByClassName("message-top")[0];
-              msgId = msgs[i].getAttribute("msgid");
-              quote = document.createElement("a");
-              quoteText = document.createTextNode("Quote");
-              space = document.createTextNode(" | ");
-              quote.appendChild(quoteText);
-              quote.href = "javascript:void(0)";
-              quote.id = msgId;
-              quote.className = "archivequote";
-              tops[i].appendChild(space);
-              tops[i].appendChild(quote);
-          }
-      }
-      // todo - event handler/links for plain text quoting
-      $("div.message-top").on("click", "a.archivequote", messageListHelper.quoteHandler);
-  },
+	quoteHandler: function() {
+		var that = this;
+		// create hidden notification so we can use fadeIn() later
+		// todo - get text colour from page to match user highlights/
+		var bgColor = $(event.target.parentNode).css('background-color');
+		$(that).append($('<span id="copied" style="display: none; position: absolute; z-index: 1; left: 100; background: ' 
+		+ bgColor + ';"><a href="javascript.void(0)">&nbsp<b>[copied to clipboard]</b></a></span>'));
+		var quoteId = that.id;
+		var quotedMsg = document.querySelector('[msgid="' + quoteId + '"]');
+		var html = quotedMsg.innerHTML;
+		var htmlToRemove;
+		var links = quotedMsg.getElementsByTagName('a');
+		var link;
+		// todo - iterate over spans to find pre tags
+		var spans = quotedMsg.getElementsByTagName('span');
+		var spoilers = quotedMsg.getElementsByClassName('spoiler_closed');
+		var spoiler;
+		var nestedQuotes = quotedMsg.getElementsByClassName('quoted-message');
+		var nestedQuote;
+		var first;
+		var last;
+		// remove sig from html
+		if (html.indexOf('---') > -1) {
+			html = '<quote msgid="' + quoteId + '">' + html.substring(0, (html.lastIndexOf('---'))) + '</quote>';
+		} else {
+			html = '<quote msgid="' + quoteId + '">' + html + '</quote>';
+		}
+		// iterates through elements in document, finds & replaces relevant parts of copied html
+		// so that formatting is maintained in quoted post
+		if (nestedQuotes) {
+			//console.log(nestedQuotes);
+			for (var i = 0, len = nestedQuotes.length; i < len; i++) {
+				nestedQuote = nestedQuotes[i];
+				nestedQuote.Id = nestedQuote.attributes.msgid.value;
+				// avoid duplicates by only checking quotes without id
+				if (!nestedQuote.id) {
+					nestedQuote.text = '<quote>' + nestedQuote.innerText + '</quote>';
+				} else if (nestedQuote.lastChild.data) {
+					nestedQuote.text = '<quote msgid="' + nestedQuote.id + '">' + nestedQuote.lastChild.data + '</quote>';
+				} else {
+					nestedQuote.html = nestedQuote.lastChild.innerHTML;
+					first = nestedQuote.html.indexOf('imgsrc="');
+					last = nestedQuote.html.indexOf('lass="');
+					nestedQuote.img = nestedQuote.html.substring(first, last);
+					nestedQuote.img = nestedQuote.img.replace('imgsrc', '<img src');
+					nestedQuote.img = nestedQuote.img.replace('" c', '" />');
+					nestedQuote.text = '<quote msgid="' + nestedQuote.id + '">' + nestedQuote.img + '</quote>';
+				}
+				html = html.replace(nestedQuote.outerHTML, nestedQuote.text);
+			}
+		}
+		if (spans) {
+			for (var i = 0, len = spans.length; i < len; i++) {
+					span = spans[i];
+					if (span.className == 'pr') {
+							span.content = span.outerHTML.replace('<span class="pr">', '<pre>');
+							span.content = span.content.replace('</span>', '</pre>');
+							html = html.replace(span.outerHTML, span.content);
+					}
+			}
+		}
+		if (spoilers) {
+			//console.log(spoilers);
+			for (var i = 0, len = spoilers.length; i < len; i++) {
+				spoiler = spoilers[i];
+				if ((spoiler) && (spoiler.id)) {
+					spoiler.contents = '';
+					spoiler.toReplace = spoiler.outerHTML;
+					spoiler.closed = spoiler.getElementsByClassName('spoiler_on_close');
+					spoiler.open = spoiler.closed[0].nextSibling.innerText;
+					spoiler.title = spoiler.closed[0].innerText.replace(/<|\/>/g, '');
+					first = spoiler.closed[0].innerText.replace(' />', '>');
+					last = first.replace('<', '</');
+					if (spoiler.closed[0].nextSibling.innerHTML.indexOf('<div class="imgs"><a target="_blank" imgsrc="') > -1) {
+						spoiler.imgs = spoiler.getElementsByClassName('imgs');
+							for (var j = 0, len = spoiler.imgs.length; j < len; j++) {
+								spoiler.img = spoiler.imgs[j];
+								spoiler.imgurl = spoiler.img.firstChild.getAttribute('imgsrc');
+								spoiler.contents += '<img src="' + spoiler.imgurl + '" />' + '\n';
+							}
+							spoiler.finished = '<spoiler caption="' + spoiler.title + '">' + spoiler.contents + '</spoiler>';
+					} else {
+						spoiler.contents = spoiler.open.replace(first, '');
+						spoiler.contents = spoiler.contents.replace(last, '');
+						spoiler.finished = '<spoiler caption="' + spoiler.title + '">' + spoiler.contents + '</spoiler>';
+					}
+					if (html.indexOf(spoiler.toReplace) > -1) {
+						html = html.replace(spoiler.toReplace, spoiler.finished);
+					}
+				}
+			}
+		}
+		if (links) {
+				//console.log(links);
+			for (var i = 0, len = links.length; i < len; i++) {
+				link = links[i];
+				if (link.firstChild.className == 'img-loaded') {
+					link.content = link.firstChild.innerHTML;
+					link.content = link.content.replace('<img src="', '');
+					link.first = link.content.indexOf('"');
+					link.last = link.content.indexOf('">');
+					link.toRemove = link.content.substring(link.first, link.last);
+					link.content = link.content.replace(link.toRemove, '');
+					link.content = link.content.replace('">', '');
+					link.content = link.content.replace('//', 'http://');
+					link.content = link.content.replace('dealtwith.it', 'endoftheinter.net');
+					link.content = '<img src="' + link.content + '" />' + "\n";
+				} else if (link.firstChild.className == 'img-placeholder') {
+					link.content = link.outerHTML;
+					link.first = link.content.indexOf('imgsrc="');
+					link.last = link.content.indexOf('" href');
+					link.toRemove = link.content.substring(0, link.first);
+					link.content = link.content.replace(link.toRemove, '');
+					link.toRemove = link.content.substring(link.last, link.content.length);
+					link.content = link.content.replace(link.toRemove, '');
+					link.content = link.content.replace('imgsrc="', '');
+					link.content = link.content.replace(' href="//images.en', '');
+					link.content = '<img src="' + link.content + ' />' + "\n";
+				} else if (link.title.indexOf("/showmessages.php") > -1) {
+					link.content = link.title.replace('/showmessages.php', 'http://boards.endoftheinter.net/showmessages.php');
+				} else if (link.className == 'jump-arrow' || link.id == 'notebook' 
+						|| link.parentElement.attributes.className == 'spoiler_on_close' 
+						|| link.parentElement.attributes.className == 'spoiler_on_open') {
+					link.content = '';
+				} else {
+					link.content = link.href;
+				}
+				if (link.content) {
+					first = html.indexOf('<a');
+					last = html.indexOf('</a>');
+					htmlToRemove = html.substring(first, last);
+					console.log("html to remove iteration " + i + "\n");
+					console.log(htmlToRemove + "\n");
+					console.log(link.content + "\n");
+					html = html.replace(htmlToRemove, '');
+					html = html.replace('</a>', link.content);
+				}
+			}
+		}
+		// clean up html
+		html = html.replace(/<div class="imgs">/g, '');
+		html = html.replace(/<div style="clear:both">/g, '');
+		html = html.replace(/<\/div>/g, '');
+		html = html.replace(/<br>/g, '');
+		html = html.replace(/&lt;/g, '<');
+		html = html.replace(/&gt;/g, '>');
+		// plain text quoting - needs separate option/button
+		/*var text = quotedMsg.innerText;
+		var quotedText = '<quote msgid="' + quoteId + '">' + text.substring(0, (text.lastIndexOf('---') - 1)) + '</quote>';*/
+		var json = {
+				"quote": ""
+		};
+		json.quote = html;
+		chrome.runtime.sendMessage(json, function(response) {
+			if (config.debug) console.log(response.clipboard);
+		});
+		$("#copied").fadeIn(200);
+		setTimeout(function() {
+			$(that).find("span:last").fadeOut(400);
+		}, 1500);
+		setTimeout(function() {
+			$(that).find("span:last").remove();
+		}, 2000);
+	},
+	archiveQuoteButtons: function() {
+		var hostname = window.location.hostname;
+		var topicId = window.location.search.replace("?topic=", "");
+		var links;
+		var msgs;
+		var containers;
+		var container;
+		var tops = [];
+		var msgId;
+		var quote;
+		if (hostname.indexOf("archives") > -1) {
+			links = document.getElementsByTagName("a");
+			msgs = document.getElementsByClassName("message");
+			containers = document.getElementsByClassName("message-container");
+			for (var i = 0, len = containers.length; i < len; i++) {
+				container = containers[i];
+				tops[i] = container.getElementsByClassName("message-top")[0];
+				msgId = msgs[i].getAttribute("msgid");
+				quote = document.createElement("a");
+				quoteText = document.createTextNode("Quote");
+				space = document.createTextNode(" | ");
+				quote.appendChild(quoteText);
+				quote.href = "javascript:void(0)";
+				quote.id = msgId;
+				quote.className = "archivequote";
+				tops[i].appendChild(space);
+				tops[i].appendChild(quote);
+			}
+		}
+		// todo - event handler/links for plain text quoting
+		$("div.message-top").on("click", "a.archivequote", messageListHelper.quoteHandler);
+	},
 	init : function() {
-    messageListHelper.archiveQuoteButtons();
+		messageListHelper.archiveQuoteButtons();
 		chrome.extension.sendRequest({
 			need : "config",
 			tcs : true
@@ -1255,10 +1253,10 @@ var messageListHelper = {
 			messageListHelper.globalPort = chrome.extension.connect();
 			config = conf.data;
 			config.tcs = conf.tcs;
-      if (config.ignorate_by_rep) {
-          repIgnorator();
-          messageListHelper.getUserIds();
-      }
+			if (config.ignorate_by_rep) {
+					repIgnorator();
+					messageListHelper.getUserIds();
+			}
 			var pm = '';
 			if (window.location.href.match('inboxthread'))
 				pm = "_pm";
@@ -1378,7 +1376,7 @@ var messageListHelper = {
 		ta.focus();
 	},
 	livelinks : function(mutation) {
-  console.log(mutation);
+	console.log(mutation);
 		var pm = '';
 		if (window.location.href.match('inboxthread'))
 			pm = "_pm";
@@ -1392,141 +1390,141 @@ var messageListHelper = {
 				}
 			}
 	},
-  wikiFix: function() {
-      window.open(this.href.replace("boards", "wiki"));
-  },
-  imageFix: function () {
-      window.open(this.href.replace("boards", "images"));
-  },
-  embedYoutube: function() {
-      var that = this;
-      if (!that.embedded) {
-          var toEmbed = document.getElementById(that.id);
-          if (toEmbed.className == "youtube") {   
-              var color = $("table.message-body tr td.message").css("background-color");
-              var videoCode;
-              var embedHTML;
-              var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-              var match = that.id.match(regExp);
-              if (match && match[2].length == 11) {
-                  videoCode = match[2];
-              } else {
-                  videoCode = match;
-              }
-              embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
-                        + "<a id='" + that.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
-                        + "<br><div class='youtube'>" 
-                        + "<iframe id='" + "yt" + that.id + "' type='text/html' width='640' height='390'" 
-                        + "src='https://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>" 
-                        + "</div>";
-              $(toEmbed).find("span:last").remove();
-              toEmbed.className = "hideme";
-              toEmbed.innerHTML += embedHTML;
-              that.embedded = true;
-          }
-      }
-  },
-  hideYoutube: function() {
-      var that = this;
-      if (!that.hidden) {
-          var toEmbed = document.getElementById(that.id);
-          $(toEmbed).find("iframe:last").remove();
-          $(toEmbed).find("br:last").remove();
-          $(toEmbed).find("div:last").remove();
-          toEmbed.className = "youtube";
-          that.hidden = true;
-      }
-  },
-  showHiddenPost: function() {
-  // shows posts hidden by rep ignorator
-  // (doesn't work for quoted posts - yet)
-  var that = this;
-  var messageContainer = document.getElementById(that.id);
-  var messageBody = messageContainer.getElementsByClassName('message-body')[0];
-  console.log(messageContainer);
-  console.log(messageBody);
-  if (messageBody.style.display = 'none') {
-      messageContainer.style.opacity = 1;
-      messageBody.style.display = 'inline';
-  } else if (messageBody.style.display = 'inline') {
-      messageContainer.style.opacity = 0.15;
-      messageBody.style.display = 'none';
-  }
-  },
-  getUserIds: function() {
-    var links = ($("div.message-top").find("a"));
-    var allIds = [];
-    var id;
-    for (var i = 0, len = links.length; i < len; i++) {
-        link = links[i];
-        if (link.href.indexOf('profile.php?user=') > -1) {
-            id = link.href.match(/\?user=([0-9]+)/)[1];
-            allIds.push(parseInt(id));
-        }
-    }
-    usersFromPage = allIds.filter(function(elem, pos) {
-        return allIds.indexOf(elem) == pos;
-    })
-    messageListHelper.checkUserIds();
-  },
-  checkUserIds: function() {
-      userFilter = config.rep_ignorator_userids;
-      checkedUsers = config.rep_ignorator_checked;
-      token = config.rep_ignorator_token;
-      if (!userFilter && !checkedUsers && !token) {
-          // wait for config
-          configTimeout = setTimeout(repIgnorator.checkUserIds, 100);
-          return;
-      } else {
-          clearTimeout(configTimeout);
-          var json = {
-              "tok": "",
-              "users": []
-          };
-          var usersForRequest = [];
-          // request contains unique ids from page that havent already been checked
-          usersForRequest = $(usersFromPage).not(checkedUsers).get();
-          json.tok = token;
-          json.users = usersForRequest;
-          console.log(json);
-          if (json.users.length == 0) {
-              console.log("nope");
-              return;
-          }
-          /*var xhr = new XMLHttpRequest();
-          var url = 'http://chillaxtian.com:8081/rep'
-          xhr.open("POST", url, true);
-          xhr.setRequestHeader('Content-Type', 'application/json');
-          xhr.onreadystatechange = function () {
-              if (xhr.readyState == 4 && xhr.status == 200) {
-                  var temp = JSON.parse(xhr.responseText);
-                  console.log(temp);
-                  if (temp.err == "pending") {
-                  console.log("server response not ready yet");
-                  return;
-                  }
-                  else {
-                  // cache response
-                  config.rep_ignorator_userids = temp.users.concat(userFilter);
-                  config.rep_ignorator_checked = usersForRequest.concat(checkedUsers);
-                  
-                  chrome.extension.sendRequest({
-                  need : "save",
-                  name : "rep_ignorator_userids",
-                  data : config.rep_ignorator_userids
-                  });
-                  chrome.extension.sendRequest({
-                  need : "save",
-                  name : "rep_ignorator_checked",
-                  data : config.rep_ignorator_checked
-                  });
-                  }
-              }
-          }
-          console.log("sending xhr");
-          xhr.send(JSON.stringify(json));*/
-      }
-  }
+	wikiFix: function() {
+		window.open(this.href.replace("boards", "wiki"));
+	},
+	imageFix: function () {
+		window.open(this.href.replace("boards", "images"));
+	},
+	embedYoutube: function() {
+		var that = this;
+		if (!that.embedded) {
+			var toEmbed = document.getElementById(that.id);
+			if (toEmbed.className == "youtube") {		
+				var color = $("table.message-body tr td.message").css("background-color");
+				var videoCode;
+				var embedHTML;
+				var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+				var match = that.id.match(regExp);
+				if (match && match[2].length == 11) {
+					videoCode = match[2];
+				} else {
+					videoCode = match;
+				}
+				embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
+									+ "<a id='" + that.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
+									+ "<br><div class='youtube'>" 
+									+ "<iframe id='" + "yt" + that.id + "' type='text/html' width='640' height='390'" 
+									+ "src='https://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>" 
+									+ "</div>";
+				$(toEmbed).find("span:last").remove();
+				toEmbed.className = "hideme";
+				toEmbed.innerHTML += embedHTML;
+				that.embedded = true;
+			}
+		}
+	},
+	hideYoutube: function() {
+		var that = this;
+		if (!that.hidden) {
+			var toEmbed = document.getElementById(that.id);
+			$(toEmbed).find("iframe:last").remove();
+			$(toEmbed).find("br:last").remove();
+			$(toEmbed).find("div:last").remove();
+			toEmbed.className = "youtube";
+			that.hidden = true;
+		}
+	},
+	showHiddenPost: function() {
+	// shows posts hidden by rep ignorator
+	// (doesn't work for quoted posts - yet)
+		var that = this;
+		var messageContainer = document.getElementById(that.id);
+		var messageBody = messageContainer.getElementsByClassName('message-body')[0];
+		console.log(messageContainer);
+		console.log(messageBody);
+		if (messageBody.style.display = 'none') {
+			messageContainer.style.opacity = 1;
+			messageBody.style.display = 'inline';
+		} else if (messageBody.style.display = 'inline') {
+			messageContainer.style.opacity = 0.15;
+			messageBody.style.display = 'none';
+		}
+	},
+	getUserIds: function() {
+		var links = ($("div.message-top").find("a"));
+		var allIds = [];
+		var id;
+		for (var i = 0, len = links.length; i < len; i++) {
+			link = links[i];
+			if (link.href.indexOf('profile.php?user=') > -1) {
+					id = link.href.match(/\?user=([0-9]+)/)[1];
+					allIds.push(parseInt(id));
+			}
+		}
+		usersFromPage = allIds.filter(function(elem, pos) {
+			return allIds.indexOf(elem) == pos;
+		})
+		messageListHelper.checkUserIds();
+	},
+	checkUserIds: function() {
+		userFilter = config.rep_ignorator_userids;
+		checkedUsers = config.rep_ignorator_checked;
+		token = config.rep_ignorator_token;
+		if (!userFilter && !checkedUsers && !token) {
+			// wait for config
+			configTimeout = setTimeout(repIgnorator.checkUserIds, 100);
+			return;
+		} else {
+			clearTimeout(configTimeout);
+			var json = {
+					"tok": "",
+					"users": []
+			};
+			var usersForRequest = [];
+			// request contains unique ids from page that havent already been checked
+			usersForRequest = $(usersFromPage).not(checkedUsers).get();
+			json.tok = token;
+			json.users = usersForRequest;
+			console.log(json);
+			if (json.users.length == 0) {
+					console.log("nope");
+					return;
+			}
+			/*var xhr = new XMLHttpRequest();
+			var url = 'http://chillaxtian.com:8081/rep'
+			xhr.open("POST", url, true);
+			xhr.setRequestHeader('Content-Type', 'application/json');
+			xhr.onreadystatechange = function () {
+				if (xhr.readyState == 4 && xhr.status == 200) {
+					var temp = JSON.parse(xhr.responseText);
+					console.log(temp);
+					if (temp.err == "pending") {
+					console.log("server response not ready yet");
+					return;
+					}
+					else {
+					// cache response
+					config.rep_ignorator_userids = temp.users.concat(userFilter);
+					config.rep_ignorator_checked = usersForRequest.concat(checkedUsers);
+					
+					chrome.extension.sendRequest({
+					need : "save",
+					name : "rep_ignorator_userids",
+					data : config.rep_ignorator_userids
+					});
+					chrome.extension.sendRequest({
+					need : "save",
+					name : "rep_ignorator_checked",
+					data : config.rep_ignorator_checked
+					});
+					}
+				}
+			}
+			console.log("sending xhr");
+			xhr.send(JSON.stringify(json));*/
+		}
+	}
 }
 
 var messageListLivelinks = {
@@ -1542,71 +1540,74 @@ var messageListLivelinks = {
 	},
 	ignorator_messagelist : function(mutation) {
 		if (!config.ignorator) { 
-    return;
-    }
-    // might need this later
-    /*if (mutation.style.display == "none") {
-    console.log("already ignorated - ignoring");
-    return;
-    }*/
-    var tops = mutation.getElementsByClassName('message-top'); 
-    var top;
-    for (var e = 0, len = tops.length; e < len; e++) {
-    top = tops[e];
-			for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
-				if (top.getElementsByTagName('a')[0].innerHTML.toLowerCase() == messageListHelper.ignores[f]) {
-					top.parentNode.style.display = "none";
-					if (config.debug) {
-						console.log('removed livelinks post by '
-								+ messageListHelper.ignores[f]);
-					ignorated.total_ignored++;
-          }
-					if (!ignorated.data.users[messageListHelper.ignores[f]]) {
-						ignorated.data.users[messageListHelper.ignores[f]] = 1;
-					} else {
-						ignorated.data.users[messageListHelper.ignores[f]]++;
+			return;
+		}
+		// might need this later
+		/*if (mutation.style.display == "none") {
+			console.log("already hidden - ignoring");
+			return;
+		}*/
+		var tops = mutation.getElementsByClassName('message-top'); 
+		var top;
+		for (var e = 0, len = tops.length; e < len; e++) {
+			top = tops[e];
+			// sometimes top is undefined
+			if (top) {
+				for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
+					if (top.getElementsByTagName('a')[0].innerHTML.toLowerCase() == messageListHelper.ignores[f]) {
+						top.parentNode.style.display = "none";
+						if (config.debug) {
+							console.log('removed livelinks post by '
+									+ messageListHelper.ignores[f]);
+						ignorated.total_ignored++;
+						}
+						if (!ignorated.data.users[messageListHelper.ignores[f]]) {
+							ignorated.data.users[messageListHelper.ignores[f]] = 1;
+						} else {
+							ignorated.data.users[messageListHelper.ignores[f]]++;
+						}
+						messageListHelper.globalPort.postMessage({
+							action : 'ignorator_update',
+							ignorator : ignorated
+						});
 					}
-					messageListHelper.globalPort.postMessage({
-						action : 'ignorator_update',
-						ignorator : ignorated
-					});
 				}
 			}
-    }
+		}
 	},
 	resize_imgs : function(mutation) {
-      for (var i = 0; mutation.getElementsByTagName('img')[i]; i++) {
-        messageListHelper.resizeImg(mutation.getElementsByTagName('img')[i]);
-      }
+		for (var i = 0; mutation.getElementsByTagName('img')[i]; i++) {
+			messageListHelper.resizeImg(mutation.getElementsByTagName('img')[i]);
+		}
 	},
 	user_notes : function(el) {
-    if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('notebook') == -1) {
-      messageListHelper.addNotebox(el.getElementsByClassName('message-top'));
-    }
+		if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('notebook') == -1) {
+			messageListHelper.addNotebox(el.getElementsByClassName('message-top'));
+		}
 	},
 	autoscroll_livelinks: function(el) {
-	    if (document.hidden && el.style.display != 'none') {
-        // jumps to new post
-          $.scrollTo(el);
-	    }
-	    if (!document.hidden && el.style.display != 'none') {
-        // scrolls to new post
-          $.scrollTo((el), 800);
-	    }
+		// jump to new post if window is hidden
+		if (document.hidden && el.style.display != 'none') {
+			$.scrollTo(el);
+		}
+		// scroll to new post if window is active
+		if (!document.hidden && el.style.display != 'none') {
+			$.scrollTo((el), 800);
+		}
 	},
 	post_title_notification : function(el) {
-    if (el.style.display === "none") {
-      if (config.debug) {
-        console.log('not updating for ignorated post');
-      }
-      return;
-    }
+		if (el.style.display === "none") {
+			if (config.debug) {
+				console.log('not updating for ignorated post');
+			}
+			return;
+		}
 		if (el.getElementsByClassName('message-top')[0]
 				.getElementsByTagName('a')[0].innerHTML == document
 				.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
 				.replace(/ \((\d+)\)$/, "")) {
-      return;
-    }
+			return;
+		}
 		var posts = 1;
 		var ud = '';
 		if (document.getElementsByClassName('message-container')[49]) {
@@ -1662,60 +1663,59 @@ var messageListLivelinks = {
 		}
 	},
 	label_tc : function(el) {
-    var tcs = messageListHelper.getTcMessages();
-    if (!tcs) {
-        return;
-    }
-    var ipx, inner, tops, top, tcname, elname;
-    tcname = tcs[0].getElementsByTagName('a')[0].innerText;
-    tops = el.getElementsByClassName('message-top');
-    for (var i = 0; tops[i]; i++) {
-        top = tops[i];
-        console.log(top);
-        elname = top.getElementsByTagName('a')[0].innerText;
-        if (tcname == elname && el.innerHTML.indexOf('TC') == -1) {
-            ipx = document.createElement('span');
-            inner = ' | <b>TC</b>';
-            if (config.tc_label_color != '') {
-                inner = ' | <font color="#' + config.tc_label_color + '"><b>TC</b></font>';
-                ipx.innerHTML = inner;
-                top.insertBefore(ipx, top.getElementsByTagName('a')[0].nextSibling);
-                }
-            else {
-            // to avoid error where user has ticked option but not selected text color
-                inner = ' | <b>TC</b>';
-                ipx.innerHTML = inner;
-                top.insertBefore(ipx, top.getElementsByTagName('a')[0].nextSibling);
-            }
-        }
-    }
+		var tcs = messageListHelper.getTcMessages();
+		if (!tcs) {
+			return;
+		}
+		var ipx, inner, tops, top, tcname, elname;
+		tcname = tcs[0].getElementsByTagName('a')[0].innerText;
+		tops = el.getElementsByClassName('message-top');
+		for (var i = 0; tops[i]; i++) {
+			top = tops[i];
+			elname = top.getElementsByTagName('a')[0].innerText;
+			if (tcname == elname && el.innerHTML.indexOf('TC') == -1) {
+				ipx = document.createElement('span');
+				inner = ' | <b>TC</b>';
+				if (config.tc_label_color != '') {
+					inner = ' | <font color="#' + config.tc_label_color + '"><b>TC</b></font>';
+					ipx.innerHTML = inner;
+					top.insertBefore(ipx, top.getElementsByTagName('a')[0].nextSibling);
+				}
+				// avoid error where user has ticked option but not selected text color
+				else {
+					inner = ' | <b>TC</b>';
+					ipx.innerHTML = inner;
+					top.insertBefore(ipx, top.getElementsByTagName('a')[0].nextSibling);
+				}
+			}
+		}
 	},
 	like_button : function(el) {
-    if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('Like') == -1) {
-      if (el.getElementsByClassName('message-top')[0]
-          .getElementsByTagName('a')[2]); {
-          el.getElementsByClassName('message-top')[0].innerHTML += ' | <a href="##like" onclick="like(this);">Like</a>';
-      }
-      }
+		if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('Like') == -1) {
+			if (el.getElementsByClassName('message-top')[0]
+					.getElementsByTagName('a')[2]); {
+				el.getElementsByClassName('message-top')[0].innerHTML += ' | <a href="##like" onclick="like(this);">Like</a>';
+			}
+		}
 	},
 	number_posts : function(el) {
-    if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('PostNumber') == -1) {
-      var top = el.getElementsByClassName('message-top')[0];
-      var lastPost = document.getElementsByClassName('PostNumber')[document
-          .getElementsByClassName('PostNumber').length - 1];
-      var number = lastPost.innerHTML.match(/#(\d+)/)[1];
-      var post = document.createElement('span');
-      var id = (parseInt(number, 10) + 1);
-      if (id < 1000)
-        id = "0" + id;
-      if (id < 100)
-        id = "0" + id;
-      if (id < 10)
-        id = "0" + id;
-      post.className = "PostNumber";
-      post.innerHTML = " | #" + id;
-      top.insertBefore(post, null);
-    }
+		if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('PostNumber') == -1) {
+			var top = el.getElementsByClassName('message-top')[0];
+			var lastPost = document.getElementsByClassName('PostNumber')[document
+					.getElementsByClassName('PostNumber').length - 1];
+			var number = lastPost.innerHTML.match(/#(\d+)/)[1];
+			var post = document.createElement('span');
+			var id = (parseInt(number, 10) + 1);
+			if (id < 1000)
+				id = "0" + id;
+			if (id < 100)
+				id = "0" + id;
+			if (id < 10)
+				id = "0" + id;
+			post.className = "PostNumber";
+			post.innerHTML = " | #" + id;
+			top.insertBefore(post, null);
+		}
 	},
 	userhl_messagelist : function(el) {
 		if (!config.enable_user_highlight)
@@ -1808,21 +1808,21 @@ var messageListLivelinks = {
 }
 messageListHelper.init();
 var livelinks = new MutationObserver(function(mutations) {
-    var mutation;
-    var check;
-    for (i in mutations) {
-        mutation = mutations[i];
-        if (!mutation.target.lastChild.firstChild 
-        || !mutation.target.lastChild.firstChild.className) {
-            return;
-        }
-        if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
-            // send new message to livelinks method
-            messageListHelper.livelinks(mutation.target.lastChild.firstChild);
-        }
-    }
+	var mutation;
+	var check;
+	for (var i = 0, len = mutations.length; i < len; i++) {
+		mutation = mutations[i];
+		if (!mutation.target.lastChild.firstChild 
+				|| !mutation.target.lastChild.firstChild.className) {
+			return;
+		}
+		if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
+			// send new message container to livelinks method
+			messageListHelper.livelinks(mutation.target.lastChild.firstChild);
+		}
+}
 });
 livelinks.observe(document, {
-    subtree: true,
-    childList: true
+		subtree: true,
+		childList: true
 });
