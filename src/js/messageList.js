@@ -785,6 +785,18 @@ var messageListHelper = {
 			messageListHelper.clearUnreadPosts();
 		}
 	},
+	autoscrollCheck : function (mutation) {
+		var elPosition = mutation.getBoundingClientRect();
+		if (mutation.style.display == 'none'
+				|| document.getElementById('following') 
+				|| document.getElementById('takemeback') 
+				|| document.getElementById('divtop')
+				|| elPosition.top > window.innerHeight) {
+			return false;
+		} else {
+			return true;
+		}
+	},
 	addDivListeners : function(div, divAlert, divTop, divMsg, oldPosition, mutation) {
 		var divScroll = document.getElementById('scrollpost');
 		var divShow = document.getElementById('showinpopup');
@@ -1030,16 +1042,20 @@ var messageListHelper = {
 			return;
 		}
 		var top;
-		for (var i = 0; top = tops[i]; i++) {
-			var notebook = document.createElement('a');
-			notebook.id = 'notebook';
-			top.innerHTML += " | ";
-			var tempID = top.getElementsByTagName('a')[0].href
-					.match(/user=(\d+)$/i)[1];
-			notebook.innerHTML = (config.usernote_notes[tempID] != undefined && config.usernote_notes[tempID] != '') ? 'Notes*'
-					: 'Notes';
-			notebook.href = "##note" + tempID;
-			top.appendChild(notebook);
+		for (var i = 0, len = tops.length; i < len; i++) {
+			top = tops[i];
+			// check to prevent problems when anon posts are quoted in normal topics
+			if (top.getElementsByTagName('a')[0].innerText != "⇗") {
+				var notebook = document.createElement('a');
+				notebook.id = 'notebook';
+				top.innerHTML += " | ";
+				var tempID = top.getElementsByTagName('a')[0].href
+						.match(/user=(\d+)$/i)[1];
+				notebook.innerHTML = (config.usernote_notes[tempID] != undefined && config.usernote_notes[tempID] != '') ? 'Notes*'
+						: 'Notes';
+				notebook.href = "##note" + tempID;
+				top.appendChild(notebook);
+			}
 		}
 	},
 	openNote : function(el) {
@@ -1655,22 +1671,14 @@ var messageListLivelinks = {
 		}
 	},
 	autoscroll_livelinks: function(mutation) {
-		// jump to new post in inactive tabs
-		if (document.hidden && mutation.style.display != 'none') {
+		if (document.hidden 
+				&& messageListHelper.autoscrollCheck (mutation) ) {
 			$.scrollTo(mutation);
 		}
 	},
 	autoscroll_livelinks_active : function(mutation) {
-		// scroll to new posts in active tabs
-		if (document.hidden || mutation.style.display == 'none'
-				|| document.getElementById('following') 
-				|| document.getElementById('takemeback') 
-				|| document.getElementById('divtop')) {
-			return;
-		}
-		var elPosition = mutation.getBoundingClientRect();
-		// check that user has finished reading topic
-		if (elPosition.top < window.innerHeight) {
+		if (!document.hidden 
+				&& messageListHelper.autoscrollCheck (mutation) ) {
 			$.scrollTo((mutation), 800);
 		}
 	},
