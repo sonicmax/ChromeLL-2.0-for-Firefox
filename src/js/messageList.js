@@ -68,22 +68,25 @@ var link_observer = new MutationObserver(function(mutations) {
 					wikiLink = link;
 					wikiLink.className = "wiki";
 					wikiLink.addEventListener("click", messageListHelper.wikiFix);
-				}
-				else if ((link.title.indexOf("youtube.com/watch?v=") > -1) 
+					
+				} else if ((link.title.indexOf("youtube.com/watch?v=") > -1) 
 						|| (link.title.indexOf("youtu.be/") > -1)) {
 					vidLink = link;
 					vidLink.className = "youtube";
 					// give each video link a unique id for embed/hide functions
 					vidLink.id = vidLink.href + "&" + Math.random().toString(16).slice(2);
-				}
-				else if (link.title.indexOf("/imap/") == 0) {
+					
+				} else if (link.title.indexOf("/imap/") == 0) {
 					imageLink = link;
 					imageLink.className = "imap";
 					imageLink.addEventListener("click", messageListHelper.imageFix);
-				}
-				else if (link.title.indexOf("http://gfycat.com/") > -1) {
+					
+				} else if (link.title.indexOf("http://gfycat.com/") > -1) {
 					gfyLink = link;
-					messageListHelper.embedGfy(gfyLink);
+					if (!gfyLink.embed) {
+						messageListHelper.embedGfy(gfyLink);
+						gfyLink.embed = true;
+					}
 				}
 			}
 		}
@@ -1507,7 +1510,24 @@ var messageListHelper = {
 	},
 	embedGfy: function (gfyLink) {
 		var url = gfyLink.href;
-		gfyLink.innerHTML = '<iframe src="' + url + '" frameborder="0" scrolling="no" width="600" height="338" style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" ></iframe>';
+		var xhr, splitURL, code, xhrURL, temp, width, height;
+		splitURL = url.split('/').slice(-1);
+		code = splitURL.join('/');
+		xhrURL = 'http://gfycat.com/cajax/get/' + code;
+		xhr = new XMLHttpRequest();
+		xhr.open("GET", xhrURL, true);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				temp = JSON.parse(xhr.responseText);
+				width = temp.gfyItem.width;
+				height = temp.gfyItem.height;
+				gfyLink.innerHTML = '<iframe src="' + url + '" frameborder="0" scrolling="no"' 
+				+ 'width="' + width + '" height="' + height + '"' 
+				+ 'style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" >'
+				+ '</iframe>';
+			}
+		}
+		xhr.send();
 	},
 	embedYoutube: function() {
 		var that = this;
