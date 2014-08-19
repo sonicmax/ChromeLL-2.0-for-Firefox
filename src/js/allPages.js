@@ -467,14 +467,19 @@ var commonFunctions = {
 		} catch (e) {
 		}
   },
-  updateDramaTicker: function() {
-    chrome.extension.sendRequest({
-            need : "dramalinks"
-            }, function(response) {
-              dramas = response.data,
-              document.getElementById("dramalinks_ticker").innerHTML = dramas;
-            });
-  }
+	updateDramaTicker: function() {
+		chrome.extension.sendRequest({
+			need: "dramalinks"
+		}, function(response) {
+			if (!response) {
+				setTimeout(commonFunctions.updateDramaTicker, 100);
+				return;
+			} else {
+				dramas = response.data,
+				document.getElementById("dramalinks_ticker").innerHTML = dramas;
+			}
+		});
+	}
 }
 
 chrome.extension.sendRequest({
