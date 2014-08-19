@@ -1037,8 +1037,9 @@ var messageListHelper = {
 	},
 	addNotebox : function(tops) {
 		if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
-			if (config.debug)
+			if (config.debug) {
 				console.log('HA Topic - skipping usernotes');
+			}
 			return;
 		}
 		var top;

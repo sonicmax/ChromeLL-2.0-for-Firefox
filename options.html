@@ -579,975 +579,1006 @@ span.desc {
 <script type="text/javascript" src="src/js/allBg.js"></script>
 <body>
 <div class="header"></div>
-<div id="main-content">
-	<div id="navbar-container">
-		<h1 class="title">ChromeLL</h1>
-		
-		<ul id="navbar">
-			<li class="navbar-item navbar-item-selected options_navigation_link" id="general_link">General</li>
-			<li class="navbar-item options_navigation_link" id="ignorator_link">Ignorator</li>
-			<li class="navbar-item options_navigation_link" id="highlighter_link">Highlights</li>
-			<li class="navbar-item options_navigation_link" id="bookmarks_link">Bookmarks</li>
-			<li class="navbar-item options_navigation_link" id="topiclist_link">Topic List</li>
-			<li class="navbar-item options_navigation_link" id="messagelist_link">Message List</li>
-			<li class="navbar-item options_navigation_link" id="profile_link">Profile/PM<small>s</small></li>
-			<br />
-            <li class="navbar-item options_navigation_link" id="about_link">About</li>
-		</ul>
-	</div>
-	
-	<div id="mainview">
-		<div id="mainview-content">
-			<div id="toplevel-page-container">			
-				<!-- BEGIN GENERAL PAGE -->
-				<div class="page shown" id="general_page">
-					<h1>General</h1>
-					<section>
-						<h3>UI</h3>
-						<div>
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="float_userbar" />
-									<span>Keep the Userbar + Menubar at the top of the screen</span>
-								</label>
-							</div>
-                            <!--
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="float_userbar_bottom" />
-									<span>Keep the Userbar + Menubar at the bottom of the screen</span>
-								</label>
-							</div>
-                            -->
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="short_title" />
-									<span>Shorten page title (remove "End of the Internet")</span>
-								</label>
-							</div>
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="history_menubar" />
-									<span>Add "Message History" link to menubar</span>
-								</label>
-							</div>
-                            <div class="checkbox subbox">
-								<label>
-									<input type="checkbox" id="history_menubar_classic" />
-									<span>Go to history.php instead of the Posted tag</span>
-								</label>
-							</div>
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="context_menu" />
-									<span>Show the right click menu (disable/enable extension or restart browser to take effect)</span>
-								</label>
-							</div>
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="dramalinks" />
-									<span>Show the dramalinks ticker</span>
-								</label>
-                            </div>
-                            <div class="checkbox subbox">
-                                <label>
-									<input type="checkbox" id="hide_dramalinks" />
-									<span>Double click board name to show dramalinks ticker</span>
-								</label>
-							</div>
-                            <div class="checkbox subbox">
-                                <label>
-									<input type="checkbox" id="hide_dramalinks_topiclist" />
-									<span>Only show the dramalinks ticker on the topic list</span>
-								</label>
-							</div>
-                            <div class="checkbox subbox">
-                                <label>
-                                    <input type="checkbox" id="dramalinks_below_topic" />
-                                    <span>Put the dramalinks ticker below the topic title</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="user_info_popup" />
-                                    <span>Double click box surrounding username for settings/info popup</span>
-                                </label>
-                            </div>
-														<!--<div class="checkbox subbox">
-                                <label>
-                                    <input type="checkbox" id="rep_callout" />
-                                    <span>Automatically copy rep to clipboard</span>
-                                </label>
-                            </div>-->
-														<div class="checkbox subbox">
-                                <label>
-                                    <input type="checkbox" id="show_old_name" />
-                                    <span>Show username history in popup</span>
-                                </label>
-														</div>
-														<div class="checkbox subbox">
-                                <label>
-                                    <input type="checkbox" id="hide_gs" />
-                                    <span>Hide "gs" in popup</span>
-                                </label>
-                            </div>		
-														<br>
-                            <div class="checkbox">
-									<input type="checkbox" id="zebra_tables" />
-									<span>Zebra tables color <input type="text" id="zebra_tables_color" class="color" style="width: 70px" value="D7DEE8" /></span>
-                            </div>
-						</div>
-					</section>
-					<section>
-						<h3>Security</h3>
-						<div>
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="force_https" />
-									<span>Force an HTTPS connection</span>
-								</label>							
-							</div>
-							
-						</div>
-					</section>
-                    <section>
-						<h3>Chrome Sync</h3>
-						<div>
-                            <span class="beta_info"><b>beta!</b> Make a backup of your config(s) from the about page. Do not sync highlights if you have &gt; 40 highlighted users.</span>
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="sync_cfg" checked="false" disabled="disabled" />
-									<span>Sync configuration with chrome profile</span>
-								</label>							
-							</div>
-                            <div class="checkbox subbox">
-								<label>
-									<input type="checkbox" id="sync_userhl" disabled="disabled" />
-									<span>Sync user highlights</span>
-								</label>							
-							</div>
-                            <div class="checkbox subbox">
-								<label>
-									<input type="checkbox" id="sync_usernotes" disabled="disabled" />
-									<span>Sync usernotes</span>
-								</label>							
-							</div>
-                            <div class="checkbox subbox">
-								<label>
-									<input type="checkbox" id="sync_ignorator" disabled="disabled" />
-									<span>Sync ignorator</span>
-								</label>							
-							</div>
-						</div>
-					</section>
-                    <section>
-						<h3>Notifications</h3>
-						<div>
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="sys_notifications" />
-									<span>Show notifications about ChromeLL events (when updated, etc)</span>
-								</label>
-							</div>   
-						</div>
-					</section>
-                    <section>
-						<h3>Ignorator</h3>
-						<div>
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="ignorator" />
-									<span>Ignore topics and/or posts by users listed below (comma separated list)</span>
-								</label>
-							</div>
-                            <input type="text" style="width: 550px;" id="ignorator_list" />
-						</div>
-						</section>
-						<section>
-                        <h3>Ignorator cleaner</h3>
-                        <div>
-												<div class="checkbox">
-									<input type="button" value="Restore backup" id="restoreignorator" />
-									<input type="button" value="Clean ignorator" id="forceignorator" />
-									<input type="checkbox" id="clean_ignorator" /> Remove banned users?
-									<span style="color:#ff0000"><div class="checkbox" id = "ignorateinfo"></div></span>
-                        </div>			
-                        </div>
-                        </section>                       
-        </div>
-        
-<div class="page hidden" id="ignorator_page">
-    <section>
-        <h3>Rep ignorator</h3>
-        <div>
-            <div class="checkbox">
-                <input type="button" value="Register filter" id="registerfilter" />
-                <input type="checkbox" id="ignorate_by_rep" />
-                <span>Ignorate by rep</span>
-                <form>
-                    Token: <input type="text" name="token" id="token">
-                </form>
-            </div>
-        </div>
-    </section>
-    <h1>Reps to ignorate:</h1>
-    <section>
-        <h3></h3>
-        <div>
-            <br>
-            <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
-                <div class="columns" style="overflow: hidden;">
-                    <br>
-                    <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
-                        <div class="columns" style="overflow: hidden;">
-                            <div style="float: left; width: 157px; margin-right: 20px;">
-                                Tag:
-                                <br />
-
-                            </div>
-                            <div style="float: left; width: 80px; margin-right: 20px;">
-                                Rep:
-                                <br />
-
-                            </div>
-                        </div>
-                    </div>
-                    <div style="font-size: small!important; margin-left: 17px;" id="rep_ignore">
-                        <div class="columns" style="overflow: hidden; display: none;" class="rep_ignore_data_blank">
-                            <div style="float: left; margin-right: 20px;">
-                                <input type="text" style="width: 150px;" class="tag_to_ignore" name="rep_ignore_tag" value="" />
-                            </div>
-                            <div style="float: left; margin-right: 20px;">
-                                <input type="number" style="width: 70px;" class="rep_to_ignore" name="rep_ignore_rep" value="" />
-                            </div>
-                        </div>
-                        <div class="columns rep_ignore_data" style="overflow: hidden;">
-                            <div style="float: left; margin-right: 20px;">
-                                <input type="text" style="width: 150px;" class="tag_to_ignore" name="rep_ignore_tag" />
-                            </div>
-                            <div style="float: left; margin-right: 20px;">
-                                <input type="number" style="width: 70px;" class="rep_to_ignore" name="rep_ignore_rep" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    </section>
-    </div>
-</div>
-                        
-				<div class="page hidden" id="highlighter_page">
-						<h1>User Highlighting</h1>
-						<section>
-						<h3></h3>
-						<div>
-							<br>
-							<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
-												<div class="columns" style="overflow: hidden;">
-								<br>
-								<label>
-									<input type="checkbox" id="enable_user_highlight" />
-									<span>Highlight users listed below:</span>
-								</label>
-                                <br>
-																<br>
-                <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
-									<div class="columns" style="overflow: hidden;">
-										<div style="float: left; width: 157px; margin-right: 20px;">
-											Username:<br />
-											
-                                        </div>
-                                        <div style="float: left; width: 80px; margin-right: 20px;">
-											Background:<br />
-											
-                                        </div>
-                                        <div style="float: left; width: 70px; margin-right: 20px;">
-											Text:<br />
-											
-										</div>
-									</div>
-								</div>
-                                <div style="font-size: small!important; margin-left: 17px;" id="user_highlight" >
-									<div class="columns" style="overflow: hidden; display: none;" class="user_highlight_data_blank">
-										<div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 150px;" class="user_name" name="user_highlight_username" value="" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color header_bg" name="user_highlight_headerbackground" value="" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color header_color" name="user_highlight_headercolor" value="" />
-										</div>
-									</div>
-                                    <div class="columns user_highlight_data" style="overflow: hidden;">
-										<div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 150px;" class="user_name" name="user_highlight_username" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color header_bg" name="user_highlight_headerbackground" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color header_color" name="user_highlight_headercolor" />
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</section>	
-				</div>
-				</div>
-        
-				<div class="page hidden" id="bookmarks_page">
-						<h1>Bookmarks</h1>
-						<section>
-								<h3></h3>
+	<div id="main-content">
+		<div id="navbar-container">
+			<h1 class="title">ChromeLL</h1>	
+			<ul id="navbar">
+				<li class="navbar-item navbar-item-selected options_navigation_link" id="general_link">General</li>
+				<li class="navbar-item options_navigation_link" id="highlighter_link">User highlights</li>
+				<li class="navbar-item options_navigation_link" id="rep_link">Rep highlights</li>
+				<li class="navbar-item options_navigation_link" id="bookmarks_link">Bookmarks</li>
+				<li class="navbar-item options_navigation_link" id="topiclist_link">Topic List</li>
+				<li class="navbar-item options_navigation_link" id="messagelist_link">Message List</li>
+				<li class="navbar-item options_navigation_link" id="profile_link">Profile/PM<small>s</small></li>
+				<br />
+				<li class="navbar-item options_navigation_link" id="about_link">About</li>
+			</ul>
+		</div>
+		<div id="mainview">
+			<div id="mainview-content">
+				<div id="toplevel-page-container">			
+					<!-- BEGIN GENERAL PAGE -->
+						<div class="page shown" id="general_page">
+							<h1>General</h1>
+							<section>
+								<h3>UI</h3>
 								<div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="float_userbar" />
+											<span>Keep the Userbar + Menubar at the top of the screen</span>
+										</label>
+									</div>
+									<!--
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="float_userbar_bottom" />
+											<span>Keep the Userbar + Menubar at the bottom of the screen</span>
+										</label>
+									</div>
+									-->
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="short_title" />
+											<span>Shorten page title (remove "End of the Internet")</span>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="history_menubar" />
+											<span>Add "Message History" link to menubar</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="history_menubar_classic" />
+											<span>Go to history.php instead of the Posted tag</span>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="context_menu" />
+											<span>Show the right click menu (disable/enable extension or restart browser to take effect)</span>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="dramalinks" />
+											<span>Show the dramalinks ticker</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="hide_dramalinks" />
+											<span>Double click board name to show dramalinks ticker</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="hide_dramalinks_topiclist" />
+											<span>Only show the dramalinks ticker on the topic list</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="dramalinks_below_topic" />
+											<span>Put the dramalinks ticker below the topic title</span>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="user_info_popup" />
+											<span>Double click box surrounding username for settings/info popup</span>
+										</label>
+									</div>
+									<!--
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="rep_callout" />
+											<span>Automatically copy rep to clipboard</span>
+										</label>
+									</div>
+									-->
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="show_old_name" />
+											<span>Show username history in popup</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="hide_gs" />
+											<span>Hide "gs" in popup</span>
+										</label>
+									</div>
+									<br>
+									<div class="checkbox">
+										<input type="checkbox" id="zebra_tables" />
+										<span>Zebra tables color <input type="text" id="zebra_tables_color" class="color" style="width: 70px" value="D7DEE8" /></span>
+									</div>
+								</div>
+							</section>
+							<section>
+								<h3>Security</h3>
+								<div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="force_https" />
+											<span>Force an HTTPS connection</span>
+										</label>
+									</div>
+								</div>
+							</section>
+							<section>
+								<h3>Chrome Sync</h3>
+								<div>
+									<span class="beta_info"><b>beta!</b> Make a backup of your config(s) from the about page. Do not sync highlights if you have &gt; 40 highlighted users.</span>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="sync_cfg" checked="false" disabled="disabled" />
+											<span>Sync configuration with chrome profile</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="sync_userhl" disabled="disabled" />
+											<span>Sync user highlights</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="sync_usernotes" disabled="disabled" />
+											<span>Sync usernotes</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="sync_ignorator" disabled="disabled" />
+											<span>Sync ignorator</span>
+										</label>
+									</div>
+								</div>
+							</section>
+							<section>
+								<h3>Notifications</h3>
+								<div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="sys_notifications" />
+											<span>Show notifications about ChromeLL events (when updated, etc)</span>
+										</label>
+									</div>
+								</div>
+							</section>
+							<section>
+								<h3>Ignorator</h3>
+								<div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="ignorator" />
+											<span>Ignore topics and/or posts by users listed below (comma separated list)</span>
+										</label>
+									</div>
+									<input type="text" style="width: 550px;" id="ignorator_list" />
+								</div>
+							</section>
+							<section>
+								<h3>Ignorator cleaner</h3>
+								<div>
+									<div class="checkbox">
+										<input type="button" value="Restore backup" id="restoreignorator" />
+										<input type="button" value="Clean ignorator" id="forceignorator" />
+										<input type="checkbox" id="clean_ignorator" />Remove banned users?
+										<span style="color:#ff0000"><div class="checkbox" id = "ignorateinfo"></div></span>
+									</div>
+								</div>
+							</section>
+						</div>
+						
+						<div class="page hidden" id="highlighter_page">
+							<h1>User Highlights</h1>
+							<section>
+								<h3>Settings</h3>
+								<div>
+									<br>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="enable_user_highlight" />
+											<span>Highlight users listed below:</span>
+										</label>
+									</div>
+									<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+										<div class="columns" style="overflow: hidden;">
+											<br>
+											<br>
+											<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+												<div class="columns" style="overflow: hidden;">
+													<div style="float: left; width: 157px; margin-right: 20px;">
+														Username:
+														<br />
+
+													</div>
+													<div style="float: left; width: 80px; margin-right: 20px;">
+														Background:
+														<br />
+
+													</div>
+													<div style="float: left; width: 70px; margin-right: 20px;">
+														Text:
+														<br />
+
+													</div>
+												</div>
+											</div>
+											<div style="font-size: small!important; margin-left: 17px;" id="user_highlight">
+												<div class="columns" style="overflow: hidden; display: none;" class="user_highlight_data_blank">
+													<div style="float: left; margin-right: 20px;">
+														<input type="text" style="width: 150px;" class="user_name" name="user_highlight_username" value="" />
+													</div>
+													<div style="float: left; margin-right: 20px;">
+														<input type="text" style="width: 70px;" class="color header_bg" name="user_highlight_headerbackground" value="" />
+													</div>
+													<div style="float: left; margin-right: 20px;">
+														<input type="text" style="width: 70px;" class="color header_color" name="user_highlight_headercolor" value="" />
+													</div>
+												</div>
+												<div class="columns user_highlight_data" style="overflow: hidden;">
+													<div style="float: left; margin-right: 20px;">
+														<input type="text" style="width: 150px;" class="user_name" name="user_highlight_username" />
+													</div>
+													<div style="float: left; margin-right: 20px;">
+														<input type="text" style="width: 70px;" class="color header_bg" name="user_highlight_headerbackground" />
+													</div>
+													<div style="float: left; margin-right: 20px;">
+														<input type="text" style="width: 70px;" class="color header_color" name="user_highlight_headercolor" />
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</section>
+						</div>	
+						
+						<div class="page hidden" id="rep_page">
+							<h1>Rep Highlights</h1>
+							<section>
+								<h3>Settings</h3>
+								<div>
+								<br>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="msgs_by_rep" />
+											<span>Highlight messages</span>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="topics_by_rep" />
+											<span>Highlight topics</span>
+										</label>
+									
+									<br>
+									<br>
+									<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+										<div class="columns" style="overflow: hidden;">
+											<br>
+											<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+												<div class="columns" style="overflow: hidden;">
+													<div style="float: left; width: 157px; margin-right: 20px;">
+														Tag:
+														<br />
+
+													</div>
+													<div style="float: left; width: 80px; margin-right: 20px;">
+														Rep:
+														<br />
+
+													</div>
+												</div>
+											</div>
+											<div style="font-size: small!important; margin-left: 17px;" id="rep_ignore">
+												<div class="columns" style="overflow: hidden; display: none;" class="rep_ignore_data_blank">
+													<div style="float: left; margin-right: 20px;">
+														<input type="text" style="width: 150px;" class="tag_to_ignore" name="rep_ignore_tag" value="" />
+													</div>
+													<div style="float: left; margin-right: 20px;">
+														<input type="number" style="width: 70px;" class="rep_to_ignore" name="rep_ignore_rep" value="" />
+													</div>
+												</div>
+												<div class="columns rep_ignore_data" style="overflow: hidden;">
+													<div style="float: left; margin-right: 20px;">
+														<input type="text" style="width: 150px;" class="tag_to_ignore" name="rep_ignore_tag" />
+													</div>
+													<div style="float: left; margin-right: 20px;">
+														<input type="number" style="width: 70px;" class="rep_to_ignore" name="rep_ignore_rep" />
+													</div>
+												</div>
+											</div>
+										</div>
+										<br>
+										<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+											<input type="button" value="Register filter" id="registerfilter" />
+											<span style="color:#ff0000" id="repinfo"></span>
+											<br>
+											<br>
+											<div>
+												<form>
+													Token:
+													<input type="text" name="token" id="token">
+												</form>
+											</div>
+										</div>
+									</div>
+								</div>
+								</div>
+							</section>
+						</div>
+						
+						<div class="page hidden" id="bookmarks_page">
+								<h1>Bookmarks</h1>
+								<section>
+										<h3>Settings</h3>
+										<div>
+										<br>
+												<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+														<div class="columns" style="overflow: hidden;">
+														<br>
+																<div style="float: left; width: 157px; margin-right: 20px;">
+																		Bookmark name:
+																		<br />
+
+																</div>
+																<div style="float: left; width: 80px; margin-right: 20px;">
+																		Tag:
+																		<br />
+
+																</div>
+														</div>
+												</div>
+												<div style="font-size: small!important; margin-left: 17px;" id="bookmarked_tags">
+														<div class="columns" style="overflow: hidden; display: none;" class="bookmark_blank">
+																<div style="float: left; margin-right: 20px;">
+																		<input type="text" style="width: 150px;" class="bookmark_name" name="user_book_name" maxlength="25" value="" />
+																</div>
+																<div style="float: left; margin-right: 20px;">
+																		<input type="text" style="width: 200px;" class="bookmark_tag" name="user_book_tag" value="" />
+																</div>
+																<div style="float: left; margin-right: 20px;">
+																</div>
+														</div>
+														<div class="columns bookmark_data" style="overflow: hidden;">
+																<div style="float: left; margin-right: 20px;">
+																		<input type="text" style="width: 150px;" class="bookmark_name" maxlength="25" name="user_book_name" />
+																</div>
+																<div style="float: left; margin-right: 20px;">
+																		<input type="text" style="width: 200px;" class="bookmark_tag" name="user_book_tag" />
+																</div>
+																<div style="float: left; margin-right: 20px;">
+																</div>
+														</div>
+												</div>
+										</div>
+								</section>
+						</div>			
+						
+						<div class="page hidden" id="topiclist_page">
+							<h1>Topic List Enhancements</h1>
+							<section>
+								<h3>Users</h3>
+								<div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="ignorator_topiclist" />
+											<span>Enable ignorator for topics</span>
+										</label>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="userhl_topiclist" />
+											<span>Enable user highlighting for topics</span>
+										</label>
+									</div>
+								</div>
+							</section>
+							<section>
+								<h3>Topics</h3>
+								<div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="page_jump_buttons" />
+											<span>Show page jump buttons</span>
+										</label>
+									</div>
+									<!--
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="append_tags" />
+											<span>Move tags to the end of the topic title</span>
+										</label>
+									</div>
+									-->
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="ignore_keyword" />
+											<span>Ignore topics matching keywords (comma separated list or JSON array)</span>
+										</label>
+									</div>
+									<input type="text" style="width: 550px;" id="ignore_keyword_list" />
+									<br />
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="enable_keyword_highlight" />
+											<span>Highlight topics containing keywords below</span>
+										</label>
 										<br />
 										<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
-												<div class="columns" style="overflow: hidden;">
-														<div style="float: left; width: 157px; margin-right: 20px;">
-																Bookmark name:
-																<br />
+											<div class="columns" style="overflow: hidden;">
+												<div style="float: left; width: 257px; margin-right: 20px;">
+													Keywords:
+													<br />
 
-														</div>
-														<div style="float: left; width: 80px; margin-right: 20px;">
-																Tag:
-																<br />
+												</div>
+												<div style="float: left; width: 80px; margin-right: 20px;">
+													Background:
+													<br />
 
-														</div>
 												</div>
+												<div style="float: left; width: 70px; margin-right: 20px;">
+													Text:
+													<br />
+												</div>
+											</div>
 										</div>
-										<div style="font-size: small!important; margin-left: 17px;" id="bookmarked_tags">
-												<div class="columns" style="overflow: hidden; display: none;" class="bookmark_blank">
-														<div style="float: left; margin-right: 20px;">
-																<input type="text" style="width: 150px;" class="bookmark_name" name="user_book_name" maxlength="25" value="" />
-														</div>
-														<div style="float: left; margin-right: 20px;">
-																<input type="text" style="width: 200px;" class="bookmark_tag" name="user_book_tag" value="" />
-														</div>
-														<div style="float: left; margin-right: 20px;">
-														</div>
+										<div style="font-size: small!important; margin-left: 17px;" id="keyword_highlight">
+											<div class="columns" style="overflow: hidden; display: none;" class="keyword_highlight_data_blank">
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 250px;" class="keyword" name="keyword_highlight_keyword" value="" />
 												</div>
-												<div class="columns bookmark_data" style="overflow: hidden;">
-														<div style="float: left; margin-right: 20px;">
-																<input type="text" style="width: 150px;" class="bookmark_name" maxlength="25" name="user_book_name" />
-														</div>
-														<div style="float: left; margin-right: 20px;">
-																<input type="text" style="width: 200px;" class="bookmark_tag" name="user_book_tag" />
-														</div>
-														<div style="float: left; margin-right: 20px;">
-														</div>
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 70px;" class="color keyword_bg" name="keyword_highlight_bg" value="" />
 												</div>
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 70px;" class="color keyword_color" name="keyword_highlight_color" value="" />
+												</div>
+											</div>
+											<div class="columns keyword_highlight_data" style="overflow: hidden;">
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 250px;" class="keyword" name="keyword_highlight_keyword" />
+												</div>
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 70px;" class="color keyword_bg" name="keyword_highlight_bg" value="" />
+												</div>
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 70px;" class="color keyword_color" name="keyword_highlight_color" value="" />
+												</div>
+											</div>
 										</div>
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="enable_tag_highlight" />
+											<span>Highlight topics containing tags below</span>
+										</label>
+										<br />
+										<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+											<div class="columns" style="overflow: hidden;">
+												<div style="float: left; width: 257px; margin-right: 20px;">
+													Tags:
+													<br />
+												</div>
+												<div style="float: left; width: 80px; margin-right: 20px;">
+													Background:
+													<br />
+												</div>
+												<div style="float: left; width: 70px; margin-right: 20px;">
+													Text:
+													<br />
+												</div>
+											</div>
+										</div>
+										<div style="font-size: small!important; margin-left: 17px;" id="tag_highlight">
+											<div class="columns" style="overflow: hidden; display: none;" class="tag_highlight_data_blank">
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 250px;" class="tag" name="tag_highlight_keyword" value="" />
+												</div>
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 70px;" class="color tag_bg" name="tag_highlight_bg" value="" />
+												</div>
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 70px;" class="color tag_color" name="tag_highlight_color" value="" />
+												</div>
+											</div>
+											<div class="columns tag_highlight_data" style="overflow: hidden;">
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 250px;" class="tag" name="tag_highlight_keyword" />
+												</div>
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 70px;" class="color tag_bg" name="tag_highlight_bg" value="" />
+												</div>
+												<div style="float: left; margin-right: 20px;">
+													<input type="text" style="width: 70px;" class="color tag_color" name="tag_highlight_color" value="" />
+												</div>
+											</div>
+										</div>
+									</div>
 								</div>
-
+							</section>
+						</div>		
+						
+						<div class="page hidden" id="messagelist_page">
+						<h1>Message List Enhancements</h1>
+						<!--
+						<section>
+								<h3>Notifications</h3>
+								<div>
+									<div class="checkbox">
+											<label>
+													<input type="checkbox" id="notify_on_highlighted_user" />
+													<span>Notify when a highlighted user posts</span>
+											</label>
+									</div>
+									<div class="checkbox">
+											<label>
+													<input type="checkbox" id="notify_on_quote" />
+													<span>Notify when one of your posts is quoted</span>
+											</label>
+									</div>
+									<div class="checkbox">
+											<label>
+													<input type="checkbox" id="notify_on_new_page" />
+													<span>Notify when a new page is created</span>
+											</label>
+									</div>
+							</div>
 						</section>
-				</div>
-				<div class="page hidden" id="topiclist_page">
-					<h1>Topic List Enhancements</h1>
-					<section>
-						<h3>Users</h3>
-						<div>
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="ignorator_topiclist" />
-									<span>Enable ignorator for topics</span>
-								</label>
-                            </div>
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="userhl_topiclist" />
-									<span>Enable user highlighting for topics</span>
-								</label>
-                            </div>
-						</div>
-					</section>
-                    <section>
-						<h3>Topics</h3>
-						<div>
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="page_jump_buttons" />
-									<span>Show page jump buttons</span>
-								</label>
-                            </div>
-                            <!--
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="append_tags" />
-									<span>Move tags to the end of the topic title</span>
-								</label>
-                            </div>
-                            -->
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="ignore_keyword" />
-									<span>Ignore topics matching keywords (comma separated list or JSON array)</span>
-								</label>
+						-->
+						<section>
+							<h3>Images</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="click_expand_thumbnail" />
+										<span>Click to expand thumbnailed images</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="imagemap_new_tab" />
+										<span>Open image map in new tab</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="copy_in_context" />
+										<span>"Copy img code" in context menu</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="embed_on_hover" />
+										<span>Show embed option next to YouTube links</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="imagemap_on_infobar" />
+										<span>Show topic's imagemap link on the infobar</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<input type="checkbox" id="resize_imgs" />
+									<span>Resize images that are wider than <input type="text" id="img_max_width" class="color-input" value="1440" /> px</span>
+								</div>
 							</div>
-                            <input type="text" style="width: 550px;" id="ignore_keyword_list" />
-                            <br />
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="enable_keyword_highlight" />
-									<span>Highlight topics containing keywords below</span>
-								</label>
-                                <br />
-                                <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+						</section>
+						<section>
+							<h3>Users</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="user_notes" />
+										<span>User notes</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="ignorator_messagelist" />
+										<span>Enable ignorator for posts</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="userhl_messagelist" />
+										<span>Enable user highlighing for posts</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="no_user_highlight_quotes" />
+										<span>Disable user highlighting on quotes</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<section>
+							<h3>Notifications</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="notify_userhl_post" />
+										<span>Send a notification when a highlighted user posts</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="notify_quote_post" />
+										<span>Send a notification when I am quoted</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="new_page_notify" />
+										<span>Send a notification when a new page is created</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<section>
+							<h3>Posts</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="number_posts" />
+										<span>Number posts</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="like_button" />
+										<span>Show the Like button</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="hide_deleted" />
+										<span>[Mod] Hide messages that have been deleted by default</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="loadquotes" />
+										<span>Click [quoted text omitted] to load quote</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="post_title_notification" />
+										<span>Show unread posts in page title</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="filter_me" />
+										<span>Filter Me button</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="expand_spoilers" />
+										<span>Expand Spoilers button</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<input type="checkbox" id="highlight_tc" />
+									<span>Highlight the TC's username color <input type="text" id="tc_highlight_color" class="color color-input" value="ffff00" /></span>
+								</div>
+								<div class="checkbox">
+									<input type="checkbox" id="label_tc" />
+									<span>Show <b>TC</b> next to the TC's username<input type="text" id="tc_label_color" class="color color-input" /></span>
+								</div>
+								<div class="checkbox">
+									<input type="checkbox" id="label_self_anon" />
+									<span>Show <b>(Me)</b> next to own posts in anonymous topics</span>
+								</div>
+								<div class="checkbox">
+									<input type="checkbox" id="foxlinks_quotes" />
+									<span>Foxlinks style quotes color #<input type="text" id="foxlinks_quotes_color" class="color-input" /> 
+										(set this to <a href="http://endoftheinter.net/colors.php">main color 3</a>)</span>
+								</div>
+								<div class="checkbox">
+									<label>
+										<span>Autoscroll livelinks:</span>
+									</label>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="autoscroll_livelinks" />
+											<span>Scroll down on livelinks post in hidden tabs</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="autoscroll_livelinks_active" />
+											<span>Follow live posts in active tabs (while at bottom of screen)</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="autoscroll_livelinks_menu" />
+											<span>Display popup menu when not at bottom of screen</span>
+										</label>
+									</div>
+								</div>
+							</div>
+						</section>
+						<section>
+							<h3>Quickpost</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="quickpost_tag_buttons" />
+										<span>Show HTML tag buttons (bold, italic, etc)</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="quickpost_on_pgbottom" />
+										<span>Quickpost on page bottom</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="post_before_preview" />
+										<span>Post button before Preview button</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="batch_uploader" />
+										<span>Show batch upload buttons</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="drop_batch_uploader" />
+										<span>Drag images onto reply text area to upload</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="post_templates" />
+										<span>Preformatted post templates</span>
+									</label>
+								</div>
+								<br />
+								<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
 									<div class="columns" style="overflow: hidden;">
 										<div style="float: left; width: 257px; margin-right: 20px;">
-											Keywords:<br />
-											
-                                        </div>
-                                        <div style="float: left; width: 80px; margin-right: 20px;">
-											Background:<br />
-											
-                                        </div>
-                                        <div style="float: left; width: 70px; margin-right: 20px;">
-											Text:<br />
-											
+											Text:
+											<br />
+										</div>
+										<div style="float: left; width: 80px; margin-right: 20px;">
+											Title:
+											<br />
+
 										</div>
 									</div>
 								</div>
-                                <div style="font-size: small!important; margin-left: 17px;" id="keyword_highlight" >
-									<div class="columns" style="overflow: hidden; display: none;" class="keyword_highlight_data_blank">
-										<div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 250px;" class="keyword" name="keyword_highlight_keyword" value="" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color keyword_bg" name="keyword_highlight_bg" value="" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color keyword_color" name="keyword_highlight_color" value="" />
-                                        </div>
-									</div>
-                                    <div class="columns keyword_highlight_data" style="overflow: hidden;">
-										<div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 250px;" class="keyword" name="keyword_highlight_keyword" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color keyword_bg" name="keyword_highlight_bg" value="" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color keyword_color" name="keyword_highlight_color" value="" />
-                                        </div>
-									</div>
-								</div>
-                            </div>
-                            <div class="checkbox">
-								<label>
-									<input type="checkbox" id="enable_tag_highlight" />
-									<span>Highlight topics containing tags below</span>
-								</label>
-                                <br />
-                                <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
-									<div class="columns" style="overflow: hidden;">
-										<div style="float: left; width: 257px; margin-right: 20px;">
-											Tags:<br />
-											
-                                        </div>
-                                        <div style="float: left; width: 80px; margin-right: 20px;">
-											Background:<br />
-											
-                                        </div>
-                                        <div style="float: left; width: 70px; margin-right: 20px;">
-											Text:<br />
-											
-										</div>
-									</div>
-								</div>
-                                <div style="font-size: small!important; margin-left: 17px;" id="tag_highlight" >
-									<div class="columns" style="overflow: hidden; display: none;" class="tag_highlight_data_blank">
-										<div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 250px;" class="tag" name="tag_highlight_keyword" value="" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color tag_bg" name="tag_highlight_bg" value="" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color tag_color" name="tag_highlight_color" value="" />
-                                        </div>
-									</div>
-                                    <div class="columns tag_highlight_data" style="overflow: hidden;">
-										<div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 250px;" class="tag" name="tag_highlight_keyword" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color tag_bg" name="tag_highlight_bg" value="" />
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
-											<input type="text" style="width: 70px;" class="color tag_color" name="tag_highlight_color" value="" />
-                                        </div>
-									</div>
-								</div>
-							</div>
-                        </div>
-					</section>
-				</div>
-				
-				<div class="page hidden" id="messagelist_page">
-					<h1>Message List Enhancements</h1>
-                    <!--
-                    <section>
-                        <h3>Notifications</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="notify_on_highlighted_user" />
-                                    <span>Notify when a highlighted user posts</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="notify_on_quote" />
-                                    <span>Notify when one of your posts is quoted</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="notify_on_new_page" />
-                                    <span>Notify when a new page is created</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    -->
-                    <section>
-                        <h3>Images</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="click_expand_thumbnail" />
-                                    <span>Click to expand thumbnailed images</span>
-                                </label>
-                            </div>
-														<div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="imagemap_new_tab" />
-                                    <span>Open image map in new tab</span>
-                                </label>
-                            </div>
-														<div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="copy_in_context" />
-                                    <span>"Copy img code" in context menu</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="embed_on_hover" />
-                                    <span>Show embed option next to YouTube links</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="imagemap_on_infobar" />
-                                    <span>Show topic's imagemap link on the infobar</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <input type="checkbox" id="resize_imgs" />
-                                <span>Resize images that are wider than <input type="text" id="img_max_width" class="color-input" value="1440" /> px</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Users</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="user_notes" />
-                                    <span>User notes</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="ignorator_messagelist" />
-                                    <span>Enable ignorator for posts</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="userhl_messagelist" />
-                                    <span>Enable user highlighing for posts</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="no_user_highlight_quotes" />
-                                    <span>Disable user highlighting on quotes</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Notifications</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="notify_userhl_post" />
-                                    <span>Send a notification when a highlighted user posts</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="notify_quote_post" />
-                                    <span>Send a notification when I am quoted</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="new_page_notify" />
-                                    <span>Send a notification when a new page is created</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Posts</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="number_posts" />
-                                    <span>Number posts</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="like_button" />
-                                    <span>Show the Like button</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="hide_deleted" />
-                                    <span>[Mod] Hide messages that have been deleted by default</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="loadquotes" />
-                                    <span>Click [quoted text omitted] to load quote</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="post_title_notification" />
-                                    <span>Show unread posts in page title</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="filter_me" />
-                                    <span>Filter Me button</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="expand_spoilers" />
-                                    <span>Expand Spoilers button</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <input type="checkbox" id="highlight_tc" />
-                                <span>Highlight the TC's username color <input type="text" id="tc_highlight_color" class="color color-input" value="ffff00" /></span>
-                            </div>
-                            <div class="checkbox">
-                                <input type="checkbox" id="label_tc" />
-                                <span>Show <b>TC</b> next to the TC's username color <input type="text" id="tc_label_color" class="color color-input" /></span>
-                            </div>
-                            <div class="checkbox">
-                                <input type="checkbox" id="foxlinks_quotes" />
-                                <span>Foxlinks style quotes color #<input type="text" id="foxlinks_quotes_color" class="color-input" /> (set this to <a href="http://endoftheinter.net/colors.php">main color 3</a>)</span>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <span>Autoscroll livelinks:</span>
-                                </label>
-                                <div class="checkbox subbox">
-                                <label>
-                                    <input type="checkbox" id="autoscroll_livelinks" />
-                                    <span>Scroll down on livelinks post in hidden tabs</span>
-                                </label>
-                                </div>																
-                                <div class="checkbox subbox">
-                                <label>
-                                    <input type="checkbox" id="autoscroll_livelinks_active" />
-                                    <span>Follow live posts in active tabs (while at bottom of screen)</span>
-                                </label>
-                                </div>
-                                <div class="checkbox subbox">
-                                <label>
-                                    <input type="checkbox" id="autoscroll_livelinks_menu" />
-                                    <span>Display popup menu when not at bottom of screen</span>
-                                </label>
-                                </div>																
-                            </div>															
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Quickpost</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="quickpost_tag_buttons" />
-                                    <span>Show HTML tag buttons (bold, italic, etc)</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="quickpost_on_pgbottom" />
-                                    <span>Quickpost on page bottom</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="post_before_preview" />
-                                    <span>Post button before Preview button</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="batch_uploader" />
-                                    <span>Show batch upload buttons</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="drop_batch_uploader" />
-                                    <span>Drag images onto reply text area to upload</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="post_templates" />
-                                    <span>Preformatted post templates</span>
-                                </label>
-                            </div>
-                            <br />
-                            <div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
-									<div class="columns" style="overflow: hidden;">
-										<div style="float: left; width: 257px; margin-right: 20px;">
-											Text:<br />
-											
-                                        </div>
-                                        <div style="float: left; width: 80px; margin-right: 20px;">
-											Title:<br />
-											
-                                        </div>
-									</div>
-                            </div>
-                                <div style="font-size: small!important; margin-left: 17px;" id="post_template" >
+								<div style="font-size: small!important; margin-left: 17px;" id="post_template">
 									<div class="columns post_template_data_blank" style="overflow: hidden; display: none;">
 										<div style="float: left; margin-right: 20px;">
 											<textarea style="width: 250px; height: 5em;" class="template_text" name="post_template_text" value=""></textarea>
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
+										</div>
+										<div style="float: left; margin-right: 20px;">
 											<input type="text" style="width: 70px;" class="template_title" name="post_template_title" value="" />
-                                        </div>
+										</div>
 									</div>
-                                    <div class="columns post_template_data" style="overflow: hidden;">
+									<div class="columns post_template_data" style="overflow: hidden;">
 										<div style="float: left; margin-right: 20px;">
 											<textarea style="width: 250px; height: 5em;" class="template_text" name="post_template_text"></textarea>
-                                        </div>
-                                        <div style="float: left; margin-right: 20px;">
+										</div>
+										<div style="float: left; margin-right: 20px;">
 											<input type="text" style="width: 70px;" class="template_title" name="post_template_title" value="" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                <div class="page hidden" id="profile_page">
-                    <h1>Profile</h1>
-                    <section>
-                        <h3>History</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="sort_history" />
-                                    <span>Sort message history by last post in topic by default</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="history_expand_search" />
-                                    <span>Auto expand search box in message history</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    <h1>PM Inbox</h1>
-                    <section>
-                        <h3>Users</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="ignorator_topiclist_pm" />
-                                    <span>Enable ignorator for PMs</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="userhl_topiclist_pm" />
-                                    <span>Enable user highlighting for PMs</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Messages</h3>
-                        <div>
-                            <div class="checkbox">
-                  <label>
-									<input type="checkbox" id="page_jump_buttons_pm" />
-									<span>Show page jump buttons</span>
-                  </label>
-                            </div>
-                        </div>
-                    </section>
-                  <h1>PM Threads</h1>
-                    <section>
-                        <h3>Images</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="click_expand_thumbnail_pm" />
-                                    <span>Click to expand thumbnailed images</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Users</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="user_notes_pm" />
-                                    <span>User notes</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="userhl_messagelist_pm" />
-                                    <span>Enable user highlighing for PM messages</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="pm_title_pm" />
-                                    <span>Put username in page title</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Posts</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="number_posts_pm" />
-                                    <span>Number posts</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="loadquotes_pm" />
-                                    <span>Click [quoted text omitted] to load quote</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="post_title_notification_pm" />
-                                    <span>Show unread posts in page title</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Quickpost</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="quickpost_tag_buttons_pm" />
-                                    <span>Show HTML tag buttons (bold, italic, etc)</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="quickpost_on_pgbottom_pm" />
-                                    <span>Quickpost on page bottom</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="post_before_preview_pm" />
-                                    <span>Post button before Preview button</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="batch_uploader_pm" />
-                                    <span>Show batch upload buttons</span>
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="drop_batch_uploader_pm" />
-                                    <span>Drag images onto reply text area to upload</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-                <div class="page hidden" id="about_page">
-                <h1>Version: <span id="version"></span></h1>
-                <h1>Development Options</h1>
-                    <section>
-                        <h3>Log</h3>
-                        <div>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="debug" />
-                                    <span>Enable debug logging to console</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>About</h3>
-                        <div>
-                            Written by <a href="https://endoftheinter.net/profile.php?user=18394">chairface</a><br />
-                            Transloader code by <a href="https://boards.endoftheinter.net/showmessages.php?board=42&topic=7817173">Milan</a><br />
-                            Some dramalinks code is based off of an extension by <a href="https://endoftheinter.net/profile.php?user=10347">freeman</a><br />
-                            "Load [quoted text omitted] on click" code originally by <a href="https://endoftheinter.net/profile.php?user=10295">headbanger</a><br />
-                            Remove unneeded links from the menubar based on code by <a href="https://endoftheinter.net/profile.php?user=5563">citizenray</a><br />
-														Notifications update and various features by <a href="https://endoftheinter.net/profile.php?user=5599">sonicmax</a><br />
-							Thumbnail expansion (and other bugs) fixed and enhanced by <a href="https://endoftheinter.net/profile.php?user=1332">xDrVonScottx</a><br />
-							Special thanks to <a href="https://endoftheinter.net/profile.php?user=3968">Letters</a> for creating the <a href="http://eti-stats.herokuapp.com/tools/clean_ignorator/">Ignorator Cleaner</a> API<br />
-							Special thanks to <a href="https://endoftheinter.net/profile.php?user=25111">chrls</a> for hosting the rep ignorator backend
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Sync</h3>
-                        <div>
-                            <input type="button" value="Force save sync" id="savesync" />
-                            <input type="button" value="Force load sync" id="loadsync" />
-                            <textarea id="fsync_ta" style="width: 90%; height: 100px; border: none;"></textarea>
-                        </div>
-                    </section>
-                    <section>
-                        <h3>Misc</h3>
-                        <div>
-                            <input type="button" value="Show ChromeLL Config" id="showcfg" />
-                            <input type="button" value="Load ChromeLL Config" id="loadcfg" />
-                            <textarea id="cfg_ta" style="width: 90%; height: 300px; border: none;"></textarea>
-                        </div>
-                    </section>
-                </div>     
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>		
+					</div>
+					
+					
+					<div class="page hidden" id="profile_page">
+						<h1>Profile</h1>
+						<section>
+							<h3>History</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="sort_history" />
+										<span>Sort message history by last post in topic by default</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="history_expand_search" />
+										<span>Auto expand search box in message history</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<h1>PM Inbox</h1>
+						<section>
+							<h3>Users</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="ignorator_topiclist_pm" />
+										<span>Enable ignorator for PMs</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="userhl_topiclist_pm" />
+										<span>Enable user highlighting for PMs</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<section>
+							<h3>Messages</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="page_jump_buttons_pm" />
+										<span>Show page jump buttons</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<h1>PM Threads</h1>
+						<section>
+							<h3>Images</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="click_expand_thumbnail_pm" />
+										<span>Click to expand thumbnailed images</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<section>
+							<h3>Users</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="user_notes_pm" />
+										<span>User notes</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="userhl_messagelist_pm" />
+										<span>Enable user highlighing for PM messages</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="pm_title_pm" />
+										<span>Put username in page title</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<section>
+							<h3>Posts</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="number_posts_pm" />
+										<span>Number posts</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="loadquotes_pm" />
+										<span>Click [quoted text omitted] to load quote</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="post_title_notification_pm" />
+										<span>Show unread posts in page title</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<section>
+							<h3>Quickpost</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="quickpost_tag_buttons_pm" />
+										<span>Show HTML tag buttons (bold, italic, etc)</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="quickpost_on_pgbottom_pm" />
+										<span>Quickpost on page bottom</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="post_before_preview_pm" />
+										<span>Post button before Preview button</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="batch_uploader_pm" />
+										<span>Show batch upload buttons</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="drop_batch_uploader_pm" />
+										<span>Drag images onto reply text area to upload</span>
+									</label>
+								</div>
+							</div>
+						</section>
+					</div>		
+					
+					<div class="page hidden" id="about_page">
+						<h1>Version: <span id="version"></span></h1>
+						<h1>Development Options</h1>
+						<section>
+							<h3>Log</h3>
+							<div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="debug" />
+										<span>Enable debug logging to console</span>
+									</label>
+								</div>
+							</div>
+						</section>
+						<section>
+							<h3>About</h3>
+							<div>
+								Written by <a href="https://endoftheinter.net/profile.php?user=18394">chairface</a>
+								<br />Transloader code by <a href="https://boards.endoftheinter.net/showmessages.php?board=42&topic=7817173">Milan</a>
+								<br />Some dramalinks code is based off of an extension by <a href="https://endoftheinter.net/profile.php?user=10347">freeman</a>
+								<br />"Load [quoted text omitted] on click" code originally by <a href="https://endoftheinter.net/profile.php?user=10295">headbanger</a>
+								<br />Remove unneeded links from the menubar based on code by <a href="https://endoftheinter.net/profile.php?user=5563">citizenray</a>
+								<br />Notifications update and various features by <a href="https://endoftheinter.net/profile.php?user=5599">sonicmax</a>
+								<br />Thumbnail expansion (and other bugs) fixed and enhanced by <a href="https://endoftheinter.net/profile.php?user=1332">xDrVonScottx</a>
+								<br />Special thanks to <a href="https://endoftheinter.net/profile.php?user=3968">Letters</a> for creating the <a href="http://eti-stats.herokuapp.com/tools/clean_ignorator/">Ignorator Cleaner</a> API
+								<br />Special thanks to <a href="https://endoftheinter.net/profile.php?user=25111">chrls</a> for hosting the rep highlighter backend
+							</div>
+						</section>
+						<section>
+							<h3>Sync</h3>
+							<div>
+								<input type="button" value="Force save sync" id="savesync" />
+								<input type="button" value="Force load sync" id="loadsync" />
+								<textarea id="fsync_ta" style="width: 90%; height: 100px; border: none;"></textarea>
+							</div>
+						</section>
+						<section>
+							<h3>Misc</h3>
+							<div>
+								<input type="button" value="Show ChromeLL Config" id="showcfg" />
+								<input type="button" value="Load ChromeLL Config" id="loadcfg" />
+								<textarea id="cfg_ta" style="width: 90%; height: 300px; border: none;"></textarea>
+							</div>
+						</section>
+					</div>
+					<!--end option pages-->
+				</div>	
 			</div>
 		</div>
 	</div>
-</div>
 </body>
 </html>
