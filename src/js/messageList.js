@@ -59,7 +59,7 @@ var link_observer = new MutationObserver(function(mutations) {
 		if (mutation.type == "childList" 
 				&& mutation.target.getAttribute("class") == "message-top" 
 				&& mutation.target.nextSibling.nodeName == "TABLE") {
-			var link, wikiLink, vidLink, imageLink;
+			var link, wikiLink, vidLink, imageLink, gfyLink;
 			var posts = mutation.target.nextSibling;
 			var links = posts.getElementsByClassName("l");
 			for (var i = links.length - 1; i >= 0; i--) {
@@ -80,6 +80,10 @@ var link_observer = new MutationObserver(function(mutations) {
 					imageLink = link;
 					imageLink.className = "imap";
 					imageLink.addEventListener("click", messageListHelper.imageFix);
+				}
+				else if (link.title.indexOf("http://gfycat.com/") > -1) {
+					gfyLink = link;
+					messageListHelper.embedGfy(gfyLink);
 				}
 			}
 		}
@@ -1500,6 +1504,10 @@ var messageListHelper = {
 	},
 	imageFix: function () {
 		window.open(this.href.replace("boards", "images"));
+	},
+	embedGfy: function (gfyLink) {
+		var url = gfyLink.href;
+		gfyLink.innerHTML = '<iframe src="' + url + '" frameborder="0" scrolling="no" width="600" height="338" style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" ></iframe>';
 	},
 	embedYoutube: function() {
 		var that = this;
