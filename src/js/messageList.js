@@ -584,6 +584,25 @@ var messageList = {
 					tcs[i].getElementsByTagName('a')[0].nextSibling);
 		}
 	},
+	label_self_anon : function() {
+		if (!window.location.href.match('archives')) {
+			var tops = document.getElementsByClassName('message-top');
+			if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {				
+				var self = document.getElementsByClassName('quickpost-body')[0]
+						.getElementsByTagName('a')[0].innerText;
+				var top, humanToCheck, span;
+				for (var i = 0, len = tops.length; i < len; i++) {
+					top = tops[i];
+					humanToCheck = top.getElementsByTagName('a')[0];
+					if (humanToCheck.innerText == self) {			
+							span = document.createElement('span');
+							span.innerHTML = ' | <b>(Me)</b>';
+							top.insertBefore(span, humanToCheck.nextSibling);
+					}
+				}
+			}
+		}
+	},
 	post_before_preview : function() {
 		var m = document.getElementsByClassName('quickpost-body')[0]
 				.getElementsByTagName('input');
