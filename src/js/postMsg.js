@@ -31,9 +31,78 @@ var postMsg = {
 		post.parentNode.removeChild(post);
 		preview.parentNode.insertBefore(post, preview);
 	},
+	create_topic_buttons : function() {
+		var txt = document.getElementById('message');
+		var tokendesc = document.getElementById('token_desc');
+		// deal with tagless topics
+		if (!tokendesc) {
+			tokendesc = document.getElementsByTagName('em')[0];
+		}
+		var br = document.createElement('br');
+		tokendesc.appendChild(br);
+		var insM = document.createElement('input');
+		insM.value = 'Mod';
+		insM.name = 'Mod';
+		insM.type = 'button';
+		insM.id = 'mod';
+		insM.addEventListener("click", postMsgHelper.qpTagButton, false);
+		var insA = document.createElement('input');
+		insA.value = 'Admin';
+		insA.name = 'Admin';
+		insA.type = 'button';
+		insA.addEventListener("click", postMsgHelper.qpTagButton, false);
+		insA.id = 'adm';
+		var insQ = document.createElement('input');
+		insQ.value = 'Quote';
+		insQ.name = 'Quote';
+		insQ.type = 'button';
+		insQ.addEventListener("click", postMsgHelper.qpTagButton, false);
+		insQ.id = 'quote';
+		var insS = document.createElement('input');
+		insS.value = 'Spoiler';
+		insS.name = 'Spoiler';
+		insS.type = 'button';
+		insS.addEventListener("click", postMsgHelper.qpTagButton, false);
+		insS.id = 'spoiler';
+		var insP = document.createElement('input');
+		insP.value = 'Preformated';
+		insP.name = 'Preformated';
+		insP.type = 'button';
+		insP.addEventListener("click", postMsgHelper.qpTagButton, false);
+		insP.id = 'pre';
+		var insU = document.createElement('input');
+		insU.value = 'Underline';
+		insU.name = 'Underline';
+		insU.type = 'button';
+		insU.addEventListener("click", postMsgHelper.qpTagButton, false);
+		insU.id = 'u';
+		var insI = document.createElement('input');
+		insI.value = 'Italic';
+		insI.name = 'Italic';
+		insI.type = 'button';
+		insI.addEventListener("click", postMsgHelper.qpTagButton, false);
+		insI.id = 'i';
+		var insB = document.createElement('input');
+		insB.value = 'Bold';
+		insB.name = 'Bold';
+		insB.type = 'button';
+		insB.addEventListener("click", postMsgHelper.qpTagButton, false);
+		insB.id = 'b';
+		tokendesc.insertBefore(insM, tokendesc.nextSibling.lastChild);
+		tokendesc.insertBefore(insQ, insM);
+		tokendesc.insertBefore(insS, insQ);
+		tokendesc.insertBefore(insP, insS);
+		tokendesc.insertBefore(insU, insP);
+		tokendesc.insertBefore(insI, insU);
+		tokendesc.insertBefore(insB, insI);
+		tokendesc.insertBefore(document.createElement('br'), insB);
+	},
 	quickpost_tag_buttons : function() {
 		var m = document.getElementsByTagName('form')[document
 				.getElementsByTagName('form').length - 1];
+		if (!m) {
+			return;
+		}
 		var txt = document.getElementById('u0_25');
 		var insM = document.createElement('input');
 		insM.value = 'Mod';
@@ -133,9 +202,14 @@ var postMsgHelper = {
 		var open = new RegExp("\\*", "m");
 		var ta = e.target.nextSibling;
 
+		if (ta.nodename) {
 		while (ta.nodeName.toLowerCase() != "textarea")
 			ta = ta.nextSibling;
-
+		}
+		// textarea for create topic page
+		else {
+			(ta = document.getElementById('message'));
+		}
 		var st = ta.scrollTop;
 		var before = ta.value.substring(0, ta.selectionStart);
 		var after = ta.value.substring(ta.selectionEnd, ta.value.length);
@@ -185,5 +259,4 @@ var postMsgHelper = {
 		});
 	}
 }
-
-postMsgHelper.init();
+window.onload=postMsgHelper.init();

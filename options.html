@@ -585,7 +585,7 @@ span.desc {
 			<ul id="navbar">
 				<li class="navbar-item navbar-item-selected options_navigation_link" id="general_link">General</li>
 				<li class="navbar-item options_navigation_link" id="highlighter_link">User highlights</li>
-				<li class="navbar-item options_navigation_link" id="rep_link">Rep highlights</li>
+				<!--<li class="navbar-item options_navigation_link" id="rep_link">Rep highlights</li>-->
 				<li class="navbar-item options_navigation_link" id="bookmarks_link">Bookmarks</li>
 				<li class="navbar-item options_navigation_link" id="topiclist_link">Topic List</li>
 				<li class="navbar-item options_navigation_link" id="messagelist_link">Message List</li>
@@ -840,6 +840,7 @@ span.desc {
 							</section>
 						</div>	
 						
+						<!--
 						<div class="page hidden" id="rep_page">
 							<h1>Rep Highlights</h1>
 							<section>
@@ -914,6 +915,7 @@ span.desc {
 								</div>
 							</section>
 						</div>
+						-->
 						
 						<div class="page hidden" id="bookmarks_page">
 								<h1>Bookmarks</h1>
@@ -984,6 +986,12 @@ span.desc {
 							<section>
 								<h3>Topics</h3>
 								<div>
+										<div class="checkbox">
+											<label>
+												<input type="checkbox" id="create_topic_buttons" />
+												<span>Show HTML tag buttons on Create Topic page (bold, italic, etc)</span>
+											</label>
+										</div>									
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="page_jump_buttons" />
