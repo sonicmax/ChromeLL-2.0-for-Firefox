@@ -104,22 +104,36 @@ function chkSync(){
 if(localStorage['ChromeLL-TCs'] == undefined) localStorage['ChromeLL-TCs'] = "{}";
 
 var app = chrome.app.getDetails();
-if(localStorage['ChromeLL-Version'] != app.version && localStorage['ChromeLL-Version'] != undefined && cfg.sys_notifications){
-    console.log('ChromeLL updated! Old v: ' + localStorage['ChromeLL-Version'] + " New v: " + app.version);
-		chrome.notifications.create(
-		    'popup', {
-		        type: "basic",
-		        title: "ChromeLL has been updated",
-		        message: "Old v: " + localStorage['ChromeLL-Version'] + " New v: " + app.version,
-		        iconUrl: "src/images/lueshi_48.png"
-		    },
-		    function () {}
-		);
-		 // todo - setTimeout needs user configurable option
-		setTimeout(function () {
-		    chrome.notifications.clear('popup', function () {});
-		}, 6000);
-    localStorage['ChromeLL-Version'] = app.version;
+if (localStorage['ChromeLL-Version'] != app.version 
+		&& localStorage['ChromeLL-Version'] != undefined 
+				&& cfg.sys_notifications) {   
+	console.log('ChromeLL updated! Old v: ' + localStorage['ChromeLL-Version'] + " New v: " + app.version);
+	chrome.notifications.create(
+			'popup', {
+					type: "basic",
+					title: "ChromeLL has been updated",
+					message: "Old v: " + localStorage['ChromeLL-Version'] + " New v: " + app.version,
+					buttons: [{
+					title: "Click for more info",
+					}],
+					iconUrl: "src/images/lueshi_48.png"
+			},
+			function (id) {
+				chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
+					if (notifId === id) {
+						if (btnIdx === 0) {
+							// todo - create social board to display this info
+							window.open("http://boards.endoftheinter.net/showmessages.php?topic=8887077");
+						} 
+					}
+				});
+			}
+	);
+	 // todo - setTimeout needs user configurable option
+	setTimeout(function () {
+			chrome.notifications.clear('popup', function () {});
+	}, 6000);
+	localStorage['ChromeLL-Version'] = app.version;
 }
 if(localStorage['ChromeLL-Version'] == undefined){
     localStorage['ChromeLL-Version'] = app.version;
