@@ -32,6 +32,9 @@ var postMsg = {
 		preview.parentNode.insertBefore(post, preview);
 	},
 	create_topic_buttons : function() {
+		if (document.body.innerHTML.indexOf('Create New Topic') == -1) {
+			return;
+		}
 		var txt = document.getElementById('message');
 		var tokendesc = document.getElementById('token_desc');
 		// deal with tagless topics
