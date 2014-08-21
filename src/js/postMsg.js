@@ -101,6 +101,9 @@ var postMsg = {
 		tokendesc.insertBefore(document.createElement('br'), insB);
 	},
 	quickpost_tag_buttons : function() {
+		if (document.body.innerHTML.indexOf('Create New Topic') > -1) {
+			return;
+		}
 		var m = document.getElementsByTagName('form')[document
 				.getElementsByTagName('form').length - 1];
 		if (!m) {
