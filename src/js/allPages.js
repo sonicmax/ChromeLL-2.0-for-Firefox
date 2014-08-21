@@ -441,7 +441,7 @@ var commonFunctions = {
 		else if (window.getSelection)
 			window.getSelection().removeAllRanges();
 	},
-	insertDramalinks : function(dramas, hide) {
+	insertDramalinks: function(dramas, hide) {
 		try {
 			var ticker = document.createElement("center");
 			var update = document.createElement("center");
@@ -450,34 +450,36 @@ var commonFunctions = {
 			update.innerHTML = "";
 			update.id = "dramalinks_update";
 			var h1 = document.getElementsByTagName('h1')[0];
-			if (config.dramalinks_below_topic
+			if (config.dramalinks_below_topic 
 					&& document.getElementsByTagName('h2')[0])
 				h1 = document.getElementsByTagName('h2')[0];
-			h1.parentNode.insertBefore(ticker, h1.nextSibling);
-			h1.parentNode.insertBefore(update, h1.nextSibling);
+				h1.parentNode.insertBefore(ticker, h1.nextSibling);
+				h1.parentNode.insertBefore(update, h1.nextSibling);
 			if (hide) {
 				document.getElementById("dramalinks_ticker").style.display = 'none';
-      }
+			}
 			if (!dramas) {
-          dramas = "Dramalinks loading...";
-          // give dramalinks xhr more time to complete
-          setTimeout(commonFunctions.updateDramaTicker, 400);
-      }
-      document.getElementById("dramalinks_ticker").innerHTML = dramas;
-		} catch (e) {
-		}
-  },
+				dramas = "Dramalinks loading...";
+				// wait for message from background page before updating dramalinks
+				chrome.extension.onMessage.addListener(function(msg, sender, sendResponse) {
+					if (msg.action == 'updatedrama') {
+						if (config.hide_dramalinks_topiclist 
+								&& !window.location.href.match(/topics/i)) {
+							return;
+						}
+						commonFunctions.updateDramaTicker();
+					}
+				});
+			}
+			document.getElementById("dramalinks_ticker").innerHTML = dramas;
+		} catch (e) {}
+	},
 	updateDramaTicker: function() {
 		chrome.extension.sendRequest({
 			need: "dramalinks"
 		}, function(response) {
-			if (!response) {
-				setTimeout(commonFunctions.updateDramaTicker, 100);
-				return;
-			} else {
-				dramas = response.data,
-				document.getElementById("dramalinks_ticker").innerHTML = dramas;
-			}
+			dramas = response.data,
+			document.getElementById("dramalinks_ticker").innerHTML = dramas;
 		});
 	}
 }

@@ -270,16 +270,23 @@ function getDrama() {
 					col="black";
 					break;
 			}
-            if (!kermit)				{
-				dramas="<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol + "</font></span><div style='background-color: "+bgcol+"; color: "+col+";'>" + dramas.slice(2).replace(/\*/g,"&nbsp;&nbsp;&nbsp;&nbsp;")+"</div>";
-            }else{
-                dramas="Current Dramalinks Level: <blink><font color='" + bgcol + "'>CODE KERMIT</font></blink><div style='background-color: "+bgcol+"; color: "+col+";'>" + dramas.slice(2).replace(/\*/g,"&nbsp;&nbsp;&nbsp;&nbsp;")+"</div>";
-            }
-            drama.txt = dramas;
-            drama.time = parseInt(new Date().getTime() + (1800 * 1000));
-        }
+      if (!kermit) {
+				dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
+						+ "</font></span><div style='background-color: "+bgcol+"; color: "+col+";'>" 
+						+ dramas.slice(2).replace(/\*/g,"&nbsp;&nbsp;&nbsp;&nbsp;")+"</div>";
+			} else {
+				dramas = "Current Dramalinks Level: <blink><font color='" + bgcol 
+						+ "'>CODE KERMIT</font></blink><div style='background-color: "+bgcol+"; color: "+col+";'>" 
+						+ dramas.slice(2).replace(/\*/g,"&nbsp;&nbsp;&nbsp;&nbsp;")+"</div>";
+      }
+			drama.txt = dramas;
+			drama.time = parseInt(new Date().getTime() + (1800 * 1000));
+			// send message to allPages.js when function has completed
+			chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+				chrome.tabs.sendMessage(tabs[0].id, {action: "updatedrama"}, function(response) {});  
+			});
     }
-    //return drama;
+  }
 }
 if(cfg.context_menu) buildContextMenu();
 function handleHttpsRedirect(dest){
