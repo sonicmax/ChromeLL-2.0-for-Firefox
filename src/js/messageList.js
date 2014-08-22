@@ -627,8 +627,9 @@ var messageList = {
 		preview.parentNode.insertBefore(post, preview);
 	},
 	like_button : function() {
-		if (window.location.href.match('archives'))
+		if (window.location.href.match('archives')) {
 			return;
+		}
 		var headID = document.getElementsByTagName("head")[0];
 		var newScript = document.createElement('script');
 		newScript.type = 'text/javascript';
@@ -637,7 +638,7 @@ var messageList = {
 		for (var i = 0; document.getElementsByClassName('message-top').item(i); i++) {
 			if (document.getElementsByClassName('message-top').item(i)
 					.getElementsByTagName('a')[2]) {
-				document.getElementsByClassName('message-top').item(i).innerHTML += ' | <a href="##like'
+				document.getElementsByClassName('message-top')[0].item(i).innerHTML += ' | <a href="##like'
 						+ i + '" onclick="like(this);">Like</a>';
 			}
 		}
