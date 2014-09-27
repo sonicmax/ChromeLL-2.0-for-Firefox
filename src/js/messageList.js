@@ -1163,102 +1163,43 @@ var messageListHelper = {
 	},
 	quoteHandler: function() {
 		var that = this;
-		// create hidden notification so we can use fadeIn() later
-		// todo - get text colour from page to match user highlights/
 		var bgColor = $(event.target.parentNode).css('background-color');
-		$(that).append($('<span id="copied" style="display: none; position: absolute; z-index: 1; left: 100; background: ' 
-		+ bgColor + ';"><a href="javascript.void(0)">&nbsp<b>[copied to clipboard]</b></a></span>'));
-		var quoteId = that.id;
-		var quotedMsg = document.querySelector('[msgid="' + quoteId + '"]');
+		// create hidden notification so we can use fadeIn() later
+		$(that).append($('<span id="copied" style="display: none; position: absolute; z-index: 1; left: 100; ' 
+				+ 'background: ' + bgColor 
+				+ ';"><a href="javascript.void(0)">&nbsp<b>[copied to clipboard]</b></a></span>'));
+		var quoteID = that.id;
+		var quotedMsg = document.querySelector('[msgid="' + quoteID + '"]');
 		var html = quotedMsg.innerHTML;
-		var htmlToRemove;
-		var links = quotedMsg.getElementsByTagName('a');
-		var link;
-		// todo - iterate over spans to find pre tags
-		var spans = quotedMsg.getElementsByTagName('span');
-		var spoilers = quotedMsg.getElementsByClassName('spoiler_closed');
-		var spoiler;
-		var nestedQuotes = quotedMsg.getElementsByClassName('quoted-message');
-		var nestedQuote;
-		var first;
-		var last;
+		var htmlElements = quotedMsg.getElementsByTagName("*");
+		var htmlToRemove, htmlElement, imageHandled, first, last, pre;
+		var link = {};
+		var spoiler = {};
+		var quote = {};
 		// remove sig from html
 		if (html.indexOf('---') > -1) {
-			html = '<quote msgid="' + quoteId + '">' + html.substring(0, (html.lastIndexOf('---'))) + '</quote>';
+			html = '<quote msgid="' + quoteID + '">' + html.substring(0, (html.lastIndexOf('---'))) + '</quote>';
 		} else {
-			html = '<quote msgid="' + quoteId + '">' + html + '</quote>';
+			html = '<quote msgid="' + quoteID + '">' + html + '</quote>';
 		}
-		// iterates through elements in document, finds & replaces relevant parts of copied html
-		// so that formatting is maintained in quoted post
-		if (nestedQuotes) {
-			//console.log(nestedQuotes);
-			for (var i = 0, len = nestedQuotes.length; i < len; i++) {
-				nestedQuote = nestedQuotes[i];
-				nestedQuote.Id = nestedQuote.attributes.msgid.value;
-				// avoid duplicates by only checking quotes without id
-				if (!nestedQuote.id) {
-					nestedQuote.text = '<quote>' + nestedQuote.innerText + '</quote>';
-				} else if (nestedQuote.lastChild.data) {
-					nestedQuote.text = '<quote msgid="' + nestedQuote.id + '">' + nestedQuote.lastChild.data + '</quote>';
-				} else {
-					nestedQuote.html = nestedQuote.lastChild.innerHTML;
-					first = nestedQuote.html.indexOf('imgsrc="');
-					last = nestedQuote.html.indexOf('lass="');
-					nestedQuote.img = nestedQuote.html.substring(first, last);
-					nestedQuote.img = nestedQuote.img.replace('imgsrc', '<img src');
-					nestedQuote.img = nestedQuote.img.replace('" c', '" />');
-					nestedQuote.text = '<quote msgid="' + nestedQuote.id + '">' + nestedQuote.img + '</quote>';
-				}
-				html = html.replace(nestedQuote.outerHTML, nestedQuote.text);
+		for (var i = 0, len = htmlElements.length; i < len; i++) {
+			// iterate through elements in document and find/replace relevant parts of copied html
+			// so that formatting is maintained in quoted post
+			htmlElement = htmlElements[i];
+			link.content = '';
+			imageHandled = false;
+			if (htmlElement.className == 'pr') {
+				// handle pre tags
+				pre = htmlElement.outerHTML;
+				pre = pre.replace('<span class="pr">', '<pre>');
+				pre = pre.replace('</span>', '</pre>');
+				html = html.replace(htmlElement.outerHTML, pre);
 			}
-		}
-		if (spans) {
-			for (var i = 0, len = spans.length; i < len; i++) {
-					span = spans[i];
-					if (span.className == 'pr') {
-							span.content = span.outerHTML.replace('<span class="pr">', '<pre>');
-							span.content = span.content.replace('</span>', '</pre>');
-							html = html.replace(span.outerHTML, span.content);
-					}
-			}
-		}
-		if (spoilers) {
-			//console.log(spoilers);
-			for (var i = 0, len = spoilers.length; i < len; i++) {
-				spoiler = spoilers[i];
-				if ((spoiler) && (spoiler.id)) {
-					spoiler.contents = '';
-					spoiler.toReplace = spoiler.outerHTML;
-					spoiler.closed = spoiler.getElementsByClassName('spoiler_on_close');
-					spoiler.open = spoiler.closed[0].nextSibling.innerText;
-					spoiler.title = spoiler.closed[0].innerText.replace(/<|\/>/g, '');
-					first = spoiler.closed[0].innerText.replace(' />', '>');
-					last = first.replace('<', '</');
-					if (spoiler.closed[0].nextSibling.innerHTML.indexOf('<div class="imgs"><a target="_blank" imgsrc="') > -1) {
-						spoiler.imgs = spoiler.getElementsByClassName('imgs');
-							for (var j = 0, len = spoiler.imgs.length; j < len; j++) {
-								spoiler.img = spoiler.imgs[j];
-								spoiler.imgurl = spoiler.img.firstChild.getAttribute('imgsrc');
-								spoiler.contents += '<img src="' + spoiler.imgurl + '" />' + '\n';
-							}
-							spoiler.finished = '<spoiler caption="' + spoiler.title + '">' + spoiler.contents + '</spoiler>';
-					} else {
-						spoiler.contents = spoiler.open.replace(first, '');
-						spoiler.contents = spoiler.contents.replace(last, '');
-						spoiler.finished = '<spoiler caption="' + spoiler.title + '">' + spoiler.contents + '</spoiler>';
-					}
-					if (html.indexOf(spoiler.toReplace) > -1) {
-						html = html.replace(spoiler.toReplace, spoiler.finished);
-					}
-				}
-			}
-		}
-		if (links) {
-				//console.log(links);
-			for (var i = 0, len = links.length; i < len; i++) {
-				link = links[i];
-				if (link.firstChild.className == 'img-loaded') {
-					link.content = link.firstChild.innerHTML;
+			if (htmlElement.firstChild) {
+				//  handle images
+				if (htmlElement.firstChild.className == 'img-loaded' 
+						&& htmlElement.outerHTML.indexOf('<span class="img-loaded"') !== 0) {
+					link.content = htmlElement.firstChild.innerHTML;
 					link.content = link.content.replace('<img src="', '');
 					link.first = link.content.indexOf('"');
 					link.last = link.content.indexOf('">');
@@ -1268,8 +1209,10 @@ var messageListHelper = {
 					link.content = link.content.replace('//', 'http://');
 					link.content = link.content.replace('dealtwith.it', 'endoftheinter.net');
 					link.content = '<img src="' + link.content + '" />' + "\n";
-				} else if (link.firstChild.className == 'img-placeholder') {
-					link.content = link.outerHTML;
+					imageHandled = true;
+				} else if (htmlElement.firstChild.className == 'img-placeholder' 
+						&& htmlElement.outerHTML.indexOf('<span class="img-placeholder"') !== 0) {
+					link.content = htmlElement.outerHTML;
 					link.first = link.content.indexOf('imgsrc="');
 					link.last = link.content.indexOf('" href');
 					link.toRemove = link.content.substring(0, link.first);
@@ -1279,25 +1222,72 @@ var messageListHelper = {
 					link.content = link.content.replace('imgsrc="', '');
 					link.content = link.content.replace(' href="//images.en', '');
 					link.content = '<img src="' + link.content + ' />' + "\n";
-				} else if (link.title.indexOf("/showmessages.php") > -1) {
-					link.content = link.title.replace('/showmessages.php', 'http://boards.endoftheinter.net/showmessages.php');
-				} else if (link.className == 'jump-arrow' || link.id == 'notebook' 
-						|| link.parentElement.attributes.className == 'spoiler_on_close' 
-						|| link.parentElement.attributes.className == 'spoiler_on_open') {
+					imageHandled = true;
+				}
+			}
+			if (htmlElement.tagName == 'A' && !imageHandled) {
+				// handle links
+				if (htmlElement.title.indexOf("/showmessages.php") > -1) {
+					link.content = htmlElement.title.replace('/showmessages.php'
+							, 'http://boards.endoftheinter.net/showmessages.php');
+				} else if (htmlElement.className == 'jump-arrow' 
+						|| htmlElement.id == 'notebook' 
+						|| htmlElement.parentElement.attributes.className == 'spoiler_on_close' 
+						|| htmlElement.parentElement.attributes.className == 'spoiler_on_open' 
+						|| htmlElement.outerHTML.indexOf('<a class="caption" href="#">') == 0) {
+					// ignore these elements
 					link.content = '';
 				} else {
-					link.content = link.href;
+					link.content = htmlElement.href;
 				}
-				if (link.content) {
-					first = html.indexOf('<a');
-					last = html.indexOf('</a>');
-					htmlToRemove = html.substring(first, last);
-					console.log("html to remove iteration " + i + "\n");
-					console.log(htmlToRemove + "\n");
-					console.log(link.content + "\n");
-					html = html.replace(htmlToRemove, '');
-					html = html.replace('</a>', link.content);
+			}
+			if (link.content) {
+				html = html.replace(htmlElement.outerHTML, link.content);
+			}
+			if (htmlElement.className == 'spoiler_closed') {
+				// handle spoiler tagged content
+				spoiler.contents = '';
+				spoiler.toReplace = htmlElement.outerHTML;
+				spoiler.closed = htmlElement.getElementsByClassName('spoiler_on_close');
+				spoiler.open = spoiler.closed[0].nextSibling.innerText;
+				spoiler.title = spoiler.closed[0].innerText.replace(/<|\/>/g, '');
+				first = spoiler.closed[0].innerText.replace(' />', '>');
+				last = first.replace('<', '</');
+				if (spoiler.closed[0].getElementsByClassName('imgs')) {
+					spoiler.imgs = htmlElement.getElementsByClassName('imgs');
+					for (var j = 0, l = spoiler.imgs.length; j < l; j++) {
+						spoiler.img = spoiler.imgs[j];
+						spoiler.imgurl = spoiler.img.firstChild.getAttribute('imgsrc');
+						spoiler.contents += '<img src="' + spoiler.imgurl + '" />' + '\n';
+					}
+					spoiler.finished = '<spoiler caption="' + spoiler.title + '">' + spoiler.contents + '</spoiler>';
+				} else {
+					spoiler.contents = spoiler.open.replace(first, '');
+					spoiler.contents = spoiler.contents.replace(last, '');
+					spoiler.finished = '<spoiler caption="' + spoiler.title + '">' + spoiler.contents + '</spoiler>';
 				}
+				if (html.indexOf(spoiler.toReplace) > -1) {
+					html = html.replace(spoiler.toReplace, spoiler.finished);
+				}
+			}
+			if (htmlElement.className == 'quoted-message') {
+				quote.msgid = htmlElement.attributes.msgid.value;
+				if (!quote.msgid) {
+					quote.finished = '<quote>' + htmlElement.innerText + '</quote>';
+				} else if (htmlElement.lastChild.data) {
+					quote.finished = '<quote msgid="' + quote.msgid + '">' + htmlElement.lastChild.data + '</quote>';
+				} else if (htmlElement.getElementsByClassName('thumbnailed_image')) {
+					quote.html = htmlElement.lastChild.innerHTML;
+					first = quote.html.indexOf('imgsrc="');
+					last = quote.html.indexOf('lass="');
+					quote.img = quote.html.substring(first, last);
+					quote.img = quote.img.replace(/imgsrc/g, '<img src');
+					quote.img = quote.img.replace(/" c/g, '" />');
+					quote.finished = '<quote msgid="' + quote.msgid + '">' + quote.img + '</quote>';
+				}
+				// todo - maintain proper html for nested quotes
+				quote.finished = quote.finished.replace(/|⇗ | Notes/g, '');
+				html = html.replace(htmlElement.outerHTML, quote.finished);
 			}
 		}
 		// clean up html
@@ -1307,14 +1297,15 @@ var messageListHelper = {
 		html = html.replace(/<br>/g, '');
 		html = html.replace(/&lt;/g, '<');
 		html = html.replace(/&gt;/g, '>');
-		// plain text quoting - needs separate option/button
+		// plain text quoting - needs separate option
 		/*var text = quotedMsg.innerText;
-		var quotedText = '<quote msgid="' + quoteId + '">' + text.substring(0, (text.lastIndexOf('---') - 1)) + '</quote>';*/
+		var quotedText = '<quote msgid="' + quoteID + '">' + text.substring(0, (text.lastIndexOf('---') - 1)) + '</quote>';*/
 		var json = {
-				"quote": ""
+			"quote": ""
 		};
 		json.quote = html;
 		chrome.runtime.sendMessage(json, function(response) {
+			// copies json data to clipboard
 			if (config.debug) console.log(response.clipboard);
 		});
 		$("#copied").fadeIn(200);
