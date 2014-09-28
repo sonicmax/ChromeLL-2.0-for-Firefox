@@ -1,4 +1,4 @@
-var config = Array();
+var config = [];
 var ignorated = {
 	total_ignored : 0,
 	data : {
@@ -6,12 +6,12 @@ var ignorated = {
 	}
 };
 // for rep ignorator
-var usersFromPage = [];
+/*var usersFromPage = [];
 var cachedResponses = [];
 var userFilter;
 var repFilter;
 var token;
-var configTimeout;
+var configTimeout;*/
 
 // set up an observer for when img-placeholders get populated
 var img_observer = new MutationObserver(function(mutations) {
@@ -67,20 +67,17 @@ var link_observer = new MutationObserver(function(mutations) {
 				if (link.title.indexOf("/index.php") == 0) {
 					wikiLink = link;
 					wikiLink.className = "wiki";
-					wikiLink.addEventListener("click", messageListHelper.wikiFix);
-					
+					wikiLink.addEventListener("click", messageListHelper.wikiFix);	
 				} else if ((link.title.indexOf("youtube.com/watch?v=") > -1) 
 						|| (link.title.indexOf("youtu.be/") > -1)) {
 					vidLink = link;
 					vidLink.className = "youtube";
 					// give each video link a unique id for embed/hide functions
 					vidLink.id = vidLink.href + "&" + Math.random().toString(16).slice(2);
-					
 				} else if (link.title.indexOf("/imap/") == 0) {
 					imageLink = link;
 					imageLink.className = "imap";
 					imageLink.addEventListener("click", messageListHelper.imageFix);
-					
 				} else if (link.title.indexOf("http://gfycat.com/") > -1) {
 					gfyLink = link;
 					if (!gfyLink.embed) {
@@ -129,7 +126,7 @@ link_observer.observe(document, {
 		attributes: true
 });
 
-function repIgnorator() {
+/*function repIgnorator() {
 	// called from messageListHelper.init
 	var msg_observer = new MutationObserver(function(mutations) {
 		var childNodes;
@@ -173,7 +170,7 @@ function repIgnorator() {
 		childList: true,
 		attributes: true
 	});
-}
+}*/
 
 var messageList = {
 	click_expand_thumbnail : function() {
@@ -518,11 +515,22 @@ var messageList = {
 		m.insertBefore(insB, insI);
 		m.insertBefore(document.createElement('br'), insB);
 	},
-	filter_me : function() {
-		var me = '&u='
-				+ document.getElementsByClassName('userbar')[0]
-						.getElementsByTagName('a')[0].href
-						.match(/\?user=([0-9]+)/)[1];
+	filter_me: function() {
+		var tops = document.getElementsByClassName('message-top');
+		if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
+			// anonymous topic - check quickpost-body for human number
+			var human = document.getElementsByClassName('quickpost-body')[0]
+				.getElementsByTagName('a')[0].innerText.replace('Human #', '');
+			if (isNaN(human)) {
+				// user hasn't posted in topic
+				return;
+			}
+			var me = '&u=-' + human;
+		} else {
+			var me = '&u=' + document.getElementsByClassName('userbar')[0]
+				.getElementsByTagName('a')[0].href
+				.match(/\?user=([0-9]+)/)[1];
+		}
 		var txt = 'Filter Me';
 		var topic = window.location.href.match(/topic=([0-9]+)/)[1];
 		var fmh;
@@ -532,7 +540,7 @@ var messageList = {
 			fmh = window.location.href.replace(me, '');
 			txt = 'Unfilter Me';
 		}
-		document.getElementsByClassName('infobar')[0].innerHTML += ' | <a href="'
+		document.getElementsByClassName('infobar')[0].innerHTML += ' | <a href="' 
 				+ fmh + '">' + txt + '</a>';
 	},
 	expand_spoilers : function() {
@@ -1357,10 +1365,10 @@ var messageListHelper = {
 			messageListHelper.globalPort = chrome.extension.connect();
 			config = conf.data;
 			config.tcs = conf.tcs;
-			if (config.ignorate_by_rep) {
+			/*if (config.ignorate_by_rep) {
 					repIgnorator();
 					messageListHelper.getUserIds();
-			}
+			}*/
 			var pm = '';
 			if (window.location.href.match('inboxthread'))
 				pm = "_pm";
@@ -1559,8 +1567,8 @@ var messageListHelper = {
 			toEmbed.className = "youtube";
 			that.hidden = true;
 		}
-	},
-	showHiddenPost: function() {
+	}//,
+	/*showHiddenPost: function() {
 	// shows posts hidden by rep ignorator
 	// (doesn't work for quoted posts - yet)
 		var that = this;
@@ -1575,7 +1583,7 @@ var messageListHelper = {
 			messageContainer.style.opacity = 0.15;
 			messageBody.style.display = 'none';
 		}
-	},
+	}
 	getUserIds: function() {
 		var links = ($("div.message-top").find("a"));
 		var allIds = [];
@@ -1616,8 +1624,9 @@ var messageListHelper = {
 					console.log("nope");
 					return;
 			}
-			/*var xhr = new XMLHttpRequest();
-			var url = 'http://chillaxtian.com:8081/rep'
+			var xhr = new XMLHttpRequest();
+			// need to set up server before we can use any of this
+			var url = ''
 			xhr.open("POST", url, true);
 			xhr.setRequestHeader('Content-Type', 'application/json');
 			xhr.onreadystatechange = function () {
@@ -1647,9 +1656,9 @@ var messageListHelper = {
 				}
 			}
 			console.log("sending xhr");
-			xhr.send(JSON.stringify(json));*/
+			xhr.send(JSON.stringify(json));
 		}
-	}
+	}*/
 }
 
 var messageListLivelinks = {
