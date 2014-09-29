@@ -286,6 +286,13 @@ function getDrama() {
 				chrome.tabs.sendMessage(tabs[0].id, {action: "updatedrama"}, function(response) {});  
 			});
     }
+		if (xhr.readyState == 4 && xhr.status == 404) {
+			// 404 errors occur if getDrama runs while user is logged out
+			drama.txt = "<a id ='retry' href='javascript:void(0)'>Error loading Dramalinks. Click to retry...</a>";
+			chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+				chrome.tabs.sendMessage(tabs[0].id, {action: "updatedrama"}, function(response) {});  
+			});
+		}
   }
 }
 if(cfg.context_menu) buildContextMenu();

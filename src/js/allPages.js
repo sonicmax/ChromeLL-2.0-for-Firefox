@@ -472,6 +472,13 @@ var commonFunctions = {
 				});
 			}
 			document.getElementById("dramalinks_ticker").innerHTML = dramas;
+			if (dramas == "<a id ='retry' href='javascript:void(0)'>Error loading Dramalinks. Click to retry...</a>") {
+				var retry = document.getElementById('retry');
+				retry.addEventListener('click', function() {
+					commonFunctions.updateDramaTicker();
+					this.removeEventListener;
+				});
+			}
 		} catch (e) {}
 	},
 	updateDramaTicker: function() {
