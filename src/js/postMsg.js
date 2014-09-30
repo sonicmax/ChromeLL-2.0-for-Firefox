@@ -206,16 +206,7 @@ var postMsgHelper = {
 		// from foxlinks
 		var tag = e.target.id;
 		var open = new RegExp("\\*", "m");
-		var ta = e.target.nextSibling;
-
-		if (ta.nodename) {
-		while (ta.nodeName.toLowerCase() != "textarea")
-			ta = ta.nextSibling;
-		}
-		// textarea for create topic page
-		else {
-			(ta = document.getElementById('message'));
-		}
+		var ta = document.getElementById('message');
 		var st = ta.scrollTop;
 		var before = ta.value.substring(0, ta.selectionStart);
 		var after = ta.value.substring(ta.selectionEnd, ta.value.length);
