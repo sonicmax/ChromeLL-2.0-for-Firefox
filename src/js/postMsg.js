@@ -32,12 +32,14 @@ var postMsg = {
 		preview.parentNode.insertBefore(post, preview);
 	},
 	create_topic_buttons : function() {
-		if (document.body.innerHTML.indexOf('Create New Topic') == -1) {
+		if (document.body.innerHTML.indexOf('Create New Topic') == -1 
+		|| document.getElementById('b')) {
+			// wrong page, or buttons already exist
 			return;
 		}
 		var txt = document.getElementById('message');
 		var tokendesc = document.getElementById('token_desc');
-		// deal with tagless topics
+		// deal with tagless topics/etc
 		if (!tokendesc) {
 			tokendesc = document.getElementsByTagName('em')[0];
 		}
@@ -47,14 +49,8 @@ var postMsg = {
 		insM.value = 'Mod';
 		insM.name = 'Mod';
 		insM.type = 'button';
-		insM.id = 'mod';
 		insM.addEventListener("click", postMsgHelper.qpTagButton, false);
-		var insA = document.createElement('input');
-		insA.value = 'Admin';
-		insA.name = 'Admin';
-		insA.type = 'button';
-		insA.addEventListener("click", postMsgHelper.qpTagButton, false);
-		insA.id = 'adm';
+		insM.id = 'mod';
 		var insQ = document.createElement('input');
 		insQ.value = 'Quote';
 		insQ.name = 'Quote';
@@ -116,12 +112,6 @@ var postMsg = {
 		insM.type = 'button';
 		insM.id = 'mod';
 		insM.addEventListener("click", postMsgHelper.qpTagButton, false);
-		var insA = document.createElement('input');
-		insA.value = 'Admin';
-		insA.name = 'Admin';
-		insA.type = 'button';
-		insA.addEventListener("click", postMsgHelper.qpTagButton, false);
-		insA.id = 'adm';
 		var insQ = document.createElement('input');
 		insQ.value = 'Quote';
 		insQ.name = 'Quote';
@@ -187,6 +177,39 @@ var postMsg = {
 }
 
 var postMsgHelper = {
+	create_topic_observer : function() {
+		var observer = new MutationObserver(function(mutations) {
+			// makes sure that create_topic_buttons are visible after tags have been added/removed
+			var mutation;
+			for (var i = 0, len = mutations.length; i < len; i++) {
+				mutation = mutations[i];
+				// check for mutations to tag description field
+				if (mutation.target.id == 'token_desc') {
+					if (mutation.addedNodes.length > 1 
+							&& mutation.addedNodes[1].tagName == "EM") {
+						// warning displayed (topic has no tags, incompatible tags, or too many tags)
+						postMsg.create_topic_buttons();
+					}
+					if (mutation.removedNodes.length > 1 
+							&& mutation.removedNodes[1].tagName == "EM") {
+						// warning removed
+						postMsg.create_topic_buttons();
+					}
+					if (mutation.addedNodes.length > 1 
+							&& mutation.addedNodes[1].tagName == "B") {
+						// second/third/fourth tag has been added to topic
+						postMsg.create_topic_buttons();
+					}
+				}
+			}
+		});
+		observer.observe(document, {
+			subtree: true,
+			characterData: true,
+			childList: true,
+			attributes: true
+		});
+	},
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
 		if (chosen.files.length == 0) {
@@ -253,7 +276,10 @@ var postMsgHelper = {
 					}
 				}
 			}
+			if (config.create_topic_buttons) {
+				postMsgHelper.create_topic_observer();
+			}
 		});
 	}
 }
-window.onload=postMsgHelper.init();
+window.onload = postMsgHelper.init();
