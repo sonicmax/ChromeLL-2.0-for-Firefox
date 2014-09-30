@@ -2034,7 +2034,6 @@ var messageListLivelinks = {
 messageListHelper.init();
 var livelinks = new MutationObserver(function(mutations) {
 	var mutation;
-	var check;
 	for (var i = 0, len = mutations.length; i < len; i++) {
 		mutation = mutations[i];
 		if (!mutation.target.lastChild.firstChild 
