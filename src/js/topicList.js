@@ -153,13 +153,22 @@ var topicList = {
 		}
 	},
 	page_jump_buttons : function() {
+		var inbox;
+		if (window.location.href.indexOf('inbox.php') > -1) {
+			if (!config.page_jump_buttons_pm) {
+				return;
+			}
+			inbox = true;
+		}
 		var trs = topicListHelper.getTopics();
 		var insert;
 		var tmp, topic;
 		for (var i = 1; trs[i]; i++) {
 			if (trs[i].getElementsByTagName('td')[0]) {
 				insert = document.createElement('span');
-				// insert.style.float = 'right';
+				if (inbox) {
+					insert.style.cssFloat = 'right';
+				}
 				insert.addEventListener('click',
 						topicListHelper.jumpHandlerTopic, false);
 				try {
@@ -169,12 +178,21 @@ var topicList = {
 					insert.innerHTML = '<a href="##' + tmp
 							+ '" id="jumpWindow">#</a> <a href="##' + tmp
 							+ '" id="jumpLast">&gt;</a>';
-					trs[i].getElementsByTagName('td')[0]
-							.getElementsByClassName('fr')[0].insertBefore(
-							insert, null);
+					if (inbox) {
+						trs[i].getElementsByTagName('td')[0]
+								.insertBefore(
+								insert, null);				
+					}
+					else {
+						trs[i].getElementsByTagName('td')[0]
+								.getElementsByClassName('fr')[0]
+								.insertBefore(
+								insert, null);
+					}					
 				} catch (e) {
-					if (config.debug)
+					if (config.debug) {
 						console.log('locked topic?');
+					}	
 					topic = trs[i].getElementsByTagName('td')[0]
 							.getElementsByTagName('span')[0]
 							.getElementsByTagName('a');
@@ -345,8 +363,15 @@ var topicList = {
 
 var topicListHelper = {
 	jumpHandlerTopic : function(ev) {
-		var a = ev.srcElement.parentNode.parentNode.parentNode.parentNode
-				.getElementsByTagName('td')[2]
+		var a;
+		if (window.location.href.indexOf('inbox.php') > -1) {
+			var inbox = true;
+			a = ev.srcElement.parentNode.parentNode.nextSibling.nextSibling;
+		}
+		else {
+			a = ev.srcElement.parentNode.parentNode.parentNode.parentNode
+					.getElementsByTagName('td')[2];
+		}
 		var last = Math.ceil(a.innerHTML.split('<')[0] / 50);
 		if (ev.srcElement.id == 'jumpWindow') {
 			pg = prompt("Page Number (" + last + " total)", "Page");
@@ -356,9 +381,15 @@ var topicListHelper = {
 		} else {
 			pg = last;
 		}
-		window.location = ev.srcElement.parentNode.parentNode.parentNode.parentNode
-				.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
-				+ '&page=' + pg;
+		if (inbox) {
+			window.location = ev.srcElement.parentNode.parentNode.firstChild.href 
+					+ '&page=' + pg;
+		}
+		else {
+			window.location = ev.srcElement.parentNode.parentNode.parentNode.parentNode
+					.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
+					+ '&page=' + pg;
+		}
 	},
 	getTopics : function() {
 		return document.getElementsByClassName('grid')[0]
