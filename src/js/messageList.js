@@ -634,20 +634,17 @@ var messageList = {
 		post.parentNode.removeChild(post);
 		preview.parentNode.insertBefore(post, preview);
 	},
-	like_button : function() {
-		if (window.location.href.match('archives')) {
-			return;
-		}
-		var headID = document.getElementsByTagName("head")[0];
-		var newScript = document.createElement('script');
-		newScript.type = 'text/javascript';
-		newScript.src = chrome.extension.getURL('src/js/like.js');
-		headID.appendChild(newScript);
-		for (var i = 0; document.getElementsByClassName('message-top').item(i); i++) {
-			if (document.getElementsByClassName('message-top').item(i)
-					.getElementsByTagName('a')[2]) {
-				document.getElementsByClassName('message-top')[0].item(i).innerHTML += ' | <a href="##like'
-						+ i + '" onclick="like(this);">Like</a>';
+	like_button: function() {
+		if (!window.location.href.match("archives")) {
+			var head = document.getElementsByTagName("head")[0];
+			var script = document.createElement("script");
+			script.type = "text/javascript";
+			script.src = chrome.extension.getURL("src/js/like.js");
+			head.appendChild(script);
+			for (var i = 0; document.getElementsByClassName("message-top").item(i); i++) {
+				document.getElementsByClassName("message-top").item(i).getElementsByTagName("a")[2] &&
+				(document.getElementsByClassName("message-top").item(i).innerHTML 
+						+= ' | <a href="##like' + i + '" onclick="like(this);">Like</a>')
 			}
 		}
 	},
