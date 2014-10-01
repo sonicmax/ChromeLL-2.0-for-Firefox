@@ -587,6 +587,7 @@ span.desc {
 				<li class="navbar-item options_navigation_link" id="highlighter_link">User highlights</li>
 				<!--<li class="navbar-item options_navigation_link" id="rep_link">Rep highlights</li>-->
 				<li class="navbar-item options_navigation_link" id="bookmarks_link">Bookmarks</li>
+				<li class="navbar-item options_navigation_link" id="snippets_link">Snippets</li>
 				<li class="navbar-item options_navigation_link" id="topiclist_link">Topic List</li>
 				<li class="navbar-item options_navigation_link" id="messagelist_link">Message List</li>
 				<li class="navbar-item options_navigation_link" id="profile_link">Profile/PM<small>s</small></li>
@@ -609,14 +610,6 @@ span.desc {
 											<span>Keep the Userbar + Menubar at the top of the screen</span>
 										</label>
 									</div>
-									<!--
-									<div class="checkbox">
-										<label>
-											<input type="checkbox" id="float_userbar_bottom" />
-											<span>Keep the Userbar + Menubar at the bottom of the screen</span>
-										</label>
-									</div>
-									-->
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="short_title" />
@@ -699,7 +692,7 @@ span.desc {
 									<div class="checkbox">
 										<input type="checkbox" id="error_check" />
 										<span>Show popup menu with link to history.php during 'whitescreenlinks'</span>
-									</div>	
+									</div>							
 								</div>
 							</section>
 							<section>
@@ -966,6 +959,60 @@ span.desc {
 												</div>
 										</div>
 								</section>
+						</div>
+						
+						<div class="page hidden" id="snippets_page">
+								<h1>Snippets</h1>
+								<section>							
+										<h3>Settings</h3>
+										<div>	
+										<br>
+										<div class="checkbox">
+											<label>
+												<input type="checkbox" id="snippet_listener" />
+												<span>Enable snippets 
+												(press Tab after entering keyword into post)</span>
+											</label>
+										</div>											
+												<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
+														<div class="columns" style="overflow: hidden;">
+														<br>
+																<div style="float: left; width: 157px; margin-right: 20px;">
+																		Keyword:
+																		<br />
+
+																</div>
+																<div style="float: left; width: 80px; margin-right: 20px;">
+																		Snippet:
+																		<br />
+
+																</div>
+														</div>
+												</div>
+												<div style="font-size: small!important; margin-left: 17px;" id="snippets">
+														<div class="columns" style="overflow: hidden; display: none;" class="snippet_blank">
+																<div style="float: left; margin-right: 20px;">
+																		<input type="text" style="width: 150px;" class="snippet_name" name="snippet_name" maxlength="25" value="" />
+																</div>
+																<div style="float: left; margin-right: 20px;">
+																		<input type="text" style="width: 400px;" class="snippet" name="user_snippet" value="" />
+																</div>
+																<div style="float: left; margin-right: 20px;">
+																</div>
+														</div>
+														<div class="columns snippet_data" style="overflow: hidden;">
+																<div style="float: left; margin-right: 20px;">
+																		<input type="text" style="width: 150px;" class="snippet_name" maxlength="25" name="snippet_name" />
+																</div>
+																<div style="float: left; margin-right: 20px;">
+																		<input type="text" style="width: 400px;" class="snippet" name="user_snippet" />
+																</div>
+																<div style="float: left; margin-right: 20px;">
+																</div>
+														</div>
+												</div>
+										</div>
+								</section>
 						</div>			
 						
 						<div class="page hidden" id="topiclist_page">
@@ -1120,31 +1167,6 @@ span.desc {
 						
 						<div class="page hidden" id="messagelist_page">
 						<h1>Message List Enhancements</h1>
-						<!--
-						<section>
-								<h3>Notifications</h3>
-								<div>
-									<div class="checkbox">
-											<label>
-													<input type="checkbox" id="notify_on_highlighted_user" />
-													<span>Notify when a highlighted user posts</span>
-											</label>
-									</div>
-									<div class="checkbox">
-											<label>
-													<input type="checkbox" id="notify_on_quote" />
-													<span>Notify when one of your posts is quoted</span>
-											</label>
-									</div>
-									<div class="checkbox">
-											<label>
-													<input type="checkbox" id="notify_on_new_page" />
-													<span>Notify when a new page is created</span>
-											</label>
-									</div>
-							</div>
-						</section>
-						-->
 						<section>
 							<h3>Images</h3>
 							<div>

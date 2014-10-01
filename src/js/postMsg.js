@@ -173,6 +173,18 @@ var postMsg = {
 										.asyncUpload(evt.dataTransfer.files[i]);
 							}
 						});
+	},
+	snippet_listener : function() {
+	 var ta = document.getElementsByName('message')[0];
+	 var text, range, word, caret, snippet;
+		ta.addEventListener('keydown', function(event) {
+			if (event.keyIdentifier == 'U+0009') {
+				// prevent default action for tab key so we can attach our own
+				event.preventDefault();
+				caret = postMsgHelper.findCaret(ta);
+				postMsgHelper.snippetHandler(ta.value, caret);
+			}
+		});
 	}
 }
 
@@ -209,6 +221,39 @@ var postMsgHelper = {
 			childList: true,
 			attributes: true
 		});
+	},
+	findCaret : function(ta) {
+		var caret = 0;
+		if (ta.selectionStart || ta.selectionStart == '0') {
+			caret = ta.selectionStart; 
+		}
+		return (caret);
+	},
+	snippetHandler : function(ta, caret) {
+		var text = ta.substring(0, caret);
+		var words, word, snippet, temp, index, newCaret;
+		var message = document.getElementsByName('message')[0];
+		if (text.indexOf(' ') > 0) {
+			words = text.split(' ');
+			word = words[words.length - 1];
+		}
+		else {
+			// first word in post
+			word = text;
+		} 
+		for (var key in config.snippet_data) {
+			if (key === word) {
+				snippet = config.snippet_data[key];
+				index = text.lastIndexOf(word);
+				temp = text.substring(0, index);
+				ta = ta.replace(text, temp + snippet);
+				message.value = ta;
+				// manually move caret to end of pasted snippet
+				// as replacing message.value moves caret to end of input
+				newCaret = ta.lastIndexOf(snippet) + snippet.length;
+				message.setSelectionRange(newCaret, newCaret);
+			}
+		}
 	},
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
