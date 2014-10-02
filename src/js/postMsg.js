@@ -175,7 +175,7 @@ var postMsg = {
 						});
 	},
 	snippet_listener : function() {
-	 var ta = document.getElementsByName('message')[0];
+	 var ta = document.getElementById('message');
 	 var text, range, word, caret, snippet;
 		ta.addEventListener('keydown', function(event) {
 			if (event.keyIdentifier == 'U+0009') {
@@ -232,15 +232,25 @@ var postMsgHelper = {
 	snippetHandler : function(ta, caret) {
 		var text = ta.substring(0, caret);
 		var words, word, snippet, temp, index, newCaret;
-		var message = document.getElementsByName('message')[0];
-		if (text.indexOf(' ') > 0) {
+		var message = document.getElementById('message');
+		if (text.indexOf(' ') > -1) {
 			words = text.split(' ');
+			word = words[words.length - 1];
+			if (word.indexOf('\n') > -1) {
+				// makes sure that line breaks are accounted for
+				words = word.split('\n');
+				word = words[words.length - 1];
+			}
+		}
+		else if (text.indexOf('\n') > -1) {
+			// line break(s) in text - no spaces
+			words = text.split('\n');
 			word = words[words.length - 1];
 		}
 		else {
 			// first word in post
 			word = text;
-		} 
+		}
 		for (var key in config.snippet_data) {
 			if (key === word) {
 				snippet = config.snippet_data[key];

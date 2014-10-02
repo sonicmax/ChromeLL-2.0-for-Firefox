@@ -457,7 +457,7 @@ var messageList = {
 	},
 	quickpost_tag_buttons : function() {
 		var m = document.getElementsByClassName('quickpost-body')[0];
-		var txt = document.getElementById('u0_13');
+		var txt = document.getElementsByName('message')[0];
 		var insM = document.createElement('input');
 		insM.value = 'Mod';
 		insM.name = 'Mod';
@@ -808,6 +808,18 @@ var messageList = {
 		}
 		document.title = "PM - " + other;
 	},
+	snippet_listener : function() {
+		var ta = document.getElementsByName('message')[0];
+		var text, range, word, caret, snippet;
+		ta.addEventListener('keydown', function(event) {
+			if (event.keyIdentifier == 'U+0009') {
+				// prevent default action for tab key so we can attach our own
+				event.preventDefault();
+				caret = messageListHelper.findCaret(ta);
+				messageListHelper.snippetHandler(ta.value, caret);
+			}
+		});
+	}
 }
 
 var messageListHelper = {
@@ -827,6 +839,49 @@ var messageListHelper = {
 			return false;
 		} else {
 			return true;
+		}
+	},
+	findCaret : function(ta) {
+		var caret = 0;
+		if (ta.selectionStart || ta.selectionStart == '0') {
+			caret = ta.selectionStart; 
+		}
+		return (caret);
+	},
+	snippetHandler : function(ta, caret) {
+		var text = ta.substring(0, caret);
+		var words, word, snippet, temp, index, newCaret;
+		var message = document.getElementsByName('message')[0];
+		if (text.indexOf(' ') > -1) {
+			words = text.split(' ');
+			word = words[words.length - 1];
+			if (word.indexOf('\n') > -1) {
+				// makes sure that line breaks are accounted for
+				words = word.split('\n');
+				word = words[words.length - 1];
+			}
+		}
+		else if (text.indexOf('\n') > -1) {
+			// line break(s) in text - no spaces
+			words = text.split('\n');
+			word = words[words.length - 1];
+		}
+		else {
+			// first word in post
+			word = text;
+		}
+		for (var key in config.snippet_data) {
+			if (key === word) {
+				snippet = config.snippet_data[key];
+				index = text.lastIndexOf(word);
+				temp = text.substring(0, index);
+				ta = ta.replace(text, temp + snippet);
+				message.value = ta;
+				// manually move caret to end of pasted snippet
+				// as replacing message.value moves caret to end of input
+				newCaret = ta.lastIndexOf(snippet) + snippet.length;
+				message.setSelectionRange(newCaret, newCaret);
+			}
 		}
 	},
 	addDivListeners : function(div, divAlert, divTop, divMsg, oldPosition, mutation) {
@@ -1450,11 +1505,7 @@ var messageListHelper = {
 		// from foxlinks
 		var tag = e.target.id;
 		var open = new RegExp("\\*", "m");
-		var ta = e.target.nextSibling;
-
-		while (ta.nodeName.toLowerCase() != "textarea")
-			ta = ta.nextSibling;
-
+		var ta = document.getElementsByName('message')[0];
 		var st = ta.scrollTop;
 		var before = ta.value.substring(0, ta.selectionStart);
 		var after = ta.value.substring(ta.selectionEnd, ta.value.length);
