@@ -308,7 +308,6 @@ allBg.init_listener(cfg);
 chrome.tabs.onActivated.addListener(function(tab){
     if(!tabPorts[tab.tabId]) return;
     currentTab = tab.tabId;
-    tabPorts[tab.tabId].postMessage({action: 'focus_gained'});
     tabPorts[tab.tabId].postMessage({action: 'ignorator_update'});
 });
 chrome.tabs.onRemoved.addListener(function(tab){

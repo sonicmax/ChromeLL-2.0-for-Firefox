@@ -299,8 +299,8 @@ var messageList = {
 				ulButton, ulBox);
 	},
 	post_title_notification : function() {
-		// uses page visibility api to clear unread post count
-		document.addEventListener("visibilitychange", messageListHelper.visibilityChange, false);
+		// use page visibility api to clear unread post count
+		document.addEventListener("visibilitychange", messageListHelper.clearUnreadPosts);
 		// keep old event listeners for backup
 		document.addEventListener('scroll', messageListHelper.clearUnreadPosts);
 		document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
@@ -824,11 +824,6 @@ var messageList = {
 
 var messageListHelper = {
 	ignores : {},
-	visibilityChange : function() {
-		if (!document.hidden) {
-			messageListHelper.clearUnreadPosts();
-		}
-	},
 	autoscrollCheck : function (mutation) {
 		var elPosition = mutation.getBoundingClientRect();
 		if (mutation.style.display == 'none'
@@ -1211,10 +1206,12 @@ var messageListHelper = {
 			messageListHelper.hasJustScrolled = false;
 			return;
 		}
+		if (document.hidden) {
+			return;
+		}
 		if (document.title.match(/\(\d+\+?\)/)) {
 			var newTitle = document.title.replace(/\(\d+\+?\) /, "");
 			document.title = newTitle;
-
 			// chrome bug, title does not always update on windows
 			// setTimeout(function(){
 			// document.title = newTitle;
@@ -1441,10 +1438,6 @@ var messageListHelper = {
 						ignorator : ignorated,
 						scope : "messageList"
 					});
-					break;
-				case "focus_gained":
-					// chrome bug, disabled for now
-					// messageListHelper.clearUnreadPosts();
 					break;
 				case "showIgnorated":
 					if (config.debug)
