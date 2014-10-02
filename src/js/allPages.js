@@ -478,17 +478,16 @@ var commonFunctions = {
 	insertDramalinks: function(dramas, hide) {
 		try {
 			var ticker = document.createElement("center");
-			var update = document.createElement("center");
-			// ticker.innerHTML="Dramalinks loading...";
+			//var update = document.createElement("center");
 			ticker.id = "dramalinks_ticker";
-			update.innerHTML = "";
-			update.id = "dramalinks_update";
+			//update.innerHTML = "";
+			//update.id = "dramalinks_update";
 			var h1 = document.getElementsByTagName('h1')[0];
 			if (config.dramalinks_below_topic 
 					&& document.getElementsByTagName('h2')[0])
 				h1 = document.getElementsByTagName('h2')[0];
 				h1.parentNode.insertBefore(ticker, h1.nextSibling);
-				h1.parentNode.insertBefore(update, h1.nextSibling);
+				//h1.parentNode.insertBefore(update, h1.nextSibling);
 			if (hide) {
 				document.getElementById("dramalinks_ticker").style.display = 'none';
 			}
