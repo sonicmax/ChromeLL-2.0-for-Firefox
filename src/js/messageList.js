@@ -68,7 +68,7 @@ var link_observer = new MutationObserver(function(mutations) {
 					wikiLink = link;
 					wikiLink.className = "wiki";
 					wikiLink.addEventListener("click", messageListHelper.wikiFix);	
-				} else if ((link.title.indexOf("youtube.com/watch?v=") > -1) 
+				} else if ((link.title.indexOf("youtube.com/") > -1) 
 						|| (link.title.indexOf("youtu.be/") > -1)) {
 					vidLink = link;
 					vidLink.className = "youtube";
@@ -1550,8 +1550,8 @@ var messageListHelper = {
 		window.open(this.href.replace("boards", "images"));
 	},
 	embedGfy: function (gfyLink) {
-		var url = gfyLink.href;
-		var xhr, splitURL, code, xhrURL, temp, width, height;
+		var url, splitURL, code, xhrURL, xhr, temp, width, height;
+		url = gfyLink.href;
 		splitURL = url.split('/').slice(-1);
 		code = splitURL.join('/');
 		xhrURL = 'http://gfycat.com/cajax/get/' + code;
@@ -1562,10 +1562,22 @@ var messageListHelper = {
 				temp = JSON.parse(xhr.responseText);
 				width = temp.gfyItem.width;
 				height = temp.gfyItem.height;
-				gfyLink.innerHTML = '<iframe src="' + url + '" frameborder="0" scrolling="no"' 
-				+ 'width="' + width + '" height="' + height + '"' 
-				+ 'style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" >'
-				+ '</iframe>';
+				if (config.img_max_width 
+						&& width > config.img_max_width) {
+					// scale iframe to match img_max_width value
+					height = (height / (width / config.img_max_width));
+					width = config.img_max_width;
+				}
+				else if (!config.img_max_width 
+						&& width > 1440 || height > 900) {
+					// resize to prevent page stretching
+					height = (height / (width / 1440));
+					width = 900;
+				}
+				gfyLink.innerHTML = '<span><iframe src="' + url + '" frameborder="0" scrolling="no"' 
+						+ 'width="' + width + '" height="' + height + '"' 
+						+ 'style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" >'
+						+ '</iframe></span>';
 			}
 		}
 		xhr.send();
