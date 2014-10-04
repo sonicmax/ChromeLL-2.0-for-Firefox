@@ -81,7 +81,8 @@ var link_observer = new MutationObserver(function(mutations) {
 				} else if (link.title.indexOf("http://gfycat.com/") > -1) {
 					gfyLink = link;
 					if (!gfyLink.embed) {
-						messageListHelper.embedGfy(gfyLink);
+						// only change classname = embedding is attached to window.onscroll event
+						gfyLink.className = "gfycat";
 						gfyLink.embed = true;
 					}
 				}
@@ -824,6 +825,27 @@ var messageList = {
 
 var messageListHelper = {
 	ignores : {},
+	gfycatLoader : function() {
+		// makes sure that only visible gfycat links are loaded
+		// to improve performance
+		var gfycats = document.getElementsByClassName('gfycat');
+		gfycats = Array.prototype.slice.call(gfycats);
+		var gfycat, position, height;
+		// todo - account for height of iframes as they are embedded
+		height = window.innerHeight - 338;
+		for (var i = 0, len = gfycats.length; i < len; i++) {
+			gfycat = gfycats[i];
+			// check whether element is visible to user
+			position = gfycat.getBoundingClientRect();
+			if (position.top > height) {
+				// ignore
+			}
+			else if (gfycat.getAttribute('name') != 'embedded') {
+				// visible link - embed
+				messageListHelper.embedGfy(gfycat);
+			}
+		}	
+	},
 	autoscrollCheck : function (mutation) {
 		var elPosition = mutation.getBoundingClientRect();
 		if (mutation.style.display == 'none'
@@ -1549,35 +1571,37 @@ var messageListHelper = {
 	imageFix: function () {
 		window.open(this.href.replace("boards", "images"));
 	},
-	embedGfy: function (gfyLink) {
+	embedGfy: function(gfyLink) {
 		var url, splitURL, code, xhrURL, xhr, temp, width, height;
-		url = gfyLink.href;
+		url = gfyLink.getAttribute('href');
 		splitURL = url.split('/').slice(-1);
 		code = splitURL.join('/');
 		xhrURL = 'http://gfycat.com/cajax/get/' + code;
 		xhr = new XMLHttpRequest();
 		xhr.open("GET", xhrURL, true);
-		xhr.onreadystatechange = function () {
+		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
+				// gfycat api provides width & height
 				temp = JSON.parse(xhr.responseText);
 				width = temp.gfyItem.width;
 				height = temp.gfyItem.height;
-				if (config.img_max_width 
-						&& width > config.img_max_width) {
+				if (width > config.img_max_width) {
 					// scale iframe to match img_max_width value
 					height = (height / (width / config.img_max_width));
 					width = config.img_max_width;
-				}
+				}							
 				else if (!config.img_max_width 
 						&& width > 1440 || height > 900) {
 					// resize to prevent page stretching
 					height = (height / (width / 1440));
 					width = 900;
 				}
-				gfyLink.innerHTML = '<span><iframe src="' + url + '" frameborder="0" scrolling="no"' 
+				// replace entire link with gfycat iframe
+				gfyLink.outerHTML = '<div class="gfycat" name="embedded" id="' + url + '">' 
+						+ '<iframe src="' + url + '" frameborder="0" scrolling="no"' 
 						+ 'width="' + width + '" height="' + height + '"' 
 						+ 'style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" >'
-						+ '</iframe></span>';
+						+ '</iframe></div>';
 			}
 		}
 		xhr.send();
@@ -2103,3 +2127,5 @@ livelinks.observe(document, {
 		subtree: true,
 		childList: true
 });
+
+window.onscroll = messageListHelper.gfycatLoader;
