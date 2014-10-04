@@ -80,10 +80,8 @@ var link_observer = new MutationObserver(function(mutations) {
 					imageLink.addEventListener("click", messageListHelper.imageFix);
 				} else if (link.title.indexOf("http://gfycat.com/") > -1) {
 					gfyLink = link;
-					if (!gfyLink.embed) {
-						// only change classname = embedding is attached to window.onscroll event
+					if (gfyLink.className != "gfycat") {
 						gfyLink.className = "gfycat";
-						gfyLink.embed = true;
 					}
 				}
 			}
@@ -826,25 +824,25 @@ var messageList = {
 var messageListHelper = {
 	ignores : {},
 	gfycatLoader : function() {
-		// makes sure that only visible gfycat links are loaded
-		// to improve performance
 		var gfycats = document.getElementsByClassName('gfycat');
 		gfycats = Array.prototype.slice.call(gfycats);
 		var gfycat, position, height;
-		// todo - account for height of iframes as they are embedded
-		height = window.innerHeight - 338;
+		height = window.innerHeight;
 		for (var i = 0, len = gfycats.length; i < len; i++) {
 			gfycat = gfycats[i];
 			// check whether element is visible to user
 			position = gfycat.getBoundingClientRect();
 			if (position.top > height) {
-				// ignore
+				// ignore hidden elements
 			}
-			else if (gfycat.getAttribute('name') != 'embedded') {
-				// visible link - embed
+			else if (gfycat.getAttribute('name') != 'embedded'
+					&& gfycat.getAttribute('name') != 'placeholder') {
+				messageListHelper.placeholderGfy(gfycat);
+			}
+			else if (gfycat.getAttribute('name') == 'placeholder') {
 				messageListHelper.embedGfy(gfycat);
 			}
-		}	
+		}
 	},
 	autoscrollCheck : function (mutation) {
 		var elPosition = mutation.getBoundingClientRect();
@@ -1429,6 +1427,10 @@ var messageListHelper = {
 	},
 	init : function() {
 		messageListHelper.archiveQuoteButtons();
+		setTimeout(function() {
+			messageListHelper.gfycatLoader();
+		}, 500);
+		window.addEventListener('scroll', messageListHelper.gfycatLoader);
 		chrome.extension.sendRequest({
 			need : "config",
 			tcs : true
@@ -1571,8 +1573,8 @@ var messageListHelper = {
 	imageFix: function () {
 		window.open(this.href.replace("boards", "images"));
 	},
-	embedGfy: function(gfyLink) {
-		var url, splitURL, code, xhrURL, xhr, temp, width, height;
+	placeholderGfy: function(gfyLink) {
+		var url, splitURL, code, xhrURL, xhr, temp, width, height, position;
 		url = gfyLink.getAttribute('href');
 		splitURL = url.split('/').slice(-1);
 		code = splitURL.join('/');
@@ -1585,6 +1587,7 @@ var messageListHelper = {
 				temp = JSON.parse(xhr.responseText);
 				width = temp.gfyItem.width;
 				height = temp.gfyItem.height;
+				url = temp.gfyItem.webmUrl;
 				if (width > config.img_max_width) {
 					// scale iframe to match img_max_width value
 					height = (height / (width / config.img_max_width));
@@ -1592,19 +1595,30 @@ var messageListHelper = {
 				}							
 				else if (!config.img_max_width 
 						&& width > 1440 || height > 900) {
-					// resize to prevent page stretching
+					// resize to prevent page stretching (as per ETI rules)
 					height = (height / (width / 1440));
 					width = 900;
 				}
-				// replace entire link with gfycat iframe
-				gfyLink.outerHTML = '<div class="gfycat" name="embedded" id="' + url + '">' 
-						+ '<iframe src="' + url + '" frameborder="0" scrolling="no"' 
-						+ 'width="' + width + '" height="' + height + '"' 
-						+ 'style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" >'
-						+ '</iframe></div>';
+					// create placeholder
+					gfyLink.outerHTML = '<div class="gfycat" name="placeholder" id="' + url + '">' 
+							+ '<video width="' + width + '" height="' + height + '" autoplay loop >'
+							+ '</video></div>';
+				// check if placeholder is visible
+				position = document.getElementById(url).getBoundingClientRect();
+				if (position.top > window.innerHeight) {
+					return;
+				} else {
+					messageListHelper.gfycatLoader();
+				}
 			}
 		}
 		xhr.send();
+	},
+	embedGfy: function(gfycat) {
+		console.log(gfycat);
+		var video = gfycat.getElementsByTagName('video')[0];
+		gfycat.setAttribute('name', 'embedded');
+		video.src = gfycat.id;
 	},
 	embedYoutube: function() {
 		var that = this;
@@ -2127,5 +2141,3 @@ livelinks.observe(document, {
 		subtree: true,
 		childList: true
 });
-
-window.onscroll = messageListHelper.gfycatLoader;
