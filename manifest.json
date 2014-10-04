@@ -1,11 +1,11 @@
 {
   "name": "ChromeLL",
-  "version": "2.0.142",
+  "version": "2.0.15",
   "manifest_version": 2,
   "description": "Enhancements for the forums at the End of the Internet",
   "options_page": "options.html",
   "minimum_chrome_version": "20.0.0.0",
-  "web_accessible_resources": [ "src/images/lueshi_48.png", "src/images/lueshi_128.png", "src/js/like.js", "src/js/topicPostTemplate.js" ],
+  "web_accessible_resources": [ "src/images/lueshi_48.png", "src/images/lueshi_128.png", "src/images/popup.png", "src/js/like.js", "src/js/topicPostTemplate.js" ],
   "icons": {
  	"16": "src/images/ll.png",
  	"48": "src/images/lueshi_48.png",
@@ -25,7 +25,7 @@
     "js": ["lib/jquery.js", "src/js/messageList.js"]
   },
   {
-    "matches": ["*://boards.endoftheinter.net/topics/*", "*://boards.endoftheinter.net/showfavorites.php*", "*://*.endoftheinter.net/search.php*", "*://endoftheinter.net/inbox.php*", "*://endoftheinter.net/main.php"],
+    "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://*.endoftheinter.net/search.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php"],
     "js": ["src/js/topicList.js"] 
   },
   {
@@ -33,7 +33,7 @@
     "js": ["src/js/postMsg.js"] 
   },
   {
-    "matches": ["*://boards.endoftheinter.net/boardlist.php*"],
+    "matches": ["*://*.endoftheinter.net/boardlist.php*"],
     "js": ["src/js/boardList.js"] 
   },
   {
@@ -45,7 +45,7 @@
     "js": ["lib/jquery.js", "src/js/allPages.js"]
   },
   {
-    "matches": ["*://boards.endoftheinter.net/search.php*"],
+    "matches": ["*://*.endoftheinter.net/search.php*"],
     "js": ["src/js/search.js"]
   }],
 	
