@@ -363,9 +363,14 @@ var topicList = {
 
 var topicListHelper = {
 	jumpHandlerTopic : function(ev) {
-		var a;
-		if (window.location.href.indexOf('inbox.php') > -1) {
-			var inbox = true;
+		var a, history, inbox;
+		if (window.location.href.indexOf('history.php') > -1) {
+			history = true;
+			a = ev.srcElement.parentNode.parentNode.parentNode.parentNode
+					.parentNode.getElementsByTagName('td')[2];
+		}
+		else if (window.location.href.indexOf('inbox.php') > -1) {
+			inbox = true;
 			a = ev.srcElement.parentNode.parentNode.nextSibling.nextSibling;
 		}
 		else {
@@ -381,7 +386,11 @@ var topicListHelper = {
 		} else {
 			pg = last;
 		}
-		if (inbox) {
+		if (history) {
+			window.location = ev.srcElement.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
+					+ '&page=' + pg;
+		}
+		else if (inbox) {
 			window.location = ev.srcElement.parentNode.parentNode.firstChild.href 
 					+ '&page=' + pg;
 		}
