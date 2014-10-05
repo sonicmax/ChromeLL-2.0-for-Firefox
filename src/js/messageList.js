@@ -830,10 +830,9 @@ var messageListHelper = {
 		height = window.innerHeight;
 		for (var i = 0, len = gfycats.length; i < len; i++) {
 			gfycat = gfycats[i];
-			// check whether element is visible to user
 			position = gfycat.getBoundingClientRect();
-			if (position.top > height) {
-				// ignore hidden elements
+			if (position.top > height + 200) {
+				// ignore
 			}
 			else if (gfycat.getAttribute('name') != 'embedded'
 					&& gfycat.getAttribute('name') != 'placeholder') {
