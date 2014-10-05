@@ -1765,7 +1765,7 @@ var messageListLivelinks = {
 	like_button : function(el) {
 		if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('Like') == -1) {
 			if (el.getElementsByClassName('message-top')[0]
-					.getElementsByTagName('a')[2]); {
+					.getElementsByTagName('a')[2]) {
 				el.getElementsByClassName('message-top')[0].innerHTML += ' | <a href="##like" onclick="like(this);">Like</a>';
 			}
 		}
