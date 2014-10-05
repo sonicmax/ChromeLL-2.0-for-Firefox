@@ -855,9 +855,6 @@ var messageListHelper = {
 	autoscrollCheck : function (mutation) {
 		var elPosition = mutation.getBoundingClientRect();
 		if (mutation.style.display == 'none'
-				|| document.getElementById('following') 
-				|| document.getElementById('takemeback') 
-				|| document.getElementById('divtop')
 				|| elPosition.top > window.innerHeight) {
 			return false;
 		} else {
@@ -879,7 +876,7 @@ var messageListHelper = {
 			words = text.split(' ');
 			word = words[words.length - 1];
 			if (word.indexOf('\n') > -1) {
-				// makes sure that line breaks are accounted for
+				// account for line breaks
 				words = word.split('\n');
 				word = words[words.length - 1];
 			}
@@ -906,58 +903,6 @@ var messageListHelper = {
 				message.setSelectionRange(newCaret, newCaret);
 			}
 		}
-	},
-	addDivListeners : function(div, divAlert, divTop, divMsg, oldPosition, mutation) {
-		var divScroll = document.getElementById('scrollpost');
-		var divClose = document.getElementById('closepopup');
-		var divFollow, divReturn;
-		// listener for [Scroll to post] option
-		divScroll.addEventListener('click', function() {
-			$.scrollTo((mutation), 800);
-			divAlert.innerHTML = '<div class = "message-top">' 
-				+ '<a id="takemeback" href="javascript:void(0)"><b>[Click to return]</b></a> | '
-				+ '<a id="scrollnew" href="javascript:void(0)"><b>[Follow live posts]</b></a> | '
-				+ '<a id="closepopup" href="javascript:void(0)"><b>[x]</b></a>'
-				+ '</div>';		 
-			divReturn = document.getElementById('takemeback');
-			divReturn.addEventListener('click', function() {
-				$.scrollTo((oldPosition), 500);
-				$(div).animate({'margin-bottom': '-100%', 'opacity': '0'},
-					{queue: false, duration: 500});
-				setTimeout(function() {
-					$('body').find(div).remove();
-				}, 500); 
-			}); 
-			divFollow = document.getElementById('scrollnew');
-			divFollow.addEventListener('click', function() {
-				divAlert.innerHTML = '<div class = "message-top">'
-					+ '<a id="following" href="javascript:void(0)"><b>[Following new posts - click to cancel]</b></a>'
-					+ '</div>';
-				// removing element with id of "following" disables autoscroll
-				document.getElementById('following').addEventListener('click', function() {
-					$(div).animate({'margin-bottom': '-100%', 'opacity': '0'},
-						{queue: false, duration: 500});
-					setTimeout(function() {
-						$('body').find(div).remove();
-					}, 500); 
-				});
-			});
-			document.getElementById('closepopup').addEventListener('click', function() {
-				$(div).animate({'margin-bottom': '-100%', 'opacity': '0'},
-					{queue: false, duration: 500});
-				setTimeout(function() {
-					$('body').find(div).remove();
-				}, 500); 
-			});			
-		});	
-		// listener for [x] option (closes popup)
-		divClose.addEventListener('click', function() {
-			$(div).animate({'margin-bottom': '-100%', 'opacity': '0'},
-				{queue: false, duration: 500});
-			setTimeout(function() {
-				$('body').find(div).remove();
-			}, 500); 
-		});
 	},
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
@@ -1177,11 +1122,10 @@ var messageListHelper = {
 			name : "usernote_notes",
 			data : config.usernote_notes
 		}, function(rsp) {
-			console.log(rsp);
+			// do nothing
 		});
 	},
 	resizeImg : function(el) {
-		// console.log(el.width, config.img_max_width);
 		var width = el.width;
 		if (width > config.img_max_width) {
 			if (config.debug)
@@ -1365,9 +1309,6 @@ var messageListHelper = {
 		html = html.replace(/<br>/g, '');
 		html = html.replace(/&lt;/g, '<');
 		html = html.replace(/&gt;/g, '>');
-		// plain text quoting - needs separate option
-		/*var text = quotedMsg.innerText;
-		var quotedText = '<quote msgid="' + quoteID + '">' + text.substring(0, (text.lastIndexOf('---') - 1)) + '</quote>';*/
 		var json = {
 			"quote": ""
 		};
@@ -1425,10 +1366,6 @@ var messageListHelper = {
 			messageListHelper.globalPort = chrome.extension.connect();
 			config = conf.data;
 			config.tcs = conf.tcs;
-			/*if (config.ignorate_by_rep) {
-					repIgnorator();
-					messageListHelper.getUserIds();
-			}*/
 			var pm = '';
 			if (window.location.href.match('inboxthread'))
 				pm = "_pm";
@@ -1547,7 +1484,6 @@ var messageListHelper = {
 		ta.focus();
 	},
 	livelinks : function(mutation) {
-	console.log(mutation);
 		var pm = '';
 		if (window.location.href.match('inboxthread'))
 			pm = "_pm";
@@ -1663,98 +1599,7 @@ var messageListHelper = {
 			toEmbed.className = "youtube";
 			that.hidden = true;
 		}
-	}//,
-	/*showHiddenPost: function() {
-	// shows posts hidden by rep ignorator
-	// (doesn't work for quoted posts - yet)
-		var that = this;
-		var messageContainer = document.getElementById(that.id);
-		var messageBody = messageContainer.getElementsByClassName('message-body')[0];
-		console.log(messageContainer);
-		console.log(messageBody);
-		if (messageBody.style.display = 'none') {
-			messageContainer.style.opacity = 1;
-			messageBody.style.display = 'inline';
-		} else if (messageBody.style.display = 'inline') {
-			messageContainer.style.opacity = 0.15;
-			messageBody.style.display = 'none';
-		}
 	}
-	getUserIds: function() {
-		var links = ($("div.message-top").find("a"));
-		var allIds = [];
-		var id;
-		for (var i = 0, len = links.length; i < len; i++) {
-			link = links[i];
-			if (link.href.indexOf('profile.php?user=') > -1) {
-					id = link.href.match(/\?user=([0-9]+)/)[1];
-					allIds.push(parseInt(id));
-			}
-		}
-		usersFromPage = allIds.filter(function(elem, pos) {
-			return allIds.indexOf(elem) == pos;
-		})
-		messageListHelper.checkUserIds();
-	},
-	checkUserIds: function() {
-		userFilter = config.rep_ignorator_userids;
-		checkedUsers = config.rep_ignorator_checked;
-		token = config.rep_ignorator_token;
-		if (!userFilter && !checkedUsers && !token) {
-			// wait for config
-			configTimeout = setTimeout(repIgnorator.checkUserIds, 100);
-			return;
-		} else {
-			clearTimeout(configTimeout);
-			var json = {
-					"tok": "",
-					"users": []
-			};
-			var usersForRequest = [];
-			// request contains unique ids from page that havent already been checked
-			usersForRequest = $(usersFromPage).not(checkedUsers).get();
-			json.tok = token;
-			json.users = usersForRequest;
-			console.log(json);
-			if (json.users.length == 0) {
-					console.log("nope");
-					return;
-			}
-			var xhr = new XMLHttpRequest();
-			// need to set up server before we can use any of this
-			var url = ''
-			xhr.open("POST", url, true);
-			xhr.setRequestHeader('Content-Type', 'application/json');
-			xhr.onreadystatechange = function () {
-				if (xhr.readyState == 4 && xhr.status == 200) {
-					var temp = JSON.parse(xhr.responseText);
-					console.log(temp);
-					if (temp.err == "pending") {
-					console.log("server response not ready yet");
-					return;
-					}
-					else {
-					// cache response
-					config.rep_ignorator_userids = temp.users.concat(userFilter);
-					config.rep_ignorator_checked = usersForRequest.concat(checkedUsers);
-					
-					chrome.extension.sendRequest({
-					need : "save",
-					name : "rep_ignorator_userids",
-					data : config.rep_ignorator_userids
-					});
-					chrome.extension.sendRequest({
-					need : "save",
-					name : "rep_ignorator_checked",
-					data : config.rep_ignorator_checked
-					});
-					}
-				}
-			}
-			console.log("sending xhr");
-			xhr.send(JSON.stringify(json));
-		}
-	}*/
 }
 
 var messageListLivelinks = {
@@ -1772,11 +1617,6 @@ var messageListLivelinks = {
 		if (!config.ignorator) { 
 			return;
 		}
-		// might need this later
-		/*if (mutation.style.display == "none") {
-			console.log("already hidden - ignoring");
-			return;
-		}*/
 		var tops = mutation.getElementsByClassName('message-top'); 
 		var top;
 		for (var e = 0, len = tops.length; e < len; e++) {
@@ -1825,47 +1665,6 @@ var messageListLivelinks = {
 		if (!document.hidden 
 				&& messageListHelper.autoscrollCheck(mutation) ) {
 			$.scrollTo((mutation), 800);
-		}
-	},
-	autoscroll_livelinks_menu : function(mutation) {
-		if (document.hidden || mutation.style.display == 'none' 
-				|| document.getElementById('takemeback') 
-				|| document.getElementById('divtop')) {
-				return;
-		}
-		if (document.getElementById('following')) {
-			$.scrollTo((mutation), 800);		
-		}
-		var elPosition = mutation.getBoundingClientRect();
-		// check that livelinks post is off screen
-		if (elPosition.top > window.innerHeight) {
-			var oldPosition = window.scrollY;
-			var bottomColor = $('body, table.classic tr td').css('background-color');
-			// create divs for popup
-			div = document.createElement('div');
-			divAlert = document.createElement('div');
-			// style divs before appending to document body
-			div.style.background = bottomColor;
-			div.style.boxShadow = "5px 5px 1.2em black";
-			div.style.position = 'fixed';
-			div.style.width = 100;
-			div.style.bottom = 0;
-			div.style.marginBottom = '-100%';
-			div.id = 'newpost';
-			// todo - use js instead of html strings
-			divAlert.innerHTML = '<div class ="message-top">' + '<b>New Livelinks post</b> | ' 
-				+ '<a id ="scrollpost" href="javascript:void(0)"><b>[Scroll to post]</b></a> | ' 
-				+ '<a id ="closepopup" href="javascript:void(0)"><b>[x]</b></a>' + '</div>';
-			$(div).append(divAlert);
-			if (!document.getElementById('newpost')) {
-				$('body').append(div);
-				$(div).animate({'margin-bottom': '0'}, {
-					queue: false,
-					duration: 500
-				});
-				messageListHelper.divExists = true;
-			}
-			messageListHelper.addDivListeners(div, divAlert, oldPosition, mutation);
 		}
 	},
 	post_title_notification : function(el) {
@@ -1922,7 +1721,7 @@ var messageListLivelinks = {
 								.getElementsByTagName('a')[0].innerHTML,
 				message : document.title.replace(/End of the Internet - /i, '')
 			}, function(data) {
-				console.log(data);
+				// do nothing
 			});
 		}
 	},
@@ -2034,7 +1833,7 @@ var messageListLivelinks = {
 															.getElementsByClassName('message-top')[0]
 															.getElementsByTagName('a')[0].innerHTML
 										}, function(data) {
-											console.log(data);
+											// do nothing
 										});
 					}
 				}
@@ -2069,7 +1868,7 @@ var messageListLivelinks = {
 								+ el.getElementsByClassName('message-top')[0]
 										.getElementsByTagName('a')[0].innerHTML
 					}, function(data) {
-						console.log(data);
+						// do nothing
 					});
 				}
 			}

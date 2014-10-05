@@ -35,7 +35,7 @@ $(document)
 					if (localStorage['ChromeLL-Config'] == ''
 							|| localStorage['ChromeLL-Config'] == undefined) {
 						console.log("Blank Config. Rebuilding");
-						localStorage['ChromeLL-Config'] = '{"float_userbar":false,"short_title":true,"show_secret_boards":true,"dramalinks":false,"hide_dramalinks":false,"hide_dramalinks_topiclist":false,"user_info_popup":true,"zebra_tables":false,"force_https":false,"sys_notifications":true,"close_notifications":false,"ignorator":false,"enable_user_highlight":false,"ignorator_topiclist":false,"userhl_topiclist":false,"page_jump_buttons":true,"ignore_keyword":false,"enable_keyword_highlight":false,"click_expand_thumbnail":true,"imagemap_new_tab":true,"copy_in_context":false,"imagemap_on_infobar":false,"resize_imgs":false,"user_notes":true,"ignorator_messagelist":false,"userhl_messagelist":false,"no_user_highlight_quotes":false,"notify_userhl_post":false,"notify_quote_post":false,"new_page_notify":false,"number_posts":true,"like_button":true,"loadquotes":true,"post_title_notification":true,"filter_me":false,"expand_spoilers":false,"highlight_tc":false,"label_tc":true,"foxlinks_quotes":false,"quickpost_tag_buttons":false,"quickpost_on_pgbottom":false,"post_before_preview":false,"batch_uploader":false,"drop_batch_uploader":true,"sort_history":false,"history_expand_search":false,"ignorator_topiclist_pm":false,"userhl_topiclist_pm":false,"page_jump_buttons_pm":true,"click_expand_thumbnail_pm":true,"user_notes_pm":false,"userhl_messagelist_pm":false,"pm_title_pm":true,"number_posts_pm":true,"loadquotes_pm":true,"post_title_notification_pm":true,"quickpost_tag_buttons_pm":false,"quickpost_on_pgbottom_pm":false,"post_before_preview_pm":false,"batch_uploader_pm":false,"drop_batch_uploader_pm":true,"debug":false,"zebra_tables_color":"D7DEE8","close_notification_time":"5","ignorator_list":"","ignore_keyword_list":"","":"0","img_max_width":"1440","tc_highlight_color":"ffff00","tc_label_color":"","foxlinks_quotes_color":"","user_highlight_data":{},"keyword_highlight_data":{}, "tag_admin":[], "bookmark_data":{"Serious":"Serious","Work Safe":"LUE-NWS-NLS","IRL Stuff":"Current Events+News+Politics","Cute Cats Only":"Cute&Cats"},"snippet_data":{},"snippet_listener":false, "tag_highlight_data":{}, "rep_callout":false, "show_old_name":true, "hide_gs":false, "clean_ignorator":false, "ignorator_backup":"", "auto_clean":false, "embed_on_hover":true, "rep_highlight_filter":{}, "rep_highlight_token":"", "rep_highlight_userids":[], "rep_highlight_checked":[], "msgs_by_rep":false,"topics_by_rep":false,"autoscroll_livelinks":false,"autoscroll_livelinks_active":true,"label_self_anon":true,"create_topic_buttons":true,"error_check":true,"embed_gfycat":true,"resize_gfys":true,"gfy_max_width":1440,"last_clean":0,"last_filter":0,"user_id",""}';
+						localStorage['ChromeLL-Config'] = '{"float_userbar":false,"short_title":true,"show_secret_boards":true,"dramalinks":false,"hide_dramalinks":false,"hide_dramalinks_topiclist":false,"user_info_popup":true,"zebra_tables":false,"force_https":false,"sys_notifications":true,"close_notifications":false,"ignorator":false,"enable_user_highlight":false,"ignorator_topiclist":false,"userhl_topiclist":false,"page_jump_buttons":true,"ignore_keyword":false,"enable_keyword_highlight":false,"click_expand_thumbnail":true,"imagemap_new_tab":true,"copy_in_context":false,"imagemap_on_infobar":false,"resize_imgs":false,"user_notes":true,"ignorator_messagelist":false,"userhl_messagelist":false,"no_user_highlight_quotes":false,"notify_userhl_post":false,"notify_quote_post":false,"new_page_notify":false,"number_posts":true,"like_button":true,"loadquotes":true,"post_title_notification":true,"filter_me":false,"expand_spoilers":false,"highlight_tc":false,"label_tc":true,"foxlinks_quotes":false,"quickpost_tag_buttons":false,"quickpost_on_pgbottom":false,"post_before_preview":false,"batch_uploader":false,"drop_batch_uploader":true,"sort_history":false,"history_expand_search":false,"ignorator_topiclist_pm":false,"userhl_topiclist_pm":false,"page_jump_buttons_pm":true,"click_expand_thumbnail_pm":true,"user_notes_pm":false,"userhl_messagelist_pm":false,"pm_title_pm":true,"number_posts_pm":true,"loadquotes_pm":true,"post_title_notification_pm":true,"quickpost_tag_buttons_pm":false,"quickpost_on_pgbottom_pm":false,"post_before_preview_pm":false,"batch_uploader_pm":false,"drop_batch_uploader_pm":true,"debug":false,"zebra_tables_color":"D7DEE8","close_notification_time":"5","ignorator_list":"","ignore_keyword_list":"","img_max_width":"1440","tc_highlight_color":"ffff00","tc_label_color":"","foxlinks_quotes_color":"","user_highlight_data":{},"keyword_highlight_data":{}, "tag_admin":[], "bookmark_data":{"Serious":"Serious","Work Safe":"LUE-NWS-NLS","IRL Stuff":"Current Events+News+Politics","Cute Cats Only":"Cute&Cats"},"snippet_data":{},"snippet_listener":false, "tag_highlight_data":{}, "rep_callout":false, "show_old_name":true, "hide_gs":false, "clean_ignorator":false, "ignorator_backup":"", "auto_clean":false, "embed_on_hover":true,"autoscroll_livelinks":false,"autoscroll_livelinks_active":false,"label_self_anon":true,"create_topic_buttons":true,"error_check":true,"embed_gfycat":false,"resize_gfys":true,"gfy_max_width":1440,"last_clean":0,"user_id":""}';
 						if (localStorage['chromeLL_userhighlight']
 								&& localStorage['chromeLL_userhighlight'] != '')
 							restoreV1Cfg();
@@ -323,81 +323,6 @@ function restoreIgnorator() {
 		return;
 	}
 }
-
-/*function repTokenLimiter() {
-	var cfg = JSON.parse(localStorage['ChromeLL-Config']);
-	var currentTime = new Date().getTime();
-	var timeLeft = currentTime - cfg.last_filter;
-	if (timeLeft > 86400000) {
-		document.getElementById('repinfo').innerText = "requesting token..."
-		getIgnoratorToken(currentTime);
-	} else {
-		var totalseconds = ((86400000 - timeLeft) / 1000);
-		var hours = Math.floor(totalseconds / 3600);
-		var totalminutes = Math.floor(totalseconds / 60);
-		var minutes = totalminutes - (hours * 60);
-		var seconds = Math.floor(totalseconds - (totalminutes * 60))
-		if (hours == 1) {
-			hours = hours + " hour, ";
-		} else if (hours != 1) {
-			hours = hours + " hours, ";
-		}
-		if (minutes == 1) {
-			minutes = minutes + " minute, and ";
-		} else if (minutes != 1) {
-			minutes = minutes + " minutes, and ";
-		}
-		if (seconds == 1) {
-			seconds = seconds + " second.";
-		} else if (seconds != 1) {
-			seconds = seconds + " seconds."
-		}	
-		document.getElementById('repinfo').innerText = "try again in " + hours + minutes + seconds;
-	}
-}
-
-function getIgnoratorToken(currentTime) {
-	// gets rep info from options html & generates token
-	var cfg = JSON.parse(localStorage['ChromeLL-Config']);
-	var tagsInput = document.getElementsByClassName("tag_to_ignore");
-	var repsInput = document.getElementsByClassName("rep_to_ignore");
-	var tokenInput = document.getElementById("token");
-	var json = {
-			"reps": {}
-	};
-	var tagArray = [];
-	var repArray = [];
-	var repsToIgnore = {};
-	var tag, rep, xhr, url;
-	for (var i = 0, len = tagsInput.length; i < len; i++) {
-		if (tagsInput[i].value) {
-			tag = tagsInput[i].value;
-			tagArray.push(tag);
-			rep = repsInput[i].valueAsNumber;
-			repArray.push(rep);
-		}
-	}
-	for (var i = 0, len = tagArray.length; i < len; i++) {
-		repsToIgnore[tagArray[i]] = repArray[i];
-	}
-	cfg.rep_highlight_filter = repsToIgnore;
-	json.reps = repsToIgnore;
-	xhr = new XMLHttpRequest();
-	url = 'http://chillaxtian.com:8081/rep/register'
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader('Content-Type', 'application/json');
-	xhr.onreadystatechange = function () {
-		if (xhr.readyState == 4 && xhr.status == 200) {
-			var temp = JSON.parse(xhr.responseText);
-			tokenInput.value = temp.tok;
-			cfg.rep_highlight_token = temp.tok;
-			cfg.last_filter = currentTime;
-			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
-			console.log("saved rep filter and token to config");
-		}
-	}
-	xhr.send(JSON.stringify(json));
-}*/
 
 function setColorPicker() {
 	$('.color').ColorPicker({
