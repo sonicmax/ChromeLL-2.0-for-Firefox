@@ -829,10 +829,15 @@ var messageListHelper = {
 		var gfycat, position, height;
 		height = window.innerHeight;
 		for (var i = 0, len = gfycats.length; i < len; i++) {
-			gfycat = gfycats[i];
+			gfycat = gfycats[i];		
 			position = gfycat.getBoundingClientRect();
-			if (position.top > height + 200) {
-				// ignore
+			if (position.top > height + 200 
+					|| position.bottom < 0) {
+				if (gfycat.getAttribute('name') == 'embedded'
+						&& !gfycat.getElementsByTagName('video')[0].paused) {
+					// pause hidden video elements to reduce CPU load
+					gfycat.getElementsByTagName('video')[0].pause();
+				}
 			}
 			else if (gfycat.getAttribute('name') != 'embedded'
 					&& gfycat.getAttribute('name') != 'placeholder') {
@@ -840,6 +845,10 @@ var messageListHelper = {
 			}
 			else if (gfycat.getAttribute('name') == 'placeholder') {
 				messageListHelper.embedGfy(gfycat);
+			}
+			else if (gfycat.getAttribute('name') == 'embedded'
+					&& gfycat.getElementsByTagName('video')[0].paused) {
+				gfycat.getElementsByTagName('video')[0].play();
 			}
 		}
 	},
@@ -1597,7 +1606,7 @@ var messageListHelper = {
 				}
 				// create placeholder
 				gfyLink.outerHTML = '<div class="gfycat" name="placeholder" id="' + url + '">' 
-						+ '<video width="' + width + '" height="' + height + '" autoplay loop >'
+						+ '<video width="' + width + '" height="' + height + '" loop >'
 						+ '</video></div>';
 				// check if placeholder is visible
 				position = document.getElementById(url).getBoundingClientRect();
@@ -1615,6 +1624,7 @@ var messageListHelper = {
 		var video = gfycat.getElementsByTagName('video')[0];
 		gfycat.setAttribute('name', 'embedded');
 		video.src = gfycat.id;
+		video.play();
 	},
 	embedYoutube: function() {
 		var that = this;
