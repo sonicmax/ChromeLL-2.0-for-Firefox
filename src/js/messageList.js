@@ -1463,6 +1463,7 @@ var messageListHelper = {
 					messageListHelper.gfycatLoader();
 				}, 500);
 				window.addEventListener('scroll', messageListHelper.gfycatLoader);
+				document.addEventListener('visibilitychange', messageListHelper.pauseGfy);				
 			}
 			messageListHelper.globalPort.onMessage.addListener(function(msg) {
 				switch (msg.action) {
@@ -1620,11 +1621,26 @@ var messageListHelper = {
 		xhr.send();
 	},
 	embedGfy: function(gfycat) {
-		console.log(gfycat);
 		var video = gfycat.getElementsByTagName('video')[0];
 		gfycat.setAttribute('name', 'embedded');
 		video.src = gfycat.id;
 		video.play();
+	},
+	pauseGfy: function() {
+		if (document.hidden) {
+			var videos = document.getElementsByTagName('video');
+			var video;
+			for (var i = 0, len = videos.length; i < len; i++) {
+				video = videos[i];
+				if (video.src &&
+						!video.paused) {
+					video.pause();
+				}
+			}
+		}
+		else {
+		 messageListHelper.gfycatLoader();
+		}
 	},
 	embedYoutube: function() {
 		var that = this;
