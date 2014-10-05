@@ -1427,10 +1427,6 @@ var messageListHelper = {
 	},
 	init : function() {
 		messageListHelper.archiveQuoteButtons();
-		setTimeout(function() {
-			messageListHelper.gfycatLoader();
-		}, 500);
-		window.addEventListener('scroll', messageListHelper.gfycatLoader);
 		chrome.extension.sendRequest({
 			need : "config",
 			tcs : true
@@ -1453,6 +1449,12 @@ var messageListHelper = {
 						console.log("error in " + i + ":", err);
 					}
 				}
+			}
+			if (config.embed_gfycat) {
+				setTimeout(function() {
+					messageListHelper.gfycatLoader();
+				}, 500);
+				window.addEventListener('scroll', messageListHelper.gfycatLoader);
 			}
 			messageListHelper.globalPort.onMessage.addListener(function(msg) {
 				switch (msg.action) {
@@ -1588,21 +1590,16 @@ var messageListHelper = {
 				width = temp.gfyItem.width;
 				height = temp.gfyItem.height;
 				url = temp.gfyItem.webmUrl;
-				if (width > config.img_max_width) {
-					// scale iframe to match img_max_width value
-					height = (height / (width / config.img_max_width));
-					width = config.img_max_width;
-				}							
-				else if (!config.img_max_width 
-						&& width > 1440 || height > 900) {
-					// resize to prevent page stretching (as per ETI rules)
-					height = (height / (width / 1440));
-					width = 900;
+				if (config.resize_gfys 
+						&& width > config.gfy_max_width) {
+					// scale iframe to match gfy_max_width value
+					height = (height / (width / config.gfy_max_width));
+					width = config.gfy_max_width;
 				}
-					// create placeholder
-					gfyLink.outerHTML = '<div class="gfycat" name="placeholder" id="' + url + '">' 
-							+ '<video width="' + width + '" height="' + height + '" autoplay loop >'
-							+ '</video></div>';
+				// create placeholder
+				gfyLink.outerHTML = '<div class="gfycat" name="placeholder" id="' + url + '">' 
+						+ '<video width="' + width + '" height="' + height + '" autoplay loop >'
+						+ '</video></div>';
 				// check if placeholder is visible
 				position = document.getElementById(url).getBoundingClientRect();
 				if (position.top > window.innerHeight) {
