@@ -524,6 +524,7 @@ function saveConfig() {
 	cfg.snippet_data = {};
 	for (var i = 0; userhlData[i]; i++) {
 		name = userhlData[i].getElementsByClassName('snippet_name')[0].value;
+		name = name.trim();
 		if (name != '') {
 			cfg.snippet_data[name] = userhlData[i]
 					.getElementsByClassName('snippet')[0].value;
