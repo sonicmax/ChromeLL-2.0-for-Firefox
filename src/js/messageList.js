@@ -909,7 +909,6 @@ var messageListHelper = {
 	},
 	addDivListeners : function(div, divAlert, divTop, divMsg, oldPosition, mutation) {
 		var divScroll = document.getElementById('scrollpost');
-		var divShow = document.getElementById('showinpopup');
 		var divClose = document.getElementById('closepopup');
 		var divFollow, divReturn;
 		// listener for [Scroll to post] option
@@ -950,23 +949,7 @@ var messageListHelper = {
 					$('body').find(div).remove();
 				}, 500); 
 			});			
-		});		
-		// listener for [Show in popup] option
-		divShow.addEventListener('click', function() {
-			$(document).find(divAlert).remove();
-			$(div).append(divTop);
-			$(div).append(divMsg);
-			// setTimeout to prevent 'click' function from firing as soon as div is displayed
-			setTimeout(function () {
-				div.addEventListener('click', function() {
-					$(div).animate({'margin-bottom': '-100%', 'opacity': '0'},
-						{queue: false, duration: 500});
-					setTimeout(function() {
-						$('body').find(div).remove();
-					}, 500); 
-				});
-			}, 50);
-		});		
+		});	
 		// listener for [x] option (closes popup)
 		divClose.addEventListener('click', function() {
 			$(div).animate({'margin-bottom': '-100%', 'opacity': '0'},
@@ -1834,13 +1817,13 @@ var messageListLivelinks = {
 	},
 	autoscroll_livelinks: function(mutation) {
 		if (document.hidden 
-				&& messageListHelper.autoscrollCheck (mutation) ) {
+				&& messageListHelper.autoscrollCheck(mutation) ) {
 			$.scrollTo(mutation);
 		}
 	},
 	autoscroll_livelinks_active : function(mutation) {
 		if (!document.hidden 
-				&& messageListHelper.autoscrollCheck (mutation) ) {
+				&& messageListHelper.autoscrollCheck(mutation) ) {
 			$.scrollTo((mutation), 800);
 		}
 	},
@@ -1857,51 +1840,10 @@ var messageListLivelinks = {
 		// check that livelinks post is off screen
 		if (elPosition.top > window.innerHeight) {
 			var oldPosition = window.scrollY;
-			var top, userTop, splitTop, partToRemove, newTop, img;
-			var quote, quoteTemp, quoteOmitHTML;
-			var div, divAlert, divTop, divMsg, divScroll, divShow, divClose;
-			// get relevant data from livelinks mutation
-			var msg = mutation.getElementsByClassName('message-body')[0].getElementsByTagName('td')[0];
-			var msgHTML = msg.innerHTML;
-			var tops = mutation.getElementsByClassName('message-top');
-			var quotes = mutation.getElementsByClassName('quoted-message');
-			var imgs = mutation.getElementsByClassName('imgs');
-			var backColor = $('table.message-body tr td.message').css('background-color');
 			var bottomColor = $('body, table.classic tr td').css('background-color');
-			// replace imgs divs with placeholder text
-			if (imgs.length > 0) {
-				for (var i = 0, len = imgs.length; i < len; i++) {
-					img = imgs[i];
-					msgHTML = msgHTML.replace(img.outerHTML, '[images removed] <br>');
-				}
-			}
-			// truncate message tops
-			for (var i = 0, len = tops.length; i < len; i++) {
-				top = tops[i];
-				splitTop = top.innerText.split('|').slice(2);
-				partToRemove = splitTop.join('|');
-				newTop = top.innerText.replace(partToRemove, '');
-				// replace diagonal arrow (ascii: &#8663)
-				newTop = newTop.replace('⇗', '');
-				if (i == 0) {
-					userTop = '<div class="message-top">' + newTop + '</div>';
-				} else {
-					msgHTML = msgHTML.replace(top.innerHTML, '<div class="message-top">' + newTop + '</div>');
-				}
-			}
-			// replace "quoted text omitted" link
-			if (quotes.length > 0) {
-				quoteTemp = quotes[quotes.length - 1].getElementsByTagName('a');
-				quoteOmitHTML = quoteTemp[quoteTemp.length - 1].outerHTML;
-				if (quoteOmitHTML) {
-					msgHTML = msgHTML.replace(quoteOmitHTML, '<u>[quoted text omitted]</u>');
-				}
-			}
 			// create divs for popup
 			div = document.createElement('div');
 			divAlert = document.createElement('div');
-			divTop = document.createElement('div');
-			divMsg = document.createElement('div');
 			// style divs before appending to document body
 			div.style.background = bottomColor;
 			div.style.boxShadow = "5px 5px 1.2em black";
@@ -1910,16 +1852,9 @@ var messageListLivelinks = {
 			div.style.bottom = 0;
 			div.style.marginBottom = '-100%';
 			div.id = 'newpost';
-			divTop.innerHTML = userTop;
-			divTop.id = 'divtop';
-			divTop.title = 'Click to hide';
-			divMsg.style.background = backColor;
-			divMsg.title = 'Click to hide';
-			divMsg.innerHTML = msgHTML;
 			// todo - use js instead of html strings
 			divAlert.innerHTML = '<div class ="message-top">' + '<b>New Livelinks post</b> | ' 
 				+ '<a id ="scrollpost" href="javascript:void(0)"><b>[Scroll to post]</b></a> | ' 
-				+ '<a id ="showinpopup" href="javascript:void(0)"><b>[Display in popup]</b></a> | ' 
 				+ '<a id ="closepopup" href="javascript:void(0)"><b>[x]</b></a>' + '</div>';
 			$(div).append(divAlert);
 			if (!document.getElementById('newpost')) {
@@ -1930,7 +1865,7 @@ var messageListLivelinks = {
 				});
 				messageListHelper.divExists = true;
 			}
-			messageListHelper.addDivListeners(div, divAlert, divTop, divMsg, oldPosition, mutation);
+			messageListHelper.addDivListeners(div, divAlert, oldPosition, mutation);
 		}
 	},
 	post_title_notification : function(el) {
