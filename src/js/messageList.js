@@ -827,7 +827,6 @@ var messageListHelper = {
 	ignores : {},
 	gfycatLoader : function() {
 		var gfycats = document.getElementsByClassName('gfycat');
-		gfycats = Array.prototype.slice.call(gfycats);
 		var gfycat, position, height;
 		height = window.innerHeight;
 		for (var i = 0, len = gfycats.length; i < len; i++) {
