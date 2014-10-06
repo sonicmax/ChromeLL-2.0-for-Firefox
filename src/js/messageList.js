@@ -1505,13 +1505,17 @@ var messageListHelper = {
 		window.open(this.href.replace("boards", "images"));
 	},
 	placeholderGfy: function(gfyLink) {
-		var placeholder, url, splitURL, code, xhrURL, xhr;
+		var https, placeholder, url, splitURL, code, xhrURL, xhr;
 		var temp, width, height, webmUrl, position;
 		placeholder = document.createElement('div');
 		url = gfyLink.getAttribute('href');
 		splitURL = url.split('/').slice(-1);
 		code = splitURL.join('/');
 		xhrURL = 'http://gfycat.com/cajax/get/' + code;
+		if (window.location.protocol == 'https:') {
+			https = true;
+			xhrURL = xhrURL.replace('http', 'https');
+		}
 		xhr = new XMLHttpRequest();
 		xhr.open("GET", xhrURL, true);
 		xhr.onreadystatechange = function() {
@@ -1521,6 +1525,9 @@ var messageListHelper = {
 				width = temp.gfyItem.width;
 				height = temp.gfyItem.height;
 				webmUrl = temp.gfyItem.webmUrl;
+				if (https) {
+					webmUrl = webmUrl.replace('http', 'https');
+				}
 				if (config.resize_gfys 
 						&& width > config.gfy_max_width) {
 					// scale iframe to match gfy_max_width value
