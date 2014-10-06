@@ -808,16 +808,18 @@ var messageList = {
 		document.title = "PM - " + other;
 	},
 	snippet_listener : function() {
-		var ta = document.getElementsByName('message')[0];
-		var text, range, word, caret, snippet;
-		ta.addEventListener('keydown', function(event) {
-			if (event.keyIdentifier == 'U+0009') {
-				// prevent default action for tab key so we can attach our own
-				event.preventDefault();
-				caret = messageListHelper.findCaret(ta);
-				messageListHelper.snippetHandler(ta.value, caret);
-			}
-		});
+		if (window.location.hostname.indexOf("archives") == -1) {
+			var ta = document.getElementsByName('message')[0];
+			var caret;
+			ta.addEventListener('keydown', function(event) {
+				if (event.keyIdentifier == 'U+0009') {
+					// prevent default action for tab key so we can attach our own
+					event.preventDefault();
+					caret = messageListHelper.findCaret(ta);
+					messageListHelper.snippetHandler(ta.value, caret);
+				}
+			});
+		}
 	}
 }
 
