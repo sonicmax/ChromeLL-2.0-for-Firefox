@@ -841,8 +841,7 @@ var messageListHelper = {
 					gfycat.getElementsByTagName('video')[0].pause();
 				}
 			}
-			else if (gfycat.getAttribute('name') != 'embedded'
-					&& gfycat.getAttribute('name') != 'placeholder') {
+			else if (gfycat.tagName == 'A') {
 				messageListHelper.placeholderGfy(gfycat);
 			}
 			else if (gfycat.getAttribute('name') == 'placeholder') {
@@ -1506,7 +1505,9 @@ var messageListHelper = {
 		window.open(this.href.replace("boards", "images"));
 	},
 	placeholderGfy: function(gfyLink) {
-		var url, splitURL, code, xhrURL, xhr, temp, width, height, position;
+		var placeholder, url, splitURL, code, xhrURL, xhr;
+		var temp, width, height, webmUrl, position;
+		placeholder = document.createElement('div');
 		url = gfyLink.getAttribute('href');
 		splitURL = url.split('/').slice(-1);
 		code = splitURL.join('/');
@@ -1519,7 +1520,7 @@ var messageListHelper = {
 				temp = JSON.parse(xhr.responseText);
 				width = temp.gfyItem.width;
 				height = temp.gfyItem.height;
-				url = temp.gfyItem.webmUrl;
+				webmUrl = temp.gfyItem.webmUrl;
 				if (config.resize_gfys 
 						&& width > config.gfy_max_width) {
 					// scale iframe to match gfy_max_width value
@@ -1527,15 +1528,21 @@ var messageListHelper = {
 					width = config.gfy_max_width;
 				}
 				// create placeholder
-				gfyLink.outerHTML = '<div class="gfycat" name="placeholder" id="' + url + '">' 
-						+ '<video width="' + width + '" height="' + height + '" loop >'
-						+ '</video></div>';
-				// check if placeholder is visible
-				position = document.getElementById(url).getBoundingClientRect();
-				if (position.top > window.innerHeight) {
-					return;
-				} else {
-					messageListHelper.gfycatLoader();
+				placeholder.className = 'gfycat';
+				placeholder.id = webmUrl;
+				placeholder.setAttribute('name', 'placeholder');
+				placeholder.innerHTML = '<video width="' + width + '" height="' + height + '" loop >'
+						+ '</video>';
+				// prevent "Cannot read property 'replaceChild' of null" error
+				if (gfyLink.parentNode) {
+					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
+					// check if placeholder is visible
+					position = placeholder.getBoundingClientRect();
+					if (position.top > window.innerHeight) {
+						return;
+					} else {
+						messageListHelper.embedGfy(placeholder);
+					}
 				}
 			}
 		}
