@@ -78,11 +78,9 @@ var link_observer = new MutationObserver(function(mutations) {
 					imageLink = link;
 					imageLink.className = "imap";
 					imageLink.addEventListener("click", messageListHelper.imageFix);
-				} else if (link.title.indexOf("http://gfycat.com/") > -1) {
+				} else if (link.title.indexOf("gfycat.com/") > -1) {
 					gfyLink = link;
-					if (gfyLink.className != "gfycat") {
-						gfyLink.className = "gfycat";
-					}
+					gfyLink.className = "gfycat";
 				}
 			}
 		}
