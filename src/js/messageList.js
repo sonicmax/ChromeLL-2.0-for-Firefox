@@ -552,6 +552,9 @@ var messageList = {
 				la[la.size]);
 	},
 	drop_batch_uploader : function() {
+		if (window.location.href.indexOf('postmsg.php') > -1) {
+			return;
+		}		
 		var quickreply = document.getElementsByTagName('textarea')[0];
 		quickreply
 				.addEventListener(
