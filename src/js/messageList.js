@@ -1042,7 +1042,7 @@ var messageListHelper = {
 				fullsize = fullsize.replace(/^http:/i, "https:");
 			}
 			newimg.src = fullsize;
-			newspan.insertBefore(newimg);
+			newspan.insertBefore(newimg, null);
 			evt.target.parentNode.parentNode.insertBefore(newspan,
 					evt.target.parentNode);
 			evt.target.parentNode.style.display = "none"; // hide old img
