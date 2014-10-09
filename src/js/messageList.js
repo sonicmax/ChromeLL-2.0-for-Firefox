@@ -297,7 +297,7 @@ var messageList = {
 	},
 	post_title_notification : function() {
 		document.addEventListener('visibilitychange', messageListHelper.clearUnreadPosts);
-		document.addEventListener('onscroll', messageListHelper.clearUnreadPosts);
+		document.addEventListener('scroll', messageListHelper.clearUnreadPosts);
 		document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
 	},
 	quickpost_on_pgbottom : function() {
@@ -1157,6 +1157,7 @@ var messageListHelper = {
 	},
 	clearUnreadPosts : function(evt) {
 		if (document.hidden) {
+			// do nothing
 			return;
 		}
 		if (document.title.match(/\(\d+\+?\)/)) {
@@ -1667,13 +1668,23 @@ var messageListLivelinks = {
 			$.scrollTo(mutation);
 		}
 	},
-	autoscroll_livelinks_active : function(mutation) {
-		if (!document.hidden 
-				&& messageListHelper.autoscrollCheck(mutation) ) {
-			// autoscrollCheck returns true if user has scrolled to bottom of page
-			document.removeEventListener('mousemove', messageListHelper.clearUnreadPosts);
+	autoscroll_livelinks_active: function(mutation) {
+		if (!document.hidden && messageListHelper.autoscrollCheck(mutation)) {
+			// detach mousemove listener so that post_title_notification
+			// functions normally while autoscroll is running
+			document.removeEventListener('mousemove',
+					messageListHelper.clearUnreadPosts);
+			document.removeEventListener('scroll',
+					messageListHelper.clearUnreadPosts);
+
 			$.scrollTo((mutation), 800);
-			document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
+
+			setTimeout(function() {
+				document.addEventListener('mousemove',
+						messageListHelper.clearUnreadPosts);
+				document.addEventListener('scroll',
+						messageListHelper.clearUnreadPosts);
+			}, 850);
 		}
 	},
 	post_title_notification : function(el) {
