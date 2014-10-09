@@ -297,7 +297,7 @@ var messageList = {
 	},
 	post_title_notification : function() {
 		// use page visibility api to clear unread post count
-		document.addEventListener("visibilitychange", messageListHelper.clearUnreadPosts);
+		//document.addEventListener("visibilitychange", messageListHelper.clearUnreadPosts);
 		// keep old event listeners for backup
 		document.addEventListener('scroll', messageListHelper.clearUnreadPosts);
 		document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
@@ -1158,20 +1158,12 @@ var messageListHelper = {
 		});
 	},
 	clearUnreadPosts : function(evt) {
-		if (messageListHelper.hasJustScrolled) {
-			messageListHelper.hasJustScrolled = false;
+		/*if (document.hidden) {
 			return;
-		}
-		if (document.hidden) {
-			return;
-		}
+		}*/
 		if (document.title.match(/\(\d+\+?\)/)) {
 			var newTitle = document.title.replace(/\(\d+\+?\) /, "");
 			document.title = newTitle;
-			// chrome bug, title does not always update on windows
-			// setTimeout(function(){
-			// document.title = newTitle;
-			// }, 500);
 		}
 	},
 	quoteHandler: function() {
