@@ -296,10 +296,8 @@ var messageList = {
 				ulButton, ulBox);
 	},
 	post_title_notification : function() {
-		// use page visibility api to clear unread post count
-		//document.addEventListener("visibilitychange", messageListHelper.clearUnreadPosts);
-		// keep old event listeners for backup
-		document.addEventListener('scroll', messageListHelper.clearUnreadPosts);
+		document.addEventListener('visibilitychange', messageListHelper.clearUnreadPosts);
+		document.addEventListener('onscroll', messageListHelper.clearUnreadPosts);
 		document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
 	},
 	quickpost_on_pgbottom : function() {
@@ -1158,9 +1156,9 @@ var messageListHelper = {
 		});
 	},
 	clearUnreadPosts : function(evt) {
-		/*if (document.hidden) {
+		if (document.hidden) {
 			return;
-		}*/
+		}
 		if (document.title.match(/\(\d+\+?\)/)) {
 			var newTitle = document.title.replace(/\(\d+\+?\) /, "");
 			document.title = newTitle;
@@ -1672,7 +1670,10 @@ var messageListLivelinks = {
 	autoscroll_livelinks_active : function(mutation) {
 		if (!document.hidden 
 				&& messageListHelper.autoscrollCheck(mutation) ) {
+			// autoscrollCheck returns true if user has scrolled to bottom of page
+			document.removeEventListener('mousemove', messageListHelper.clearUnreadPosts);
 			$.scrollTo((mutation), 800);
+			document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
 		}
 	},
 	post_title_notification : function(el) {
@@ -1686,6 +1687,7 @@ var messageListLivelinks = {
 				.getElementsByTagName('a')[0].innerHTML == document
 				.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
 				.replace(/ \((\d+)\)$/, "")) {
+			// don't update for own posts
 			return;
 		}
 		var posts = 1;
