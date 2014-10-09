@@ -1904,7 +1904,8 @@ var livelinks = new MutationObserver(function(mutations) {
 	var mutation;
 	for (var i = 0, len = mutations.length; i < len; i++) {
 		mutation = mutations[i];
-		if (!mutation.target.lastChild.firstChild 
+		if (!mutation.target.lastChild 
+				|| !mutation.target.lastChild.firstChild 
 				|| !mutation.target.lastChild.firstChild.className) {
 			return;
 		}
@@ -1912,7 +1913,7 @@ var livelinks = new MutationObserver(function(mutations) {
 			// send new message container to livelinks method
 			messageListHelper.livelinks(mutation.target.lastChild.firstChild);
 		}
-}
+	}
 });
 livelinks.observe(document, {
 		subtree: true,
