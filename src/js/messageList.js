@@ -636,13 +636,17 @@ var messageList = {
 		if (!window.location.href.match("archives")) {
 			var head = document.getElementsByTagName("head")[0];
 			var script = document.createElement("script");
+			var tops = document.getElementsByClassName("message-top");
+			var top;
 			script.type = "text/javascript";
 			script.src = chrome.extension.getURL("src/js/like.js");
 			head.appendChild(script);
-			for (var i = 0; document.getElementsByClassName("message-top").item(i); i++) {
-				document.getElementsByClassName("message-top").item(i).getElementsByTagName("a")[2] &&
-				(document.getElementsByClassName("message-top").item(i).innerHTML 
-						+= ' | <a href="##like' + i + '" onclick="like(this);">Like</a>')
+			for (var i = 0, len = tops.length; i < len; i++) {
+				top = tops[i];
+				// ignore message-top element of quoted posts
+				if (top.nextSibling.className === 'message-body') {
+					top.innerHTML += ' | <a href="##like' + i + '" onclick="like(this);">Like</a>';
+				}
 			}
 		}
 	},
