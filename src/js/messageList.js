@@ -91,7 +91,8 @@ var link_observer = new MutationObserver(function(mutations) {
 				var that = this;
 				var color = $("table.message-body tr td.message").css("background-color");
 				if (that.className == "youtube") {
-					$(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'><a id='" + that.id + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+					$(that).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color 
+					+ ";'><a id='" + that.id + "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
 				}
 			}, function() {
 				var that = this;
@@ -100,8 +101,16 @@ var link_observer = new MutationObserver(function(mutations) {
 				}
 			}
 		);
-		$("table.message-body").on("click", "a.embed", messageListHelper.embedYoutube);
-		$("table.message-body").on("click", "a.hide", messageListHelper.hideYoutube);
+		$("table.message-body").on("click", "a.embed", function() {
+			if (!this.embedded) {
+				messageListHelper.embedYoutube(this);
+			}
+		});
+		$("table.message-body").on("click", "a.hide", function() {
+			if (!this.hidden) {
+				messageListHelper.hideYoutube(this);
+			}
+		});
 	}
 	$(document).ready(function() {
 		$("a.wiki").click(function(event) {
@@ -1572,43 +1581,63 @@ var messageListHelper = {
 		 messageListHelper.gfycatLoader();
 		}
 	},
-	embedYoutube: function() {
-		var that = this;
-		if (!that.embedded) {
-			var toEmbed = document.getElementById(that.id);
-			if (toEmbed.className == "youtube") {		
-				var color = $("table.message-body tr td.message").css("background-color");
+	embedYoutube: function(_this) {
+		if (!_this.embedded) {
+			var toEmbed = document.getElementById(_this.id);
+			if (toEmbed.className == "youtube") {	
+				var color = $("table.message-body tr td.message").css("background-color");		
 				var videoCode;
 				var embedHTML;
+				var time = toEmbed.href.match(/([0-9])+([h|m|s])/g);			
 				var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-				var match = that.id.match(regExp);
+				var match = _this.id.match(regExp);
 				if (match && match[2].length == 11) {
 					videoCode = match[2];
 				} else {
 					videoCode = match;
 				}
+				if (time) {
+					// convert into seconds
+					var splitTime, temp;
+					var seconds = 0;
+					for (var i = 0, len = time.length; i < len; i++) {
+						splitTime = time[i];
+						if (splitTime.indexOf('h') > -1) {
+							temp = parseInt(splitTime.replace('h', ''));
+							seconds += temp * 60 * 60;
+						}
+						else if (splitTime.indexOf('m') > -1) {
+							temp = parseInt(splitTime.replace('m', ''));
+							seconds += temp * 60;
+						}
+						else if (splitTime.indexOf('s') > -1) {
+							seconds += parseInt(splitTime.replace('s', ''));
+						}
+					}
+					videoCode += "?start=" + seconds + "'";
+				}			
 				embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
-									+ "<a id='" + that.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
+									+ "<a id='" + _this.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
 									+ "<br><div class='youtube'>" 
-									+ "<iframe id='" + "yt" + that.id + "' type='text/html' width='640' height='390'" 
-									+ "src='https://www.youtube.com/embed/" + videoCode + "?autoplay='0' frameborder='0'/>" 
+									+ "<iframe id='" + "yt" + _this.id + "' type='text/html' width='640' height='390'" 
+									+ "src='https://www.youtube.com/embed/" + videoCode 
+									+ "'?autoplay='0' frameborder='0'/>" 
 									+ "</div>";
 				$(toEmbed).find("span:last").remove();
 				toEmbed.className = "hideme";
 				toEmbed.innerHTML += embedHTML;
-				that.embedded = true;
+				_this.embedded = true;
 			}
 		}
 	},
-	hideYoutube: function() {
-		var that = this;
-		if (!that.hidden) {
-			var toEmbed = document.getElementById(that.id);
+	hideYoutube: function(_this) {
+		if (!_this.hidden) {
+			var toEmbed = document.getElementById(_this.id);
 			$(toEmbed).find("iframe:last").remove();
 			$(toEmbed).find("br:last").remove();
 			$(toEmbed).find("div:last").remove();
 			toEmbed.className = "youtube";
-			that.hidden = true;
+			_this.hidden = true;
 		}
 	}
 }
