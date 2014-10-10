@@ -38,9 +38,19 @@ var allPages = {
 			return;
 		}
 	},
-	notify_pm : function() {
-		// todo - use mutation observer to get live notifications
+	/*notify_pm : function() {
 		var userbar_pms = document.getElementById('userbar_pms');
+		var observer = new MutationObserver(function(mutations) {
+			var mutation;
+			for (var i = 0, len = mutations.length; i < len; i++) {
+				mutation = mutations[i];
+				console.log(mutation);
+			}
+		});
+		observer.observe(userbar_pms, {
+				attributes: true,
+				childList: true
+		});
 		if (userbar_pms.style.display == 'none' && config.pms != 0) {
 			// clear unread message count from config
 				config.pms = 0;
@@ -85,7 +95,7 @@ var allPages = {
 				return;
 			}
 		}
-	},
+	},*/
 	history_menubar : function() {
 		var link = document.createElement('a');
 		link.innerHTML = 'Message History';
