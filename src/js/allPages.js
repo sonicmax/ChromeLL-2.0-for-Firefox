@@ -50,7 +50,7 @@ var allPages = {
 						data : config.pms
 				});
 		}
-		else if (document.getElementById('userbar_pms')) {
+		else if (userbar_pms.style.display != 'none') {
 			var pms_text = userbar_pms.innerText;
 			var pm_number = parseInt(userbar_pms.match(/\((\d+)\)/)[1]);
 			var notify_title, notify_msg;
