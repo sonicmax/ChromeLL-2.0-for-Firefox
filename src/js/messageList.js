@@ -1589,9 +1589,11 @@ var messageListHelper = {
 				var videoCode;
 				var embedHTML;
 				var href = toEmbed.href;
-				var index = href.indexOf('t=');
-				var substring = href.substring(index, href.length);
-				var time = substring.match(/([0-9])+([h|m|s])/g);			
+				var timeEquals = href.match(/(\?|\&)(t=)/);
+				if (timeEquals) {
+					var substring = href.substring(timeEquals.index, href.length);
+					var time = substring.match(/([0-9])+([h|m|s])/g);
+				}		
 				var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
 				var match = _this.id.match(regExp);
 				if (match && match[2].length == 11) {
