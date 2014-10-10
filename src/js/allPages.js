@@ -38,6 +38,54 @@ var allPages = {
 			return;
 		}
 	},
+	notify_pm : function() {
+		// todo - use mutation observer to get live notifications
+		var userbar_pms = document.getElementById('userbar_pms');
+		if (userbar_pms.style.display == 'none' && config.pms != 0) {
+			// clear unread message count from config
+				config.pms = 0;
+				chrome.extension.sendRequest({
+						need : "save",
+						name : "pms",
+						data : config.pms
+				});
+		}
+		else if (document.getElementById('userbar_pms')) {
+			var pms_text = userbar_pms.innerText;
+			var pm_number = parseInt(userbar_pms.match(/\((\d+)\)/)[1]);
+			var notify_title, notify_msg;
+			// compare pm_number to last known value for pm_number
+			if (pm_number > config.pms) {
+				if (pm_number == 1) {
+					notify_title = 'New PM';
+					notify_msg = 'You have 1 new private message.';
+				}
+				else {
+					notify_title = 'New PMs';
+					notify_msg = 'You have ' + pm_number 
+							+ ' new private messages.';
+				}
+				// notify user and save current pm_number
+				chrome.extension.sendRequest({
+						need: "notify",
+						title: notify_title,
+						message: notify_msg
+				}, function(data) {
+					console.log(data);
+				});
+				config.pms = pm_number;
+				chrome.extension.sendRequest({
+						need : "save",
+						name : "pms",
+						data : config.pms
+				});	
+			}
+			else {
+				// PMs are unread, but not new
+				return;
+			}
+		}
+	},
 	history_menubar : function() {
 		var link = document.createElement('a');
 		link.innerHTML = 'Message History';
