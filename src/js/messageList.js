@@ -837,6 +837,7 @@ var messageList = {
 
 var messageListHelper = {
 	ignores : {},
+	scrolling : false,
 	gfycatLoader : function() {
 		var gfycats = document.getElementsByClassName('gfycat');
 		var gfycat, position, height;
@@ -1169,7 +1170,8 @@ var messageListHelper = {
 		});
 	},
 	clearUnreadPosts : function(evt) {
-		if (document.hidden) {
+		if (messageListHelper.scrolling == true
+				|| document.hidden) {
 			// do nothing
 			return;
 		}
@@ -1706,22 +1708,13 @@ var messageListLivelinks = {
 			$.scrollTo(mutation);
 		}
 	},
-	autoscroll_livelinks_active: function(mutation) {
-		if (!document.hidden && messageListHelper.autoscrollCheck(mutation)) {
-			// detach mousemove listener so that post_title_notification
-			// functions normally while autoscroll is running
-			document.removeEventListener('mousemove',
-					messageListHelper.clearUnreadPosts);
-			document.removeEventListener('scroll',
-					messageListHelper.clearUnreadPosts);
-
+	autoscroll_livelinks_active : function(mutation) {
+		if (!document.hidden 
+				&& messageListHelper.autoscrollCheck(mutation)) {
+			messageListHelper.scrolling = true;
 			$.scrollTo((mutation), 800);
-
 			setTimeout(function() {
-				document.addEventListener('mousemove',
-						messageListHelper.clearUnreadPosts);
-				document.addEventListener('scroll',
-						messageListHelper.clearUnreadPosts);
+				messageListHelper.scrolling = false;				
 			}, 850);
 		}
 	},
