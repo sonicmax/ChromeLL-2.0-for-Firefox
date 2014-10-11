@@ -1711,10 +1711,15 @@ var messageListLivelinks = {
 	autoscroll_livelinks_active : function(mutation) {
 		if (!document.hidden 
 				&& messageListHelper.autoscrollCheck(mutation)) {
-			messageListHelper.scrolling = true;
-			$.scrollTo((mutation), 800);
+			// trigger after 10ms delay to prevent undesired 
+			// behaviour in post_title_notification
 			setTimeout(function() {
-				messageListHelper.scrolling = false;				
+				messageListHelper.scrolling = true;
+				$.scrollTo((mutation), 800);
+			}, 10);
+			setTimeout(function() {
+				messageListHelper.scrolling = false;
+				console.log('set scrolling to false');				
 			}, 850);
 		}
 	},
