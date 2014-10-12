@@ -1443,11 +1443,14 @@ var messageListHelper = { // ordering of functions has no impact
 			// store messageList functions as array
 			var functions = Object.keys(messageList);
 			var func;
-			for (var j = 0, len = msgs.length; j < len; j++) {
+			var len;
+			for (var j = 0, len = 10; j < len; j++) {
+				if (msgs.length < 10) {
+					len = msgs.length;
+				}
 				msg = msgs[j];
 				// iterate over functions in messageList
-				for (var k = 0, len = functions.length; k < len; k++) {
-					func = functions[k];
+				for (var k = 0, func; func = functions[k]; k++) {
 					if (config[func + pm]) {
 						try {
 							// pass msg to function
@@ -1462,14 +1465,29 @@ var messageListHelper = { // ordering of functions has no impact
 				}
 			}
 			// standalone functions
-			functions = Object.keys(miscFunctions);
-			for (var i = 0, len = functions.length; i < len; i++) {
-				func = functions[i];
+			var miscfunctions = Object.keys(miscFunctions);
+			for (var k = 0, func; func = miscfunctions[k]; k++) {
 				if (config[func + pm]) {
 					try {
 						miscFunctions[func]();
 					} catch (err) {
 						console.log("error in " + func + ":", err);
+					}
+				}
+			}	
+			for (var j = len, msg; msg = msgs[j]; j++) {
+				// iterate over functions in messageList
+				for (var k = 0, func; func = functions[k]; k++) {
+					if (config[func + pm]) {
+						try {
+							// pass msg to function
+							messageList[func](msg, j);
+						} catch (err) {
+							console.log("error in " + func + ":", err);
+						}
+					}
+					if (func == 'link_handler') {
+						messageList.link_handler(msg);
 					}
 				}
 			}
