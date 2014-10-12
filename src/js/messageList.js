@@ -149,19 +149,17 @@ var miscFunctions = {	// maintain order of functions
 		infobar.appendChild(anchor);
 	},	
 	batch_uploader : function() {
+		var quickpost_body = document.getElementsByClassName('quickpost-body')[0];
 		var ulBox = document.createElement('input');
+		var ulButton = document.createElement('input');		
 		ulBox.type = 'file';
 		ulBox.multiple = true;
-		// ulBox.value = "Batch Upload";
 		ulBox.id = "batch_uploads";
-		var ulButton = document.createElement('input');
 		ulButton.type = "button";
 		ulButton.value = "Batch Upload";
 		ulButton.addEventListener('click', messageListHelper.startBatchUpload);
-		document.getElementsByClassName('quickpost-body')[0].insertBefore(
-				ulBox, null);
-		document.getElementsByClassName('quickpost-body')[0].insertBefore(
-				ulButton, ulBox);
+		quickpost_body.insertBefore(ulBox, null);
+		quickpost_body.insertBefore(ulButton, ulBox);
 	},
 	post_title_notification : function() {
 		document.addEventListener('visibilitychange', messageListHelper.clearUnreadPosts);
@@ -375,15 +373,16 @@ var miscFunctions = {	// maintain order of functions
 		}
 	},
 	expand_spoilers : function() {
+		var infobar = document.getElementsByClassName('infobar')[0];
 		var ains = document.createElement('span');
-		ains.id = 'chromell_spoilers';
-		document.addEventListener('click', messageListHelper.toggleSpoilers,
-				false);
-		ains.innerHTML = ' | <a href="##" id="chromell_spoiler">Expand Spoilers</a>';
-		var la = document.getElementsByClassName('infobar')[0]
-				.getElementsByClassName('a');
-		document.getElementsByClassName('infobar')[0].insertBefore(ains,
-				la[la.size]);
+		var anchor = document.createElement('a');
+		var divider = document.createTextNode(' | ');
+		anchor.id = 'chromell_spoilers';
+		anchor.href = '##';
+		anchor.innerText = 'Expand Spoilers';
+		infobar.appendChild(divider);
+		infobar.appendChild(anchor);
+		anchor.addEventListener('click', messageListHelper.toggleSpoilers, false);		
 	},
 	drop_batch_uploader : function() {
 		if (window.location.href.indexOf('postmsg.php') > -1) {
@@ -407,11 +406,14 @@ var miscFunctions = {	// maintain order of functions
 	},
 	highlight_tc : function() {
 		var tcs = messageListHelper.getTcMessages();
-		if (!tcs)
+		var tc;
+		if (!tcs) {
 			return;
+		}
 		for (var i = 0, len = tcs.length; i < len; i++) {
+			tc = tcs[i];
 			if (config.tc_highlight_color) {
-				tcs[i].getElementsByTagName('a')[0].style.color = '#'
+				tc.getElementsByTagName('a')[0].style.color = '#'
 						+ config.tc_highlight_color;
 			}
 		}
@@ -421,36 +423,43 @@ var miscFunctions = {	// maintain order of functions
 		if (!tcs) {
 			return;
 		}
-		var ipx, inner;
+		var color, tc, span, b, text, divider;
+		if (config.tc_label_color && config.tc_label_color != '') {
+			color = true;
+		}
 		for (var i = 0, len = tcs.length; i < len; i++) {
-			ipx = document.createElement('span');
-			inner = ' | <b>TC</b>';
-			if (config.tc_label_color && config.tc_label_color != '')
-				inner = ' | <font color="#' + config.tc_label_color
-						+ '"><b>TC</b></font>';
-			ipx.innerHTML = inner;
-			tcs[i].insertBefore(ipx,
-					tcs[i].getElementsByTagName('a')[0].nextSibling);
+			tc = tcs[i];
+			span = document.createElement('span');
+			b = document.createElement('b');
+			text = document.createTextNode('TC');
+			divider = document.createTextNode(' | ');
+			b.appendChild(text);
+			if (color) {
+				b.style.color = '#' + config.tc_label_color;
+			}
+			span.appendChild(divider);
+			span.appendChild(b);			
+			username = tc.getElementsByTagName('a')[0];
+			tc.insertBefore(span, username.nextSibling);
 		}
 	},
 	post_before_preview : function() {
-		var m = document.getElementsByClassName('quickpost-body')[0]
+		var inputs = document.getElementsByClassName('quickpost-body')[0]
 				.getElementsByTagName('input');
+		var input;
 		var preview;
 		var post;
-		for (var i = 0; m[i]; i++) {
-			if (m[i].name == 'preview') {
-				preview = m[i];
+		for (var i = 0, len = inputs.length; i < len; i++) {
+			input = inputs[i];
+			if (input.name == 'preview') {
+				preview = input;
 			}
-			if (m[i].name == 'post') {
-				post = m[i];
+			if (input.name == 'post') {
+				post = input;
 			}
 		}
 		post.parentNode.removeChild(post);
 		preview.parentNode.insertBefore(post, preview);
-	},
-	foxlinks_quotes : function() { // needs examining
-		commonFunctions.foxlinks_quote();
 	},
 	load_next_page : function() {
 		document.getElementById('u0_3').addEventListener('dblclick',
@@ -458,13 +467,14 @@ var miscFunctions = {	// maintain order of functions
 	},
 	pm_title : function() {
 		var me = document.getElementsByClassName('userbar')[0]
-				.getElementsByTagName('a')[0].innerHTML.match(/(.*) \(\d+\)/)[1];
+				.getElementsByTagName('a')[0].innerText;
 		var other = '';
-		for (var i = 0; document.getElementsByClassName('message-top')[i]; i++) {
-			if (document.getElementsByClassName('message-top')[i]
-					.getElementsByTagName('a')[0].innerHTML !== me) {
-				other = document.getElementsByClassName('message-top')[i]
-						.getElementsByTagName('a')[0].innerHTML;
+		var tops = document.getElementsByClassName('message-top');
+		var top;
+		for (var i = 0, len = tops.length; i < len; i++) {
+			top = tops[i];
+			if (top.getElementsByTagName('a')[0].innerText.indexOf(me) == -1) {
+				other = top.getElementsByTagName('a')[0].innerText;
 				break;
 			}
 		}
@@ -614,6 +624,9 @@ var messageList = { // maintain order of functions
 				}
 		}
 	},
+	foxlinks_quotes : function(msg) {
+		commonFunctions.foxlinks_quote(msg);
+	},	
 	ignorator_messagelist : function(msg) {
 		if (!config.ignorator)
 			return;
@@ -1081,9 +1094,6 @@ var messageListHelper = { // ordering of functions has no impact
 		return tcs;
 	},
 	toggleSpoilers : function(el) {
-		if (el.srcElement.id != 'chromell_spoiler') {
-			return;
-		}
 		var spans = document.getElementsByClassName('spoiler_on_close');
 		var nnode;
 		for (var i = 0; spans[i]; i++) {
@@ -2051,8 +2061,6 @@ var livelinks = new MutationObserver(function(mutations) {
 		}
 		if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
 			// send new message container to livelinks method
-			console.log(mutation.target.lastChild);
-			console.log(mutation.target.lastChild.firstChild);
 			messageListHelper.livelinks(mutation.target.lastChild.firstChild);
 		}
 	}

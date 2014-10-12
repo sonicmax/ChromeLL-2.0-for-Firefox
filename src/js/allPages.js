@@ -214,13 +214,13 @@ var allPages = {
 }
 
 var commonFunctions = {
-	foxlinks_quote : function() {
-		var mcol = "#" + config['foxlinks_quotes_color'];
-		var m = document.getElementsByClassName('quoted-message');
-		var n;
-		for ( var i = 0; m[i]; i++) {
-			var quot_msg = m[i];
-			var quot_msg_style = quot_msg.style;
+	foxlinks_quote : function(msg) {
+		var color = "#" + config['foxlinks_quotes_color'];
+		var quotes = msg.getElementsByClassName('quoted-message');
+		var quote, top;
+		for (var i = 0, len = quotes.length; i < len; i++) {
+			quote = quotes[i];
+			quot_msg_style = quote.style;
 			quot_msg_style.borderStyle = 'solid';
 			quot_msg_style.borderWidth = '2px';
 			quot_msg_style.borderRadius = '5px';
@@ -228,17 +228,17 @@ var commonFunctions = {
 			quot_msg_style.marginLeft = '10px';
 			quot_msg_style.paddingBottom = '10px';
 			quot_msg_style.marginTop = '0px';
-			quot_msg_style.borderColor = mcol;
-			n = quot_msg.getElementsByClassName('message-top')[0];
-			if (n) {
-				if (n.style.background == '') {
-					n.style.background = mcol;
+			quot_msg_style.borderColor = color;
+			top = quote.getElementsByClassName('message-top')[0];
+			if (top) {
+				if (top.style.background == '') {
+					top.style.background = color;
 				} else {
-					quot_msg_style.borderColor = n.style.background;
+					quot_msg_style.borderColor = top.style.background;
 				}
-				n.style.marginTop = '0px';
-				n.style.paddingBottom = '2px';
-				n.style.marginLeft = '-6px';
+				top.style.marginTop = '0px';
+				top.style.paddingBottom = '2px';
+				top.style.marginLeft = '-6px';
 			}
 		}
 	},
