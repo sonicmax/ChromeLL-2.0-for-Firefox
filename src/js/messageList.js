@@ -1439,30 +1439,37 @@ var messageListHelper = { // ordering of functions has no impact
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";
 			}
+			var t0 = performance.now();
+			// store messageList functions as array
+			var functions = Object.keys(messageList);
+			var func;
 			for (var j = 0, len = msgs.length; j < len; j++) {
 				msg = msgs[j];
 				// iterate over functions in messageList
-				for (var i in messageList) {
-					if (config[i + pm]) {
+				for (var k = 0, len = functions.length; k < len; k++) {
+					func = functions[k];
+					if (config[func + pm]) {
 						try {
 							// pass msg to function
-							messageList[i](msg, j);
+							messageList[func](msg, j);
 						} catch (err) {
-							console.log("error in " + i + ":", err);
+							console.log("error in " + func + ":", err);
 						}
 					}
-					if (i == 'link_handler') {
+					if (func == 'link_handler') {
 						messageList.link_handler(msg);
 					}
 				}
 			}
 			// standalone functions
-			for (var i in miscFunctions) {
-				if (config[i + pm]) {
+			functions = Object.keys(miscFunctions);
+			for (var i = 0, len = functions.length; i < len; i++) {
+				func = functions[i];
+				if (config[func + pm]) {
 					try {
-						miscFunctions[i]();
+						miscFunctions[func]();
 					} catch (err) {
-						console.log("error in " + i + ":", err);
+						console.log("error in " + func + ":", err);
 					}
 				}
 			}
@@ -1526,6 +1533,8 @@ var messageListHelper = { // ordering of functions has no impact
 				};
 				observer.observe(target, obsconfig);
 			}
+			var t1 = performance.now();
+			console.log("Processed in " + (t1 - t0) + " milliseconds.");			
 		});
 	},
 	loadNextPage : function() {
