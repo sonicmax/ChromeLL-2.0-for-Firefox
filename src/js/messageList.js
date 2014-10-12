@@ -1434,67 +1434,67 @@ var messageListHelper = { // ordering of functions has no impact
 			config = conf.data;
 			config.tcs = conf.tcs;
 			var msgs = document.getElementsByClassName('message-container');
-			var msg;
+			var msg, len;
 			var pm = '';
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";
 			}
 			var t0 = performance.now();
-			// store messageList functions as array
-			var functions = Object.keys(messageList);
-			var func;
-			var len;
-			for (var j = 0, len = 10; j < len; j++) {
-				if (msgs.length < 10) {
-					len = msgs.length;
+			// call miscFunctions if config value exists
+			for (var k in miscFunctions) {
+				if (config[k + pm]) {
+					try {
+						miscFunctions[k]();
+					} catch (err) {
+						console.log("error in " + k + ":", err);
+					}
 				}
+			}
+			// iterate over first 10 messages (or fewer)
+			if (msgs.length < 10) {
+				len = msgs.length;
+			}
+			else {
+				len = 10;
+			}
+			for (var j = 0; j < len; j++) {
 				msg = msgs[j];
 				// iterate over functions in messageList
-				for (var k = 0, func; func = functions[k]; k++) {
-					if (config[func + pm]) {
+				for (var k in messageList) {
+					if (config[k + pm]) {
 						try {
-							// pass msg to function
-							messageList[func](msg, j);
+							// pass msg and index value to function
+							messageList[k](msg, j);
 						} catch (err) {
-							console.log("error in " + func + ":", err);
+							console.log("error in " + k + ":", err);
 						}
 					}
-					if (func == 'link_handler') {
+					// call link_handler separately as it has no config value
+					if (k == 'link_handler') {
 						messageList.link_handler(msg);
 					}
 				}
 			}
-			// standalone functions
-			var miscfunctions = Object.keys(miscFunctions);
-			for (var k = 0, func; func = miscfunctions[k]; k++) {
-				if (config[func + pm]) {
-					try {
-						miscFunctions[func]();
-					} catch (err) {
-						console.log("error in " + func + ":", err);
-					}
-				}
-			}	
-			for (var j = len, msg; msg = msgs[j]; j++) {
-				// iterate over functions in messageList
-				for (var k = 0, func; func = functions[k]; k++) {
-					if (config[func + pm]) {
-						try {
-							// pass msg to function
-							messageList[func](msg, j);
-						} catch (err) {
-							console.log("error in " + func + ":", err);
+			// page will appear to have been fully loaded by this point
+			var t1 = performance.now();
+			console.log("Processed in " + (t1 - t0) + " milliseconds.");		
+			if (len == 10) {
+				// iterate over rest of messages
+				for (j = len, msg; msg = msgs[j]; j++) {
+					for (var k in messageList) {
+						if (config[k + pm]) {
+							try {
+								messageList[k](msg, j);
+							} catch (err) {
+								console.log("error in " + k + ":", err);
+							}
 						}
-					}
-					if (func == 'link_handler') {
-						messageList.link_handler(msg);
+						if (k == 'link_handler') {
+							messageList.link_handler(msg);
+						}
 					}
 				}
 			}
-			/*if (config.msgs_by_rep) {
-					repHighlight();
-					messageListHelper.getUserIds();
-			}*/
 			if (config.embed_gfycat) {
 				setTimeout(function() {
 					messageListHelper.gfycatLoader();
@@ -1528,12 +1528,10 @@ var messageListHelper = { // ordering of functions has no impact
 					break;
 				}
 			});
-
 			if (config.new_page_notify) {
 				if (config.debug) {
 					console.log('listening for new page');
 				}
-
 				var target = document.getElementById('nextpage');
 				var observer = new MutationObserver(function(mutations) {
 					mutations.forEach(function(mutation) {
@@ -1551,8 +1549,8 @@ var messageListHelper = { // ordering of functions has no impact
 				};
 				observer.observe(target, obsconfig);
 			}
-			var t1 = performance.now();
-			console.log("Processed in " + (t1 - t0) + " milliseconds.");			
+			var t2 = performance.now();
+			console.log("Fully processed in " + (t2 - t0) + " milliseconds.");				
 		});
 	},
 	loadNextPage : function() {
