@@ -7,43 +7,41 @@ var ignorated = {
 	}
 };
 var topicList = {
-	ignorator_topiclist : function() {
-		if (!config.ignorator)
+	ignorator_topiclist : function(tr, i) {
+		if (!config.ignorator) {
 			return;
-		var s;
+		}
 		var ignores = config.ignorator_list.split(',');
 		ignores = topicListHelper.handleCsv(ignores);
-		if (config.debug)
+		if (config.debug) {
 			console.log(ignores);
-		var g = document.getElementsByTagName('tr');
+		}
 		var title;
-		for (var i = 1; g[i]; i++) {
-			if (g[i].getElementsByTagName('td')[1]) {
-				g[i].className = "live_tr";
-				title = g[i].getElementsByTagName('td')[1];
-				for (var f = 0; f < ignores.length; f++) {
-					if (title.getElementsByTagName('a')[0]
-							&& title.getElementsByTagName('a')[0].innerHTML
-									.toLowerCase() == ignores[f]) {
-						if (config.debug)
-							console
-									.log('found topic to remove: \"'
-											+ g[i].getElementsByTagName('td')[0]
-													.getElementsByTagName('a')[0].innerHTML
-													.toLowerCase()
-											+ "\" author: " + ignores[f]
-											+ " topic: " + i);
-						title.parentNode.style.display = 'none';
-						title.parentNode.className = "hidden_tr";
-						ignorated.total_ignored++;
-						if (!ignorated.data.users[ignores[f]]) {
-							ignorated.data.users[ignores[f]] = {};
-							ignorated.data.users[ignores[f]].total = 1;
-							ignorated.data.users[ignores[f]].trs = [ i ];
-						} else {
-							ignorated.data.users[ignores[f]].total++;
-							ignorated.data.users[ignores[f]].trs.push(i);
-						}
+		if (tr.getElementsByTagName('td')[1]) {
+			tr.className = "live_tr";
+			title = tr.getElementsByTagName('td')[1];
+			for (var f = 0; f < ignores.length; f++) {
+				if (title.getElementsByTagName('a')[0]
+						&& title.getElementsByTagName('a')[0].innerHTML
+								.toLowerCase() == ignores[f]) {
+					if (config.debug)
+						console
+								.log('found topic to remove: \"'
+										+ tr.getElementsByTagName('td')[0]
+												.getElementsByTagName('a')[0].innerHTML
+												.toLowerCase()
+										+ "\" author: " + ignores[f]
+										+ " topic: " + i);
+					title.parentNode.style.display = 'none';
+					title.parentNode.className = "hidden_tr";
+					ignorated.total_ignored++;
+					if (!ignorated.data.users[ignores[f]]) {
+						ignorated.data.users[ignores[f]] = {};
+						ignorated.data.users[ignores[f]].total = 1;
+						ignorated.data.users[ignores[f]].trs = [ i ];
+					} else {
+						ignorated.data.users[ignores[f]].total++;
+						ignorated.data.users[ignores[f]].trs.push(i);
 					}
 				}
 			}
@@ -53,16 +51,18 @@ var topicList = {
 			ignorator : ignorated
 		});
 	},
-	ignore_keyword : function() {
+	ignore_keyword : function(tr, i) {
 		if (config.ignore_keyword_list == ""
-				|| config.ignore_keyword_list == undefined)
+				|| config.ignore_keyword_list == undefined) {
 			return;
+		}
 		var keywords;
 		var re = false;
 		try {
 			keywords = JSON.parse(config.ignore_keyword_list);
-			if (config.debug)
+			if (config.debug) {
 				console.log("JSON keywords");
+			}
 			re = true;
 		} catch (e) {
 			keywords = config.ignore_keyword_list.split(',');
@@ -70,58 +70,53 @@ var topicList = {
 		}
 		if (config.debug)
 			console.log(keywords);
-		if (document.getElementsByClassName('live_tr').length === 0) {
-			for (var i = 0; document.getElementsByTagName('tr')[i]; i++) {
-				document.getElementsByTagName('tr')[i].className = 'live_tr';
-			}
+		if (tr.className !== 'live_tr') {
+			tr.className = 'live_tr';
 		}
-		var g = topicListHelper.getTopics();
 		var title;
 		var match = false;
 		var reg;
-		for (var i = 1; g[i]; i++) {
-			if (g[i].getElementsByTagName('td')[0]) {
-				title = g[i].getElementsByTagName('td')[0];
-				for (var f = 0; f < keywords.length; f++) {
-					if (re) {
-						if (keywords[f].substring(0, 1) == '/') {
-							reg = new RegExp(keywords[f].substring(1,
-									keywords[f].lastIndexOf('/')), keywords[f]
-									.substring(
-											keywords[f].lastIndexOf('/') + 1,
-											keywords[f].length));
-						} else {
-							reg = keywords[f];
-						}
-						match = title.getElementsByTagName('a')[0].innerHTML
-								.match(reg);
+		if (tr.getElementsByTagName('td')[0]) {
+			title = tr.getElementsByTagName('td')[0];
+			for (var f = 0; f < keywords.length; f++) {
+				if (re) {
+					if (keywords[f].substring(0, 1) == '/') {
+						reg = new RegExp(keywords[f].substring(1,
+								keywords[f].lastIndexOf('/')), keywords[f]
+								.substring(
+										keywords[f].lastIndexOf('/') + 1,
+										keywords[f].length));
 					} else {
-						match = title.getElementsByTagName('a')[0].innerHTML
-								.toLowerCase().indexOf(
-										keywords[f].toLowerCase()) != -1;
+						reg = keywords[f];
 					}
-					if (match) {
-						if (config.debug)
-							console
-									.log('found topic to remove: \"'
-											+ g[i].getElementsByTagName('td')[0]
-													.getElementsByTagName('a')[0].innerHTML
-													.toLowerCase()
-											+ "\" keyword: " + keywords[f]
-											+ " topic: " + i);
-						title.parentNode.style.display = 'none';
-						title.parentNode.className = "hidden_tr";
-						ignorated.total_ignored++;
-						if (!ignorated.data.keywords[keywords[f]]) {
-							ignorated.data.keywords[keywords[f]] = {};
-							ignorated.data.keywords[keywords[f]].total = 1;
-							ignorated.data.keywords[keywords[f]].trs = [ i ];
-						} else {
-							ignorated.data.keywords[keywords[f]].total++;
-							ignorated.data.keywords[keywords[f]].trs.push(i);
-						}
-						// break;
+					match = title.getElementsByTagName('a')[0].innerHTML
+							.match(reg);
+				} else {
+					match = title.getElementsByTagName('a')[0].innerHTML
+							.toLowerCase().indexOf(
+									keywords[f].toLowerCase()) != -1;
+				}
+				if (match) {
+					if (config.debug)
+						console
+								.log('found topic to remove: \"'
+										+ tr.getElementsByTagName('td')[0]
+												.getElementsByTagName('a')[0].innerHTML
+												.toLowerCase()
+										+ "\" keyword: " + keywords[f]
+										+ " topic: " + i);
+					title.parentNode.style.display = 'none';
+					title.parentNode.className = "hidden_tr";
+					ignorated.total_ignored++;
+					if (!ignorated.data.keywords[keywords[f]]) {
+						ignorated.data.keywords[keywords[f]] = {};
+						ignorated.data.keywords[keywords[f]].total = 1;
+						ignorated.data.keywords[keywords[f]].trs = [ i ];
+					} else {
+						ignorated.data.keywords[keywords[f]].total++;
+						ignorated.data.keywords[keywords[f]].trs.push(i);
 					}
+					// break;
 				}
 			}
 		}
@@ -131,7 +126,8 @@ var topicList = {
 			scope : "topicList"
 		});
 	},
-	append_tags : function() {
+	/*append_tags : function(tr) {
+		console.log('does this actually work');
 		for (var i = 0; i < tags.length; i++) {
 			var tag_children = tags[i].children;
 			for (var j = 0; j < tag_children.length; j++) {
@@ -151,8 +147,8 @@ var topicList = {
 				}
 			}
 		}
-	},
-	page_jump_buttons : function() {
+	},*/
+	page_jump_buttons : function(tr) {
 		var inbox;
 		if (window.location.href.indexOf('inbox.php') > -1) {
 			if (!config.page_jump_buttons_pm) {
@@ -160,55 +156,51 @@ var topicList = {
 			}
 			inbox = true;
 		}
-		var trs = topicListHelper.getTopics();
 		var insert;
 		var tmp, topic;
-		for (var i = 1; trs[i]; i++) {
-			if (trs[i].getElementsByTagName('td')[0]) {
-				insert = document.createElement('span');
+		if (tr.getElementsByTagName('td')[0]) {
+			insert = document.createElement('span');
+			if (inbox) {
+				insert.style.cssFloat = 'right';
+			}
+			insert.addEventListener('click',
+					topicListHelper.jumpHandlerTopic, false);
+			try {
+				topic = tr.getElementsByTagName('td')[0]
+						.getElementsByTagName('a');
+				tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
+				insert.innerHTML = '<a href="##' + tmp
+						+ '" id="jumpWindow">#</a> <a href="##' + tmp
+						+ '" id="jumpLast">&gt;</a>';
 				if (inbox) {
-					insert.style.cssFloat = 'right';
+					tr.getElementsByTagName('td')[0]
+							.insertBefore(
+							insert, null);				
 				}
-				insert.addEventListener('click',
-						topicListHelper.jumpHandlerTopic, false);
-				try {
-					topic = trs[i].getElementsByTagName('td')[0]
-							.getElementsByTagName('a');
-					tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
-					insert.innerHTML = '<a href="##' + tmp
-							+ '" id="jumpWindow">#</a> <a href="##' + tmp
-							+ '" id="jumpLast">&gt;</a>';
-					if (inbox) {
-						trs[i].getElementsByTagName('td')[0]
-								.insertBefore(
-								insert, null);				
-					}
-					else {
-						trs[i].getElementsByTagName('td')[0]
-								.getElementsByClassName('fr')[0]
-								.insertBefore(
-								insert, null);
-					}					
-				} catch (e) {
-					if (config.debug) {
-						console.log('locked topic?');
-					}	
-					topic = trs[i].getElementsByTagName('td')[0]
-							.getElementsByTagName('span')[0]
-							.getElementsByTagName('a');
-					tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
-					insert.innerHTML = '<a href="##' + tmp
-							+ '" id="jumpWindow">#</a> <a href="##' + tmp
-							+ '" id="jumpLast">&gt;</a>';
-					trs[i].getElementsByTagName('td')[0]
-							.getElementsByClassName('fr')[0].insertBefore(
+				else {
+					tr.getElementsByTagName('td')[0]
+							.getElementsByClassName('fr')[0]
+							.insertBefore(
 							insert, null);
-				}
+				}					
+			} catch (e) {
+				if (config.debug) {
+					console.log('locked topic?');
+				}	
+				topic = tr.getElementsByTagName('td')[0]
+						.getElementsByTagName('span')[0]
+						.getElementsByTagName('a');
+				tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
+				insert.innerHTML = '<a href="##' + tmp
+						+ '" id="jumpWindow">#</a> <a href="##' + tmp
+						+ '" id="jumpLast">&gt;</a>';
+				tr.getElementsByTagName('td')[0]
+						.getElementsByClassName('fr')[0].insertBefore(
+						insert, null);
 			}
 		}
 	},
-	enable_keyword_highlight : function() {
-		var topics = topicListHelper.getTopics();
+	enable_keyword_highlight : function(tr) {
 		var title;
 		var keys = {};
 		var re = false;
@@ -230,8 +222,7 @@ var topicList = {
 			}
 		}
 		var reg;
-		for (var i = 1; topics[i]; i++) {
-			title = topics[i].getElementsByTagName('td')[0]
+			title = tr.getElementsByTagName('td')[0]
 					.getElementsByClassName('fl')[0].getElementsByTagName('a')[0].innerHTML;
 			for (var j = 0; keys[j]; j++) {
 				for (var k = 0; keys[j].match[k]; k++) {
@@ -247,26 +238,25 @@ var topicList = {
 						match = title.toLowerCase().indexOf(reg) != -1;
 					}
 					if (match) {
-						topics[i].getElementsByTagName('td')[0].style.background = '#'
+						tr.getElementsByTagName('td')[0].style.background = '#'
 								+ keys[j].bg;
-						topics[i].getElementsByTagName('td')[0].style.color = '#'
+						tr.getElementsByTagName('td')[0].style.color = '#'
 								+ keys[j].color;
-						for (var m = 0; topics[i].getElementsByTagName('td')[0]
+						for (var m = 0; tr.getElementsByTagName('td')[0]
 								.getElementsByTagName('a')[m]; m++) {
-							topics[i].getElementsByTagName('td')[0]
+							tr.getElementsByTagName('td')[0]
 									.getElementsByTagName('a')[m].style.color = '#'
 									+ keys[j].color;
 						}
-						if (config.debug)
+						if (config.debug) {
 							console.log('highlight topic ' + title
 									+ ' keyword ' + reg);
+						}
 					}
 				}
 			}
-		}
 	},
-	enable_tag_highlight : function() {
-		var topics = topicListHelper.getTopics();
+	enable_tag_highlight : function(tr) {
 		var keys = {};
 		for (var j = 0; config.tag_highlight_data[j]; j++) {
 			keys[j] = {};
@@ -275,88 +265,76 @@ var topicList = {
 			keys[j].bg = config.tag_highlight_data[j].bg;
 			keys[j].color = config.tag_highlight_data[j].color;
 		}
-		for (var i = 1; topics[i]; i++) {
-			tags = topics[i].getElementsByTagName('td')[0]
-					.getElementsByClassName('fr')[0].getElementsByTagName('a');
-			for (var j = 0; tags[j]; j++) {
-				for (var k = 0; keys[k]; k++) {
-					for (var l = 0; keys[k].match[l]; l++) {
-						if (tags[j].innerHTML.toLowerCase().match(
-								keys[k].match[l])) {
-							for (var m = 0; topics[i]
-									.getElementsByTagName('td')[m]; m++) {
-								if (topics[i].getElementsByTagName('td')[m].style.background == '') {
-									topics[i].getElementsByTagName('td')[m].style.background = '#'
-											+ keys[k].bg;
-									topics[i].getElementsByTagName('td')[m].style.color = '#'
+		tags = tr.getElementsByTagName('td')[0]
+				.getElementsByClassName('fr')[0].getElementsByTagName('a');
+		for (var j = 0; tags[j]; j++) {
+			for (var k = 0; keys[k]; k++) {
+				for (var l = 0; keys[k].match[l]; l++) {
+					if (tags[j].innerHTML.toLowerCase().match(
+							keys[k].match[l])) {
+						for (var m = 0; tr
+								.getElementsByTagName('td')[m]; m++) {
+							if (tr.getElementsByTagName('td')[m].style.background == '') {
+								tr.getElementsByTagName('td')[m].style.background = '#'
+										+ keys[k].bg;
+								tr.getElementsByTagName('td')[m].style.color = '#'
+										+ keys[k].color;
+								for (var n = 0; tr
+										.getElementsByTagName('td')[m]
+										.getElementsByTagName('a')[n]; n++) {
+									tr.getElementsByTagName('td')[m]
+											.getElementsByTagName('a')[n].style.color = '#'
 											+ keys[k].color;
-									for (var n = 0; topics[i]
-											.getElementsByTagName('td')[m]
-											.getElementsByTagName('a')[n]; n++) {
-										topics[i].getElementsByTagName('td')[m]
-												.getElementsByTagName('a')[n].style.color = '#'
-												+ keys[k].color;
-									}
-									break;
 								}
+								break;
 							}
-							if (config.debug)
-								console.log('highlight topic ' + topics[i]
-										+ ' tag ' + keys[k].match[l]);
 						}
+						if (config.debug)
+							console.log('highlight topic ' + tr
+									+ ' tag ' + keys[k].match[l]);
 					}
 				}
 			}
 		}
 	},
-	userhl_topiclist : function() {
-		if (!config.enable_user_highlight)
+	userhl_topiclist : function(tr) {
+		if (!config.enable_user_highlight) {
 			return;
-		var topics = topicListHelper.getTopics();
+		}
 		var user;
-		for (var i = 1; topics[i]; i++) {
-			if (topics[i].getElementsByTagName('td')[1]
-					.getElementsByTagName('a')[0]) {
-				user = topics[i].getElementsByTagName('td')[1]
-						.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-				if (config.user_highlight_data[user]) {
-					if (config.debug)
-						console.log('highlighting topic by ' + user);
-					for (var j = 0; topics[i].getElementsByTagName('td')[j]; j++) {
-						topics[i].getElementsByTagName('td')[j].style.background = '#'
-								+ config.user_highlight_data[user].bg;
-						topics[i].getElementsByTagName('td')[j].style.color = '#'
-								+ config.user_highlight_data[user].color;
-					}
-					for (var j = 0; topics[i].getElementsByTagName('a')[j]; j++) {
-						topics[i].getElementsByTagName('a')[j].style.color = '#'
-								+ config.user_highlight_data[user].color;
-					}
-					topics[i].className = 'highlighted_tr';
+		if (tr.getElementsByTagName('td')[1]
+				.getElementsByTagName('a')[0]) {
+			user = tr.getElementsByTagName('td')[1]
+					.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+			if (config.user_highlight_data[user]) {
+				if (config.debug) {
+					console.log('highlighting topic by ' + user);
 				}
+				for (var j = 0; tr.getElementsByTagName('td')[j]; j++) {
+					tr.getElementsByTagName('td')[j].style.background = '#'
+							+ config.user_highlight_data[user].bg;
+					tr.getElementsByTagName('td')[j].style.color = '#'
+							+ config.user_highlight_data[user].color;
+				}
+				for (var j = 0; tr.getElementsByTagName('a')[j]; j++) {
+					tr.getElementsByTagName('a')[j].style.color = '#'
+							+ config.user_highlight_data[user].color;
+				}
+				tr.className = 'highlighted_tr';
 			}
 		}
 	},
-	zebra_tables : function() {
+	zebra_tables : function(tr, i) {
 		var trs;
-		if (document.getElementsByClassName('live_tr').length !== 0) {
-			trs = document.getElementsByClassName('grid')[0]
-					.getElementsByClassName('live_tr');
-			var i = 0;
-		} else {
-			trs = document.getElementsByClassName('grid')[0]
-					.getElementsByTagName('tr');
+		if (tr.className !== 'live_tr' && i === 0) {
 			var i = 1;
 		}
-		while (trs[i]) {
-			if (i % 2 === 0) {
-				for (var j = 0; trs[i].getElementsByTagName('td')[j]; j++) {
-					if (trs[i].getElementsByTagName('td')[j].style.background === '')
-						trs[i].getElementsByTagName('td')[j].style.background = '#'
-								+ config.zebra_tables_color;
-				}
+		if (i % 2 === 0) {
+			for (var j = 0; tr.getElementsByTagName('td')[j]; j++) {
+				if (tr.getElementsByTagName('td')[j].style.background === '')
+					tr.getElementsByTagName('td')[j].style.background = '#'
+							+ config.zebra_tables_color;
 			}
-			i++
 		}
 	}
 }
@@ -439,15 +417,22 @@ var topicListHelper = {
 			need : "config"
 		}, function(conf) {
 			config = conf.data;
+			var trs = document.getElementsByClassName('grid')[0]
+					.getElementsByTagName('tr');
+			var tr;
 			var pm = '';
 			if (window.location.href.match('inbox.php'))
 				pm = "_pm";
-			for ( var i in topicList) {
-				if (config[i + pm]) {
-					try {
-						topicList[i]();
-					} catch (err) {
-						console.log("error in " + i + ":", err);
+			// loop through trs & pass each node to topicList functions
+			// ignoring first node in trs (not a topic)
+			for (j = 1, tr; tr = trs[j]; j++) {
+				for ( var i in topicList) {
+					if (config[i + pm]) {
+						try {
+							topicList[i](tr, j);
+						} catch (err) {
+							console.log("error in " + i + ":", err);
+						}
 					}
 				}
 			}
