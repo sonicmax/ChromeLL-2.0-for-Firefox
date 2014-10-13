@@ -1,4 +1,5 @@
 var config = [];
+var t0 = performance.now();
 var ignorated = {
 	total_ignored : 0,
 	data : {
@@ -81,14 +82,13 @@ var miscFunctions = {	// maintain order of functions
 			}
 			return vars;
 		}
-		var divs = document.getElementsByClassName("infobar")[0];
+		var infobar = document.getElementsByClassName("infobar")[0];
 		var get = getUrlVars(window.location.href);
 		var page = location.pathname;
 		var anchor = document.createElement('a');
 		var divider = document.createTextNode(" | ");
-
 		if (page == "/imagemap.php" && get["topic"] != undefined) {
-			var as2 = divs.getElementsByTagName("a");
+			var as2 = infobar.getElementsByTagName("a");
 			for (var j = 0; j < as2.length; j++) {
 				if (as2[j].href.indexOf("imagemap.php?") > 0) {
 					as2[j].href = as2[j].href + "&board=" + get["board"];
@@ -97,15 +97,14 @@ var miscFunctions = {	// maintain order of functions
 			anchor.href = '/showmessages.php?board=' + get["board"]
 					+ '&topic=' + get["topic"];
 			anchor.innerText = 'Back to Topic';
-			divs.appendChild(divider);
-			divs.appendChild(anchor);
-			divs.appendChild(divider);
+			infobar.appendChild(divider);
+			infobar.appendChild(anchor);
 		} else if (page == "/showmessages.php") {
 			anchor.href = '/imagemap.php?board=' + get["board"]
 					+ '&topic=' + get["topic"];
 			anchor.innerText = 'Imagemap';
-			divs.appendChild(divider);
-			divs.appendChild(anchor);
+			infobar.appendChild(divider);
+			infobar.appendChild(anchor);
 		}
 	},
 	filter_me: function() {
@@ -531,29 +530,23 @@ var messageList = { // maintain order of functions
 				messageListHelper.openNote(tgt.target);
 			});
 		}
+
 	},
-	like_button: function(msg) {
+	like_button: function(msg, index) {
 		if (!window.location.href.match("archives")) {
 			var head = document.getElementsByTagName("head")[0];
 			var script = document.createElement("script");
-			var tops = msg.getElementsByClassName("message-top");
-			var top;
+			var top = msg.getElementsByClassName('message-top')[0];
 			var anchor = document.createElement('a');
-			var divider = document.createTextNode(" | ");				
+			var divider = document.createTextNode(" | ");
 			anchor.setAttribute('onclick', 'like(this);');
 			anchor.innerText = 'Like';
 			script.type = "text/javascript";
 			script.src = chrome.extension.getURL("src/js/like.js");
 			head.appendChild(script);
-			for (var i = 0, len = tops.length; i < len; i++) {
-				top = tops[i];
-				// ignore message-top element of quoted posts
-				if (top.nextSibling.className === 'message-body') {
-					anchor.href = '##like' + i;
-					top.appendChild(divider);
-					top.appendChild(anchor);
-				}
-			}
+			anchor.href = '##like' + index;
+			top.appendChild(divider);
+			top.appendChild(anchor);
 		}
 	},	
 	number_posts : function(msg, index) {
@@ -574,7 +567,37 @@ var messageList = { // maintain order of functions
 		postnum = document.createTextNode(' | #' + id);
 		top.appendChild(postnum);
 	},	
-	userhl_messagelist : function(msg) {
+	post_templates : function(msg) {
+		var top = msg.getElementsByClassName('message-top')[0];
+		var sep, sepIns, qr;
+		var cDiv = document.createElement('div');
+		cDiv.style.display = 'none';
+		cDiv.id = 'cdiv';
+		document.body.insertBefore(cDiv, null);
+		messageListHelper.postEvent = document.createEvent('Event');
+		messageListHelper.postEvent.initEvent('postTemplateInsert', true, true);
+		var newScript = document.createElement('script');
+		newScript.type = 'text/javascript';
+		newScript.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
+		document.getElementsByTagName('head')[0].appendChild(newScript);
+		sep = document.createElement('span');
+		sep.innerHTML = " | ";
+		sep.className = "post_template_holder";
+		sepIns = document.createElement('span');
+		sepIns.className = 'post_template_opts';
+		sepIns.innerHTML = '[';
+		qr = document.createElement('a');
+		qr.href = "##" + i;
+		qr.innerHTML = "&gt;"
+		qr.className = "expand_post_template";
+		sepIns.addEventListener("click",
+				messageListHelper.postTemplateAction);
+		sepIns.insertBefore(qr, null);
+		sepIns.innerHTML += ']';
+		sep.insertBefore(sepIns, null);
+		top.insertBefore(sep, null);
+	},	
+	userhl_messagelist : function(msg, index) {
 		if (!config.enable_user_highlight) {
 			return;
 		}
@@ -598,30 +621,32 @@ var messageList = { // maintain order of functions
 							+ config.user_highlight_data[user].bg;
 					top.style.color = '#'
 							+ config.user_highlight_data[user].color;
-					for (var j = 0; top.getElementsByTagName('a')[j]; j++) {
-						top.getElementsByTagName('a')[j].style.color = '#'
-								+ config.user_highlight_data[user].color;
-					}
-				}
-			}
-		} else {
-				user = msg.getElementsByClassName('message-top')[0]
-						.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-				if (config.user_highlight_data[user]) {
-					if (config.debug) {
-						console.log('highlighting post by ' + user);
-					}
-					msg.getElementsByClassName('message-top')[0].style.background = '#'
-							+ config.user_highlight_data[user].bg;
-					msg.getElementsByClassName('message-top')[0].style.color = '#'
-							+ config.user_highlight_data[user].color;
-					anchors = msg.getElementsByClassName('message-top')[0].getElementsByTagName('a');
+					anchors = top.getElementsByTagName('a');
 					for (var j = 0, len = anchors.length; j < len; j++) {
 						anchor = anchors[j];
 						anchor.style.color = '#'
 								+ config.user_highlight_data[user].color;
 					}
 				}
+			}
+		} else {
+			user = msg.getElementsByClassName('message-top')[0]
+					.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+			if (config.user_highlight_data[user]) {
+				if (config.debug) {
+					console.log('highlighting post by ' + user);
+				}
+				msg.getElementsByClassName('message-top')[0].style.background = '#'
+						+ config.user_highlight_data[user].bg;
+				msg.getElementsByClassName('message-top')[0].style.color = '#'
+						+ config.user_highlight_data[user].color;
+				anchors = msg.getElementsByClassName('message-top')[0].getElementsByTagName('a');
+				for (var j = 0, len = anchors.length; j < len; j++) {
+					anchor = anchors[j];
+					anchor.style.color = '#'
+							+ config.user_highlight_data[user].color;
+				}
+			}
 		}
 	},
 	foxlinks_quotes : function(msg) {
@@ -633,7 +658,7 @@ var messageList = { // maintain order of functions
 		var s;
 		ignorated.total_ignored = 0;
 		messageListHelper.ignores = config.ignorator_list.split(',');
-		for (var r = 0; r < messageListHelper.ignores.length; r++) {
+		for (var r = 0, len = messageListHelper.ignores.length; r < len; r++) {
 			var d = 0;
 			while (messageListHelper.ignores[r].substring(d, d + 1) == ' ') {
 				d++;
@@ -642,11 +667,13 @@ var messageList = { // maintain order of functions
 					.substring(d, messageListHelper.ignores[r].length)
 					.toLowerCase();
 		}
-		for (var j = 0; msg.getElementsByClassName('message-top')[j]; j++) {
-			s = msg.getElementsByClassName('message-top').item(j);
-			for (var f = 0; messageListHelper.ignores[f]; f++) {
-				if (s.getElementsByTagName('a').item(0).innerHTML.toLowerCase() == messageListHelper.ignores[f]) {
-					s.parentNode.style.display = 'none';
+		var tops = msg.getElementsByClassName('message-top');
+		var top;
+		for (var j = 0, len = tops.length; j < len; j++) {
+			top = tops[j];
+			for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
+				if (top.getElementsByTagName('a').item(0).innerHTML.toLowerCase() == messageListHelper.ignores[f]) {
+					top.parentNode.style.display = 'none';
 					if (config.debug)
 						console.log('removed post by '
 								+ messageListHelper.ignores[f]);
@@ -708,40 +735,6 @@ var messageList = { // maintain order of functions
 				msg.getElementsByClassName('message-top')[0].insertBefore(
 						a, null);
 			}
-	},
-	post_templates : function(msg) {
-		var sep, sepIns, qr;
-		var cDiv = document.createElement('div');
-		cDiv.style.display = 'none';
-		cDiv.id = 'cdiv';
-		document.body.insertBefore(cDiv, null);
-		messageListHelper.postEvent = document.createEvent('Event');
-		messageListHelper.postEvent.initEvent('postTemplateInsert', true, true);
-		var newScript = document.createElement('script');
-		newScript.type = 'text/javascript';
-		newScript.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
-		document.getElementsByTagName('head')[0].appendChild(newScript);
-		for (var i = 0; msg.getElementsByClassName('message-top')[i]; i++) {
-			if (msg.getElementsByClassName('message-top')[i].parentNode.className != 'quoted-message') {
-				sep = document.createElement('span');
-				sep.innerHTML = " | ";
-				sep.className = "post_template_holder";
-				sepIns = document.createElement('span');
-				sepIns.className = 'post_template_opts';
-				sepIns.innerHTML = '[';
-				qr = document.createElement('a');
-				qr.href = "##" + i;
-				qr.innerHTML = "&gt;"
-				qr.className = "expand_post_template";
-				sepIns.addEventListener("click",
-						messageListHelper.postTemplateAction);
-				sepIns.insertBefore(qr, null);
-				sepIns.innerHTML += ']';
-				sep.insertBefore(sepIns, null);
-				msg.getElementsByClassName('message-top')[i].insertBefore(
-						sep, null);
-			}
-		}
 	},
 	click_expand_thumbnail : function(msg) {
 		// rewritten by xdrvonscottx
@@ -821,6 +814,8 @@ var messageList = { // maintain order of functions
 		}
 	},
 	autoscroll_livelinks : function(mutation, index, live) {
+		// live is undefined unless these functions are called 
+		// from messageListHelper.livelinks
 		if (live) {
 			if (document.hidden 
 					&& messageListHelper.autoscrollCheck(mutation) ) {
@@ -914,7 +909,7 @@ var messageList = { // maintain order of functions
 	}
 }
 
-var messageListHelper = { // ordering of functions has no impact
+var messageListHelper = {
 	ignores : {},
 	scrolling : false,
 	gfycatLoader : function() {
@@ -1436,11 +1431,12 @@ var messageListHelper = { // ordering of functions has no impact
 			var msgs = document.getElementsByClassName('message-container');
 			var msg, len;
 			var pm = '';
+			// add _pm to config keys to check for PM config values
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";
 			}
-			var t0 = performance.now();
-			// call miscFunctions if config value exists
+			// iterate over miscFunctions and messageList
+			// objects & call function if config value is true			
 			for (var k in miscFunctions) {
 				if (config[k + pm]) {
 					try {
@@ -1449,13 +1445,13 @@ var messageListHelper = { // ordering of functions has no impact
 						console.log("error in " + k + ":", err);
 					}
 				}
-			}
-			// iterate over first 10 messages (or fewer)
-			if (msgs.length < 10) {
+			}		
+			// iterate over first 5 message-containers (or fewer)
+			if (msgs.length < 5) {
 				len = msgs.length;
 			}
 			else {
-				len = 10;
+				len = 5;
 			}
 			for (var j = 0; j < len; j++) {
 				msg = msgs[j];
@@ -1478,7 +1474,7 @@ var messageListHelper = { // ordering of functions has no impact
 			// page will appear to have been fully loaded by this point
 			var t1 = performance.now();
 			console.log("Processed in " + (t1 - t0) + " milliseconds.");		
-			if (len == 10) {
+			if (len == 5) {
 				// iterate over rest of messages
 				for (j = len, msg; msg = msgs[j]; j++) {
 					for (var k in messageList) {
@@ -1495,6 +1491,7 @@ var messageListHelper = { // ordering of functions has no impact
 					}
 				}
 			}
+			// gfyCat loader is called separately
 			if (config.embed_gfycat) {
 				setTimeout(function() {
 					messageListHelper.gfycatLoader();
@@ -1533,8 +1530,9 @@ var messageListHelper = { // ordering of functions has no impact
 					console.log('listening for new page');
 				}
 				var target = document.getElementById('nextpage');
+				var mutation;
 				var observer = new MutationObserver(function(mutations) {
-					mutations.forEach(function(mutation) {
+					for (var i = 0, mutation; mutation = mutations[i]; i++) {
 						if (mutation.type === 'attributes' && target.style.display === 'block') {
 							chrome.extension.sendRequest({
 								need: "notify",
@@ -1542,7 +1540,7 @@ var messageListHelper = { // ordering of functions has no impact
 								message: document.title
 							});
 						}
-					});
+					}
 				});
 				var obsconfig = {
 					attributes: true
@@ -1762,317 +1760,6 @@ var messageListHelper = { // ordering of functions has no impact
 		}
 	}
 }
-
-/*var messageListLivelinks = {
-	click_expand_thumbnail : function(el) {
-		if(config.debug) console.log('livelinks message received - checking for thumbnails');
-		
-		var phold = el.getElementsByClassName("img-placeholder");
-		for(i = 0; i<phold.length; i++){
-			if(phold[i].parentNode.parentNode.getAttribute('class') !== "userpic-holder") {
-				img_observer.observe(phold[i], {attributes:true});
-			}
-		}
-	},
-	ignorator_messagelist : function(mutation) {
-		if (!config.ignorator) { 
-			return;
-		}
-		var tops = mutation.getElementsByClassName('message-top'); 
-		var top;
-		for (var e = 0, len = tops.length; e < len; e++) {
-		top = tops[e];
-		// check that top isn't undefined to avoid typeerrors
-			if (top) {
-				for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
-					if (top.getElementsByTagName('a')[0].innerHTML.toLowerCase() == messageListHelper.ignores[f]) {
-						top.parentNode.style.display = "none";
-						if (config.debug) {
-							console.log('removed livelinks post by '
-									+ messageListHelper.ignores[f]);
-						ignorated.total_ignored++;
-						}
-						if (!ignorated.data.users[messageListHelper.ignores[f]]) {
-							ignorated.data.users[messageListHelper.ignores[f]] = 1;
-						} else {
-							ignorated.data.users[messageListHelper.ignores[f]]++;
-						}
-						messageListHelper.globalPort.postMessage({
-							action : 'ignorator_update',
-							ignorator : ignorated
-						});
-					}
-				}
-			}
-		}
-	},
-	resize_imgs : function(mutation) {
-		for (var i = 0; mutation.getElementsByTagName('img')[i]; i++) {
-			messageListHelper.resizeImg(mutation.getElementsByTagName('img')[i]);
-		}
-	},
-	user_notes : function(el) {
-		if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('notebook') == -1) {
-			messageListHelper.addNotebox(el.getElementsByClassName('message-top'));
-		}
-	},
-	autoscroll_livelinks : function(mutation) {
-		if (document.hidden 
-				&& messageListHelper.autoscrollCheck(mutation) ) {
-			// autoscrollCheck returns true if user has scrolled to bottom of page
-			$.scrollTo(mutation);
-		}
-	},
-	autoscroll_livelinks_active : function(mutation) {
-		if (!document.hidden 
-				&& messageListHelper.autoscrollCheck(mutation)) {
-			// trigger after 10ms delay to prevent undesired 
-			// behaviour in post_title_notification
-			setTimeout(function() {
-				messageListHelper.scrolling = true;
-				$.scrollTo((mutation), 800);
-			}, 10);
-			setTimeout(function() {
-				messageListHelper.scrolling = false;
-				console.log('set scrolling to false');				
-			}, 850);
-		}
-	},
-	post_title_notification : function(el) {
-		if (el.style.display === "none") {
-			if (config.debug) {
-				console.log('not updating for ignorated post');
-			}
-			return;
-		}
-		if (el.getElementsByClassName('message-top')[0]
-				.getElementsByTagName('a')[0].innerHTML == document
-				.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
-				.replace(/ \((\d+)\)$/, "")) {
-			return;
-		}
-		var posts = 1;
-		var ud = '';
-		if (document.getElementsByClassName('message-container')[50]) {
-			ud = ud + "+";
-		}
-		if (document.title.match(/\(\d+\)/)) {
-			posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
-			document.title = "(" + (posts + 1) + ud + ") "
-					+ document.title.replace(/\(\d+\) /, "");
-		} else {
-			document.title = "(" + posts + ud + ") " + document.title;
-		}
-	},
-	notify_quote_post : function(el) {
-		if (!el.getElementsByClassName('quoted-message')) {
-			return;
-		}
-		if (el.getElementsByClassName('message-top')[0]
-				.getElementsByTagName('a')[0].innerHTML == document
-				.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
-				.replace(/ \((\d+)\)$/, "")) {
-			// dont notify when quoting own posts
-			return;
-		}
-		var not = false;
-		var msg = el.getElementsByClassName('quoted-message');
-		for (var i = 0, len = msg.length; i < len; i++) {
-			if (msg[i].getElementsByClassName('message-top')[0]
-					.getElementsByTagName('a')[0].innerHTML == document
-					.getElementsByClassName('userbar')[0]
-					.getElementsByTagName('a')[0].innerHTML.replace(
-					/ \((.*)\)$/, "")) {
-				if (msg[i].parentNode.className != 'quoted-message')
-					// only display notification if user has been directly quoted
-					not = true;
-			}
-		}
-		if (not) {
-			chrome.extension.sendRequest({
-				need : "notify",
-				title : "Quoted by "
-						+ el.getElementsByClassName('message-top')[0]
-								.getElementsByTagName('a')[0].innerHTML,
-				message : document.title.replace(/End of the Internet - /i, '')
-			}, function(data) {
-				console.log(data);
-			});
-		}
-	},
-	highlight_tc : function(el) {
-		var topic = window.location.href.match(/topic=(\d+)/)[1];
-		if (el.getElementsByClassName('message-top')[0]
-				.getElementsByTagName('a')[0].innerHTML.toLowerCase() == config.tcs[topic].tc) {
-			el.getElementsByClassName('message-top')[0]
-					.getElementsByTagName('a')[0].style.color = '#'
-					+ config.tc_highlight_color;
-		}
-	},
-	label_tc : function(el) {
-		var tcs = messageListHelper.getTcMessages();
-		if (!tcs) {
-			return;
-		}
-		var ipx, inner, tops, top, tcname, elname;
-		tcname = tcs[0].getElementsByTagName('a')[0].innerText;
-		tops = el.getElementsByClassName('message-top');
-		for (var i = 0; tops[i]; i++) {
-			top = tops[i];
-			elname = top.getElementsByTagName('a')[0].innerText;
-			if (tcname == elname && el.innerHTML.indexOf('TC') == -1) {
-				ipx = document.createElement('span');
-				inner = ' | <b>TC</b>';
-				if (config.tc_label_color & config.tc_label_color != '') {
-					inner = ' | <font color="#' + config.tc_label_color + '"><b>TC</b></font>';
-					ipx.innerHTML = inner;
-					top.insertBefore(ipx, top.getElementsByTagName('a')[0].nextSibling);
-				}
-				// avoid error where user has ticked option but not selected text color
-				else {
-					inner = ' | <b>TC</b>';
-					ipx.innerHTML = inner;
-					top.insertBefore(ipx, top.getElementsByTagName('a')[0].nextSibling);
-				}
-			}
-		}
-	},
-	like_button : function(el) {
-		el.getElementsByClassName('message-top')[0].innerHTML 
-				+= ' | <a href="##like" onclick="like(this);">Like</a>';
-	},
-	number_posts : function(el) {
-		if (el.getElementsByClassName('message-top')[0].innerHTML.indexOf('PostNumber') == -1) {
-			var top = el.getElementsByClassName('message-top')[0];
-			var lastPost = document.getElementsByClassName('PostNumber')[document
-					.getElementsByClassName('PostNumber').length - 1];
-			var number = lastPost.innerHTML.match(/#(\d+)/)[1];
-			var post = document.createElement('span');
-			var id = (parseInt(number, 10) + 1);
-			if (id < 1000)
-				id = "0" + id;
-			if (id < 100)
-				id = "0" + id;
-			if (id < 10)
-				id = "0" + id;
-			post.className = "PostNumber";
-			post.innerHTML = " | #" + id;
-			top.insertBefore(post, null);
-		}
-	},
-	userhl_messagelist : function(el) {
-		if (!config.enable_user_highlight)
-			return;
-		if (!config.no_user_highlight_quotes) {
-			for (var k = 0; el.getElementsByClassName('message-top')[k]; k++) {
-				try {
-					user = el.getElementsByClassName('message-top')[k]
-							.getElementsByTagName('a')[0].innerHTML
-							.toLowerCase();
-				} catch (e) {
-					break;
-				}
-				if (config.user_highlight_data[user]) {
-					if (config.debug)
-						console.log('highlighting post by ' + user);
-					el.getElementsByClassName('message-top')[k].style.background = '#'
-							+ config.user_highlight_data[user].bg;
-					el.getElementsByClassName('message-top')[k].style.color = '#'
-							+ config.user_highlight_data[user].color;
-					for (var j = 0; el.getElementsByClassName('message-top')[k]
-							.getElementsByTagName('a')[j]; j++) {
-						el.getElementsByClassName('message-top')[k]
-								.getElementsByTagName('a')[j].style.color = '#'
-								+ config.user_highlight_data[user].color;
-					}
-					if (k == 0
-							&& config.notify_userhl_post
-							&& el.getElementsByClassName('message-top')[0]
-									.getElementsByTagName('a')[0].innerHTML != document
-									.getElementsByClassName('userbar')[0]
-									.getElementsByTagName('a')[0].innerHTML
-									.replace(/ \((\d+)\)$/, "")) {
-						chrome.extension
-								.sendRequest(
-										{
-											need : "notify",
-											message : document.title.replace(
-													/End of the Internet - /i,
-													''),
-											title : "Post by "
-													+ el
-															.getElementsByClassName('message-top')[0]
-															.getElementsByTagName('a')[0].innerHTML
-										}, function(data) {
-											console.log(data);
-										});
-					}
-				}
-			}
-		} else {
-			user = el.getElementsByClassName('message-top')[0]
-					.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-			if (config.user_highlight_data[user]) {
-				if (config.debug)
-					console.log('highlighting post by ' + user);
-				el.getElementsByClassName('message-top')[0].style.background = '#'
-						+ config.user_highlight_data[user].bg;
-				el.getElementsByClassName('message-top')[0].style.color = '#'
-						+ config.user_highlight_data[user].color;
-				for (var j = 0; el.getElementsByClassName('message-top')[0]
-						.getElementsByTagName('a')[j]; j++) {
-					el.getElementsByClassName('message-top')[0]
-							.getElementsByTagName('a')[j].style.color = '#'
-							+ config.user_highlight_data[user].color;
-				}
-				if (config.notify_userhl_post
-						&& el.getElementsByClassName('message-top')[0]
-								.getElementsByTagName('a')[0].innerHTML != document
-								.getElementsByClassName('userbar')[0]
-								.getElementsByTagName('a')[0].innerHTML
-								.replace(/ \((\d+)\)$/, "")) {
-					chrome.extension.sendRequest({
-						need : "notify",
-						message : document.title.replace(
-								/End of the Internet - /i, ''),
-						title : "Post by "
-								+ el.getElementsByClassName('message-top')[0]
-										.getElementsByTagName('a')[0].innerHTML
-					}, function(data) {
-						console.log(data);
-					});
-				}
-			}
-		}
-	},
-	foxlinks_quotes : function(el) {
-		messageList.foxlinks_quotes();
-	},
-	label_self_anon : function(mutation) {
-		if (!window.location.href.match('archives')) {
-			var tops = mutation.getElementsByClassName('message-top');
-			if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
-				var self = document.getElementsByClassName('quickpost-body')[0]
-							.getElementsByTagName('a')[0].href;
-				// human number is only displayed in quickpost-body after refreshing page
-				if (self.match(/u=-(\d+)$/i)) {
-					var tops = mutation.getElementsByClassName('message-top');
-					// check 'filter' links as human number href isnt updated in livelinks
-					var top, humanToCheck, span;
-					for (var i = 0, len = tops.length; i < len; i++) {
-						top = tops[i];
-						humanToCheck = top.getElementsByTagName('a')[0];
-						if (humanToCheck.href == self) {			
-							span = document.createElement('span');
-							span.innerHTML = '<b>(Me)</b> | ';
-							top.insertBefore(span, top.getElementsByTagName('b')[1]);
-						}
-					}
-				}
-			}
-		}
-	}
-}*/
 
 messageListHelper.init();
 var livelinks = new MutationObserver(function(mutations) {
