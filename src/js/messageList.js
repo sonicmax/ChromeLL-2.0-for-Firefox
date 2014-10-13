@@ -72,8 +72,8 @@ var miscFunctions = {	// maintain order of functions
 		function getUrlVars(urlz) {
 			var vars = [], hash;
 			var hashes = urlz.slice(urlz.indexOf('?') + 1).split('&');
-			for (var i = 0; i < hashes.length; i++) {
-				hash = hashes[i].split('=');
+			for (var i = 0, hash; hash = hashes[i]; i++) {
+				hash = hash.split('=');
 				vars.push(hash[0]);
 				vars[hash[0]] = hash[1];
 				if (hash[1] != null && hash[1].indexOf("#") >= 0) {
@@ -89,9 +89,9 @@ var miscFunctions = {	// maintain order of functions
 		var divider = document.createTextNode(" | ");
 		if (page == "/imagemap.php" && get["topic"] != undefined) {
 			var as2 = infobar.getElementsByTagName("a");
-			for (var j = 0; j < as2.length; j++) {
-				if (as2[j].href.indexOf("imagemap.php?") > 0) {
-					as2[j].href = as2[j].href + "&board=" + get["board"];
+			for (var j = 0, a; a = as2[j]; j++) {
+				if (a.href.indexOf("imagemap.php?") > 0) {
+					a.href = a.href + "&board=" + get["board"];
 				}
 			}
 			anchor.href = '/showmessages.php?board=' + get["board"]
@@ -602,45 +602,46 @@ var messageList = { // maintain order of functions
 			return;
 		}
 		var tops = msg.getElementsByClassName('message-top');
+		var first_top = msg.getElementsByClassName('message-top')[0];
 		var top, anchors, anchor;
 		var user;
 		if (!config.no_user_highlight_quotes) {
-			for (var k = 0, len = tops.length; k < len; k++) {
-				top = tops[k];
-				try {
-					user = top.getElementsByTagName('a')[0].innerHTML
-							.toLowerCase();
-				} catch (e) {
-					break;
-				}
-				if (config.user_highlight_data[user]) {
-					if (config.debug) {
-						console.log('highlighting post by ' + user);
-					}
-					top.style.background = '#'
-							+ config.user_highlight_data[user].bg;
-					top.style.color = '#'
-							+ config.user_highlight_data[user].color;
-					anchors = top.getElementsByTagName('a');
-					for (var j = 0, len = anchors.length; j < len; j++) {
-						anchor = anchors[j];
-						anchor.style.color = '#'
+			try {
+				for (var k = 0, len = tops.length; k < len; k++) {
+					top = tops[k];
+						user = top.getElementsByTagName('a')[0].innerHTML
+								.toLowerCase();
+					if (config.user_highlight_data[user]) {
+						if (config.debug) {
+							console.log('highlighting post by ' + user);
+						}
+						top.style.background = '#'
+								+ config.user_highlight_data[user].bg;
+						top.style.color = '#'
 								+ config.user_highlight_data[user].color;
+						anchors = top.getElementsByTagName('a');
+						for (var j = 0, len = anchors.length; j < len; j++) {
+							anchor = anchors[j];
+							anchor.style.color = '#'
+									+ config.user_highlight_data[user].color;
+						}
 					}
 				}
-			}
+			} catch (e) {
+				if (config.debug) console.log(e);
+			}			
 		} else {
-			user = msg.getElementsByClassName('message-top')[0]
-					.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+			user = first_top.getElementsByTagName('a')[0]
+					.innerHTML.toLowerCase();
 			if (config.user_highlight_data[user]) {
 				if (config.debug) {
 					console.log('highlighting post by ' + user);
 				}
-				msg.getElementsByClassName('message-top')[0].style.background = '#'
+				first_top.style.background = '#'
 						+ config.user_highlight_data[user].bg;
-				msg.getElementsByClassName('message-top')[0].style.color = '#'
+				first_top.style.color = '#'
 						+ config.user_highlight_data[user].color;
-				anchors = msg.getElementsByClassName('message-top')[0].getElementsByTagName('a');
+				anchors = first_top.getElementsByTagName('a');
 				for (var j = 0, len = anchors.length; j < len; j++) {
 					anchor = anchors[j];
 					anchor.style.color = '#'
@@ -650,7 +651,30 @@ var messageList = { // maintain order of functions
 		}
 	},
 	foxlinks_quotes : function(msg) {
-		commonFunctions.foxlinks_quote(msg);
+		var color = "#" + config['foxlinks_quotes_color'];
+		var quotes = msg.getElementsByClassName('quoted-message');
+		var quote, top;
+		for (var i = 0, len = quotes.length; i < len; i++) {
+			quote = quotes[i];
+			quot_msg_style = quote.style;
+			quot_msg_style.borderStyle = 'solid';
+			quot_msg_style.borderWidth = '2px';
+			quot_msg_style.borderRadius = '5px';
+			quot_msg_style.marginRight = '30px';
+			quot_msg_style.marginLeft = '10px';
+			quot_msg_style.paddingBottom = '10px';
+			quot_msg_style.marginTop = '0px';
+			quot_msg_style.borderColor = color;
+			top = quote.getElementsByClassName('message-top')[0];
+			if (top.style.background == '') {
+				top.style.background = color;
+			} else {
+				quot_msg_style.borderColor = top.style.background;
+			}
+			top.style.marginTop = '0px';
+			top.style.paddingBottom = '2px';
+			top.style.marginLeft = '-6px';
+		}
 	},	
 	ignorator_messagelist : function(msg) {
 		if (!config.ignorator)
@@ -751,7 +775,8 @@ var messageList = { // maintain order of functions
 		}
 	},
 	link_handler : function(msg) {
-		var links = msg.getElementsByClassName("l");
+		var msg_body = msg.getElementsByClassName('message-body')[0];
+		var links = msg_body.getElementsByClassName("l");
 		var link;
 		// iterate backwards to prevent errors
 		// when modifying live nodelist
@@ -1436,60 +1461,63 @@ var messageListHelper = {
 				pm = "_pm";
 			}
 			// iterate over miscFunctions and messageList
-			// objects & call function if config value is true			
-			for (var k in miscFunctions) {
-				if (config[k + pm]) {
-					try {
-						miscFunctions[k]();
-					} catch (err) {
-						console.log("error in " + k + ":", err);
+			// objects & call function if config value is true		
+			try {	
+				for (var k in miscFunctions) {
+					if (config[k + pm]) {
+							miscFunctions[k]();
 					}
 				}
+			}
+			catch (err) {
+				console.log("error in " + k + ":", err);
 			}		
 			// iterate over first 5 message-containers (or fewer)
-			if (msgs.length < 5) {
+			if (msgs.length < 4) {
 				len = msgs.length;
 			}
 			else {
-				len = 5;
+				len = 4;
 			}
-			for (var j = 0; j < len; j++) {
-				msg = msgs[j];
-				// iterate over functions in messageList
-				for (var k in messageList) {
-					if (config[k + pm]) {
-						try {
-							// pass msg and index value to function
-							messageList[k](msg, j);
-						} catch (err) {
-							console.log("error in " + k + ":", err);
+			try {
+				for (var j = 0; j < len; j++) {
+					msg = msgs[j];
+					// iterate over functions in messageList
+					for (var k in messageList) {
+						if (config[k + pm]) {
+								// pass msg and index value to function
+								messageList[k](msg, j);
 						}
 					}
-					// call link_handler separately as it has no config value
+						// call link_handler separately as it has no config value
 					if (k == 'link_handler') {
 						messageList.link_handler(msg);
 					}
 				}
 			}
+			catch (err) {
+				console.log("error in " + k + ":", err);
+			}		
 			// page will appear to have been fully loaded by this point
 			var t1 = performance.now();
 			console.log("Processed in " + (t1 - t0) + " milliseconds.");		
-			if (len == 5) {
+			if (len == 4) {
 				// iterate over rest of messages
-				for (j = len, msg; msg = msgs[j]; j++) {
-					for (var k in messageList) {
-						if (config[k + pm]) {
-							try {
-								messageList[k](msg, j);
-							} catch (err) {
-								console.log("error in " + k + ":", err);
+				try {
+					for (j = len, msg; msg = msgs[j]; j++) {
+						for (var k in messageList) {
+							if (config[k + pm]) {
+									messageList[k](msg, j);
 							}
-						}
-						if (k == 'link_handler') {
-							messageList.link_handler(msg);
+							if (k == 'link_handler') {
+								messageList.link_handler(msg);
+							}
 						}
 					}
 				}
+				catch (err) {
+					console.log("error in " + k + ":", err);
+				}				
 			}
 			// gfyCat loader is called separately
 			if (config.embed_gfycat) {
@@ -1599,22 +1627,22 @@ var messageListHelper = {
 		ta.focus();
 	},
 	livelinks : function(mutation) {
-		// index is required for post numbers
 		var index = document.getElementsByClassName('message-container').length -1;
 		var live = true;
 		var pm = '';
 		if (window.location.href.match('inboxthread')) {
 			pm = "_pm";
 		}
-		for (var i in messageList) {
-			if (config[i + pm]) {
-				try {
-					messageList[i](mutation, index, live);
-				} catch (err) {
-					console.log("error in livelinks " + i + ":", err);
+		try {	
+			for (var i in messageList) {
+				if (config[i + pm]) {
+						messageList[i](mutation, index, live);
 				}
 			}
 		}
+		catch (err) {
+			console.log("error in livelinks " + i + ":", err);
+		}	
 	},
 	wikiFix: function(_this) {
 		window.open(_this.href.replace("boards", "wiki"));
@@ -1720,7 +1748,7 @@ var messageListHelper = {
 					var splitTime, temp;
 					var seconds = 0;
 					for (var i = 0, len = time.length; i < len; i++) {
-						splitTime = time[i];
+						splitTime = time[i];						
 						if (splitTime.indexOf('h') > -1) {
 							temp = Number(splitTime.replace('h', ''));
 							seconds += temp * 60 * 60;
