@@ -16,13 +16,14 @@ function openOptions() {
 
 function showHidden(i, el) {
 	console.log(ignoratorData.users[i].trs);
-	chrome.extension.sendRequest({
+	chrome.runtime.sendMessage({
 		need : "showIgnorated",
 		ids : ignoratorData.users[i].trs
 	});
 	el.parentNode.style.display = 'none';
 }
 var ignoratorData = {};
+
 window.onload = function() {
 var tags = cfg.saved_tags;
 var userTags = cfg.bookmark_data;
@@ -60,8 +61,8 @@ for(var i=0, len=tagcps.length; i < len; i++){
 	document.getElementById('tags').addEventListener('change', openControl);
 	document.getElementById('options').addEventListener('click', openOptions);
 	
-	chrome.extension
-			.sendRequest(
+	chrome.runtime
+			.sendMessage(
 					{
 						need : "config",
 						sub : "sort_history"
@@ -74,15 +75,16 @@ for(var i=0, len=tagcps.length; i < len; i++){
 	
 	var insert;
 	if (cfg.ignorator && cfg.ignorator_list) {
-    chrome.extension
-        .sendRequest({
+		console.log('gimme');
+    chrome.runtime
+        .sendMessage({
                 need: "noIgnored"
             },
             function (response) {
             // prevents "Cannot read property 'data' of undefined" error if no users are currently being ignored
                 if (!response.noIgnores) {
-                    chrome.extension
-                    .sendRequest({
+                    chrome.runtime
+                    .sendMessage({
                             need: "getIgnored"
                         },
                         function (response) {

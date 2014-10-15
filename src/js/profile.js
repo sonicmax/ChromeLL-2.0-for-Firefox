@@ -60,7 +60,7 @@ var profile = {
 }
 var profileHelper = {
 	init : function() {
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "config"
 		}, function(conf) {
 			config = conf.data;

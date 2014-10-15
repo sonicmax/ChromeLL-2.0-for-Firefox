@@ -13,14 +13,14 @@ var topicList = {
 		}
 		var ignores = config.ignorator_list.split(',');
 		ignores = topicListHelper.handleCsv(ignores);
-		if (config.debug) {
-			console.log(ignores);
-		}
 		var title;
 		if (tr.getElementsByTagName('td')[1]) {
 			tr.className = "live_tr";
 			title = tr.getElementsByTagName('td')[1];
-			for (var f = 0; f < ignores.length; f++) {
+			for (var f = 0, len = ignores.length; f < len; f++) {
+				if (title.getElementsByTagName('a').innerHTML = '<td>Human</td>') {
+					return;
+				}
 				if (title.getElementsByTagName('a')[0]
 						&& title.getElementsByTagName('a')[0].innerHTML
 								.toLowerCase() == ignores[f]) {
@@ -43,6 +43,9 @@ var topicList = {
 						ignorated.data.users[ignores[f]].total++;
 						ignorated.data.users[ignores[f]].trs.push(i);
 					}
+				}
+				else {
+					// do nothing
 				}
 			}
 		}
@@ -405,15 +408,15 @@ var topicListHelper = {
 						.match('\/topics\/(.*)$')[1];
 			}
 		}
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "save",
 			name : "saved_tags",
 			data : ctags
 		});
 	},
 	init : function() {
-		topicListHelper.globalPort = chrome.extension.connect();
-		chrome.extension.sendRequest({
+		topicListHelper.globalPort = chrome.runtime.connect();
+		chrome.runtime.sendMessage({
 			need : "config"
 		}, function(conf) {
 			config = conf.data;
@@ -425,17 +428,17 @@ var topicListHelper = {
 				pm = "_pm";
 			// loop through trs & pass each node to topicList functions
 			// ignoring first node in trs (not a topic)
-			for (j = 1, tr; tr = trs[j]; j++) {
-				for ( var i in topicList) {
-					if (config[i + pm]) {
-						try {
+			try {
+				for (j = 1, tr; tr = trs[j]; j++) {
+					for ( var i in topicList) {
+						if (config[i + pm]) {
 							topicList[i](tr, j);
-						} catch (err) {
-							console.log("error in " + i + ":", err);
 						}
 					}
 				}
-			}
+			} catch (err) {
+				console.log("error in " + i + ":", err);
+			}		
 			try {
 				topicListHelper.chkTags();
 			} catch (e) {

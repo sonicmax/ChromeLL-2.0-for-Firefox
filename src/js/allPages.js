@@ -1,3 +1,4 @@
+var a0 = performance.now();
 var config = {};
 var allPages = {
 	error_check : function() {
@@ -38,64 +39,62 @@ var allPages = {
 			return;
 		}
 	},
-	/*notify_pm : function() {
+	notify_pm : function() {
 		var userbar_pms = document.getElementById('userbar_pms');
-		var observer = new MutationObserver(function(mutations) {
-			var mutation;
-			for (var i = 0, len = mutations.length; i < len; i++) {
-				mutation = mutations[i];
-				console.log(mutation);
+		var observer = new MutationObserver(function() {
+			// we can assume that all mutations on 
+			// userbar_pms element are relevant
+			if (userbar_pms.style.display == 'none' && config.pms != 0) {
+				// clear unread message count from config
+				config.pms = 0;
+				chrome.runtime.sendMessage({
+						need : "save",
+						name : "pms",
+						data : config.pms
+				});
+			}
+			else if (userbar_pms.style.display != 'none') {
+				var pms_text = userbar_pms.innerText;
+				var pm_number = parseInt(pms_text.match(/\((\d+)\)/)[1]);
+				var notify_title, notify_msg;
+				// compare pm_number to last known value for pm_number
+				if (pm_number > config.pms) {
+					// you have mail
+					if (pm_number == 1) {
+						notify_title = 'New PM';
+						notify_msg = 'You have 1 new private message.';
+					}
+					else {
+						notify_title = 'New PMs';
+						notify_msg = 'You have ' + pm_number 
+								+ ' new private messages.';
+					}
+					// notify user and save current pm_number
+					chrome.runtime.sendMessage({
+							need: "notify",
+							title: notify_title,
+							message: notify_msg
+					}, function(data) {
+						console.log(data);
+					});
+					config.pms = pm_number;
+					chrome.runtime.sendMessage({
+							need : "save",
+							name : "pms",
+							data : config.pms
+					});	
+				}
+				else {
+					// user has unread PMs, but no new PMs
+					return;
+				}
 			}
 		});
 		observer.observe(userbar_pms, {
 				attributes: true,
 				childList: true
-		});
-		if (userbar_pms.style.display == 'none' && config.pms != 0) {
-			// clear unread message count from config
-				config.pms = 0;
-				chrome.extension.sendRequest({
-						need : "save",
-						name : "pms",
-						data : config.pms
-				});
-		}
-		else if (userbar_pms.style.display != 'none') {
-			var pms_text = userbar_pms.innerText;
-			var pm_number = parseInt(userbar_pms.match(/\((\d+)\)/)[1]);
-			var notify_title, notify_msg;
-			// compare pm_number to last known value for pm_number
-			if (pm_number > config.pms) {
-				if (pm_number == 1) {
-					notify_title = 'New PM';
-					notify_msg = 'You have 1 new private message.';
-				}
-				else {
-					notify_title = 'New PMs';
-					notify_msg = 'You have ' + pm_number 
-							+ ' new private messages.';
-				}
-				// notify user and save current pm_number
-				chrome.extension.sendRequest({
-						need: "notify",
-						title: notify_title,
-						message: notify_msg
-				}, function(data) {
-					console.log(data);
-				});
-				config.pms = pm_number;
-				chrome.extension.sendRequest({
-						need : "save",
-						name : "pms",
-						data : config.pms
-				});	
-			}
-			else {
-				// PMs are unread, but not new
-				return;
-			}
-		}
-	},*/
+		});		
+	},
 	history_menubar : function() {
 		var link = document.createElement('a');
 		link.innerHTML = 'Message History';
@@ -163,7 +162,7 @@ var allPages = {
 		document.title = document.title.replace(/End of the Internet - /i, '');
 	},
 	user_info_popup : function() {
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "insertcss",
 			file : "src/css/arrowbox.css"
 		}, function(r) {
@@ -175,10 +174,11 @@ var allPages = {
 			info.id = 'popup_info';
 			var user = document.createElement('div');
 			user.id = 'popup_user';
-			for ( var i = 0; links[i]; i++) {
-				var ins = document.createElement('span');
+			var ins;
+			for (var i = 0, link; link = links[i]; i++) {
+				ins = document.createElement('span');
 				ins.className = 'popup_link';
-				ins.innerHTML = links[i];
+				ins.innerHTML = link;
 				ins.addEventListener('click', commonFunctions.popupClick);
 				info.insertBefore(ins, null);
 			}
@@ -191,18 +191,6 @@ var allPages = {
 				if (e.target.className != 'popup_link')
 					commonFunctions.hidePopup(e)
 			});
-			/*
-			 * try{ var arrow, arrow_user; for(var i = 1;
-			 * document.getElementsByTagName('tr')[i]; i++){ arrow =
-			 * document.createElement('span'); arrow.className = "arrow";
-			 * arrow_user = document.createElement('span'); arrow_user.className =
-			 * "arrow";
-			 * document.getElementsByTagName('tr')[i].getElementsByTagName('td')[0].insertBefore(arrow,
-			 * document.getElementsByTagName('tr')[i].getElementsByTagName('td')[0].getElementsByTagName('a')[0]);
-			 * document.getElementsByTagName('tr')[i].getElementsByTagName('td')[1].insertBefore(arrow_user,
-			 * document.getElementsByTagName('tr')[i].getElementsByTagName('td')[1].getElementsByTagName('a')[0]); }
-			 * }catch(e){ }
-			 */
 		});
 	},
 	dramalinks : function() {
@@ -214,35 +202,8 @@ var allPages = {
 }
 
 var commonFunctions = {
-	foxlinks_quote : function(msg) {
-		var color = "#" + config['foxlinks_quotes_color'];
-		var quotes = msg.getElementsByClassName('quoted-message');
-		var quote, top;
-		for (var i = 0, len = quotes.length; i < len; i++) {
-			quote = quotes[i];
-			quot_msg_style = quote.style;
-			quot_msg_style.borderStyle = 'solid';
-			quot_msg_style.borderWidth = '2px';
-			quot_msg_style.borderRadius = '5px';
-			quot_msg_style.marginRight = '30px';
-			quot_msg_style.marginLeft = '10px';
-			quot_msg_style.paddingBottom = '10px';
-			quot_msg_style.marginTop = '0px';
-			quot_msg_style.borderColor = color;
-			top = quote.getElementsByClassName('message-top')[0];
-			if (top) {
-				if (top.style.background == '') {
-					top.style.background = color;
-				} else {
-					quot_msg_style.borderColor = top.style.background;
-				}
-				top.style.marginTop = '0px';
-				top.style.paddingBottom = '2px';
-				top.style.marginLeft = '-6px';
-			}
-		}
-	},
 	asyncUpload : function(tgt, i) {
+		console.log(tgt, i);
 		if (!i)
 			var i = 0;
 		var xh = new XMLHttpRequest();
@@ -250,6 +211,7 @@ var commonFunctions = {
 			if (this.readyState === 4 && this.status === 200) {
 				var tmp = document.createElement('div');
 				tmp.innerHTML = this.responseText;
+				console.log(tmp);
 				var update_ul;
 				if (window.location.href.match('postmsg')) {
 					update_ul = document.getElementsByTagName('form')[0]
@@ -320,7 +282,7 @@ var commonFunctions = {
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", user, true);
 			xhr.onreadystatechange = function () {
-			if (xhr.readyState == 4 && xhr.status == 200) {			
+				if (xhr.readyState == 4 && xhr.status == 200) {
 					var html = document.createElement('html');
 					html.innerHTML = xhr.responseText;
 					var htmlobj = ($(html.innerHTML).find("td"));
@@ -350,20 +312,20 @@ var commonFunctions = {
 					// update popup menu elements
 					displayRep.innerHTML = '<br>' + commonFunctions.rep;
 					if (config.show_old_name) {
-					    if (oldUsername.indexOf("Formerly") > -1) {
-					        formerly.innerHTML = "<br>Formerly known as: <b>" + commonFunctions.oldName + '</b>';
-					    }
+							if (oldUsername.indexOf("Formerly") > -1) {
+									formerly.innerHTML = "<br>Formerly known as: <b>" + commonFunctions.oldName + '</b>';
+							}
 					}
 					if (html.innerHTML.indexOf('online now') > -1) {
-					    displayOnline.innerHTML = '(online now)';
+							displayOnline.innerHTML = '(online now)';
 					}
 					if (commonFunctions.punish.indexOf('Suspended') > -1) {
-					    displayPunish.innerHTML = '<b>Suspended until: </b>' + commonFunctions.punish.substring(17);
+							displayPunish.innerHTML = '<b>Suspended until: </b>' + commonFunctions.punish.substring(17);
 					}
 					if (commonFunctions.punish.indexOf('Banned') > -1) {
-					    displayPunish.innerHTML = '<b>Banned</b>';
+							displayPunish.innerHTML = '<b>Banned</b>';
 					}
-			}
+				}
 			}
 			xhr.send();
 			// create popup menu
@@ -399,7 +361,7 @@ var commonFunctions = {
 			} else {
 				config.ignorator_list += ", " + commonFunctions.currentUser;
 			}
-			chrome.extension.sendRequest({
+			chrome.runtime.sendMessage({
 				need : "save",
 				name : "ignorator_list",
 				data : config.ignorator_list
@@ -415,7 +377,7 @@ var commonFunctions = {
 			evt.target.innerHTML = "IGNORATE?";
 			break;
 		case "PM":
-			chrome.extension.sendRequest({
+			chrome.runtime.sendMessage({
 				need : "opentab",
 				url : "http://endoftheinter.net/postmsg.php?puser="
 						+ commonFunctions.currentID
@@ -423,7 +385,7 @@ var commonFunctions = {
 			commonFunctions.hidePopup();
 			break;
 		case "GT":
-			chrome.extension.sendRequest({
+			chrome.runtime.sendMessage({
 				need : "opentab",
 				url : "http://endoftheinter.net/token.php?type=2&user="
 						+ commonFunctions.currentID
@@ -431,7 +393,7 @@ var commonFunctions = {
 			commonFunctions.hidePopup();
 			break;
 		case "BT":
-			chrome.extension.sendRequest({
+			chrome.runtime.sendMessage({
 				need : "opentab",
 				url : "http://endoftheinter.net/token.php?type=1&user="
 						+ commonFunctions.currentID
@@ -445,7 +407,7 @@ var commonFunctions = {
 					Math.random() * 16777215).toString(16);
 			config.user_highlight_data[user].color = Math.floor(
 					Math.random() * 16777215).toString(16);
-			chrome.extension.sendRequest({
+			chrome.runtime.sendMessage({
 				need : "save",
 				name : "user_highlight_data",
 				data : config.user_highlight_data
@@ -461,7 +423,7 @@ var commonFunctions = {
 		case "UNHIGHLIGHT":
 			delete config.user_highlight_data[commonFunctions.currentUser
 					.toLowerCase()];
-			chrome.extension.sendRequest({
+			chrome.runtime.sendMessage({
 				need : "save",
 				name : "user_highlight_data",
 				data : config.user_highlight_data
@@ -508,7 +470,7 @@ var commonFunctions = {
 		quickreply.value = newtxt;
 	},
 	getDrama : function() {
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "dramalinks"
 		}, function(response) {
 			commonFunctions.insertDramalinks(response.data,
@@ -540,23 +502,19 @@ var commonFunctions = {
 	insertDramalinks: function(dramas, hide) {
 		try {
 			var ticker = document.createElement("center");
-			//var update = document.createElement("center");
 			ticker.id = "dramalinks_ticker";
-			//update.innerHTML = "";
-			//update.id = "dramalinks_update";
 			var h1 = document.getElementsByTagName('h1')[0];
 			if (config.dramalinks_below_topic 
 					&& document.getElementsByTagName('h2')[0])
 				h1 = document.getElementsByTagName('h2')[0];
 				h1.parentNode.insertBefore(ticker, h1.nextSibling);
-				//h1.parentNode.insertBefore(update, h1.nextSibling);
 			if (hide) {
 				document.getElementById("dramalinks_ticker").style.display = 'none';
 			}
 			if (!dramas) {
 				dramas = "Dramalinks loading...";
 				// wait for message from background page before updating dramalinks
-				chrome.extension.onMessage.addListener(function(msg, sender, sendResponse) {
+				chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
 					if (msg.action == 'updatedrama') {
 						if (config.hide_dramalinks_topiclist 
 								&& !window.location.href.match(/topics/i)) {
@@ -574,26 +532,28 @@ var commonFunctions = {
 		} catch (e) {}
 	},
 	updateDramaTicker: function() {
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need: "dramalinks"
 		}, function(response) {
-			dramas = response.data,
+			dramas = response.data;
 			document.getElementById("dramalinks_ticker").innerHTML = dramas;
 		});
 	}
 }
 
-chrome.extension.sendRequest({
+chrome.runtime.sendMessage({
 	need : "config"
 }, function(response) {
 	config = response.data;
-	for ( var i in allPages) {
-		if (response.data[i]) {
-			try {
+	try {
+		for ( var i in allPages) {
+			if (config[i]) {
 				allPages[i]();
-			} catch (err) {
-				console.log("error in " + i + ":", err);
 			}
 		}
+	} catch (err) {
+		console.log("error in " + i + ":", err);
 	}
+	var a1 = performance.now();
+	console.log("Processed allPages in " + (a1 - a0) + " milliseconds.");
 });

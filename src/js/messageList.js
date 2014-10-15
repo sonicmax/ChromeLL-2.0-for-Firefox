@@ -166,7 +166,7 @@ var miscFunctions = {	// maintain order of functions
 		document.addEventListener('mousemove', messageListHelper.clearUnreadPosts);
 	},
 	quickpost_on_pgbottom : function() {
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "insertcss",
 			file : "src/css/quickpost_on_pgbottom.css"
 		});
@@ -628,7 +628,7 @@ var messageList = { // maintain order of functions
 					}
 				}
 			} catch (e) {
-				if (config.debug) console.log(e);
+				// if (config.debug) console.log(e);
 			}			
 		} else {
 			user = first_top.getElementsByTagName('a')[0]
@@ -677,41 +677,39 @@ var messageList = { // maintain order of functions
 		}
 	},	
 	ignorator_messagelist : function(msg) {
-		if (!config.ignorator)
+		if (!config.ignorator) {
 			return;
-		var s;
-		ignorated.total_ignored = 0;
+		}
 		messageListHelper.ignores = config.ignorator_list.split(',');
 		for (var r = 0, len = messageListHelper.ignores.length; r < len; r++) {
-			var d = 0;
-			while (messageListHelper.ignores[r].substring(d, d + 1) == ' ') {
-				d++;
-			}
-			messageListHelper.ignores[r] = messageListHelper.ignores[r]
-					.substring(d, messageListHelper.ignores[r].length)
-					.toLowerCase();
+			ignore = messageListHelper.ignores[r].toLowerCase().trim();
+			messageListHelper.ignores[r] = ignore;
 		}
 		var tops = msg.getElementsByClassName('message-top');
-		var top;
+		var top, username;
 		for (var j = 0, len = tops.length; j < len; j++) {
 			top = tops[j];
-			for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
-				if (top.getElementsByTagName('a').item(0).innerHTML.toLowerCase() == messageListHelper.ignores[f]) {
-					top.parentNode.style.display = 'none';
-					if (config.debug)
-						console.log('removed post by '
-								+ messageListHelper.ignores[f]);
-					ignorated.total_ignored++;
-					if (!ignorated.data.users[messageListHelper.ignores[f]]) {
-						ignorated.data.users[messageListHelper.ignores[f]] = {};
-						ignorated.data.users[messageListHelper.ignores[f]].total = 1;
-						ignorated.data.users[messageListHelper.ignores[f]].trs = [ j ];
-					} else {
-						ignorated.data.users[messageListHelper.ignores[f]].total++;
-						ignorated.data.users[messageListHelper.ignores[f]].trs
-								.push(j);
+			if (top) {
+				username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+				for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
+					if (username == messageListHelper.ignores[f]) {
+						top.parentNode.style.display = 'none';
+						if (config.debug) {
+							console.log('removed post by '
+									+ messageListHelper.ignores[f]);
+						}
+						ignorated.total_ignored++;
+						if (!ignorated.data.users[messageListHelper.ignores[f]]) {
+							ignorated.data.users[messageListHelper.ignores[f]] = {};
+							ignorated.data.users[messageListHelper.ignores[f]].total = 1; 
+							ignorated.data.users[messageListHelper.ignores[f]].trs = [ j ];
+						} else {
+							ignorated.data.users[messageListHelper.ignores[f]].total++;
+							ignorated.data.users[messageListHelper.ignores[f]].trs
+									.push(j);
+						}
 					}
-				}
+				}		
 			}
 		}
 		messageListHelper.globalPort.postMessage({
@@ -771,70 +769,6 @@ var messageList = { // maintain order of functions
 					attributes : true,
 					childList: true
 				});
-			}
-		}
-	},
-	link_handler : function(msg) {
-		var msg_body = msg.getElementsByClassName('message-body')[0];
-		var links = msg_body.getElementsByClassName("l");
-		var link;
-		// iterate backwards to prevent errors
-		// when modifying live nodelist
-		for (var i = links.length - 1; i >= 0; i--) {
-			link = links[i];
-			if (link.title.indexOf("/index.php") == 0) {
-				wikiLink = link;
-				wikiLink.className = "wiki";
-				wikiLink.addEventListener("click", function(evt) {
-					messageListHelper.wikiFix(this);
-					evt.preventDefault();
-				});
-			}
-			else if (link.title.indexOf("/imap/") == 0) {
-				imageLink = link;
-				imageLink.className = "imap";
-				imageLink.addEventListener("click", function(evt) {
-					messageListHelper.imageFix(this);					
-					evt.preventDefault();
-				});	
-			} 			
-			else if (config.embed_on_hover 
-					&& (link.title.indexOf("youtube.com/") > -1
-					|| link.title.indexOf("youtu.be/") > -1)) {
-				vidLink = link;
-				vidLink.className = "youtube";
-				// give each video link a unique id for embed/hide functions
-				vidLink.id = vidLink.href + "&" + Math.random().toString(16).slice(2);			
-				// attach event listener
-				$(vidLink).hoverIntent(
-					function() {
-						var _this = this;
-						var color = $("table.message-body tr td.message").css("background-color");
-						if (_this.className == "youtube") {
-							$(_this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
-									+ "background: " + color 
-									+ ";'><a id='" + _this.id 
-									+ "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
-						}
-					}, function() {
-						var _this = this;
-						if (_this.className == "youtube") {
-							$(_this).find("span").remove();
-						}
-					}
-				);
-				// pass vidLink to mutation observer to handle embed/hide clicks
-				link_observer.observe(vidLink, {
-						subtree: true,
-						characterData: true,
-						childList: true,
-						attributes: true
-				});				
-			}
-			else if (config.embed_gfycat 
-					&& link.title.indexOf("gfycat.com/") > -1) {
-				gfyLink = link;
-				gfyLink.className = "gfycat";
 			}
 		}
 	},
@@ -920,7 +854,7 @@ var messageList = { // maintain order of functions
 				}
 			}
 			if (not) {
-				chrome.extension.sendRequest({
+				chrome.runtime.sendMessage({
 					need : "notify",
 					title : "Quoted by "
 							+ mutation.getElementsByClassName('message-top')[0]
@@ -1017,6 +951,64 @@ var messageListHelper = {
 			}
 		}
 	},
+	link_handler : function() {
+		var links = document.getElementsByClassName("l");
+		var link;
+		// iterate backwards to prevent errors
+		// when modifying live nodelist
+		var i = links.length;
+		while (i--) {
+			link = links[i];
+			if (link.title.indexOf("/index.php") == 0) {
+				link.addEventListener("click", function(evt) {
+					messageListHelper.wikiFix(this);
+					evt.preventDefault();
+				});
+			}
+			else if (link.title.indexOf("/imap/") == 0) {
+				link.addEventListener("click", function(evt) {
+					messageListHelper.imageFix(this);					
+					evt.preventDefault();
+				});	
+			} 			
+			else if (config.embed_on_hover 
+					&& (link.title.indexOf("youtube.com/") > -1
+					|| link.title.indexOf("youtu.be/") > -1)) {
+				link.className = "youtube";
+				// give each video link a unique id for embed/hide functions
+				link.id = link.href + "&" + Math.random().toString(16).slice(2);			
+				// attach event listener
+				$(link).hoverIntent(
+					function() {
+						var _this = this;
+						var color = $("table.message-body tr td.message").css("background-color");
+						if (_this.className == "youtube") {
+							$(_this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
+									+ "background: " + color 
+									+ ";'><a id='" + _this.id 
+									+ "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+						}
+					}, function() {
+						var _this = this;
+						if (_this.className == "youtube") {
+							$(_this).find("span").remove();
+						}
+					}
+				);
+				// pass vidLink to mutation observer to handle embed/hide clicks
+				link_observer.observe(link, {
+						subtree: true,
+						characterData: true,
+						childList: true,
+						attributes: true
+				});				
+			}
+			else if (config.embed_gfycat 
+					&& link.title.indexOf("gfycat.com/") > -1) {
+				link.className = "gfycat";
+			}
+		}
+	},	
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
 		if (chosen.files.length == 0) {
@@ -1197,7 +1189,7 @@ var messageListHelper = {
 		}
 	},
 	saveNotes : function() {
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "save",
 			name : "usernote_notes",
 			data : config.usernote_notes
@@ -1231,7 +1223,7 @@ var messageListHelper = {
 		}
 		if (numTcs > max)
 			delete config.tcs[lowestTc];
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "save",
 			name : "tcs",
 			data : config.tcs
@@ -1446,11 +1438,11 @@ var messageListHelper = {
 	},
 	init : function() {
 		messageListHelper.archiveQuoteButtons();
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "config",
 			tcs : true
 		}, function(conf) {
-			messageListHelper.globalPort = chrome.extension.connect();
+			messageListHelper.globalPort = chrome.runtime.connect();
 			config = conf.data;
 			config.tcs = conf.tcs;
 			var msgs = document.getElementsByClassName('message-container');
@@ -1489,10 +1481,6 @@ var messageListHelper = {
 								messageList[k](msg, j);
 						}
 					}
-						// call link_handler separately as it has no config value
-					if (k == 'link_handler') {
-						messageList.link_handler(msg);
-					}
 				}
 			}
 			catch (err) {
@@ -1509,9 +1497,6 @@ var messageListHelper = {
 							if (config[k + pm]) {
 									messageList[k](msg, j);
 							}
-							if (k == 'link_handler') {
-								messageList.link_handler(msg);
-							}
 						}
 					}
 				}
@@ -1519,6 +1504,7 @@ var messageListHelper = {
 					console.log("error in " + k + ":", err);
 				}				
 			}
+			messageListHelper.link_handler();
 			// gfyCat loader is called separately
 			if (config.embed_gfycat) {
 				setTimeout(function() {
@@ -1562,7 +1548,7 @@ var messageListHelper = {
 				var observer = new MutationObserver(function(mutations) {
 					for (var i = 0, mutation; mutation = mutations[i]; i++) {
 						if (mutation.type === 'attributes' && target.style.display === 'block') {
-							chrome.extension.sendRequest({
+							chrome.runtime.sendMessage({
 								need: "notify",
 								title: "New Page Created",
 								message: document.title

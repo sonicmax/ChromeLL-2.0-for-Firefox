@@ -176,7 +176,7 @@ var postMsg = {
 	},
 	snippet_listener : function() {
 	 var ta = document.getElementById('message');
-	 var text, range, word, caret, snippet;
+	 var caret;
 		ta.addEventListener('keydown', function(event) {
 			if (event.keyIdentifier == 'U+0009') {
 				// prevent default action for tab key so we can attach our own
@@ -315,7 +315,7 @@ var postMsgHelper = {
 		ta.focus();
 	},
 	init : function() {
-		chrome.extension.sendRequest({
+		chrome.runtime.sendMessage({
 			need : "config"
 		}, function(conf) {
 			config = conf.data;
