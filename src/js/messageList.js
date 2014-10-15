@@ -48,26 +48,32 @@ var mutation;
 
 // set up observer to detect mutations to youtube links
 var link_observer = new MutationObserver(function(mutations) {
-	$("table.message-body").on("click", "a.embed", 
-			function() {
-				// handle "embed" link
-				if (!this.embedded) {
-					messageListHelper.embedYoutube(this);
-				}
-	});
-	$("table.message-body").on("click", "a.hide", 
-			function() {
-				// handle "hide" link
-				if (!this.hidden) {
-					messageListHelper.hideYoutube(this);
-				}
-	});
-	$("div.youtube").click(function(event) {
-		event.preventDefault();
-	});
+	$("table.message-body").on("click", "a.embed",
+		function() {
+			// handle "embed" link
+			if (!this.embedded) {
+				messageListHelper.embedYoutube(this);
+			}
+		}
+	);
+	$("table.message-body").on("click", "a.hide",
+		function() {
+			// handle "hide" link
+			if (!this.hidden) {
+				messageListHelper.hideYoutube(this);
+			}
+		}
+	);
+	$("div.youtube").click(
+		function(event) {
+			event.preventDefault();
+		}
+	);
 });
 
-var miscFunctions = {	// maintain order of functions
+var miscFunctions = {
+	// order of functions in object has to be maintained
+	// for dom elements to be added in correct order
 	imagemap_on_infobar : function() {
 		function getUrlVars(urlz) {
 			var vars = [], hash;
@@ -495,7 +501,9 @@ var miscFunctions = {	// maintain order of functions
 	}	
 }
 
-var messageList = { // maintain order of functions
+var messageList = {
+	// order of functions in object has to be maintained
+	// for dom elements to be added in correct order
 	resize_imgs : function(msg) {
 		var imgs = msg.getElementsByTagName('img');
 		var img;
@@ -712,11 +720,6 @@ var messageList = { // maintain order of functions
 				}		
 			}
 		}
-		messageListHelper.globalPort.postMessage({
-			action : 'ignorator_update',
-			ignorator : ignorated,
-			scope : "messageList"
-		});
 	},	
 	label_self_anon : function(msg) {
 		if (!window.location.href.match('archives')) {
@@ -878,6 +881,7 @@ var messageListHelper = {
 		for (var i = 0, len = gfycats.length; i < len; i++) {
 			gfycat = gfycats[i];			
 			position = gfycat.getBoundingClientRect();
+			// use window height + 200 to increase visibility of gfycatLoader
 			if (position.top > height + 200 
 					|| position.bottom < 0) {
 				if (gfycat.getAttribute('name') == 'embedded'
@@ -899,7 +903,7 @@ var messageListHelper = {
 		}
 	},
 	autoscrollCheck : function(mutation) {
-		// check whether user has scrolled to bottom of page
+		// checks whether user has scrolled to bottom of page
 		var position = mutation.getBoundingClientRect();
 		if (mutation.style.display == 'none'
 				|| position.top > window.innerHeight) {
@@ -916,6 +920,7 @@ var messageListHelper = {
 		return (caret);
 	},
 	snippetHandler : function(ta, caret) {
+		// detects keyword & replaces with snippet
 		var text = ta.substring(0, caret);
 		var words, word, snippet, temp, index, newCaret;
 		var message = document.getElementsByName('message')[0];
@@ -1198,7 +1203,6 @@ var messageListHelper = {
 		});
 	},
 	resizeImg : function(el) {
-		// console.log(el.width, config.img_max_width);
 		var width = el.width;
 		if (width > config.img_max_width) {
 			if (config.debug)
@@ -1396,6 +1400,7 @@ var messageListHelper = {
 			// copies json data to clipboard
 			if (config.debug) console.log(response.clipboard);
 		});
+		// alert user
 		$("#copied").fadeIn(200);
 		setTimeout(function() {
 			$(that).find("span:last").fadeOut(400);
@@ -1437,11 +1442,11 @@ var messageListHelper = {
 		$("div.message-top").on("click", "a.archivequote", messageListHelper.quoteHandler);
 	},
 	init : function() {
-		messageListHelper.archiveQuoteButtons();
 		chrome.runtime.sendMessage({
 			need : "config",
 			tcs : true
 		}, function(conf) {
+			// set up globalPort so we can communicate with background script
 			messageListHelper.globalPort = chrome.runtime.connect();
 			config = conf.data;
 			config.tcs = conf.tcs;
@@ -1454,7 +1459,7 @@ var messageListHelper = {
 			}
 			// iterate over miscFunctions and messageList
 			// objects & call function if config value is true		
-			try {	
+			try {
 				for (var k in miscFunctions) {
 					if (config[k + pm]) {
 							miscFunctions[k]();
@@ -1504,6 +1509,14 @@ var messageListHelper = {
 					console.log("error in " + k + ":", err);
 				}				
 			}
+			// send ignorator data to background script
+			messageListHelper.globalPort.postMessage({
+				action : 'ignorator_update',
+				ignorator : ignorated,
+				scope : "messageList"
+			});		
+			// call any functions that don't exist in messageList object
+			messageListHelper.archiveQuoteButtons();			
 			messageListHelper.link_handler();
 			// gfyCat loader is called separately
 			if (config.embed_gfycat) {
@@ -1512,31 +1525,27 @@ var messageListHelper = {
 				}, 500);
 				window.addEventListener('scroll', messageListHelper.gfycatLoader);
 				document.addEventListener('visibilitychange', messageListHelper.pauseGfy);
-			}			
+			}
 			messageListHelper.globalPort.onMessage.addListener(function(msg) {
-				switch (msg.action) {
-				case "ignorator_update":
-					messageListHelper.globalPort.postMessage({
-						action : 'ignorator_update',
-						ignorator : ignorated,
-						scope : "messageList"
-					});
-					break;
-				case "showIgnorated":
-					if (config.debug)
-						console.log("showing hidden msg", msg.ids);
-					var tr = document.getElementsByClassName('message-top');
-					for (var i = 0; i < msg.ids.length; i++) {
-						if (config.debug)
-							console.log(tr[msg.ids[i]]);
-						tr[msg.ids[i]].parentNode.style.display = 'block';
-						tr[msg.ids[i]].parentNode.style.opacity = '.7';
+				// ignorator_update action is handled by background script
+				if (msg.action !== 'ignorator_update') {			
+					switch (msg.action) {
+						case "showIgnorated":
+							if (config.debug)
+								console.log("showing hidden msg", msg.ids);
+							var tr = document.getElementsByClassName('message-top');
+							for (var i = 0; i < msg.ids.length; i++) {
+								if (config.debug)
+									console.log(tr[msg.ids[i]]);
+								tr[msg.ids[i]].parentNode.style.display = 'block';
+								tr[msg.ids[i]].parentNode.style.opacity = '.7';
+							}
+							break;
+						default:
+							if (config.debug)
+								console.log('invalid action', msg);
+							break;
 					}
-					break;
-				default:
-					if (config.debug)
-						console.log('invalid action', msg);
-					break;
 				}
 			});
 			if (config.new_page_notify) {
@@ -1626,6 +1635,12 @@ var messageListHelper = {
 				}
 			}
 		}
+		// send ignorator data to background script
+		messageListHelper.globalPort.postMessage({
+			action : 'ignorator_update',
+			ignorator : ignorated,
+			scope : "messageList"
+		});				
 		catch (err) {
 			console.log("error in livelinks " + i + ":", err);
 		}	
@@ -1652,7 +1667,7 @@ var messageListHelper = {
 		xhr.open("GET", xhrURL, true);
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
-				// gfycat api provides width & height
+				// gfycat api provides width, height, & webm url
 				temp = JSON.parse(xhr.responseText);
 				width = temp.gfyItem.width;
 				height = temp.gfyItem.height;
@@ -1662,7 +1677,7 @@ var messageListHelper = {
 				}
 				if (config.resize_gfys 
 						&& width > config.gfy_max_width) {
-					// scale iframe to match gfy_max_width value
+					// scale video size to match gfy_max_width value
 					height = (height / (width / config.gfy_max_width));
 					width = config.gfy_max_width;
 				}
@@ -1675,11 +1690,12 @@ var messageListHelper = {
 				// prevent "Cannot read property 'replaceChild' of null" error
 				if (gfyLink.parentNode) {
 					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
-					// check if placeholder is visible
+					// check if placeholder is visible (some placeholders will be off screen)
 					position = placeholder.getBoundingClientRect();
 					if (position.top > window.innerHeight) {
 						return;
 					} else {
+						// pass placeholder video element to embed function
 						messageListHelper.embedGfy(placeholder);
 					}
 				}
@@ -1687,13 +1703,15 @@ var messageListHelper = {
 		}
 		xhr.send();
 	},
-	embedGfy: function(gfycat) {
-		var video = gfycat.getElementsByTagName('video')[0];
-		gfycat.setAttribute('name', 'embedded');
-		video.src = gfycat.id;
+	embedGfy: function(placeholder) {
+		var video = placeholder.getElementsByTagName('video')[0];
+		placeholder.setAttribute('name', 'embedded');
+		// placeholder id is webm url
+		video.src = placeholder.id;
 		video.play();
 	},
 	pauseGfy: function() {
+		// pause all gfycat videos if document is hidden
 		if (document.hidden) {
 			var videos = document.getElementsByTagName('video');
 			var video;
@@ -1706,6 +1724,8 @@ var messageListHelper = {
 			}
 		}
 		else {
+			// call gfycatLoader so that only visible gfycat videos are played
+			// if document visibility changes from hidden to visible
 			messageListHelper.gfycatLoader();
 		}
 	},
@@ -1736,15 +1756,15 @@ var messageListHelper = {
 					for (var i = 0, len = time.length; i < len; i++) {
 						splitTime = time[i];						
 						if (splitTime.indexOf('h') > -1) {
-							temp = Number(splitTime.replace('h', ''));
+							temp = Number(splitTime.replace('h', ''), 10);
 							seconds += temp * 60 * 60;
 						}
 						else if (splitTime.indexOf('m') > -1) {
-							temp = parseInt(splitTime.replace('m', ''));
+							temp = parseInt(splitTime.replace('m', ''), 10);
 							seconds += temp * 60;
 						}
 						else if (splitTime.indexOf('s') > -1) {
-							seconds += parseInt(splitTime.replace('s', ''));
+							seconds += parseInt(splitTime.replace('s', ''), 10);
 						}
 					}
 					videoCode += "?start=" + seconds + "'";
@@ -1791,6 +1811,7 @@ var livelinks = new MutationObserver(function(mutations) {
 		}
 	}
 });
+
 livelinks.observe(document.getElementById('u0_1'), {
 		subtree: true,
 		childList: true

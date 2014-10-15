@@ -13,16 +13,15 @@ var topicList = {
 		}
 		var ignores = config.ignorator_list.split(',');
 		ignores = topicListHelper.handleCsv(ignores);
-		var title;
+		var username;
 		if (tr.getElementsByTagName('td')[1]) {
-			tr.className = "live_tr";
-			title = tr.getElementsByTagName('td')[1];
+			username = tr.getElementsByTagName('td')[1];
 			for (var f = 0, len = ignores.length; f < len; f++) {
-				if (title.getElementsByTagName('a').innerHTML = '<td>Human</td>') {
+				if (username.innerHTML.indexOf('<td>Human</td>') > -1) {
 					return;
-				}
-				if (title.getElementsByTagName('a')[0]
-						&& title.getElementsByTagName('a')[0].innerHTML
+				}			
+				else if (username.getElementsByTagName('a')[0]
+						&& username.getElementsByTagName('a')[0].innerHTML
 								.toLowerCase() == ignores[f]) {
 					if (config.debug)
 						console
@@ -32,8 +31,8 @@ var topicList = {
 												.toLowerCase()
 										+ "\" author: " + ignores[f]
 										+ " topic: " + i);
-					title.parentNode.style.display = 'none';
-					title.parentNode.className = "hidden_tr";
+					username.parentNode.style.display = 'none';
+					username.parentNode.className = "hidden_tr";
 					ignorated.total_ignored++;
 					if (!ignorated.data.users[ignores[f]]) {
 						ignorated.data.users[ignores[f]] = {};
@@ -44,19 +43,11 @@ var topicList = {
 						ignorated.data.users[ignores[f]].trs.push(i);
 					}
 				}
-				else {
-					// do nothing
-				}
 			}
 		}
-		topicListHelper.globalPort.postMessage({
-			action : 'ignorator_update',
-			ignorator : ignorated
-		});
 	},
 	ignore_keyword : function(tr, i) {
-		if (config.ignore_keyword_list == ""
-				|| config.ignore_keyword_list == undefined) {
+		if (!config.ignore_keyword_list) {
 			return;
 		}
 		var keywords;
@@ -70,11 +61,6 @@ var topicList = {
 		} catch (e) {
 			keywords = config.ignore_keyword_list.split(',');
 			keywords = topicListHelper.handleCsv(keywords);
-		}
-		if (config.debug)
-			console.log(keywords);
-		if (tr.className !== 'live_tr') {
-			tr.className = 'live_tr';
 		}
 		var title;
 		var match = false;
@@ -123,11 +109,6 @@ var topicList = {
 				}
 			}
 		}
-		topicListHelper.globalPort.postMessage({
-			action : 'ignorator_update',
-			ignorator : ignorated,
-			scope : "topicList"
-		});
 	},
 	/*append_tags : function(tr) {
 		console.log('does this actually work');
@@ -328,10 +309,9 @@ var topicList = {
 		}
 	},
 	zebra_tables : function(tr, i) {
-		var trs;
-		if (tr.className !== 'live_tr' && i === 0) {
+		/*if (tr.className !== 'live_tr' && i === 0) {
 			var i = 1;
-		}
+		}*/
 		if (i % 2 === 0) {
 			for (var j = 0; tr.getElementsByTagName('td')[j]; j++) {
 				if (tr.getElementsByTagName('td')[j].style.background === '')
@@ -426,19 +406,26 @@ var topicListHelper = {
 			var pm = '';
 			if (window.location.href.match('inbox.php'))
 				pm = "_pm";
-			// loop through trs & pass each node to topicList functions
-			// ignoring first node in trs (not a topic)
 			try {
-				for (j = 1, tr; tr = trs[j]; j++) {
-					for ( var i in topicList) {
+				// ignore first node in trs (not a topic)				
+				for (j = 1, len = trs.length; j < len; j++) {
+				 tr = trs[j];
+					for (var i in topicList) {
 						if (config[i + pm]) {
+							// pass tr node & index to function
 							topicList[i](tr, j);
 						}
 					}
 				}
 			} catch (err) {
 				console.log("error in " + i + ":", err);
-			}		
+			}
+			// send ignorator data to background script
+			topicListHelper.globalPort.postMessage({
+				action : 'ignorator_update',
+				ignorator : ignorated,
+				scope : "topicList"
+			});			
 			try {
 				topicListHelper.chkTags();
 			} catch (e) {
@@ -446,20 +433,25 @@ var topicListHelper = {
 			}
 		});
 		topicListHelper.globalPort.onMessage.addListener(function(msg) {
-			switch (msg.action) {
-			case "showIgnorated":
-				if (config.debug)
-					console.log("showing hidden trs", msg.ids);
-				var tr = document.getElementsByTagName('tr');
-				for (var i; i = msg.ids.pop();) {
-					tr[i].style.display = '';
-					tr[i].style.opacity = '.7';
+			// ignorator_update is handled by background script
+			if (msg.action !== 'ignorator_update') {
+				switch (msg.action) {
+					case "showIgnorated":
+						if (config.debug) {
+							console.log("showing hidden trs", msg.ids);
+						}
+						var tr = document.getElementsByTagName('tr');
+						for (var i; i = msg.ids.pop();) {
+							tr[i].style.display = '';
+							tr[i].style.opacity = '.7';
+						}
+						break;
+					default:
+						if (config.debug) {
+							console.log('invalid action', msg);
+						}
+						break;
 				}
-				break;
-			default:
-				if (config.debug)
-					console.log('invalid action', msg);
-				break;
 			}
 		});
 	}
