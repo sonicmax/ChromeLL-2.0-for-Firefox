@@ -684,7 +684,7 @@ var messageList = {
 			top.style.marginLeft = '-6px';
 		}
 	},	
-	ignorator_messagelist : function(msg) {
+	ignorator_messagelist : function(msg, index) {
 		if (!config.ignorator) {
 			return;
 		}
@@ -710,11 +710,11 @@ var messageList = {
 						if (!ignorated.data.users[messageListHelper.ignores[f]]) {
 							ignorated.data.users[messageListHelper.ignores[f]] = {};
 							ignorated.data.users[messageListHelper.ignores[f]].total = 1; 
-							ignorated.data.users[messageListHelper.ignores[f]].trs = [ j ];
+							ignorated.data.users[messageListHelper.ignores[f]].trs = [ index + 1 ];
 						} else {
 							ignorated.data.users[messageListHelper.ignores[f]].total++;
 							ignorated.data.users[messageListHelper.ignores[f]].trs
-									.push(j);
+									.push(index + 1);
 						}
 					}
 				}		
@@ -1530,15 +1530,17 @@ var messageListHelper = {
 				// ignorator_update action is handled by background script
 				if (msg.action !== 'ignorator_update') {			
 					switch (msg.action) {
-						case "showIgnorated":
-							if (config.debug)
+						case "showIgnorated":				
+							if (config.debug) {
 								console.log("showing hidden msg", msg.ids);
-							var tr = document.getElementsByClassName('message-top');
+							}
+							var tops = document.getElementsByClassName('message-top');
 							for (var i = 0; i < msg.ids.length; i++) {
-								if (config.debug)
-									console.log(tr[msg.ids[i]]);
-								tr[msg.ids[i]].parentNode.style.display = 'block';
-								tr[msg.ids[i]].parentNode.style.opacity = '.7';
+								if (config.debug) {
+									console.log(tops[msg.ids[i]]);
+								}
+								tops[msg.ids[i]].parentNode.style.display = 'block';
+								tops[msg.ids[i]].parentNode.style.opacity = '.7';
 							}
 							break;
 						default:
@@ -1628,12 +1630,15 @@ var messageListHelper = {
 		if (window.location.href.match('inboxthread')) {
 			pm = "_pm";
 		}
-		try {	
+		try {
 			for (var i in messageList) {
 				if (config[i + pm]) {
 						messageList[i](mutation, index, live);
 				}
 			}
+		}		
+		catch (err) {
+			console.log("error in livelinks " + i + ":", err);
 		}
 		// send ignorator data to background script
 		messageListHelper.globalPort.postMessage({
@@ -1641,9 +1646,6 @@ var messageListHelper = {
 			ignorator : ignorated,
 			scope : "messageList"
 		});				
-		catch (err) {
-			console.log("error in livelinks " + i + ":", err);
-		}	
 	},
 	wikiFix: function(_this) {
 		window.open(_this.href.replace("boards", "wiki"));
