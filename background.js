@@ -280,16 +280,32 @@ function getDrama() {
 			drama.txt = dramas;
 			drama.time = parseInt(new Date().getTime() + (1800 * 1000));
 			// send message to allPages.js when function has completed
-			chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
-				chrome.tabs.sendMessage(tabs[0].id, {action: "updatedrama"}, function(response) {});  
+			chrome.tabs.query({status: "loading"}, function(tabs) {
+				var tab;
+				for (var i = 0, len = tabs.length; i < len; i++) {
+					tab = tabs[i];
+					chrome.tabs.sendMessage(tab.id, {
+						action: "updatedrama"
+					}, function(response) {
+						// empty callback
+					});
+				}
 			});
     }
 		if (xhr.readyState == 4 && xhr.status == 404) {
 			// 404 errors usually occur if getDrama runs while user
 			// is logged in using a different IP address (work, mobile, etc)
 			drama.txt = '<a id="retry" href="javascript:void(0)">Error loading Dramalinks. Click to retry...</a>';
-			chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
-				chrome.tabs.sendMessage(tabs[0].id, {action: "updatedrama"}, function(response) {});  
+			chrome.tabs.query({status: "loading"}, function(tabs) {
+				var tab;
+				for (var i = 0, len = tabs.length; i < len; i++) {
+					tab = tabs[i];
+					chrome.tabs.sendMessage(tab.id, {
+						action: "updatedrama"
+					}, function(response) {
+						// empty callback
+					});
+				}
 			});
 		}
   }
