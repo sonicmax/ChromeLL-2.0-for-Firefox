@@ -195,8 +195,9 @@ var allPages = {
 	},
 	dramalinks : function() {
 		if (config.hide_dramalinks_topiclist
-				&& !window.location.href.match(/topics/i))
+				&& !window.location.href.match(/topics/i)) {
 			return;
+		}
 		commonFunctions.getDrama();
 	}
 }
@@ -470,14 +471,10 @@ var commonFunctions = {
 		quickreply.value = newtxt;
 	},
 	getDrama : function() {
-		chrome.runtime.sendMessage({
-			need : "dramalinks"
-		}, function(response) {
-			commonFunctions.insertDramalinks(response.data,
-					config.hide_dramalinks);
-			if (config.hide_dramalinks)
-				commonFunctions.hideDrama();
-		});
+		commonFunctions.insertDramalinks(config.hide_dramalinks);
+		if (config.hide_dramalinks) {
+			commonFunctions.hideDrama();
+		}
 	},
 	hideDrama : function() {
 		var t = document.getElementById("dramalinks_ticker");
@@ -499,36 +496,39 @@ var commonFunctions = {
 		else if (window.getSelection)
 			window.getSelection().removeAllRanges();
 	},
-	insertDramalinks: function(dramas, hide) {
+	insertDramalinks: function(hide) {
 		try {
 			var ticker = document.createElement("center");
 			ticker.id = "dramalinks_ticker";
 			var h1 = document.getElementsByTagName('h1')[0];
 			if (config.dramalinks_below_topic 
-					&& document.getElementsByTagName('h2')[0])
+					&& document.getElementsByTagName('h2')[0]) {
 				h1 = document.getElementsByTagName('h2')[0];
-				h1.parentNode.insertBefore(ticker, h1.nextSibling);
+			}
+			h1.parentNode.insertBefore(ticker, h1.nextSibling);
+			ticker = document.getElementById('dramalinks_ticker');
 			if (hide) {
-				document.getElementById("dramalinks_ticker").style.display = 'none';
+				center.style.display = 'none';
 			}
-			if (!dramas) {
-				dramas = "Dramalinks loading...";
-				// wait for message from background page before updating dramalinks
-				chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
-					if (msg.action == 'updatedrama') {
-						if (config.hide_dramalinks_topiclist 
-								&& !window.location.href.match(/topics/i)) {
-							return;
-						}
-						commonFunctions.updateDramaTicker();
+			ticker.innerHTML = "Dramalinks loading...";
+			// set up listener to update ticker with xhr data
+			chrome.runtime.onMessage.addListener(function(msg, sender) {
+				if (msg.action == 'updatedrama') {
+					if (config.hide_dramalinks_topiclist 
+							&& !window.location.href.match(/topics/i)) {
+						return;
 					}
-				});
-			}
-			document.getElementById("dramalinks_ticker").innerHTML = dramas;
-			if (dramas == '<a id="retry" href="javascript:void(0)">Error loading Dramalinks. Click to retry...</a>') {
-				var retry = document.getElementById('retry');
-				retry.addEventListener('click', commonFunctions.updateDramaTicker);
-			}
+					commonFunctions.updateDramaTicker();
+				}
+			});
+			// request dramalinks and handle response from bg script
+			chrome.runtime.sendMessage({
+				need : "dramalinks"
+			}, function(response) {
+				// bg script only responds if returning cached dramalinks
+				dramas = response.data;
+				document.getElementById("dramalinks_ticker").innerHTML = dramas;
+			});
 		} catch (e) {}
 	},
 	updateDramaTicker: function() {
@@ -537,6 +537,10 @@ var commonFunctions = {
 		}, function(response) {
 			dramas = response.data;
 			document.getElementById("dramalinks_ticker").innerHTML = dramas;
+			if (dramas == '<a id="retry" href="javascript:void(0)">Error loading Dramalinks. Click to retry...</a>') {
+				var retry = document.getElementById('retry');
+				retry.addEventListener('click', commonFunctions.updateDramaTicker);
+			}			
 		});
 	}
 }
