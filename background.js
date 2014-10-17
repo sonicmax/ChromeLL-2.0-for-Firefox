@@ -7,6 +7,120 @@ var ignoratorInfo = {};
 var noIgnores;
 var scopeInfo = {};
 
+function init() {
+	// get default config, save to local storage
+	var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
+	var temp, defaultConfig;
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", defaultURL, true);
+	xhr.withCredentials = "true";
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState == 4 && xhr.status == 200) {
+			temp = JSON.parse(xhr.responseText);
+			defaultConfig = JSON.stringify(temp);
+			if (localStorage['ChromeLL-Config'] === undefined) {
+				localStorage['ChromeLL-Config'] = defaultConfig;
+				cfg = defaultConfig;
+			}
+			if (localStorage['ChromeLL-TCs'] == undefined) {
+				localStorage['ChromeLL-TCs'] = "{}";
+			}			
+			upgradeConfig(defaultConfig);
+		}
+	}
+	xhr.send();	
+}
+
+function upgradeConfig(defaultConfig) {
+	var configJS = JSON.parse(defaultConfig);
+	cfg = JSON.parse(localStorage['ChromeLL-Config']);
+	for (var i in configJS) {
+		// if this variable does not exist, set it to the default
+		if (cfg[i] === undefined) {
+			cfg[i] = configJS[i];
+			if (cfg.debug) {
+				console.log("upgrade diff!", i, cfg[i]);
+			}
+		}
+	}
+	// beta versions stored TC cache in the global config. Delete if found
+	if (cfg.tcs) {
+		delete cfg.tcs;
+	}
+	// save the config, just in case it was updated
+	localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
+	// continue running background script functions
+	handleCfg();
+	checkVersion();
+	clipboardTextArea();	
+	getTCPData();
+}
+
+function handleCfg() {
+	if (cfg.history_menubar_classic) {
+		if (cfg.sort_history) {
+			boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php?b';
+		} else {
+			boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php';
+		}
+	}
+	if (cfg.saved_tags) {
+		boards['Tags'] = cfg.saved_tags;
+	}
+	if (cfg.context_menu) {
+		buildContextMenu();
+	}
+	for (var i in allBg.activeListeners) {
+		// sets listeners for force_https, batch_uploader, etc
+		allBg.activeListeners[i] = cfg[i];
+		console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
+	}
+	allBg.init_listener(cfg);
+}
+
+function checkVersion() {
+	var app = chrome.app.getDetails();
+	// notify user if chromeLL has been updated
+	if (localStorage['ChromeLL-Version'] != app.version 
+			&& localStorage['ChromeLL-Version'] != undefined 
+			&& cfg.sys_notifications) {
+		console.log('ChromeLL updated! Old v: ' + localStorage['ChromeLL-Version'] 
+				+ " New v: " + app.version);
+		chrome.notifications.create(
+			'popup', {
+				type: "basic",
+				title: "ChromeLL has been updated",
+				message: "Old v: " + localStorage['ChromeLL-Version'] 
+						+ " New v: " + app.version,
+				buttons: [{
+					title: "Click for more info",
+				}],
+				iconUrl: "src/images/lueshi_48.png"
+			},
+			function(id) {
+				chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
+					if (notifId === id) {
+						if (btnIdx === 0) {
+							window.open("http://boards.endoftheinter.net/showmessages.php?topic=8887077");
+						}
+					}
+				});
+				if (!cfg.clear_notify || cfg.clear_notify == 0) {
+					cfg.clear_notify == 5;
+				}
+				setTimeout(function() {
+					clearNotification(id);
+				}, parseInt(cfg.clear_notify, 10) * 1000);
+			}
+		);
+		localStorage['ChromeLL-Version'] = app.version;
+	}
+
+	if (localStorage['ChromeLL-Version'] == undefined) {
+		localStorage['ChromeLL-Version'] = app.version;
+	}
+}
+
 function chkSync() {
 	setTimeout(chkSync, 90 * 1000);
 	cfg = JSON.parse(localStorage['ChromeLL-Config']);
@@ -534,119 +648,4 @@ function clearNotification(id) {
 	);
 }
 
-function getDefault() {
-	var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
-	var temp, defaultConfig;
-	var xhr = new XMLHttpRequest();
-	xhr.open("GET", defaultURL, true);
-	xhr.withCredentials = "true";
-	xhr.onreadystatechange = function() {
-		if (xhr.readyState == 4 && xhr.status == 200) {
-			temp = JSON.parse(xhr.responseText);
-			defaultConfig = JSON.stringify(temp);
-			// set localStorage data for fresh installs
-			if (localStorage['ChromeLL-Config'] === undefined) {
-				localStorage['ChromeLL-Config'] = defaultConfig;
-				cfg = defaultConfig;
-			}
-			if (localStorage['ChromeLL-TCs'] == undefined) {
-				localStorage['ChromeLL-TCs'] = "{}";
-			}			
-			upgradeConfig(defaultConfig);
-		}
-	}
-	xhr.send();	
-}
-
-function upgradeConfig(defaultConfig) {
-	// set config defaults on upgrade
-	var configJS = JSON.parse(defaultConfig);
-	cfg = JSON.parse(localStorage['ChromeLL-Config']);
-	for (var i in configJS) {
-		// if this variable does not exist, set it to the default
-		if (cfg[i] === undefined) {
-			cfg[i] = configJS[i];
-			if (cfg.debug) {
-				console.log("upgrade diff!", i, cfg[i]);
-			}
-		}
-	}
-	// beta versions stored TC cache in the global config. Delete if found
-	if (cfg.tcs) {
-		delete cfg.tcs;
-	}
-	// save the config, just in case it was updated
-	localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
-	// continue running background script functions
-	handleCfg();
-	checkVersion();
-	clipboardTextArea();	
-	getTCPData();
-}
-
-function handleCfg() {
-	if (cfg.history_menubar_classic) {
-		if (cfg.sort_history) {
-			boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php?b';
-		} else {
-			boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php';
-		}
-	}
-	if (cfg.saved_tags) {
-		boards['Tags'] = cfg.saved_tags;
-	}
-	if (cfg.context_menu) {
-		buildContextMenu();
-	}
-	for (var i in allBg.activeListeners) {
-		// sets listeners for force_https, batch_uploader, etc
-		allBg.activeListeners[i] = cfg[i];
-		console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
-	}
-	allBg.init_listener(cfg);
-}
-
-function checkVersion() {
-	var app = chrome.app.getDetails();
-	// notify user if chromeLL has been updated
-	if (localStorage['ChromeLL-Version'] != app.version 
-			&& localStorage['ChromeLL-Version'] != undefined 
-			&& cfg.sys_notifications) {
-		console.log('ChromeLL updated! Old v: ' + localStorage['ChromeLL-Version'] 
-				+ " New v: " + app.version);
-		chrome.notifications.create(
-			'popup', {
-				type: "basic",
-				title: "ChromeLL has been updated",
-				message: "Old v: " + localStorage['ChromeLL-Version'] 
-						+ " New v: " + app.version,
-				buttons: [{
-					title: "Click for more info",
-				}],
-				iconUrl: "src/images/lueshi_48.png"
-			},
-			function(id) {
-				chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
-					if (notifId === id) {
-						if (btnIdx === 0) {
-							window.open("http://boards.endoftheinter.net/showmessages.php?topic=8887077");
-						}
-					}
-				});
-				if (!cfg.clear_notify || cfg.clear_notify == 0) {
-					cfg.clear_notify == 5;
-				}
-				setTimeout(function() {
-					clearNotification(id);
-				}, parseInt(cfg.clear_notify, 10) * 1000);
-			}
-		);
-		localStorage['ChromeLL-Version'] = app.version;
-	}
-
-	if (localStorage['ChromeLL-Version'] == undefined) {
-		localStorage['ChromeLL-Version'] = app.version;
-	}
-}
-
-getDefault();
+init();
