@@ -74,14 +74,16 @@ for(var i=0, len=tagcps.length; i < len; i++){
 					});
 	
 	var insert;
-	if (cfg.ignorator && cfg.ignorator_list) {
-		console.log('gimme');
+	if (cfg.ignorator && cfg.ignorator_list 
+			|| !cfg.ignorator && cfg.ignore_keyword 
+					&& cfg.ignore_keyword_list) {
     chrome.runtime
         .sendMessage({
-                need: "noIgnored"
+                need: "noIgnores"
             },
             function (response) {
-            // prevents "Cannot read property 'data' of undefined" error if no users are currently being ignored
+            // prevents "Cannot read property 'data' of undefined" error 
+            // if no users are currently being ignored
                 if (!response.noIgnores) {
                     chrome.runtime
                     .sendMessage({
