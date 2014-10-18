@@ -895,7 +895,7 @@ var messageListHelper = {
 				if (gfycat.getAttribute('name') == 'gfycat_thumb') {
 					messageListHelper.thumbnailGfy(gfycat);
 				} else {
-				messageListHelper.placeholderGfy(gfycat);
+					messageListHelper.placeholderGfy(gfycat);
 				}
 			}
 			else if (gfycat.getAttribute('name') == 'placeholder') {
@@ -961,8 +961,13 @@ var messageListHelper = {
 			}
 		}
 	},
-	link_handler : function() {
-		var links = document.getElementsByClassName("l");
+	link_handler : function(msg) {
+		if (msg) {
+			var links = msg.getElementsByClassName("l");
+		}
+		else {
+			var links = document.getElementsByClassName("l");
+		}
 		var link;
 		// iterate backwards to prevent errors
 		// when modifying live nodelist
@@ -1013,13 +1018,21 @@ var messageListHelper = {
 						attributes: true
 				});				
 			}
-			else if (config.embed_gfycat 
-					&& link.title.indexOf("gfycat.com/") > -1) {
-				link.className = "gfycat";
-				if (link.parentNode.className == "quoted-message") {
-					link.setAttribute('name', "gfycat_thumb");
+			else if (config.embed_gfycat || config.embed_gfycat_thumbs) {
+				if (link.title.indexOf("gfycat.com/") > -1) {
+					link.className = "gfycat";
+					if (config.embed_gfycat_thumbs 
+							|| link.parentNode.className == "quoted-message") {
+						link.setAttribute('name', "gfycat_thumb");
+					}
 				}
 			}
+		}
+		// call gfycatLoader after loop has finished
+		if (config.embed_gfycat || config.embed_gfycat_thumbs) {
+			messageListHelper.gfycatLoader();
+			window.addEventListener('scroll', messageListHelper.gfycatLoader);
+			document.addEventListener('visibilitychange', messageListHelper.pauseGfy);
 		}
 	},	
 	startBatchUpload : function(evt) {
@@ -1526,14 +1539,7 @@ var messageListHelper = {
 			// call any functions that don't exist in messageList object
 			messageListHelper.archiveQuoteButtons();			
 			messageListHelper.link_handler();
-			// gfyCat loader is called separately
-			if (config.embed_gfycat) {
-				setTimeout(function() {
-					messageListHelper.gfycatLoader();
-				}, 500);
-				window.addEventListener('scroll', messageListHelper.gfycatLoader);
-				document.addEventListener('visibilitychange', messageListHelper.pauseGfy);
-			}
+			
 			messageListHelper.globalPort.onMessage.addListener(function(msg) {
 				// ignorator_update action is handled by background script
 				if (msg.action !== 'ignorator_update') {			
@@ -1648,6 +1654,7 @@ var messageListHelper = {
 		catch (err) {
 			console.log("error in livelinks " + i + ":", err);
 		}
+		messageListHelper.link_handler(mutation);
 		// send ignorator data to background script
 		messageListHelper.globalPort.postMessage({
 			action : 'ignorator_update',
