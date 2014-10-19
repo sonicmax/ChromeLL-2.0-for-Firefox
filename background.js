@@ -13,7 +13,6 @@ function init() {
 	var temp, defaultConfig;
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", defaultURL, true);
-	xhr.withCredentials = "true";
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4 && xhr.status == 200) {
 			temp = JSON.parse(xhr.responseText);
@@ -105,12 +104,9 @@ function checkVersion() {
 						}
 					}
 				});
-				if (!cfg.clear_notify || cfg.clear_notify == 0) {
-					cfg.clear_notify == 5;
-				}
 				setTimeout(function() {
 					clearNotification(id);
-				}, parseInt(cfg.clear_notify, 10) * 1000);
+				}, 5000);
 			}
 		);
 		localStorage['ChromeLL-Version'] = app.version;
@@ -428,10 +424,10 @@ chrome.tabs.onActivated.addListener(function(tab) {
 });
 
 chrome.tabs.onRemoved.addListener(function(tab) {
-	if (tabPorts[tab.tabId]) {
-		delete tabPorts[tab.tabId];
-		delete ignoratorInfo[tab.tabId];
-		delete scopeInfo[tab.tabId];
+	if (tabPorts[tab]) {
+		delete tabPorts[tab];
+		delete ignoratorInfo[tab];
+		delete scopeInfo[tab];
 	}
 });
 
@@ -507,9 +503,9 @@ chrome.runtime.onMessage.addListener(
 				},
 				function (id) {
 					if (!cfg.clear_notify) {
-						cfg.clear_notify == 5;
+						cfg.clear_notify = "5";
 					}
-					if (cfg.clear_notify == 0) {
+					if (cfg.clear_notify === "0") {
 						return;
 					}
 					setTimeout(function() {
