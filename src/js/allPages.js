@@ -62,12 +62,12 @@ var allPages = {
 					// you have mail
 					if (pm_number == 1) {
 						notify_title = 'New PM';
-						notify_msg = 'You have 1 new private message.';
+						notify_msg = 'You have 1 unread private message.';
 					}
 					else {
 						notify_title = 'New PMs';
 						notify_msg = 'You have ' + pm_number 
-								+ ' new private messages.';
+								+ ' unread private messages.';
 					}
 					// notify user and save current pm_number
 					chrome.runtime.sendMessage({
@@ -115,15 +115,6 @@ var allPages = {
 			document.getElementsByClassName('classic3')[0].insertBefore(br,
 					link);
 		}
-		/*
-		 * else{ if(config.sort_history) link.href =
-		 * '//endoftheinter.net/history.php?b'; else link.href =
-		 * '//endoftheinter.net/history.php';
-		 * document.getElementsByClassName('menubar')[0].insertBefore(link,
-		 * null);
-		 * document.getElementsByClassName('menubar')[0].insertBefore(sep,
-		 * link); }
-		 */
 	},
 	float_userbar : function() {
 		var id = document.createElement('div');
@@ -286,45 +277,43 @@ var commonFunctions = {
 				if (xhr.readyState == 4 && xhr.status == 200) {
 					var html = document.createElement('html');
 					html.innerHTML = xhr.responseText;
-					var htmlobj = ($(html.innerHTML).find("td"));
-					
+					var tds = html.getElementsByTagName('td');
+					var td, profileStatus, oldUsername, profileRep;
 					// scrape information from profile
-					var profileRep = $(htmlobj).filter(function () {
-							return $(this).text() == "Reputation";
-					}).closest("tr").text();
-					commonFunctions.rep = profileRep.replace('Reputation', '');
-					
-					var profileStatus = $(htmlobj).filter(function () {
-							return $(this).text() == "Status";
-					}).closest("tr").text();
-					commonFunctions.punish = profileStatus.replace('Status', '').trim();
-					
-					var oldUsername = $(htmlobj).filter(function () {
-							return $(this).text() == "Formerly";
-					}).closest("tr").text();
-					commonFunctions.oldName = oldUsername.replace('Formerly', '').trim();
-
+					for (var i = 0, len = tds.length; i < len; i++) {
+						td = tds[i];
+						if (td.innerText.indexOf('Status') > -1) {
+							profileStatus = tds[i + 1].innerText;
+						}
+						if (td.innerText.indexOf('Formerly') > -1) {
+							oldUsername = tds[i + 1].innerText;
+						}
+						if (td.innerText.indexOf('Reputation') > -1) {
+							profileRep = tds[i + 1].innerText;
+						}					
+					}
 					// prepare popup menu for updates
 					var formerly = document.getElementById("namechange");
 					var displayOnline = document.getElementById('online');
 					var displayPunish = document.getElementById('punish');
-					var displayRep = document.getElementById('rep');
-					
+					var displayRep = document.getElementById('rep');					
 					// update popup menu elements
-					displayRep.innerHTML = '<br>' + commonFunctions.rep;
+					displayRep.innerHTML = '<br>' + profileRep;
 					if (config.show_old_name) {
-							if (oldUsername.indexOf("Formerly") > -1) {
-									formerly.innerHTML = "<br>Formerly known as: <b>" + commonFunctions.oldName + '</b>';
-							}
+						if (oldUsername) {
+							formerly.innerHTML = "<br>Formerly known as: <b>" + oldUsername + '</b>';
+						}
 					}
 					if (html.innerHTML.indexOf('online now') > -1) {
 							displayOnline.innerHTML = '(online now)';
 					}
-					if (commonFunctions.punish.indexOf('Suspended') > -1) {
-							displayPunish.innerHTML = '<b>Suspended until: </b>' + commonFunctions.punish.substring(17);
-					}
-					if (commonFunctions.punish.indexOf('Banned') > -1) {
-							displayPunish.innerHTML = '<b>Banned</b>';
+					if (profileStatus) {
+						if (profileStatus.indexOf('Suspended') > -1) {
+								displayPunish.innerHTML = '<b>Suspended until: </b>' + profileStatus.substring(17);
+						}
+						if (profileStatus.indexOf('Banned') > -1) {
+								displayPunish.innerHTML = '<b>Banned</b>';
+						}
 					}
 				}
 			}
@@ -471,6 +460,18 @@ var commonFunctions = {
 		quickreply.value = newtxt;
 	},
 	getDrama : function() {
+		var ticker = document.createElement("center");
+		ticker.id = "dramalinks_ticker";
+		if (config.hide_dramalinks) {
+			ticker.style.display = "none";
+		}
+		ticker.innerHTML = "<span><div>" + "Dramalinks loading..." + "</div></span>";
+		var h1 = document.getElementsByTagName('h1')[0];
+		if (config.dramalinks_below_topic 
+				&& document.getElementsByTagName('h2')[0]) {
+			h1 = document.getElementsByTagName('h2')[0];
+		}
+		h1.parentNode.insertBefore(ticker, h1.nextSibling);	
 		commonFunctions.insertDramalinks(config.hide_dramalinks);
 		if (config.hide_dramalinks) {
 			commonFunctions.hideDrama();
@@ -478,58 +479,43 @@ var commonFunctions = {
 	},
 	hideDrama : function() {
 		var t = document.getElementById("dramalinks_ticker");
-		try {
-			var color = t.getElementsByTagName('div')[0].style.background;
-			var hone = document.getElementsByTagName('h1')[0];
-			hone.style.color = color;
-			hone.ondblclick = commonFunctions.switchDrama;
-		} catch (e) {
-			// dramalinks ticker did not load for some reason, ignore it
-		}
+		var color = t.getElementsByTagName('div')[0].style.background;
+		var hone = document.getElementsByTagName('h1')[0];
+		hone.style.color = color;
+		hone.ondblclick = commonFunctions.switchDrama;
 	},
 	switchDrama : function() {
-		document.getElementById("dramalinks_ticker").style.display == 'none' ? document
-				.getElementById("dramalinks_ticker").style.display = 'block'
-				: document.getElementById("dramalinks_ticker").style.display = 'none';
-		if (document.selection)
+		var ticker = document.getElementById('dramalinks_ticker');
+		ticker.style.display == 'none' 
+				? ticker.style.display = 'block'
+				: ticker.style.display = 'none';
+		if (document.selection) {
 			document.selection.empty();
-		else if (window.getSelection)
+		}
+		else if (window.getSelection) {
 			window.getSelection().removeAllRanges();
+		}
 	},
 	insertDramalinks: function(hide) {
-		try {
-			var ticker = document.createElement("center");
-			ticker.id = "dramalinks_ticker";
-			var h1 = document.getElementsByTagName('h1')[0];
-			if (config.dramalinks_below_topic 
-					&& document.getElementsByTagName('h2')[0]) {
-				h1 = document.getElementsByTagName('h2')[0];
-			}
-			h1.parentNode.insertBefore(ticker, h1.nextSibling);
-			ticker = document.getElementById('dramalinks_ticker');
-			if (hide) {
-				center.style.display = 'none';
-			}
-			ticker.innerHTML = "Dramalinks loading...";
-			// set up listener to update ticker with xhr data
-			chrome.runtime.onMessage.addListener(function(msg, sender) {
-				if (msg.action == 'updatedrama') {
-					if (config.hide_dramalinks_topiclist 
-							&& !window.location.href.match(/topics/i)) {
-						return;
-					}
-					commonFunctions.updateDramaTicker();
+		var ticker = document.getElementById('dramalinks_ticker');
+		// set up listener to update ticker with xhr data
+		chrome.runtime.onMessage.addListener(function(msg, sender) {
+			if (msg.action == 'updatedrama') {
+				if (config.hide_dramalinks_topiclist 
+						&& !window.location.href.match(/topics/i)) {
+					return;
 				}
-			});
-			// request dramalinks and handle response from bg script
-			chrome.runtime.sendMessage({
-				need : "dramalinks"
-			}, function(response) {
-				// bg script only responds if returning cached dramalinks
-				dramas = response.data;
-				document.getElementById("dramalinks_ticker").innerHTML = dramas;
-			});
-		} catch (e) {}
+				commonFunctions.updateDramaTicker();
+			}
+		});
+		// request dramalinks and handle response from bg script
+		chrome.runtime.sendMessage({
+			need : "dramalinks"
+		}, function(response) {
+			// bg script only responds if returning cached dramalinks
+			dramas = response.data;
+			ticker.innerHTML = dramas;
+		});
 	},
 	updateDramaTicker: function() {
 		chrome.runtime.sendMessage({
@@ -542,22 +528,25 @@ var commonFunctions = {
 				retry.addEventListener('click', commonFunctions.updateDramaTicker);
 			}			
 		});
+	},
+	init: function() {
+		chrome.runtime.sendMessage({
+			need : "config"
+		}, function(response) {
+			config = response.data;
+			try {
+				for (var i in allPages) {
+					if (config[i]) {
+						allPages[i]();
+					}
+				}
+			} catch (err) {
+				console.log("error in " + i + ":", err);
+			}
+			var a1 = performance.now();
+			console.log("Processed allPages in " + (a1 - a0) + " milliseconds.");
+		});
 	}
 }
 
-chrome.runtime.sendMessage({
-	need : "config"
-}, function(response) {
-	config = response.data;
-	try {
-		for ( var i in allPages) {
-			if (config[i]) {
-				allPages[i]();
-			}
-		}
-	} catch (err) {
-		console.log("error in " + i + ":", err);
-	}
-	var a1 = performance.now();
-	console.log("Processed allPages in " + (a1 - a0) + " milliseconds.");
-});
+commonFunctions.init();

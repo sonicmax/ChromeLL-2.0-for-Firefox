@@ -600,36 +600,43 @@ function scrapeUserProf(me) {
 	var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 	var url = "http://endoftheinter.net/profile.php?user=" + me;
 	var xhr = new XMLHttpRequest();
-	var tag;
-	var tagsArray = [];
 	console.log("User Profile = " + url);
 	xhr.open("GET", url, true);
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState == 4 && xhr.status == 200) {
+			var tds, td, adminTags, modTags, isAdmin, isMod, tag;
 			var html = document.createElement('html');
 			html.innerHTML = xhr.responseText;
-			var htmlobj = ($(html.innerHTML).find("td"));
-			
-			var profileAdmin = $(htmlobj).filter(function() {
-				return $(this).text() == "Administrator of";
-			}).closest("tr").text();
-			var tagsAdmin = profileAdmin.replace("Administrator of", "");
-
-			var profileMod = $(htmlobj).filter(function() {
-				return $(this).text() == "Moderator of";
-			}).closest("tr").text();
-			var tagsMod = profileMod.replace("Moderator of", "");
-
-			var tagsAll = tagsAdmin + tagsMod;
-			var pattern = /\[(.*?)\]/g;
-			// todo - rewrite this so we don't have to use exec
-			while ((tag = pattern.exec(tagsAll)) != null) {
-				tagsArray.push(tag[1]);
+			var adminArray = [];
+			var modArray = [];
+			var tagArray = [];
+			tds = html.getElementsByTagName("td");
+			for (var i = 0; i < tds.length; i++) {
+				td = tds[i];
+				if (td.innerText.indexOf("Administrator of") > -1) {
+					adminTags = tds[i + 1].getElementsByTagName('a');
+					isAdmin = true;
+				}
+				if (td.innerText.indexOf("Moderator of") > -1) {
+					modTags = tds[i + 1].getElementsByTagName('a');
+					isMod = true;
+				}
 			}
-			console.log(tagsArray);
+			if (isAdmin) {
+				adminArray = Array.prototype.slice.call(adminTags);
+			}
+			if (isMod) {
+				modArray = Array.prototype.slice.call(modTags);
+			}
+			tagArray = adminArray.concat(modArray);
+			for (var i = 0, len = tagArray.length; i < len; i++) {
+				tag = tagArray[i].innerText;
+				tagArray[i] = tag;
+			}
+			console.log(tagArray);
 			delete cfg.tag_admin;
-			cfg.tag_admin = tagsArray;
-			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
+			cfg.tag_admin = tagArray;
+			//localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
 			console.log("scraped profile for tag information");
 		}
 	}

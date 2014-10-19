@@ -65,17 +65,15 @@ var profileHelper = {
 		}, function(conf) {
 			config = conf.data;
 			for (var i in profile) {
-				if (config[i] && !profile.addControlPanel) {
+				if (config[i]) {
 					try {
 						profile[i]();
 					} catch (err) {
 						console.log("error in " + i + ":", err);
 					}
 				}
-				if (profile.addControlPanel) {
-					profile.addControlPanel();
-				}
 			}
+			profile.addControlPanel();			
 		});
 	}
 }
