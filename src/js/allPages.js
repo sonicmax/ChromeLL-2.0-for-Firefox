@@ -23,9 +23,9 @@ var allPages = {
 			redirect.innerText = 'Redirect'
 			redirect.addEventListener('click', function() {
 				if (window.location.protocol == 'https:') {
-					window.location.href = 'https://boards.endoftheinter.net/history.php';
+					window.location.href = 'https://boards.endoftheinter.net/history.php?b';
 				} else {
-					window.location.href = 'http://boards.endoftheinter.net/history.php';
+					window.location.href = 'http://boards.endoftheinter.net/history.php?b';
 				}
 			});			
 			close.innerText = 'Close';
