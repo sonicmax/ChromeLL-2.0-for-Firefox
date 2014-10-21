@@ -351,6 +351,7 @@ function getDrama() {
 			var col;
 			var kermit = false;
 			var other = false;
+			var error = false;
 			switch (bgcol.toLowerCase()) {
 				case "kermit":
 					document.getElementById("dramalinks_ticker").style.border = "2px solid #990099";
@@ -361,14 +362,32 @@ function getDrama() {
 				case "green":
 					col = "white";
 					break;
+				case "lovelinks":
+				case "yellow":
+				case "orange":
+				case "red":
+					col = "black";
+					break;
+				case "errorlinks":
+					bgcol = "blue";
+					col = "white";
+					error = true;
+					break;
 				default:
 					other = true;
 					break;
 			}
 			if (kermit) {
-				dramas = "Current Dramalinks Level: <blink><font color='" + bgcol 
+				dramas = "Current Dramalinks Level: <blink><font color='" + bgcol
 						+ "'>CODE KERMIT</font></blink><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
 						+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";			
+			}
+			else if (error) {
+				dramas = "<font face='Lucida Console'>"
+						+ "<div style='background-color: " + bgcol + "; color: " + col + ";'>" 
+						+ "A problem has been detected and ETI has been shut down to prevent damage to your computer." 
+						+ "<br><br> Technical information: </font>" + dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") 
+						+ "</div></font>";	
 			} 
 			else if (other) {
 				dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
