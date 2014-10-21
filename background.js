@@ -350,6 +350,7 @@ function getDrama() {
 			var bgcol = t.slice(0, t.indexOf("}}"));
 			var col;
 			var kermit = false;
+			var other = false;
 			switch (bgcol.toLowerCase()) {
 				case "kermit":
 					document.getElementById("dramalinks_ticker").style.border = "2px solid #990099";
@@ -361,18 +362,22 @@ function getDrama() {
 					col = "white";
 					break;
 				default:
-					col = "black";
+					other = true;
 					break;
 			}
-			if (!kermit) {
-				dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
-						+ "</font></span><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
-						+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";
-			} else {
+			if (kermit) {
 				dramas = "Current Dramalinks Level: <blink><font color='" + bgcol 
 						+ "'>CODE KERMIT</font></blink><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
-						+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";
-			}
+						+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";			
+			} 
+			else if (other) {
+				dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
+						+ "</font></span><div>" + dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";				
+			} else {
+				dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
+					+ "</font></span><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
+					+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";	
+			}	
 			drama.txt = dramas;
 			drama.time = parseInt(new Date().getTime() + (1800 * 1000));
 			// update dramalinks ticker in all relevant tabs
