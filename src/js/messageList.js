@@ -6,6 +6,7 @@ var ignorated = {
 		users : {}
 	}
 };
+var tops_total = 0;
 
 // set up an observer for when img-placeholders get populated
 var img_observer = new MutationObserver(function(mutations) {
@@ -698,19 +699,23 @@ var messageList = {
 		if (!config.ignorator) {
 			return;
 		}
-		messageListHelper.ignores = config.ignorator_list.split(',');
-		for (var r = 0, len = messageListHelper.ignores.length; r < len; r++) {
-			ignore = messageListHelper.ignores[r].toLowerCase().trim();
-			messageListHelper.ignores[r] = ignore;
-		}
 		var tops = msg.getElementsByClassName('message-top');
-		var top, username;
+		var top, username, top_index;
+		tops_total += tops.length;
 		for (var j = 0, len = tops.length; j < len; j++) {
 			top = tops[j];
 			if (top) {
 				username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
 				for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
 					if (username == messageListHelper.ignores[f]) {
+						// calculate equivalent index of message-top for
+						// show_ignorator function
+						if (j == 0 && tops_total > 0) {
+							top_index = tops_total - tops.length;
+						}
+						else {
+							top_index = tops_total - j;
+						}
 						top.parentNode.style.display = 'none';
 						if (config.debug) {
 							console.log('removed post by '
@@ -720,17 +725,17 @@ var messageList = {
 						if (!ignorated.data.users[messageListHelper.ignores[f]]) {
 							ignorated.data.users[messageListHelper.ignores[f]] = {};
 							ignorated.data.users[messageListHelper.ignores[f]].total = 1; 
-							ignorated.data.users[messageListHelper.ignores[f]].trs = [ index + 1 ];
+							ignorated.data.users[messageListHelper.ignores[f]].trs = [ top_index ];
 						} else {
 							ignorated.data.users[messageListHelper.ignores[f]].total++;
 							ignorated.data.users[messageListHelper.ignores[f]].trs
-									.push(index + 1);
+									.push(top_index);
 						}
 					}
 				}		
 			}
 		}
-	},	
+	},
 	label_self_anon : function(msg) {
 		if (!window.location.href.match('archives')) {
 			var tops = msg.getElementsByClassName('message-top');
