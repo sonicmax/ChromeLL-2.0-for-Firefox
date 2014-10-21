@@ -29,6 +29,7 @@
       "Cute Cats Only":"Cute&Cats"
    },
    "snippet_listener":false,
+	 "snippet_alt_key":false,
    "snippet_data":{},
    "ignorator_topiclist":false,
    "userhl_topiclist":false,
@@ -48,7 +49,7 @@
    "img_max_width":"1440",
    "embed_on_hover":true,
    "embed_gfycat":true,
-   "embed_gfycat_thumbs":false,
+	 "embed_gfycat_thumbs":false,
    "resize_gfys":true,
    "gfy_max_width":1440,
    "user_notes":true,

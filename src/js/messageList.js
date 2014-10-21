@@ -490,15 +490,25 @@ var miscFunctions = {
 			var ta = document.getElementsByName('message')[0];
 			var caret;
 			ta.addEventListener('keydown', function(event) {
-				if (event.keyIdentifier == 'U+0009') {
-					// prevent default action for tab key so we can attach our own
-					event.preventDefault();
-					caret = messageListHelper.findCaret(ta);
-					messageListHelper.snippetHandler(ta.value, caret);
+				if (config.snippet_alt_key) {
+					if (event.shiftKey == true
+							&& event.keyIdentifier == 'U+0009') {
+						// user has pressed shift & tab together
+						event.preventDefault();
+						caret = messageListHelper.findCaret(ta);
+						messageListHelper.snippetHandler(ta.value, caret);					
+					}
 				}
+				else if (!config.snippet_alt_key) {
+					if (event.keyIdentifier == 'U+0009') {
+						event.preventDefault();
+						caret = messageListHelper.findCaret(ta);
+						messageListHelper.snippetHandler(ta.value, caret);
+					}
+				}			
 			});
 		}
-	}	
+	}
 }
 
 var messageList = {
