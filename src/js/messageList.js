@@ -1486,6 +1486,13 @@ var messageListHelper = {
 			messageListHelper.globalPort = chrome.runtime.connect();
 			config = conf.data;
 			config.tcs = conf.tcs;
+			// turn ignorator list into array before running messageList functions
+			messageListHelper.ignores = config.ignorator_list.split(',');
+			var ignore;
+			for (var r = 0, len = messageListHelper.ignores.length; r < len; r++) {
+				ignore = messageListHelper.ignores[r].toLowerCase().trim();
+				messageListHelper.ignores[r] = ignore;
+			}
 			var msgs = document.getElementsByClassName('message-container');
 			var msg, len;
 			var pm = '';
