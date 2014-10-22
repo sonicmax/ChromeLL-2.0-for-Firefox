@@ -1850,10 +1850,10 @@ var messageListHelper = {
 				var videoCode;
 				var embedHTML;
 				var href = toEmbed.href;
-				var timeEquals = href.match(/(\?|\&)(t=)/);
+				var timeEquals = href.match(/(\?|\&|#)(t=)/);
 				if (timeEquals) {
 					var substring = href.substring(timeEquals.index, href.length);
-					var time = substring.match(/([0-9])+([h|m|s])/g);
+					var time = substring.match(/([0-9])+([h|m|s])?/g);
 				}
 				var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
 				var match = _this.id.match(regExp);
@@ -1867,8 +1867,12 @@ var messageListHelper = {
 					var splitTime, temp;
 					var seconds = 0;
 					for (var i = 0, len = time.length; i < len; i++) {
-						splitTime = time[i];						
-						if (splitTime.indexOf('h') > -1) {
+						splitTime = time[i];
+						if (!splitTime.match(/([h|m|s])/)) {
+							// timecode is probably in format "#t=xx" 
+							seconds += splitTime;
+						}
+						else if (splitTime.indexOf('h') > -1) {
 							temp = Number(splitTime.replace('h', ''), 10);
 							seconds += temp * 60 * 60;
 						}
