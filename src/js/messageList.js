@@ -616,7 +616,7 @@ var messageList = {
 		sep.insertBefore(sepIns, null);
 		top.insertBefore(sep, null);
 	},	
-	userhl_messagelist : function(msg, index) {
+	userhl_messagelist : function(msg) {
 		if (!config.enable_user_highlight) {
 			return;
 		}
@@ -626,8 +626,8 @@ var messageList = {
 		var user;
 		if (!config.no_user_highlight_quotes) {
 			try {
-				for (var k = 0, len = tops.length; k < len; k++) {
-					top = tops[k];
+				for (var k = 0; k < tops.length; k++) {
+					top = tops[k];			
 						user = top.getElementsByTagName('a')[0].innerHTML
 								.toLowerCase();
 					if (config.user_highlight_data[user]) {
