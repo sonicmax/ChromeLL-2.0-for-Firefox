@@ -6,6 +6,7 @@ var ignorated = {
 		users : {}
 	}
 };
+// tops_total is required for showIgnorated function to work correctly
 var tops_total = 0;
 
 // set up an observer for when img-placeholders get populated
@@ -18,7 +19,7 @@ var mutation;
 				&& mutation.addedNodes[0].src
 					.match(/.*\/i\/n\/.*/)) {
 			// pass to resize_imgs method
-			messageList.resize_imgs(mutation.target.parentNode);
+			messageListHelper.resizeImg(mutation.target);
 		}
 		if (mutation.type === 'attributes') {
 			// once they're loaded, thumbnails have /i/t/ in their
@@ -47,34 +48,382 @@ var mutation;
 	}
 });
 
-// set up observer to detect mutations to youtube links
-var link_observer = new MutationObserver(function(mutations) {
-	$("table.message-body").on("click", "a.embed",
-		function() {
-			// handle "embed" link
-			if (!this.embedded) {
-				messageListHelper.embedYoutube(this);
+var messageList = {
+	resize_imgs : function(container) {
+		// exclude avatars from htmlCollection
+		var msg = container.getElementsByClassName('message')[0];
+		var imgs = msg.getElementsByTagName('img');
+		var img;
+		for (var i = 0, len = imgs.length; i < len; i++) {
+			img = imgs[i];
+			messageListHelper.resizeImg(img);
+		}
+	},
+	ignorator_messagelist : function(msg, index) {
+		if (!config.ignorator) {
+			return;
+		}
+		var tops = msg.getElementsByClassName('message-top');
+		var top, username, top_index;
+		tops_total += tops.length;
+		for (var j = 0, len = tops.length; j < len; j++) {
+			top = tops[j];
+			if (top) {
+				username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+				for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
+					if (username == messageListHelper.ignores[f]) {
+						// calculate equivalent index of message-top for
+						// show_ignorator function
+						if (j == 0 && tops_total > 0) {
+							top_index = tops_total - tops.length;
+						}
+						else {
+							top_index = tops_total - j;
+						}
+						top.parentNode.style.display = 'none';
+						if (config.debug) {
+							console.log('removed post by '
+									+ messageListHelper.ignores[f]);
+						}
+						ignorated.total_ignored++;
+						if (!ignorated.data.users[messageListHelper.ignores[f]]) {
+							ignorated.data.users[messageListHelper.ignores[f]] = {};
+							ignorated.data.users[messageListHelper.ignores[f]].total = 1; 
+							ignorated.data.users[messageListHelper.ignores[f]].trs = [ top_index ];
+						} else {
+							ignorated.data.users[messageListHelper.ignores[f]].total++;
+							ignorated.data.users[messageListHelper.ignores[f]].trs
+									.push(top_index);
+						}
+					}
+				}		
 			}
 		}
-	);
-	$("table.message-body").on("click", "a.hide",
-		function() {
-			// handle "hide" link
-			if (!this.hidden) {
-				messageListHelper.hideYoutube(this);
+	},	
+	user_notes : function(msg) {
+		if (!config.usernote_notes) {
+			config.usernote_notes = {};
+		}	
+		var top = msg.getElementsByClassName('message-top')[0];
+		if (!top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
+			return;
+		}
+		var notebook = document.createElement('a');	
+		notebook.id = 'notebook';
+		var divider = document.createTextNode(' | ');
+		var top, tempID;
+		top.appendChild(divider);
+		tempID = top.getElementsByTagName('a')[0].href
+				.match(/user=(\d+)$/i)[1];
+		notebook.innerHTML = (config.usernote_notes[tempID] != undefined && config.usernote_notes[tempID] != '') ? 'Notes*'
+				: 'Notes';
+		notebook.href = "##note" + tempID;
+		top.appendChild(notebook);
+	},
+	like_button: function(msg, index) {
+		if (!window.location.href.match("archives")) {		
+			var top = msg.getElementsByClassName('message-top')[0];
+			var anchor = document.createElement('a');
+			var divider = document.createTextNode(" | ");
+			anchor.setAttribute('onclick', 'like(this);');
+			anchor.innerText = 'Like';
+			anchor.href = '##like' + index;
+			top.appendChild(divider);
+			top.appendChild(anchor);
+		}
+	},	
+	number_posts : function(msg, index) {
+		var top = msg.getElementsByClassName('message-top')[0];
+		var page, id, postnum;
+		if (!window.location.href.match(/page=/)) {
+			page = 1;
+		} else {
+			page = window.location.href.match(/page=(\d+)/)[1];
+		}
+		id = ((index + 1) + (50 * (page - 1)));
+		if (id < 1000)
+			id = "0" + id;
+		if (id < 100)
+			id = "0" + id;
+		if (id < 10)
+			id = "0" + id;
+		postnum = document.createTextNode(' | #' + id);
+		top.appendChild(postnum);
+	},	
+	post_templates : function(msg, index) {
+		var top = msg.getElementsByClassName('message-top')[0];
+		var sep, sepIns, qr;
+		var cDiv = document.createElement('div');
+		cDiv.style.display = 'none';
+		cDiv.id = 'cdiv';
+		document.body.appendChild(cDiv, null);
+		messageListHelper.postEvent = document.createEvent('Event');
+		messageListHelper.postEvent.initEvent('postTemplateInsert', true, true);
+		sep = document.createElement('span');
+		sep.innerHTML = " | ";
+		sep.className = "post_template_holder";
+		sepIns = document.createElement('span');
+		sepIns.className = 'post_template_opts';
+		sepIns.innerHTML = '[';
+		qr = document.createElement('a');
+		qr.href = "##" + index;
+		qr.innerHTML = "&gt;"
+		qr.className = "expand_post_template";
+		sepIns.appendChild(qr);
+		sepIns.innerHTML += ']';
+		sep.appendChild(sepIns);
+		top.appendChild(sep);
+	},	
+	userhl_messagelist : function(msg) {
+		if (!config.enable_user_highlight) {
+			return;
+		}
+		var tops = msg.getElementsByClassName('message-top');
+		var first_top = msg.getElementsByClassName('message-top')[0];
+		var top, anchors, anchor;
+		var user;
+		if (!config.no_user_highlight_quotes) {
+			try {
+				for (var k = 0; k < tops.length; k++) {
+					top = tops[k];			
+						user = top.getElementsByTagName('a')[0].innerHTML
+								.toLowerCase();
+					if (config.user_highlight_data[user]) {
+						if (config.debug) {
+							console.log('highlighting post by ' + user);
+						}
+						top.style.background = '#'
+								+ config.user_highlight_data[user].bg;
+						top.style.color = '#'
+								+ config.user_highlight_data[user].color;
+						anchors = top.getElementsByTagName('a');
+						for (var j = 0, len = anchors.length; j < len; j++) {
+							anchor = anchors[j];
+							anchor.style.color = '#'
+									+ config.user_highlight_data[user].color;
+						}
+					}
+				}
+			} catch (e) {
+				// if (config.debug) console.log(e);
+			}			
+		} else {
+			user = first_top.getElementsByTagName('a')[0]
+					.innerHTML.toLowerCase();
+			if (config.user_highlight_data[user]) {
+				if (config.debug) {
+					console.log('highlighting post by ' + user);
+				}
+				first_top.style.background = '#'
+						+ config.user_highlight_data[user].bg;
+				first_top.style.color = '#'
+						+ config.user_highlight_data[user].color;
+				anchors = first_top.getElementsByTagName('a');
+				for (var j = 0, len = anchors.length; j < len; j++) {
+					anchor = anchors[j];
+					anchor.style.color = '#'
+							+ config.user_highlight_data[user].color;
+				}
 			}
 		}
-	);
-	$("div.youtube").click(
-		function(event) {
-			event.preventDefault();
+	},
+	foxlinks_quotes : function(msg) {
+		var color = "#" + config['foxlinks_quotes_color'];
+		var quotes = msg.getElementsByClassName('quoted-message');
+		if (!quotes.length) {
+			return;
 		}
-	);
-});
+		var quote, top;
+		for (var i = 0, len = quotes.length; i < len; i++) {
+			quote = quotes[i];
+			quot_msg_style = quote.style;
+			quot_msg_style.borderStyle = 'solid';
+			quot_msg_style.borderWidth = '2px';
+			quot_msg_style.borderRadius = '5px';
+			quot_msg_style.marginRight = '30px';
+			quot_msg_style.marginLeft = '10px';
+			quot_msg_style.paddingBottom = '10px';
+			quot_msg_style.marginTop = '0px';
+			quot_msg_style.borderColor = color;
+			top = quote.getElementsByClassName('message-top')[0];
+			if (top) {
+				if (top.style.background == '') {
+					top.style.background = color;
+				} else {
+					quot_msg_style.borderColor = top.style.background;
+				}
+				top.style.marginTop = '0px';
+				top.style.paddingBottom = '2px';
+				top.style.marginLeft = '-6px';
+			}
+		}
+	},		
+	label_self_anon : function(msg) {
+		var tags = document.getElementsByTagName('h2')[0].innerHTML;
+		if (tags.indexOf('/topics/Anonymous') > -1) {
+			if (!window.location.href.match('archives')) {
+				var tops = msg.getElementsByClassName('message-top');
+				if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {				
+					var self = document.getElementsByClassName('quickpost-body')[0]
+							.getElementsByTagName('a')[0].innerHTML;
+					if (self.indexOf('Human') == -1) {
+						return;
+					}
+					var top, humanToCheck, span;
+					for (var i = 0, len = tops.length; i < len; i++) {
+						top = tops[i];
+						humanToCheck = top.getElementsByTagName('a')[0];
+						if (humanToCheck.innerHTML.indexOf('Filter') > -1) {
+							// handle livelinks post
+							humanToCheck = top.getElementsByTagName('b')[0].nextSibling;
+							if (!humanToCheck.innerHTML 
+									&& humanToCheck.nodeValue.indexOf(self) > -1) {
+								span = document.createElement('span');
+								span.innerHTML = '<b>(Me)</b> | ';
+								top.insertBefore(span, humanToCheck.nextSibling);		
+							}
+						}
+						else if (humanToCheck.innerHTML == self) {
+								span = document.createElement('span');
+								span.innerHTML = ' | <b>(Me)</b>';
+								top.insertBefore(span, humanToCheck.nextSibling);
+						}
+					}
+				}
+			}
+		}
+	},
+	hide_deleted : function(msg) {
+			if (msg.getElementsByClassName('message-top')[0]
+					.getElementsByTagName('em')[0]
+					&& msg.getElementsByClassName('message-top')[0]
+							.getElementsByTagName('em')[0].innerHTML !== 'Moderator') {
+				msg.getElementsByClassName('message-body')[0].style.display = 'none';
+				var a = document.createElement('a');
+				a.href = 'javascript.void(0)';
+				a.innerHTML = 'Show Message';
+				a.addEventListener('click', function(evt) {
+					var hiddenMsg = evt.target.parentNode.parentNode
+							.getElementsByClassName('message-body')[0];
+					console.log(evt.target);
+					hiddenMsg.style.display === 'none' ? hiddenMsg.style.display = 'block'
+							: hiddenMsg.style.display = 'none';
+				});
+				msg.getElementsByClassName('message-top')[0].innerHTML += ' | ';
+				msg.getElementsByClassName('message-top')[0].insertBefore(
+						a, null);
+			}
+	},
+	click_expand_thumbnail : function(container) {
+		// rewritten by xdrvonscottx
+		// find all the placeholders before the images are loaded
+		var msg = container.getElementsByClassName('message')[0];
+		var pholds = msg.getElementsByClassName('img-placeholder');
+		var phold;
+		for (var i = 0, len = pholds.length; i < len; i++) {
+			phold = pholds[i];
+			img_observer.observe(phold, {
+				attributes : true,
+				childList: true
+			});
+		}
+	},	
+	autoscroll_livelinks : function(mutation, index, live) {
+		// live is undefined unless these functions are called 
+		// from messageListHelper.livelinks
+		if (live) {
+			if (document.hidden 
+					&& messageListHelper.autoscrollCheck(mutation) ) {
+				// autoscrollCheck returns true if user has scrolled to bottom of page
+				$.scrollTo(mutation);
+			}
+		}
+	},
+	autoscroll_livelinks_active : function(mutation, index, live) {
+		if (live) {
+			if (!document.hidden 
+					&& messageListHelper.autoscrollCheck(mutation)) {
+				// trigger after 10ms delay to prevent undesired 
+				// behaviour in post_title_notification
+				setTimeout(function() {
+					messageListHelper.scrolling = true;
+					$.scrollTo((mutation), 800);
+				}, 10);
+				setTimeout(function() {
+					messageListHelper.scrolling = false;	
+				}, 850);
+			}
+		}
+	},
+	post_title_notification : function(mutation, index, live) {
+		if (live) {
+			if (mutation.style.display === "none") {
+				if (config.debug) {
+					console.log('not updating for ignorated post');
+				}
+				return;
+			}
+			if (mutation.getElementsByClassName('message-top')[0]
+					.getElementsByTagName('a')[0].innerHTML == document
+					.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
+					.replace(/ \((\d+)\)$/, "")) {
+				return;
+			}
+			var posts = 1;
+			var ud = '';
+			if (document.getElementsByClassName('message-container')[50]) {
+				ud = ud + "+";
+			}
+			if (document.title.match(/\(\d+\)/)) {
+				posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
+				document.title = "(" + (posts + 1) + ud + ") "
+						+ document.title.replace(/\(\d+\) /, "");
+			} else {
+				document.title = "(" + posts + ud + ") " + document.title;
+			}
+		}
+	},
+	notify_quote_post : function(mutation, index, live) {
+		if (live) {
+			if (!mutation.getElementsByClassName('quoted-message')) {
+				return;
+			}
+			if (mutation.getElementsByClassName('message-top')[0]
+					.getElementsByTagName('a')[0].innerHTML == document
+					.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
+					.replace(/ \((\d+)\)$/, "")) {
+				// dont notify when quoting own posts
+				return;
+			}
+			var not = false;
+			var msg = mutation.getElementsByClassName('quoted-message');
+			for (var i = 0, len = msg.length; i < len; i++) {
+				if (msg[i].getElementsByClassName('message-top')[0]
+						.getElementsByTagName('a')[0].innerHTML == document
+						.getElementsByClassName('userbar')[0]
+						.getElementsByTagName('a')[0].innerHTML.replace(
+						/ \((.*)\)$/, "")) {
+					if (msg[i].parentNode.className != 'quoted-message')
+						// only display notification if user has been directly quoted
+						not = true;
+				}
+			}
+			if (not) {
+				chrome.runtime.sendMessage({
+					need : "notify",
+					title : "Quoted by "
+							+ mutation.getElementsByClassName('message-top')[0]
+									.getElementsByTagName('a')[0].innerHTML,
+					message : document.title.replace(/End of the Internet - /i, '')
+				}, function(data) {
+					console.log(data);
+				});
+			}
+		}	
+	}
+}
 
 var miscFunctions = {
-	// order of functions in object has to be maintained
-	// for dom elements to be added in correct order
 	imagemap_on_infobar : function() {
 		function getUrlVars(urlz) {
 			var vars = [], hash;
@@ -153,6 +502,96 @@ var miscFunctions = {
 		}
 		infobar.appendChild(divider);
 		infobar.appendChild(anchor);
+	},	
+	expand_spoilers : function() {
+		var infobar = document.getElementsByClassName('infobar')[0];
+		var ains = document.createElement('span');
+		var anchor = document.createElement('a');
+		var divider = document.createTextNode(' | ');
+		anchor.id = 'chromell_spoilers';
+		anchor.href = '##';
+		anchor.innerText = 'Expand Spoilers';
+		infobar.appendChild(divider);
+		infobar.appendChild(anchor);
+		anchor.addEventListener('click', messageListHelper.toggleSpoilers, false);		
+	},
+	highlight_tc : function() {
+		var tcs = messageListHelper.getTcMessages();
+		var tc;
+		if (!tcs) {
+			return;
+		}
+		for (var i = 0, len = tcs.length; i < len; i++) {
+			tc = tcs[i];
+			if (config.tc_highlight_color) {
+				tc.getElementsByTagName('a')[0].style.color = '#'
+						+ config.tc_highlight_color;
+			}
+		}
+	},
+	label_tc : function() {
+		var tcs = messageListHelper.getTcMessages();
+		if (!tcs) {
+			return;
+		}
+		var color, tc, span, b, text, divider;
+		if (config.tc_label_color && config.tc_label_color != '') {
+			color = true;
+		}
+		for (var i = 0, len = tcs.length; i < len; i++) {
+			tc = tcs[i];
+			span = document.createElement('span');
+			b = document.createElement('b');
+			text = document.createTextNode('TC');
+			divider = document.createTextNode(' | ');
+			b.appendChild(text);
+			if (color) {
+				b.style.color = '#' + config.tc_label_color;
+			}
+			span.appendChild(divider);
+			span.appendChild(b);			
+			username = tc.getElementsByTagName('a')[0];
+			username.outerHTML += span.innerHTML;
+		}
+	}
+}
+
+var otherFuncs = {
+	pm_title : function() {
+		if (window.location.href.indexOf('inboxthread.php') == -1) {
+			return;
+		}
+		var me = document.getElementsByClassName('userbar')[0]
+				.getElementsByTagName('a')[0].innerText;
+		var other = '';
+		var tops = document.getElementsByClassName('message-top');
+		var top;
+		for (var i = 0, len = tops.length; i < len; i++) {
+			top = tops[i];
+			if (top.getElementsByTagName('a')[0].innerText.indexOf(me) == -1) {
+				other = top.getElementsByTagName('a')[0].innerText;
+				break;
+			}
+		}
+		document.title = "PM - " + other;
+	},	
+	post_before_preview : function() {
+		var inputs = document.getElementsByClassName('quickpost-body')[0]
+				.getElementsByTagName('input');
+		var input;
+		var preview;
+		var post;
+		for (var i = 0, len = inputs.length; i < len; i++) {
+			input = inputs[i];
+			if (input.name == 'preview') {
+				preview = input;
+			}
+			if (input.name == 'post') {
+				post = input;
+			}
+		}
+		post.parentNode.removeChild(post);
+		preview.parentNode.insertBefore(post, preview);
 	},	
 	batch_uploader : function() {
 		var quickpost_body = document.getElementsByClassName('quickpost-body')[0];
@@ -378,20 +817,9 @@ var miscFunctions = {
 			m.insertBefore(document.createElement('br'), insB);
 		}
 	},
-	expand_spoilers : function() {
-		var infobar = document.getElementsByClassName('infobar')[0];
-		var ains = document.createElement('span');
-		var anchor = document.createElement('a');
-		var divider = document.createTextNode(' | ');
-		anchor.id = 'chromell_spoilers';
-		anchor.href = '##';
-		anchor.innerText = 'Expand Spoilers';
-		infobar.appendChild(divider);
-		infobar.appendChild(anchor);
-		anchor.addEventListener('click', messageListHelper.toggleSpoilers, false);		
-	},
 	drop_batch_uploader : function() {
-		if (window.location.href.indexOf('postmsg.php') > -1) {
+		if (window.location.href.indexOf('postmsg.php') > -1 
+		|| window.location.hostname.indexOf("archives") > -1) {
 			return;
 		}
 		var quickreply = document.getElementsByTagName('textarea')[0];
@@ -410,495 +838,34 @@ var miscFunctions = {
 							commonFunctions.asyncUpload(evt.dataTransfer.files);
 						});
 	},
-	highlight_tc : function() {
-		var tcs = messageListHelper.getTcMessages();
-		var tc;
-		if (!tcs) {
-			return;
-		}
-		for (var i = 0, len = tcs.length; i < len; i++) {
-			tc = tcs[i];
-			if (config.tc_highlight_color) {
-				tc.getElementsByTagName('a')[0].style.color = '#'
-						+ config.tc_highlight_color;
-			}
-		}
-	},
-	label_tc : function() {
-		var tcs = messageListHelper.getTcMessages();
-		if (!tcs) {
-			return;
-		}
-		var color, tc, span, b, text, divider;
-		if (config.tc_label_color && config.tc_label_color != '') {
-			color = true;
-		}
-		for (var i = 0, len = tcs.length; i < len; i++) {
-			tc = tcs[i];
-			span = document.createElement('span');
-			b = document.createElement('b');
-			text = document.createTextNode('TC');
-			divider = document.createTextNode(' | ');
-			b.appendChild(text);
-			if (color) {
-				b.style.color = '#' + config.tc_label_color;
-			}
-			span.appendChild(divider);
-			span.appendChild(b);			
-			username = tc.getElementsByTagName('a')[0];
-			tc.insertBefore(span, username.nextSibling);
-		}
-	},
-	post_before_preview : function() {
-		var inputs = document.getElementsByClassName('quickpost-body')[0]
-				.getElementsByTagName('input');
-		var input;
-		var preview;
-		var post;
-		for (var i = 0, len = inputs.length; i < len; i++) {
-			input = inputs[i];
-			if (input.name == 'preview') {
-				preview = input;
-			}
-			if (input.name == 'post') {
-				post = input;
-			}
-		}
-		post.parentNode.removeChild(post);
-		preview.parentNode.insertBefore(post, preview);
-	},
 	load_next_page : function() {
 		document.getElementById('u0_3').addEventListener('dblclick',
 				messageListHelper.loadNextPage);
-	},
-	pm_title : function() {
-		var me = document.getElementsByClassName('userbar')[0]
-				.getElementsByTagName('a')[0].innerText;
-		var other = '';
-		var tops = document.getElementsByClassName('message-top');
-		var top;
-		for (var i = 0, len = tops.length; i < len; i++) {
-			top = tops[i];
-			if (top.getElementsByTagName('a')[0].innerText.indexOf(me) == -1) {
-				other = top.getElementsByTagName('a')[0].innerText;
-				break;
-			}
-		}
-		document.title = "PM - " + other;
-	},
+	},	
 	snippet_listener : function() {
 		if (window.location.hostname.indexOf("archives") == -1) {
 			var ta = document.getElementsByName('message')[0];
 			var caret;
-			ta.addEventListener('keydown', function(event) {
-				if (config.snippet_alt_key) {
-					if (event.shiftKey == true
-							&& event.keyIdentifier == 'U+0009') {
-						// user has pressed shift & tab together
-						event.preventDefault();
-						caret = messageListHelper.findCaret(ta);
-						messageListHelper.snippetHandler(ta.value, caret);					
-					}
-				}
-				else if (!config.snippet_alt_key) {
-					if (event.keyIdentifier == 'U+0009') {
-						event.preventDefault();
-						caret = messageListHelper.findCaret(ta);
-						messageListHelper.snippetHandler(ta.value, caret);
-					}
-				}			
-			});
-		}
-	}
-}
-
-var messageList = {
-	// order of functions in object has to be maintained
-	// for dom elements to be added in correct order
-	resize_imgs : function(msg) {
-		var imgs = msg.getElementsByTagName('img');
-		var img;
-		for (var i = 0, len = imgs.length; i < len; i++) {
-			img = imgs[i];
-			messageListHelper.resizeImg(img);
-		}
-	},
-	user_notes : function(msg) {
-		if (!config.usernote_notes) {
-			config.usernote_notes = {};
-		}
-		//var tops = msg.getElementsByClassName('message-top')[0];		
-		var top = msg.getElementsByClassName('message-top')[0];
-		if (!top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
-			return;
-		}
-		var notebook = document.createElement('a');	
-		notebook.id = 'notebook';
-		var divider = document.createTextNode(' | ');
-		var top, tempID;
-		// prevent problems when anon posts are quoted in normal topics
-		if (top.getElementsByTagName('a')[0].innerText !== "⇗") {
-			top.appendChild(divider);
-			tempID = top.getElementsByTagName('a')[0].href
-					.match(/user=(\d+)$/i)[1];
-			notebook.innerHTML = (config.usernote_notes[tempID] != undefined && config.usernote_notes[tempID] != '') ? 'Notes*'
-					: 'Notes';
-			notebook.href = "##note" + tempID;
-			top.appendChild(notebook);
-			notebook.addEventListener('click', function(tgt) {
-				messageListHelper.openNote(tgt.target);
-			});
-		}
-
-	},
-	like_button: function(msg, index) {
-		if (!window.location.href.match("archives")) {
-			var head = document.getElementsByTagName("head")[0];
-			var script = document.createElement("script");
-			var top = msg.getElementsByClassName('message-top')[0];
-			var anchor = document.createElement('a');
-			var divider = document.createTextNode(" | ");
-			anchor.setAttribute('onclick', 'like(this);');
-			anchor.innerText = 'Like';
-			script.type = "text/javascript";
-			script.src = chrome.extension.getURL("src/js/like.js");
-			head.appendChild(script);
-			anchor.href = '##like' + index;
-			top.appendChild(divider);
-			top.appendChild(anchor);
-		}
-	},	
-	number_posts : function(msg, index) {
-		var top = msg.getElementsByClassName('message-top')[0];
-		var page, id, postnum;
-		if (!window.location.href.match(/page=/)) {
-			page = 1;
-		} else {
-			page = window.location.href.match(/page=(\d+)/)[1];
-		}
-		id = ((index + 1) + (50 * (page - 1)));
-		if (id < 1000)
-			id = "0" + id;
-		if (id < 100)
-			id = "0" + id;
-		if (id < 10)
-			id = "0" + id;
-		postnum = document.createTextNode(' | #' + id);
-		top.appendChild(postnum);
-	},	
-	post_templates : function(msg) {
-		var top = msg.getElementsByClassName('message-top')[0];
-		var sep, sepIns, qr;
-		var cDiv = document.createElement('div');
-		cDiv.style.display = 'none';
-		cDiv.id = 'cdiv';
-		document.body.insertBefore(cDiv, null);
-		messageListHelper.postEvent = document.createEvent('Event');
-		messageListHelper.postEvent.initEvent('postTemplateInsert', true, true);
-		var newScript = document.createElement('script');
-		newScript.type = 'text/javascript';
-		newScript.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
-		document.getElementsByTagName('head')[0].appendChild(newScript);
-		sep = document.createElement('span');
-		sep.innerHTML = " | ";
-		sep.className = "post_template_holder";
-		sepIns = document.createElement('span');
-		sepIns.className = 'post_template_opts';
-		sepIns.innerHTML = '[';
-		qr = document.createElement('a');
-		qr.href = "##" + i;
-		qr.innerHTML = "&gt;"
-		qr.className = "expand_post_template";
-		sepIns.addEventListener("click",
-				messageListHelper.postTemplateAction);
-		sepIns.insertBefore(qr, null);
-		sepIns.innerHTML += ']';
-		sep.insertBefore(sepIns, null);
-		top.insertBefore(sep, null);
-	},	
-	userhl_messagelist : function(msg) {
-		if (!config.enable_user_highlight) {
-			return;
-		}
-		var tops = msg.getElementsByClassName('message-top');
-		var first_top = msg.getElementsByClassName('message-top')[0];
-		var top, anchors, anchor;
-		var user;
-		if (!config.no_user_highlight_quotes) {
-			try {
-				for (var k = 0; k < tops.length; k++) {
-					top = tops[k];			
-						user = top.getElementsByTagName('a')[0].innerHTML
-								.toLowerCase();
-					if (config.user_highlight_data[user]) {
-						if (config.debug) {
-							console.log('highlighting post by ' + user);
-						}
-						top.style.background = '#'
-								+ config.user_highlight_data[user].bg;
-						top.style.color = '#'
-								+ config.user_highlight_data[user].color;
-						anchors = top.getElementsByTagName('a');
-						for (var j = 0, len = anchors.length; j < len; j++) {
-							anchor = anchors[j];
-							anchor.style.color = '#'
-									+ config.user_highlight_data[user].color;
+			ta.addEventListener('keydown', 
+				function(event) {
+					if (config.snippet_alt_key) {
+						if (event.shiftKey == true
+								&& event.keyIdentifier == 'U+0009') {
+							event.preventDefault();
+							caret = messageListHelper.findCaret(ta);
+							messageListHelper.snippetHandler(ta.value, caret);					
 						}
 					}
-				}
-			} catch (e) {
-				// if (config.debug) console.log(e);
-			}			
-		} else {
-			user = first_top.getElementsByTagName('a')[0]
-					.innerHTML.toLowerCase();
-			if (config.user_highlight_data[user]) {
-				if (config.debug) {
-					console.log('highlighting post by ' + user);
-				}
-				first_top.style.background = '#'
-						+ config.user_highlight_data[user].bg;
-				first_top.style.color = '#'
-						+ config.user_highlight_data[user].color;
-				anchors = first_top.getElementsByTagName('a');
-				for (var j = 0, len = anchors.length; j < len; j++) {
-					anchor = anchors[j];
-					anchor.style.color = '#'
-							+ config.user_highlight_data[user].color;
-				}
-			}
-		}
-	},
-	foxlinks_quotes : function(msg) {
-		var color = "#" + config['foxlinks_quotes_color'];
-		var quotes = msg.getElementsByClassName('quoted-message');
-		var quote, top;
-		for (var i = 0, len = quotes.length; i < len; i++) {
-			quote = quotes[i];
-			quot_msg_style = quote.style;
-			quot_msg_style.borderStyle = 'solid';
-			quot_msg_style.borderWidth = '2px';
-			quot_msg_style.borderRadius = '5px';
-			quot_msg_style.marginRight = '30px';
-			quot_msg_style.marginLeft = '10px';
-			quot_msg_style.paddingBottom = '10px';
-			quot_msg_style.marginTop = '0px';
-			quot_msg_style.borderColor = color;
-			top = quote.getElementsByClassName('message-top')[0];
-			if (top.style.background == '') {
-				top.style.background = color;
-			} else {
-				quot_msg_style.borderColor = top.style.background;
-			}
-			top.style.marginTop = '0px';
-			top.style.paddingBottom = '2px';
-			top.style.marginLeft = '-6px';
-		}
-	},	
-	ignorator_messagelist : function(msg, index) {
-		if (!config.ignorator) {
-			return;
-		}
-		var tops = msg.getElementsByClassName('message-top');
-		var top, username, top_index;
-		tops_total += tops.length;
-		for (var j = 0, len = tops.length; j < len; j++) {
-			top = tops[j];
-			if (top) {
-				username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-				for (var f = 0, len = messageListHelper.ignores.length; f < len; f++) {
-					if (username == messageListHelper.ignores[f]) {
-						// calculate equivalent index of message-top for
-						// show_ignorator function
-						if (j == 0 && tops_total > 0) {
-							top_index = tops_total - tops.length;
+					else if (!config.snippet_alt_key) {
+						if (event.keyIdentifier == 'U+0009') {
+							event.preventDefault();
+							caret = messageListHelper.findCaret(ta);
+							messageListHelper.snippetHandler(ta.value, caret);
 						}
-						else {
-							top_index = tops_total - j;
-						}
-						top.parentNode.style.display = 'none';
-						if (config.debug) {
-							console.log('removed post by '
-									+ messageListHelper.ignores[f]);
-						}
-						ignorated.total_ignored++;
-						if (!ignorated.data.users[messageListHelper.ignores[f]]) {
-							ignorated.data.users[messageListHelper.ignores[f]] = {};
-							ignorated.data.users[messageListHelper.ignores[f]].total = 1; 
-							ignorated.data.users[messageListHelper.ignores[f]].trs = [ top_index ];
-						} else {
-							ignorated.data.users[messageListHelper.ignores[f]].total++;
-							ignorated.data.users[messageListHelper.ignores[f]].trs
-									.push(top_index);
-						}
-					}
-				}		
-			}
-		}
-	},
-	label_self_anon : function(msg) {
-		var tags = document.getElementsByTagName('h2')[0].innerHTML;
-		if (tags.indexOf('/topics/Anonymous') > -1) {
-			if (!window.location.href.match('archives')) {
-				var tops = msg.getElementsByClassName('message-top');
-				if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {				
-					var self = document.getElementsByClassName('quickpost-body')[0]
-							.getElementsByTagName('a')[0].innerHTML;
-					if (self.indexOf('Human') == -1) {
-						return;
-					}
-					var top, humanToCheck, span;
-					for (var i = 0, len = tops.length; i < len; i++) {
-						top = tops[i];
-						humanToCheck = top.getElementsByTagName('a')[0];
-						if (humanToCheck.innerHTML.indexOf('Filter') > -1) {
-							// handle livelinks post
-							humanToCheck = top.getElementsByTagName('b')[0].nextSibling;
-							if (!humanToCheck.innerHTML 
-									&& humanToCheck.nodeValue.indexOf(self) > -1) {
-								span = document.createElement('span');
-								span.innerHTML = '<b>(Me)</b> | ';
-								top.insertBefore(span, humanToCheck.nextSibling);		
-							}
-						}
-						else if (humanToCheck.innerHTML == self) {
-								span = document.createElement('span');
-								span.innerHTML = ' | <b>(Me)</b>';
-								top.insertBefore(span, humanToCheck.nextSibling);
-						}
-					}
+					}		
 				}
-			}
+			);
 		}
-	},
-	hide_deleted : function(msg) {
-			if (msg.getElementsByClassName('message-top')[0]
-					.getElementsByTagName('em')[0]
-					&& msg.getElementsByClassName('message-top')[0]
-							.getElementsByTagName('em')[0].innerHTML !== 'Moderator') {
-				msg.getElementsByClassName('message-body')[0].style.display = 'none';
-				var a = document.createElement('a');
-				a.href = 'javascript.void(0)';
-				a.innerHTML = 'Show Message';
-				a.addEventListener('click', function(evt) {
-					var hiddenMsg = evt.target.parentNode.parentNode
-							.getElementsByClassName('message-body')[0];
-					console.log(evt.target);
-					hiddenMsg.style.display === 'none' ? hiddenMsg.style.display = 'block'
-							: hiddenMsg.style.display = 'none';
-				});
-				msg.getElementsByClassName('message-top')[0].innerHTML += ' | ';
-				msg.getElementsByClassName('message-top')[0].insertBefore(
-						a, null);
-			}
-	},
-	click_expand_thumbnail : function(msg) {
-		// rewritten by xdrvonscottx
-		// find all the placeholders before the images are loaded
-		var phold = msg.getElementsByClassName("img-placeholder");
-
-		for ( var i = 0; i < phold.length; i++) {
-			if(phold[i].parentNode.parentNode.getAttribute('class') !== 'userpic-holder') {
-				img_observer.observe(phold[i], {
-					attributes : true,
-					childList: true
-				});
-			}
-		}
-	},
-	autoscroll_livelinks : function(mutation, index, live) {
-		// live is undefined unless these functions are called 
-		// from messageListHelper.livelinks
-		if (live) {
-			if (document.hidden 
-					&& messageListHelper.autoscrollCheck(mutation) ) {
-				// autoscrollCheck returns true if user has scrolled to bottom of page
-				$.scrollTo(mutation);
-			}
-		}
-	},
-	autoscroll_livelinks_active : function(mutation, index, live) {
-		if (live) {
-			if (!document.hidden 
-					&& messageListHelper.autoscrollCheck(mutation)) {
-				// trigger after 10ms delay to prevent undesired 
-				// behaviour in post_title_notification
-				setTimeout(function() {
-					messageListHelper.scrolling = true;
-					$.scrollTo((mutation), 800);
-				}, 10);
-				setTimeout(function() {
-					messageListHelper.scrolling = false;
-					console.log('set scrolling to false');				
-				}, 850);
-			}
-		}
-	},
-	post_title_notification : function(mutation, index, live) {
-		if (live) {
-			if (mutation.style.display === "none") {
-				if (config.debug) {
-					console.log('not updating for ignorated post');
-				}
-				return;
-			}
-			if (mutation.getElementsByClassName('message-top')[0]
-					.getElementsByTagName('a')[0].innerHTML == document
-					.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
-					.replace(/ \((\d+)\)$/, "")) {
-				return;
-			}
-			var posts = 1;
-			var ud = '';
-			if (document.getElementsByClassName('message-container')[50]) {
-				ud = ud + "+";
-			}
-			if (document.title.match(/\(\d+\)/)) {
-				posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
-				document.title = "(" + (posts + 1) + ud + ") "
-						+ document.title.replace(/\(\d+\) /, "");
-			} else {
-				document.title = "(" + posts + ud + ") " + document.title;
-			}
-		}
-	},
-	notify_quote_post : function(mutation, index, live) {
-		if (live) {
-			if (!mutation.getElementsByClassName('quoted-message')) {
-				return;
-			}
-			if (mutation.getElementsByClassName('message-top')[0]
-					.getElementsByTagName('a')[0].innerHTML == document
-					.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
-					.replace(/ \((\d+)\)$/, "")) {
-				// dont notify when quoting own posts
-				return;
-			}
-			var not = false;
-			var msg = mutation.getElementsByClassName('quoted-message');
-			for (var i = 0, len = msg.length; i < len; i++) {
-				if (msg[i].getElementsByClassName('message-top')[0]
-						.getElementsByTagName('a')[0].innerHTML == document
-						.getElementsByClassName('userbar')[0]
-						.getElementsByTagName('a')[0].innerHTML.replace(
-						/ \((.*)\)$/, "")) {
-					if (msg[i].parentNode.className != 'quoted-message')
-						// only display notification if user has been directly quoted
-						not = true;
-				}
-			}
-			if (not) {
-				chrome.runtime.sendMessage({
-					need : "notify",
-					title : "Quoted by "
-							+ mutation.getElementsByClassName('message-top')[0]
-									.getElementsByTagName('a')[0].innerHTML,
-					message : document.title.replace(/End of the Internet - /i, '')
-				}, function(data) {
-					console.log(data);
-				});
-			}
-		}	
 	}
 }
 
@@ -991,8 +958,9 @@ var messageListHelper = {
 				message.setSelectionRange(newCaret, newCaret);
 			}
 		}
-	},
+	},	
 	link_handler : function(msg) {
+		var t0 = performance.now();
 		if (msg) {
 			var links = msg.getElementsByClassName("l");
 		}
@@ -1005,51 +973,33 @@ var messageListHelper = {
 		var i = links.length;
 		while (i--) {
 			link = links[i];
-			if (link.title.indexOf("/index.php") == 0) {
-				link.addEventListener("click", function(evt) {
-					messageListHelper.wikiFix(this);
-					evt.preventDefault();
-				});
-			}
-			else if (link.title.indexOf("/imap/") == 0) {
-				link.addEventListener("click", function(evt) {
-					messageListHelper.imageFix(this);					
-					evt.preventDefault();
-				});	
-			} 			
-			else if (config.embed_on_hover 
-					&& (link.title.indexOf("youtube.com/") > -1
-					|| link.title.indexOf("youtu.be/") > -1)) {
-				link.className = "youtube";
-				// give each video link a unique id for embed/hide functions
-				link.id = link.href + "&" + Math.random().toString(16).slice(2);			
-				// attach event listener
-				$(link).hoverIntent(
-					function() {
-						var _this = this;
-						var color = $("table.message-body tr td.message").css("background-color");
-						if (_this.className == "youtube") {
-							$(_this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
-									+ "background: " + color 
-									+ ";'><a id='" + _this.id 
-									+ "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+			if (config.embed_on_hover) {
+				if (link.href.match(/youtube|youtu.be/)
+						&& link.href.match(/^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/)) {
+					link.className = "youtube";
+					// give each video link a unique id for embed/hide functions
+					link.id = link.href + "&" + Math.random().toString(16).slice(2);			
+					// attach event listener
+					$(link).hoverIntent(
+						function() {
+							var _this = this;
+							var color = $("table.message-body tr td.message").css("background-color");
+							if (_this.className == "youtube") {
+								$(_this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
+										+ "background: " + color 
+										+ ";'><a id='" + _this.id 
+										+ "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+							}
+						}, function() {
+							var _this = this;
+							if (_this.className == "youtube") {
+								$(_this).find("span").remove();
+							}
 						}
-					}, function() {
-						var _this = this;
-						if (_this.className == "youtube") {
-							$(_this).find("span").remove();
-						}
-					}
-				);
-				// pass vidLink to mutation observer to handle embed/hide clicks
-				link_observer.observe(link, {
-						subtree: true,
-						characterData: true,
-						childList: true,
-						attributes: true
-				});				
+					);
+				}
 			}
-			else if (config.embed_gfycat || config.embed_gfycat_thumbs) {
+			if (config.embed_gfycat || config.embed_gfycat_thumbs) {
 				if (link.title.indexOf("gfycat.com/") > -1) {
 					link.className = "gfycat";
 					if (config.embed_gfycat_thumbs 
@@ -1065,7 +1015,54 @@ var messageListHelper = {
 			window.addEventListener('scroll', messageListHelper.gfycatLoader);
 			document.addEventListener('visibilitychange', messageListHelper.pauseGfy);
 		}
+		var t1 = performance.now();
+		console.log("link_handler processed in " + (t1 - t0) + " milliseconds.");
 	},	
+	addListeners : function() {
+		var body = document.body;
+		body.addEventListener('click', function(ev) {
+			if (config.user_notes) {
+				messageListHelper.openNote(ev.target);
+			}
+			if (config.post_templates) {
+				messageListHelper.postTemplateAction(ev.target);
+			}
+			if (ev.target.title.indexOf("/index.php") == 0) {
+				messageListHelper.wikiFix(ev.target);
+				ev.preventDefault();
+			}
+			else if (ev.target.title.indexOf("/imap/") == 0) {
+				messageListHelper.imageFix(ev.target);					
+				ev.preventDefault();
+			}
+			else if (ev.target.parentNode.className == 'embed') {
+				messageListHelper.embedYoutube(ev.target.parentNode);
+			}
+			else if (ev.target.parentNode.className == 'hide') {
+				messageListHelper.hideYoutube(ev.target.parentNode);			
+			}
+			else if (ev.target.className == 'youtube'
+					&& ev.target.tagName == 'DIV') {
+				// prevent youtube divs from acting as anchor tags
+				ev.preventDefault();
+			}
+		});
+	},
+	appendScripts : function() {
+		var head = document.getElementsByTagName("head")[0];
+		if (config.like_button) {
+			var like = document.createElement("script");
+			like.type = "text/javascript";
+			like.src = chrome.extension.getURL("src/js/like.js");
+			head.appendChild(like);
+		}
+		if (config.post_templates) {
+			var templates = document.createElement('script');
+			templates.type = 'text/javascript';
+			templates.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
+			head.appendChild(templates);
+		}
+	},
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
 		if (chosen.files.length == 0) {
@@ -1078,9 +1075,9 @@ var messageListHelper = {
 		commonFunctions.asyncUpload(chosen.files, 0);
 	},
 	postTemplateAction : function(evt) {
-		if (evt.target.className === "expand_post_template") {
-			var ins = evt.target.parentNode;
-			ins.removeChild(evt.target);
+		if (evt.className === "expand_post_template") {
+			var ins = evt.parentNode;
+			ins.removeChild(evt);
 			var ia = document.createElement('a');
 			ia.innerHTML = "&lt;"
 			ia.className = "shrink_post_template";
@@ -1102,9 +1099,9 @@ var messageListHelper = {
 			}
 			ins.innerHTML += ']';
 		}
-		if (evt.target.className === "shrink_post_template") {
-			var ins = evt.target.parentNode;
-			evt.target.parentNode.removeChild(evt.target);
+		if (evt.className === "shrink_post_template") {
+			var ins = evt.parentNode;
+			evt.parentNode.removeChild(evt);
 			var ia = document.createElement('a');
 			ia.innerHTML = "&gt;"
 			ia.className = "expand_post_template";
@@ -1113,11 +1110,11 @@ var messageListHelper = {
 			ins.insertBefore(ia, null);
 			ins.innerHTML += ']';
 		}
-		if (evt.target.className === "post_template_title") {
-			evt.target.id = 'post_action';
+		if (evt.className === "post_template_title") {
+			evt.id = 'post_action';
 			var cdiv = document.getElementById('cdiv');
 			var d = {};
-			d.text = config.post_template_data[evt.target.parentNode.className].text;
+			d.text = config.post_template_data[evt.parentNode.className].text;
 			cdiv.innerText = JSON.stringify(d);
 			cdiv.dispatchEvent(messageListHelper.postEvent);
 		}
@@ -1227,22 +1224,24 @@ var messageListHelper = {
 					.log("I don't know what's going on with this image - weird number of siblings");
 	},
 	openNote : function(el) {
-		var userID = el.href.match(/note(\d+)$/i)[1];
-		if (document.getElementById("notepage")) {
-			var pg = document.getElementById('notepage');
-			userID = pg.parentNode.getElementsByTagName('a')[0].href
-					.match(/user=(\d+)$/i)[1];
-			config.usernote_notes[userID] = pg.value;
-			pg.parentNode.removeChild(pg);
-			messageListHelper.saveNotes();
-		} else {
-			var note = config.usernote_notes[userID];
-			page = document.createElement('textarea');
-			page.id = 'notepage';
-			page.value = (note == undefined) ? "" : note;
-			page.style.width = "100%";
-			page.style.opacity = '.6';
-			el.parentNode.appendChild(page);
+		if (el.id == 'notebook') {
+			var userID = el.href.match(/note(\d+)$/i)[1];
+			if (document.getElementById("notepage")) {
+				var pg = document.getElementById('notepage');
+				userID = pg.parentNode.getElementsByTagName('a')[0].href
+						.match(/user=(\d+)$/i)[1];
+				config.usernote_notes[userID] = pg.value;
+				pg.parentNode.removeChild(pg);
+				messageListHelper.saveNotes();
+			} else {
+				var note = config.usernote_notes[userID];
+				page = document.createElement('textarea');
+				page.id = 'notepage';
+				page.value = (note == undefined) ? "" : note;
+				page.style.width = "100%";
+				page.style.opacity = '.6';
+				el.parentNode.appendChild(page);
+			}
 		}
 	},
 	saveNotes : function() {
@@ -1518,16 +1517,11 @@ var messageListHelper = {
 			}
 			// iterate over miscFunctions and messageList
 			// objects & call function if config value is true		
-			try {
-				for (var k in miscFunctions) {
-					if (config[k + pm]) {
-							miscFunctions[k]();
-					}
+			for (var k in miscFunctions) {
+				if (config[k + pm]) {
+						miscFunctions[k]();
 				}
 			}
-			catch (err) {
-				console.log("error in " + k + ":", err);
-			}		
 			// iterate over first 5 message-containers (or fewer)
 			if (msgs.length < 4) {
 				len = msgs.length;
@@ -1535,38 +1529,33 @@ var messageListHelper = {
 			else {
 				len = 4;
 			}
-			try {
-				for (var j = 0; j < len; j++) {
-					msg = msgs[j];
-					// iterate over functions in messageList
-					for (var k in messageList) {
-						if (config[k + pm]) {
-								// pass msg and index value to function
-								messageList[k](msg, j);
-						}
+			for (var j = 0; j < len; j++) {
+				msg = msgs[j];
+				// iterate over functions in messageList
+				for (var k in messageList) {
+					if (config[k + pm]) {
+							// pass msg and index value to function
+							messageList[k](msg, j);
 					}
 				}
 			}
-			catch (err) {
-				console.log("error in " + k + ":", err);
-			}		
 			// page will appear to have been fully loaded by this point
 			var t1 = performance.now();
 			console.log("Processed in " + (t1 - t0) + " milliseconds.");		
 			if (len == 4) {
 				// iterate over rest of messages
-				try {
-					for (j = len, msg; msg = msgs[j]; j++) {
-						for (var k in messageList) {
-							if (config[k + pm]) {
-									messageList[k](msg, j);
-							}
+				for (j = len, msg; msg = msgs[j]; j++) {
+					for (var k in messageList) {
+						if (config[k + pm]) {
+								messageList[k](msg, j);
 						}
 					}
+				}		
+			}
+			for (var i in otherFuncs) {
+				if (config[i + pm]) {
+					otherFuncs[i]();
 				}
-				catch (err) {
-					console.log("error in " + k + ":", err);
-				}				
 			}
 			// send ignorator data to background script
 			messageListHelper.globalPort.postMessage({
@@ -1577,7 +1566,8 @@ var messageListHelper = {
 			// call any functions that don't exist in messageList object
 			messageListHelper.archiveQuoteButtons();			
 			messageListHelper.link_handler();
-			
+			messageListHelper.addListeners();
+			messageListHelper.appendScripts();			
 			messageListHelper.globalPort.onMessage.addListener(function(msg) {
 				// ignorator_update action is handled by background script
 				if (msg.action !== 'ignorator_update') {			
@@ -1676,21 +1666,16 @@ var messageListHelper = {
 		ta.focus();
 	},
 	livelinks : function(mutation) {
-		var index = document.getElementsByClassName('message-container').length -1;
+		var index = document.getElementsByClassName('message-container').length - 1;
 		var live = true;
 		var pm = '';
 		if (window.location.href.match('inboxthread')) {
 			pm = "_pm";
 		}
-		try {
-			for (var i in messageList) {
-				if (config[i + pm]) {
-						messageList[i](mutation, index, live);
-				}
+		for (var i in messageList) {
+			if (config[i + pm]) {
+					messageList[i](mutation, index, live);
 			}
-		}		
-		catch (err) {
-			console.log("error in livelinks " + i + ":", err);
 		}
 		messageListHelper.link_handler(mutation);
 		// send ignorator data to background script
@@ -1700,11 +1685,11 @@ var messageListHelper = {
 			scope : "messageList"
 		});				
 	},
-	wikiFix: function(_this) {
-		window.open(_this.href.replace("boards", "wiki"));
+	wikiFix: function(anchor) {
+		window.open(anchor.href.replace("boards", "wiki"));
 	},
-	imageFix: function(_this) {
-		window.open(_this.href.replace("boards", "images"));
+	imageFix: function(anchor) {
+		window.open(anchor.href.replace("boards", "images"));
 	},
 	placeholderGfy: function(gfyLink) {
 		var https, placeholder, url, splitURL, code, xhrURL, xhr;
@@ -1724,7 +1709,12 @@ var messageListHelper = {
 			if (xhr.readyState == 4 && xhr.status == 200) {
 				// gfycat api provides width, height, & webm url
 				temp = JSON.parse(xhr.responseText);
-				width = temp.gfyItem.width;
+				if (!temp.gfyItem) {
+					// some kind of error
+					gfyLink.className = 'l';
+					return;
+				}
+				width = temp.gfyItem.width;		
 				height = temp.gfyItem.height;
 				webmUrl = temp.gfyItem.webmUrl;
 				if (https) {
@@ -1778,8 +1768,11 @@ var messageListHelper = {
 		xhr.open("GET", xhrURL, true);
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
-				// gfycat api provides width, height, & webm url
-				temp = JSON.parse(xhr.responseText);
+				temp = JSON.parse(xhr.responseText);			
+				if (!temp.gfyItem) {
+					gfyLink.className = 'l';
+					return;
+				}
 				width = temp.gfyItem.width;
 				height = temp.gfyItem.height;
 				webmUrl = temp.gfyItem.webmUrl;
@@ -1788,17 +1781,14 @@ var messageListHelper = {
 				}
 				if (config.resize_gfys 
 						&& width > config.gfy_max_width) {
-					// scale video size to match gfy_max_width value
 					height = (height / (width / config.gfy_max_width));
 					width = config.gfy_max_width;
 				}
-				// create placeholder
 				placeholder.className = 'gfycat';
 				placeholder.id = webmUrl;
 				placeholder.innerHTML = '<img src="' + thumbnailURL 
 						+ '" width="' + width + '" height="' + height + '">'
 						+ '</img>';
-				// prevent "Cannot read property 'replaceChild' of null" error
 				if (gfyLink.parentNode) {
 					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
 					// add click listener to replace img with video
@@ -1812,11 +1802,9 @@ var messageListHelper = {
 								+ '</video>';
 						video = placeholder.getElementsByTagName('video')[0];
 						placeholder.setAttribute('name', 'embedded_thumb');
-						// placeholder id is webm url
 						video.src = placeholder.id;
 						video.title = "Click to pause";
 						video.play();
-						// add click listener to toggle play/pause
 						video.addEventListener('click', function(ev) {
 							video.title = "Click to play/pause";
 							if (!video.paused) {
@@ -1854,81 +1842,83 @@ var messageListHelper = {
 		}
 		else {
 			// call gfycatLoader so that only visible gfycat videos are played
-			// if document visibility changes from hidden to visible
+			// if document visibility changes from hidden to !hidden
 			messageListHelper.gfycatLoader();
 		}
 	},
-	embedYoutube: function(_this) {
-		if (!_this.embedded) {
-			var toEmbed = document.getElementById(_this.id);
-			if (toEmbed.className == "youtube") {	
-				var color = $("table.message-body tr td.message").css("background-color");		
-				var videoCode;
-				var embedHTML;
-				var href = toEmbed.href;
-				var timeEquals = href.match(/(\?|\&|#)(t=)/);
-				if (timeEquals) {
-					var substring = href.substring(timeEquals.index, href.length);
-					var time = substring.match(/([0-9])+([h|m|s])?/g);
-				}
-				var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-				var match = _this.id.match(regExp);
-				if (match && match[2].length == 11) {
-					videoCode = match[2];
-				} else {
-					videoCode = match;
-				}
-				if (time) {
-					// convert into seconds
-					var splitTime, temp;
-					var seconds = 0;
-					for (var i = 0, len = time.length; i < len; i++) {
-						splitTime = time[i];
-						if (!splitTime.match(/([h|m|s])/)) {
-							// timecode is probably in format "#t=xx" 
-							seconds += splitTime;
-						}
-						else if (splitTime.indexOf('h') > -1) {
-							temp = Number(splitTime.replace('h', ''), 10);
-							seconds += temp * 60 * 60;
-						}
-						else if (splitTime.indexOf('m') > -1) {
-							temp = parseInt(splitTime.replace('m', ''), 10);
-							seconds += temp * 60;
-						}
-						else if (splitTime.indexOf('s') > -1) {
-							seconds += parseInt(splitTime.replace('s', ''), 10);
-						}
-					}
-					videoCode += "?start=" + seconds + "'";
-				}				
-				embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
-									+ "<a id='" + _this.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
-									+ "<br><div class='youtube'>" 
-									+ "<iframe id='" + "yt" + _this.id + "' type='text/html' width='640' height='390'" 
-									+ "src='https://www.youtube.com/embed/" + videoCode 
-									+ "'?autoplay='0' frameborder='0'/>" 
-									+ "</div>";
-				$(toEmbed).find("span:last").remove();
-				toEmbed.className = "hideme";
-				toEmbed.innerHTML += embedHTML;
-				_this.embedded = true;
+	embedYoutube: function(anchor) {
+		var toEmbed = document.getElementById(anchor.id);
+		if (toEmbed.className == "youtube") {
+			var color = $("table.message-body tr td.message").css("background-color");		
+			var videoCode;
+			var embedHTML;
+			var href = toEmbed.href;
+			var timeEquals = href.match(/(\?|\&|#)(t=)/);
+			if (timeEquals) {
+				var substring = href.substring(timeEquals.index, href.length);
+				var time = substring.match(/([0-9])+([h|m|s])?/g);
 			}
+			var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+			var match = anchor.id.match(regExp);
+			if (match && match[2].length == 11) {
+				videoCode = match[2];
+			} else {
+				videoCode = match;
+			}
+			if (time) {
+				// convert into seconds
+				var splitTime, temp;
+				var seconds = 0;
+				for (var i = 0, len = time.length; i < len; i++) {
+					splitTime = time[i];
+					if (!splitTime.match(/([h|m|s])/)) {
+						// timecode is probably in format "#t=xx" 
+						seconds += splitTime;
+					}
+					else if (splitTime.indexOf('h') > -1) {
+						temp = Number(splitTime.replace('h', ''), 10);
+						seconds += temp * 60 * 60;
+					}
+					else if (splitTime.indexOf('m') > -1) {
+						temp = parseInt(splitTime.replace('m', ''), 10);
+						seconds += temp * 60;
+					}
+					else if (splitTime.indexOf('s') > -1) {
+						seconds += parseInt(splitTime.replace('s', ''), 10);
+					}
+				}
+				videoCode += "?start=" + seconds + "'";
+			}				
+			embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
+								+ "<a id='" + anchor.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
+								+ "<br><div class='youtube'>" 
+								+ "<iframe id='" + "yt" + anchor.id + "' type='text/html' width='640' height='390'" 
+								+ "src='https://www.youtube.com/embed/" + videoCode 
+								+ "'?autoplay='0' frameborder='0'/>" 
+								+ "</div>";
+			$(toEmbed).find("span:last").remove();
+			toEmbed.className = "hideme";
+			toEmbed.innerHTML += embedHTML;
 		}
 	},
-	hideYoutube: function(_this) {
-		if (!_this.hidden) {
-			var toEmbed = document.getElementById(_this.id);
-			$(toEmbed).find("iframe:last").remove();
-			$(toEmbed).find("br:last").remove();
-			$(toEmbed).find("div:last").remove();
-			toEmbed.className = "youtube";
-			_this.hidden = true;
+	hideYoutube: function(anchor) {
+		var toEmbed = document.getElementById(anchor.id);
+		var i = toEmbed.childNodes.length;
+		var child;
+		// iterate backwards as we are removing nodes
+		while (i--) {
+			child = toEmbed.childNodes[i];
+			if (child.nodeName !== '#text'
+				&& child.tagName !== 'SPAN') {
+				toEmbed.removeChild(child);
+			}
 		}
+		toEmbed.className = "youtube";
 	}
 }
 
 messageListHelper.init();
+
 var livelinks = new MutationObserver(function(mutations) {
 	var mutation;
 	for (var i = 0, len = mutations.length; i < len; i++) {
