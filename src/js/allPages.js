@@ -183,13 +183,6 @@ var allPages = {
 					commonFunctions.hidePopup(e)
 			});
 		});
-	},
-	dramalinks : function() {
-		if (config.hide_dramalinks_topiclist
-				&& !window.location.href.match(/topics/i)) {
-			return;
-		}
-		commonFunctions.getDrama();
 	}
 }
 
@@ -458,76 +451,6 @@ var commonFunctions = {
 		}
 		newtxt += text + "\n---" + oldtxt[oldtxt.length - 1];
 		quickreply.value = newtxt;
-	},
-	getDrama : function() {
-		var ticker = document.createElement("center");
-		ticker.id = "dramalinks_ticker";
-		if (config.hide_dramalinks) {
-			ticker.style.display = "none";
-		}
-		ticker.innerHTML = "<span><div>" + "Dramalinks loading..." + "</div></span>";
-		var h1 = document.getElementsByTagName('h1')[0];
-		if (config.dramalinks_below_topic 
-				&& document.getElementsByTagName('h2')[0]) {
-			h1 = document.getElementsByTagName('h2')[0];
-		}
-		h1.parentNode.insertBefore(ticker, h1.nextSibling);	
-		commonFunctions.insertDramalinks(config.hide_dramalinks);
-		if (config.hide_dramalinks) {
-			commonFunctions.hideDrama();
-		}
-	},
-	hideDrama : function() {
-		var t = document.getElementById("dramalinks_ticker");
-		var color = t.getElementsByTagName('div')[0].style.background;
-		var hone = document.getElementsByTagName('h1')[0];
-		hone.style.color = color;
-		hone.ondblclick = commonFunctions.switchDrama;
-	},
-	switchDrama : function() {
-		var ticker = document.getElementById('dramalinks_ticker');
-		ticker.style.display == 'none' 
-				? ticker.style.display = 'block'
-				: ticker.style.display = 'none';
-		if (document.selection) {
-			document.selection.empty();
-		}
-		else if (window.getSelection) {
-			window.getSelection().removeAllRanges();
-		}
-	},
-	insertDramalinks: function(hide) {
-		var ticker = document.getElementById('dramalinks_ticker');
-		// set up listener to update ticker with xhr data
-		chrome.runtime.onMessage.addListener(function(msg, sender) {
-			if (msg.action == 'updatedrama') {
-				if (config.hide_dramalinks_topiclist 
-						&& !window.location.href.match(/topics/i)) {
-					return;
-				}
-				commonFunctions.updateDramaTicker();
-			}
-		});
-		// request dramalinks and handle response from bg script
-		chrome.runtime.sendMessage({
-			need : "dramalinks"
-		}, function(response) {
-			// bg script only responds if returning cached dramalinks
-			dramas = response.data;
-			ticker.innerHTML = dramas;
-		});
-	},
-	updateDramaTicker: function() {
-		chrome.runtime.sendMessage({
-			need: "dramalinks"
-		}, function(response) {
-			dramas = response.data;
-			document.getElementById("dramalinks_ticker").innerHTML = dramas;
-			if (dramas == '<a id="retry" href="javascript:void(0)">Error loading Dramalinks. Click to retry...</a>') {
-				var retry = document.getElementById('retry');
-				retry.addEventListener('click', commonFunctions.updateDramaTicker);
-			}			
-		});
 	},
 	init: function() {
 		chrome.runtime.sendMessage({
