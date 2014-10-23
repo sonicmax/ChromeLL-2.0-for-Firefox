@@ -475,7 +475,6 @@ var miscFunctions = {
 			}
 		}
 		var topic = window.location.href.match(/topic=([0-9]+)/)[1];
-		var fmh;
 		var anchor = document.createElement('a');		
 		var divider = document.createTextNode(" | ");		
 		if (window.location.href.indexOf(me) == -1) {
