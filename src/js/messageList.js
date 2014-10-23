@@ -425,8 +425,13 @@ var messageList = {
 
 var miscFunctions = {
 	imagemap_on_infobar : function() {
-		var regex = /(topic=)([0-9])+/;
-		var topicNumber = window.location.search.match(regex)[0];
+		var regex = window.location.search.match(/(topic=)([0-9])+/);
+		if (regex) {
+			var topicNumber = regex[0];
+		}
+		else {
+			return;
+		}
 		var infobar = document.getElementsByClassName("infobar")[0];
 		var page = location.pathname;
 		var anchor = document.createElement('a');
