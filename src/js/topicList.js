@@ -11,8 +11,7 @@ var topicList = {
 		if (!config.ignorator) {
 			return;
 		}
-		var ignores = config.ignorator_list.split(',');
-		ignores = topicListHelper.handleCsv(ignores);
+		var ignores = topicListHelper.ignoreUsers;
 		var username;
 		if (tr.getElementsByTagName('td')[1]) {
 			username = tr.getElementsByTagName('td')[1];
@@ -50,9 +49,8 @@ var topicList = {
 		if (!config.ignore_keyword_list) {
 			return;
 		}
-		var keywords;
 		var re = false;
-		try {
+		/*try {
 			keywords = JSON.parse(config.ignore_keyword_list);
 			if (config.debug) {
 				console.log("JSON keywords");
@@ -61,13 +59,15 @@ var topicList = {
 		} catch (e) {
 			keywords = config.ignore_keyword_list.split(',');
 			keywords = topicListHelper.handleCsv(keywords);
-		}
+		}*/
+		var keywords = topicListHelper.ignoreKeywords;
 		var title;
 		var match = false;
 		var reg;
 		if (tr.getElementsByTagName('td')[0]) {
 			title = tr.getElementsByTagName('td')[0];
-			for (var f = 0; f < keywords.length; f++) {
+			username = title.getElementsByTagName('a')[0].innerHTML;
+			for (var f = 0, len = keywords.length; f < len; f++) {
 				if (re) {
 					if (keywords[f].substring(0, 1) == '/') {
 						reg = new RegExp(keywords[f].substring(1,
@@ -78,11 +78,9 @@ var topicList = {
 					} else {
 						reg = keywords[f];
 					}
-					match = title.getElementsByTagName('a')[0].innerHTML
-							.match(reg);
+					match = username.match(reg);
 				} else {
-					match = title.getElementsByTagName('a')[0].innerHTML
-							.toLowerCase().indexOf(
+					match = username.toLowerCase().indexOf(
 									keywords[f].toLowerCase()) != -1;
 				}
 				if (match) {
@@ -111,7 +109,6 @@ var topicList = {
 		}
 	},
 	/*append_tags : function(tr) {
-		console.log('does this actually work');
 		for (var i = 0; i < tags.length; i++) {
 			var tag_children = tags[i].children;
 			for (var j = 0; j < tag_children.length; j++) {
@@ -186,9 +183,9 @@ var topicList = {
 	},
 	enable_keyword_highlight : function(tr) {
 		var title;
-		var keys = {};
+		var keys = topicListHelper.highlightKeywords;
 		var re = false;
-		for (var j = 0; config.keyword_highlight_data[j]; j++) {
+		/*for (var j = 0; config.keyword_highlight_data[j]; j++) {
 			try {
 				keys[j] = {};
 				keys[j].match = JSON
@@ -204,7 +201,7 @@ var topicList = {
 				keys[j].bg = config.keyword_highlight_data[j].bg;
 				keys[j].color = config.keyword_highlight_data[j].color;
 			}
-		}
+		}*/
 		var reg;
 			title = tr.getElementsByTagName('td')[0]
 					.getElementsByClassName('fl')[0].getElementsByTagName('a')[0].innerHTML;
@@ -241,14 +238,7 @@ var topicList = {
 			}
 	},
 	enable_tag_highlight : function(tr) {
-		var keys = {};
-		for (var j = 0; config.tag_highlight_data[j]; j++) {
-			keys[j] = {};
-			keys[j].match = config.tag_highlight_data[j].match.split(',');
-			keys[j].match = topicListHelper.handleCsv(keys[j].match);
-			keys[j].bg = config.tag_highlight_data[j].bg;
-			keys[j].color = config.tag_highlight_data[j].color;
-		}
+		var keys = topicListHelper.highlightTags;
 		tags = tr.getElementsByTagName('td')[0]
 				.getElementsByClassName('fr')[0].getElementsByTagName('a');
 		for (var j = 0; tags[j]; j++) {
@@ -323,6 +313,61 @@ var topicList = {
 }
 
 var topicListHelper = {
+	ignoreUsers : [],
+	ignoreKeywords : [],
+	highlightKeywords : {},
+	highlightTags : {},
+	createArrays : function() {
+		// prepare ignorator arrays for topicList functions
+		if (config.ignorator_list) {
+			if (config.ignorator_list.indexOf(',') == -1) {
+				// ignorator list only has one user
+				topicListHelper.ignoreUsers[0] = config.ignore_keyword_list;
+			}
+			else {
+				// split comma separated list into array
+				var ignore_users = config.ignorator_list.split(',');
+				for (var i = 0, len = ignore_users.length; i < len; i++) {
+					topicListHelper.ignoreUsers[i] = ignore_users[i].toLowerCase().trim();
+				}
+			}
+		}
+		if (config.ignore_keyword_list) {
+			if (config.ignore_keyword_list.indexOf(',') == -1) {
+				topicListHelper.ignoreKeywords[0] = config.ignore_keyword_list;
+			}
+			else {
+				var ignore_words = config.ignore_keyword_list.split(',');		
+				for (var i = 0, len = ignore_words.length; i < len; i++) {
+					topicListHelper.ignoreKeywords[i] = ignore_words[i]
+							.toLowerCase().trim();
+				}
+			}
+		}
+		for (var i = 0; config.keyword_highlight_data[i]; i++) {
+			try {
+				topicListHelper.highlightKeywords[i] = {};
+				topicListHelper.highlightKeywords[i].match = JSON
+						.parse(config.keyword_highlight_data[i].match);
+				topicListHelper.highlightKeywords[i].bg = config.keyword_highlight_data[i].bg;
+				topicListHelper.highlightKeywords[i].color = config.keyword_highlight_data[i].color;
+			} catch (e) {
+				topicListHelper.highlightKeywords[i] = {};
+				topicListHelper.highlightKeywords[i].match = config.keyword_highlight_data[i].match
+						.split(',');
+				// note - may have to convert match values into strings & use toLowerCase() & trim() on them
+				topicListHelper.highlightKeywords[i].bg = config.keyword_highlight_data[i].bg;
+				topicListHelper.highlightKeywords[i].color = config.keyword_highlight_data[i].color;
+			}
+		}
+		for (var i = 0; config.tag_highlight_data[i]; i++) {
+			topicListHelper.highlightTags[i] = {};
+			topicListHelper.highlightTags[i].match = config.tag_highlight_data[i].match.split(',');
+			// note - may have to convert match values into strings & use toLowerCase() & trim() on them			
+			topicListHelper.highlightTags[i].bg = config.tag_highlight_data[i].bg;
+			topicListHelper.highlightTags[i].color = config.tag_highlight_data[i].color;
+		}
+	},
 	jumpHandlerTopic : function(ev) {
 		var a, history, inbox;
 		if (window.location.href.indexOf('history.php') > -1) {
@@ -365,27 +410,18 @@ var topicListHelper = {
 		return document.getElementsByClassName('grid')[0]
 				.getElementsByTagName('tr');
 	},
-	handleCsv : function(ignores) {
-		for (var r = 0; r < ignores.length; r++) {
-			var d = 0;
-			while (ignores[r].substring(d, d + 1) == ' ') {
-				d++;
-			}
-			ignores[r] = ignores[r].substring(d, ignores[r].length)
-					.toLowerCase();
-			;
-		}
-		return ignores;
-	},
 	chkTags : function() {
 		var atags = document.getElementById('bookmarks').getElementsByTagName(
 				'span');
 		var ctags = {};
-		for (var i = 0; atags[i]; i++) {
+		var tag, name;
+		for (var i = 0, len = atags.length; i < len; i++) {
+			tag = atags[i];
 			if (!atags[i].className) {
-				ctags[atags[i].getElementsByTagName('a')[0].innerHTML] = atags[i]
-						.getElementsByTagName('a')[0].href
+				name = atags[i].getElementsByTagName('a')[0].innerHTML;
+				tag = atags[i].getElementsByTagName('a')[0].href
 						.match('\/topics\/(.*)$')[1];
+				ctags[name] = tag;
 			}
 		}
 		chrome.runtime.sendMessage({
@@ -394,65 +430,79 @@ var topicListHelper = {
 			data : ctags
 		});
 	},
+	callFunctions : function(pm) {
+		var trs = document.getElementsByClassName('grid')[0]
+				.getElementsByTagName('tr');
+		var tr;
+		// iterate over trs and pass tr nodes to topicList functions
+		// (ignoring trs[0] as it's not a topic)
+		for (j = 1, len = trs.length; j < len; j++) {
+		 tr = trs[j];
+			for (var i in topicList) {
+				if (config[i + pm]) {
+					// pass tr node & index to function
+					topicList[i](tr, j);
+				}
+			}
+		}
+		// scrape bookmarked tags from page
+		try {
+			topicListHelper.chkTags();
+		} catch (e) {
+			console.log("Error finding tags");
+		}
+	},
 	init : function() {
+		// connect to background page
 		topicListHelper.globalPort = chrome.runtime.connect();
+		// request config
 		chrome.runtime.sendMessage({
 			need : "config"
 		}, function(conf) {
 			config = conf.data;
-			var trs = document.getElementsByClassName('grid')[0]
-					.getElementsByTagName('tr');
-			var tr;
+			// set up ignorator/highlighter arrays
+			topicListHelper.createArrays();
 			var pm = '';
 			if (window.location.href.match('inbox.php'))
-				pm = "_pm";
-			try {
-				// ignore first node in trs (not a topic)				
-				for (j = 1, len = trs.length; j < len; j++) {
-				 tr = trs[j];
-					for (var i in topicList) {
-						if (config[i + pm]) {
-							// pass tr node & index to function
-							topicList[i](tr, j);
-						}
-					}
-				}
-			} catch (err) {
-				console.log("error in " + i + ":", err);
-			}
+				pm = "_pm";		
 			// send ignorator data to background script
 			topicListHelper.globalPort.postMessage({
 				action : 'ignorator_update',
 				ignorator : ignorated,
 				scope : "topicList"
-			});			
-			try {
-				topicListHelper.chkTags();
-			} catch (e) {
-				console.log("Error finding tags");
-			}
-		});
-		topicListHelper.globalPort.onMessage.addListener(function(msg) {
-			// ignorator_update is handled by background script
-			if (msg.action !== 'ignorator_update') {
-				switch (msg.action) {
-					case "showIgnorated":
-						if (config.debug) {
-							console.log("showing hidden trs", msg.ids);
-						}
-						var tr = document.getElementsByTagName('tr');
-						for (var i; i = msg.ids.pop();) {
-							tr[i].style.display = '';
-							tr[i].style.opacity = '.7';
-						}
-						break;
-					default:
-						if (config.debug) {
-							console.log('invalid action', msg);
-						}
-						break;
+			});
+			// add listener to handle showIgnorated request from popup menu
+			topicListHelper.globalPort.onMessage.addListener(function(msg) {
+				if (msg.action !== 'ignorator_update') {
+					switch (msg.action) {
+						case "showIgnorated":
+							if (config.debug) {
+								console.log("showing hidden trs", msg.ids);
+							}
+							var tr = document.getElementsByTagName('tr');
+							for (var i; i = msg.ids.pop();) {
+								tr[i].style.display = '';
+								tr[i].style.opacity = '.7';
+							}
+							break;
+						default:
+							if (config.debug) {
+								console.log('invalid action', msg);
+							}
+							break;
+					}
 				}
+			});
+			if (document.readyState == 'loading') {
+				// call functions after DOM is ready
+				document.addEventListener('DOMContentLoaded', function() {
+					topicListHelper.callFunctions(pm);
+				});
 			}
+			else {
+				// DOM is ready
+				topicListHelper.callFunctions(pm);
+			}			
 		});
 	}
 }
