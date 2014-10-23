@@ -425,39 +425,19 @@ var messageList = {
 
 var miscFunctions = {
 	imagemap_on_infobar : function() {
-		function getUrlVars(urlz) {
-			var vars = [], hash;
-			var hashes = urlz.slice(urlz.indexOf('?') + 1).split('&');
-			for (var i = 0, hash; hash = hashes[i]; i++) {
-				hash = hash.split('=');
-				vars.push(hash[0]);
-				vars[hash[0]] = hash[1];
-				if (hash[1] != null && hash[1].indexOf("#") >= 0) {
-					vars[hash[0]] = hash[1].slice(0, hash[1].indexOf("#"));
-				}
-			}
-			return vars;
-		}
+		var regex = /(topic=)([0-9])+/;
+		var topicNumber = window.location.search.match(regex)[0];
 		var infobar = document.getElementsByClassName("infobar")[0];
-		var get = getUrlVars(window.location.href);
 		var page = location.pathname;
 		var anchor = document.createElement('a');
 		var divider = document.createTextNode(" | ");
-		if (page == "/imagemap.php" && get["topic"] != undefined) {
-			var as2 = infobar.getElementsByTagName("a");
-			for (var j = 0, a; a = as2[j]; j++) {
-				if (a.href.indexOf("imagemap.php?") > 0) {
-					a.href = a.href + "&board=" + get["board"];
-				}
-			}
-			anchor.href = '/showmessages.php?board=' + get["board"]
-					+ '&topic=' + get["topic"];
+		if (page == "/imagemap.php" && topicNumber) {
+			anchor.href = '/showmessages.php?' + topicNumber;
 			anchor.innerText = 'Back to Topic';
 			infobar.appendChild(divider);
 			infobar.appendChild(anchor);
 		} else if (page == "/showmessages.php") {
-			anchor.href = '/imagemap.php?board=' + get["board"]
-					+ '&topic=' + get["topic"];
+			anchor.href = '/imagemap.php?' + topicNumber;
 			anchor.innerText = 'Imagemap';
 			infobar.appendChild(divider);
 			infobar.appendChild(anchor);
