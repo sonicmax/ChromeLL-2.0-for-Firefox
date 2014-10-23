@@ -1492,8 +1492,6 @@ var messageListHelper = {
 				ignore = messageListHelper.ignores[r].toLowerCase().trim();
 				messageListHelper.ignores[r] = ignore;
 			}
-			var msgs = document.getElementsByClassName('message-container');
-			var msg, len;
 			var pm = '';
 			// add _pm to config keys to check for PM config values
 			if (window.location.href.match('inboxthread')) {
@@ -1528,101 +1526,117 @@ var messageListHelper = {
 							break;
 					}
 				}
-			});					
-			document.addEventListener('DOMContentLoaded', function() {
-				// iterate over miscFunctions and messageList
-				// objects & call function if config value is true
-				for (var k in miscFunctions) {
-					if (config[k + pm]) {
-							miscFunctions[k]();
-					}
-				}
-				// iterate over first 5 message-containers (or fewer)
-				if (msgs.length < 4) {
-					len = msgs.length;
-				}
-				else {
-					len = 4;
-				}
-				for (var j = 0; j < len; j++) {
-					msg = msgs[j];
-					// iterate over functions in messageList
-					for (var k in messageList) {
-						if (config[k + pm]) {
-								// pass msg and index value to function
-								messageList[k](msg, j);
-						}
-					}
-				}
-				// page will appear to have been fully loaded by this point
-				var t1 = performance.now();
-				console.log("Processed in " + (t1 - t0) + " milliseconds.");		
-				if (len == 4) {
-					// iterate over rest of messages
-					for (j = len, msg; msg = msgs[j]; j++) {
-						for (var k in messageList) {
-							if (config[k + pm]) {
-									messageList[k](msg, j);
-							}
-						}
-					}		
-				}
-				for (var i in otherFuncs) {
-					if (config[i + pm]) {
-						otherFuncs[i]();
-					}
-				}
-				// call any functions that don't exist in messageList object
-				messageListHelper.archiveQuoteButtons();			
-				messageListHelper.link_handler();
-				messageListHelper.addListeners();
-				messageListHelper.appendScripts();
-				if (config.new_page_notify) {
-					if (config.debug) {
-						console.log('listening for new page');
-					}
-					var target = document.getElementById('nextpage');
-					var mutation;
-					var observer = new MutationObserver(function(mutations) {
-						for (var i = 0, mutation; mutation = mutations[i]; i++) {
-							if (mutation.type === 'attributes' && target.style.display === 'block') {
-								chrome.runtime.sendMessage({
-									need: "notify",
-									title: "New Page Created",
-									message: document.title
-								});
-							}
-						}
-					});
-					var obsconfig = {
-						attributes: true
-					};
-					observer.observe(target, obsconfig);
-				}				
-				// set up observer to watch for new livelinks posts
-				var livelinks = new MutationObserver(function(mutations) {
-					var mutation;
-					for (var i = 0, len = mutations.length; i < len; i++) {
-						mutation = mutations[i];
-						if (!mutation.target.lastChild 
-								|| !mutation.target.lastChild.firstChild 
-								|| !mutation.target.lastChild.firstChild.className) {
-							return;
-						}
-						if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
-							// send new message container to livelinks method
-							messageListHelper.livelinks(mutation.target.lastChild.firstChild);
-						}
-					}
-				});
-				livelinks.observe(document.getElementById('u0_1'), {
-						subtree: true,
-						childList: true
-				});
-				var t2 = performance.now();
-				console.log("Fully processed in " + (t2 - t0) + " milliseconds.");					
 			});
+			console.log('finished pre-processing');
+			console.log(document.readyState);
+			if (document.readyState == 'loading') {
+				// wait for DOMContentLoaded status before calling messageList functions
+				document.addEventListener('DOMContentLoaded', function() {
+					console.log('DOMContentLoaded event fired');
+					messageListHelper.callFunctions(pm);
+				});
+			}
+			else {
+				console.log('event didnt fire - call functions');
+				console.log(document.readyState);
+				messageListHelper.callFunctions(pm);
+			}
 		});
+	},
+	callFunctions : function(pm) {
+		// iterate over miscFunctions and messageList
+		// objects & call function if config value is true
+		var msgs = document.getElementsByClassName('message-container');		
+		var msg, len;		
+		for (var k in miscFunctions) {
+			if (config[k + pm]) {
+					miscFunctions[k]();
+			}
+		}
+		// iterate over first 5 message-containers (or fewer)
+		if (msgs.length < 4) {
+			len = msgs.length;
+		}
+		else {
+			len = 4;
+		}
+		for (var j = 0; j < len; j++) {
+			msg = msgs[j];
+			// iterate over functions in messageList
+			for (var k in messageList) {
+				if (config[k + pm]) {
+						// pass msg and index value to function
+						messageList[k](msg, j);
+				}
+			}
+		}
+		// page will appear to have been fully loaded by this point
+		var t1 = performance.now();
+		console.log("Processed in " + (t1 - t0) + " milliseconds.");		
+		if (len == 4) {
+			// iterate over rest of messages
+			for (j = len, msg; msg = msgs[j]; j++) {
+				for (var k in messageList) {
+					if (config[k + pm]) {
+							messageList[k](msg, j);
+					}
+				}
+			}		
+		}
+		for (var i in otherFuncs) {
+			if (config[i + pm]) {
+				otherFuncs[i]();
+			}
+		}
+		// call any functions that don't exist in messageList object
+		messageListHelper.archiveQuoteButtons();			
+		messageListHelper.link_handler();
+		messageListHelper.addListeners();
+		messageListHelper.appendScripts();
+		if (config.new_page_notify) {
+			if (config.debug) {
+				console.log('listening for new page');
+			}
+			var target = document.getElementById('nextpage');
+			var mutation;
+			var observer = new MutationObserver(function(mutations) {
+				for (var i = 0, mutation; mutation = mutations[i]; i++) {
+					if (mutation.type === 'attributes' && target.style.display === 'block') {
+						chrome.runtime.sendMessage({
+							need: "notify",
+							title: "New Page Created",
+							message: document.title
+						});
+					}
+				}
+			});
+			var obsconfig = {
+				attributes: true
+			};
+			observer.observe(target, obsconfig);
+		}				
+		// set up observer to watch for new livelinks posts
+		var livelinks = new MutationObserver(function(mutations) {
+			var mutation;
+			for (var i = 0, len = mutations.length; i < len; i++) {
+				mutation = mutations[i];
+				if (!mutation.target.lastChild 
+						|| !mutation.target.lastChild.firstChild 
+						|| !mutation.target.lastChild.firstChild.className) {
+					return;
+				}
+				if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
+					// send new message container to livelinks method
+					messageListHelper.livelinks(mutation.target.lastChild.firstChild);
+				}
+			}
+		});
+		livelinks.observe(document.getElementById('u0_1'), {
+				subtree: true,
+				childList: true
+		});
+		var t2 = performance.now();
+		console.log("Fully processed in " + (t2 - t0) + " milliseconds.");					
 	},
 	loadNextPage : function() {
 		var page = 1;
