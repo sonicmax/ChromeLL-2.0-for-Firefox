@@ -22,11 +22,13 @@
   "content_scripts": [
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
-    "js": ["lib/jquery.js", "src/js/messageList.js"]
+    "js": ["lib/jquery.js", "src/js/messageList.js"],
+		"run_at" : "document_end"
   },
   {
-    "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://*.endoftheinter.net/search.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php"],
-    "js": ["src/js/topicList.js"] 
+    "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php"],
+    "js": ["src/js/topicList.js"],
+		"run_at" : "document_end"
   },
   {
     "matches": ["*://*.endoftheinter.net/postmsg.php*"],
