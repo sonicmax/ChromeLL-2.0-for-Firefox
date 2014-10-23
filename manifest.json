@@ -23,7 +23,7 @@
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://*.endoftheinter.net/imagemap.php*", "*://endoftheinter.net/inboxthread.php*"],
     "js": ["lib/jquery.js", "src/js/messageList.js"],
-		"run_at" : "document_end"
+		"run_at" : "document_start"
   },
   {
     "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php"],
