@@ -139,44 +139,44 @@ var topicList = {
 		}
 		var insert;
 		var tmp, topic;
-		if (tr.getElementsByTagName('td')[0]) {
+		var td = tr.getElementsByTagName('td')[0];
+		if (td) {
 			insert = document.createElement('span');
 			if (inbox) {
 				insert.style.cssFloat = 'right';
 			}
-			insert.addEventListener('click',
-					topicListHelper.jumpHandlerTopic, false);
 			try {
-				topic = tr.getElementsByTagName('td')[0]
-						.getElementsByTagName('a');
+				topic = td.getElementsByTagName('a');
 				tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
-				insert.innerHTML = '<a href="##' + tmp
-						+ '" id="jumpWindow">#</a> <a href="##' + tmp
-						+ '" id="jumpLast">&gt;</a>';
+				var space = document.createTextNode(' ');
+				var jumpWindow = document.createElement('a');
+				jumpWindow.href = '##' + tmp;
+				jumpWindow.id = 'jumpWindow';
+				jumpWindow.innerHTML = '#';
+				var jumpLast = document.createElement('a');
+				jumpLast.href = '##' + tmp;
+				jumpLast.id = 'jumpLast';
+				jumpLast.innerHTML = '&gt;';
+				insert.appendChild(jumpWindow);
+				insert.appendChild(space);
+				insert.appendChild(jumpLast);
 				if (inbox) {
-					tr.getElementsByTagName('td')[0]
-							.insertBefore(
-							insert, null);				
+					td.appendChild(insert);				
 				}
 				else {
-					tr.getElementsByTagName('td')[0]
-							.getElementsByClassName('fr')[0]
-							.insertBefore(
-							insert, null);
+					td.getElementsByClassName('fr')[0].appendChild(insert);
 				}					
 			} catch (e) {
 				if (config.debug) {
 					console.log('locked topic?');
-				}	
-				topic = tr.getElementsByTagName('td')[0]
-						.getElementsByTagName('span')[0]
+				}
+				topic = td.getElementsByTagName('span')[0]
 						.getElementsByTagName('a');
 				tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
 				insert.innerHTML = '<a href="##' + tmp
 						+ '" id="jumpWindow">#</a> <a href="##' + tmp
 						+ '" id="jumpLast">&gt;</a>';
-				tr.getElementsByTagName('td')[0]
-						.getElementsByClassName('fr')[0].insertBefore(
+				td.getElementsByClassName('fr')[0].insertBefore(
 						insert, null);
 			}
 		}
@@ -369,22 +369,26 @@ var topicListHelper = {
 		}
 	},
 	jumpHandlerTopic : function(ev) {
+		if (ev.id !== 'jumpWindow' 
+				&& ev.id !== 'jumpLast') {
+			return;
+		}
 		var a, history, inbox;
 		if (window.location.href.indexOf('history.php') > -1) {
 			history = true;
-			a = ev.srcElement.parentNode.parentNode.parentNode.parentNode
+			a = ev.parentNode.parentNode.parentNode.parentNode
 					.parentNode.getElementsByTagName('td')[2];
 		}
 		else if (window.location.href.indexOf('inbox.php') > -1) {
 			inbox = true;
-			a = ev.srcElement.parentNode.parentNode.nextSibling.nextSibling;
+			a = ev.parentNode.parentNode.nextSibling.nextSibling;
 		}
 		else {
-			a = ev.srcElement.parentNode.parentNode.parentNode.parentNode
+			a = ev.parentNode.parentNode.parentNode.parentNode
 					.getElementsByTagName('td')[2];
 		}
 		var last = Math.ceil(a.innerHTML.split('<')[0] / 50);
-		if (ev.srcElement.id == 'jumpWindow') {
+		if (ev.id == 'jumpWindow') {
 			pg = prompt("Page Number (" + last + " total)", "Page");
 			if (pg == undefined || pg == "Page") {
 				return 0;
@@ -392,18 +396,19 @@ var topicListHelper = {
 		} else {
 			pg = last;
 		}
+		// TODO - figure out why opening as new tab is broken
 		if (history) {
-			window.location = ev.srcElement.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
-					+ '&page=' + pg;
+			window.location.replace(ev.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
+					+ '&page=' + pg);
 		}
 		else if (inbox) {
-			window.location = ev.srcElement.parentNode.parentNode.firstChild.href 
-					+ '&page=' + pg;
+			window.location.replace(ev.parentNode.parentNode.firstChild.href 
+					+ '&page=' + pg);
 		}
 		else {
-			window.location = ev.srcElement.parentNode.parentNode.parentNode.parentNode
+			window.location.replace(ev.parentNode.parentNode.parentNode.parentNode
 					.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
-					+ '&page=' + pg;
+					+ '&page=' + pg);
 		}
 	},
 	getTopics : function() {
@@ -494,15 +499,26 @@ var topicListHelper = {
 				}
 			});
 			if (document.readyState == 'loading') {
-				// call functions after DOM is ready
+				// wait for DOM to load before calling topicList functions
 				document.addEventListener('DOMContentLoaded', function() {
+					if (config.page_jump_buttons 
+							|| config.page_jump_buttons_pm) {
+						document.body.addEventListener('click', function(ev) {
+							topicListHelper.jumpHandlerTopic(ev.target);
+						});
+					}
 					topicListHelper.callFunctions(pm);
 				});
-			}
-			else {
-				// DOM is ready
+			} else {
+				// DOM is ready - call topicList functions
+				if (config.page_jump_buttons 
+						|| config.page_jump_buttons_pm) {
+					document.body.addEventListener('click', function(ev) {
+						topicListHelper.jumpHandlerTopic(ev.target);
+					});
+				}
 				topicListHelper.callFunctions(pm);
-			}			
+			}
 		});
 	}
 }
