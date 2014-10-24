@@ -10,7 +10,7 @@ BUILD_SRC=$(BUILD_DIR)/src
 BUILD_JS=$(BUILD_SRC)/js
 SRC_JS=src/js
 
-all: copy_files allBg.js allPages.js boardList.js like.js messageList.js options.js popup.js postMsg.js profile.js search.js topicList.js topicPostTemplate.js transloader.js
+all: copy_files allBg.js allPages.js boardList.js like.js messageList.js options.js popup.js postMsg.js profile.js search.js topicList.js topicPostTemplate.js transloader.js dramalinks.js
 	
 copy_files:
 	-mkdir build
@@ -66,6 +66,9 @@ topicPostTemplate.js:
 	
 transloader.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/transloader.js $(SRC_JS)/transloader.js
+	
+dramalinks.js:
+	$(CC) $(CFLAGS) $(BUILD_JS)/dramalinks.js $(SRC_JS)/dramalinks.js
 	
 # clear the build directory
 clean:

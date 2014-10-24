@@ -1,17 +1,21 @@
 var config = {};
-var ticker;
 var dramas;
 var dramalinksFunctions = {
-	insertTicker : function() {
+	insertTicker : function(ticker) {
 		var h1 = document.getElementsByTagName('h1')[0];
 		if (config.dramalinks_below_topic 
 				&& document.getElementsByTagName('h2')[0]) {
 			h1 = document.getElementsByTagName('h2')[0];
 		}
-		h1.parentNode.insertBefore(ticker, h1.nextSibling);	
-		dramalinksFunctions.updateDramaTicker(config.hide_dramalinks);
+		h1.parentNode.insertBefore(ticker, h1.nextSibling);
 		if (config.hide_dramalinks) {
 			dramalinksFunctions.hideDrama();
+		}
+		if (dramas) {
+			ticker.innerHTML = dramas;
+		}
+		else {
+			// wait for update_drama action
 		}
 	},
 	hideDrama : function() {
@@ -34,15 +38,41 @@ var dramalinksFunctions = {
 		}
 	},
 	updateDramaTicker: function() {
+		// called after update_drama message is passed from bg script
 		chrome.runtime.sendMessage({
 			need: "dramalinks"
 		}, function(response) {
-			dramas = response.data;
-			document.getElementById("dramalinks_ticker").innerHTML = dramas;
-			if (dramas == '<a id="retry" href="javascript:void(0)">Error loading Dramalinks. Click to retry...</a>') {
-				var retry = document.getElementById('retry');
-				retry.addEventListener('click', dramalinksFunctions.updateDramaTicker);
-			}			
+			var dramalinks_ticker = document.getElementById('dramalinks_ticker');
+			dramas = response.data;	
+			if (dramalinks_ticker) {
+				dramalinks_ticker.innerHTML = dramas;
+				if (dramas == '<a id="retry" href="javascript:void(0)">Error loading Dramalinks. Click to retry...</a>') {
+					var retry = document.getElementById('retry');
+					retry.addEventListener('click', dramalinksFunctions.updateDramaTicker);
+				}
+			}
+			else {
+				console.log('problem with updateDramaTicker');
+				console.log(document.readyState);
+			}
+		});
+	},
+	addListener : function() {
+		chrome.runtime.onMessage.addListener(function(msg, sender) {
+			if (msg.action == 'update_drama') {
+				if (config.hide_dramalinks_topiclist 
+						&& !window.location.href.match(/topics/i)) {
+					return;
+				}
+				else if (document.getElementById('dramalinks_ticker')) {
+					dramalinksFunctions.updateDramaTicker();
+				}
+				else {
+					// do nothing
+					console.log('problem with onMessage listener');
+					console.log(document.readyState);
+				}
+			}
 		});
 	},
 	init: function() {
@@ -54,46 +84,32 @@ var dramalinksFunctions = {
 					&& !window.location.href.match(/topics/i)) {
 				return;
 			}
-			ticker = document.createElement("center");
-			ticker.id = "dramalinks_ticker";
-			if (config.hide_dramalinks) {
-				ticker.style.display = "none";
-			}
-			document.addEventListener('DOMContentLoaded', function() {
-				console.log('domcontentloaded listener triggered');
-				dramalinksFunctions.insertTicker();
-			});
-			// set up listener to update ticker with xhr data
-			console.log('adding onMessage listener');
-			console.log(document.readyState);	
-			chrome.runtime.onMessage.addListener(function(msg, sender) {
-				if (msg.action == 'updatedrama') {
-					if (config.hide_dramalinks_topiclist 
-							&& !window.location.href.match(/topics/i)) {
-						return;
-					}
-					else if (document.getElementById('dramalinks_ticker')) {
-						dramalinksFunctions.updateDramaTicker();
-					}
-					else {
-						console.log(document.readyState);			
-					}
-				}
-			});
+			// set up listener to update ticker
+			dramalinksFunctions.addListener();
 			// request dramalinks and handle response from bg script
-			console.log('requesting dramalinks');
-			console.log(document.readyState);
 			chrome.runtime.sendMessage({
 				need : "dramalinks"
 			}, function(response) {
 				// bg script only responds if returning cached dramalinks
 				dramas = response.data;
-				// ticker.innerHTML = dramas;
-			});						
+			});
+			// create ticker element
+			ticker = document.createElement("center");
+			ticker.id = "dramalinks_ticker";
+			if (config.hide_dramalinks) {
+				ticker.style.display = "none";
+			}
+			// append ticker if/when DOM is ready
+			if (document.readyState == 'loading') {
+				document.addEventListener('DOMContentLoaded', function() {
+					dramalinksFunctions.insertTicker(ticker);
+				});
+			}
+			else if (document.readyState != 'loading') {
+				dramalinksFunctions.insertTicker(ticker);
+			}
 		});
 	}
 }
 
-console.log('init');
-console.log(document.readyState);	
 dramalinksFunctions.init();
