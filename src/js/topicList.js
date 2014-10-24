@@ -391,24 +391,19 @@ var topicListHelper = {
 		} else {
 			pg = last;
 		}
-		// TODO - figure out why opening as new tab is broken
 		if (history) {
-			window.location.href = ev.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
+			return ev.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
 					+ '&page=' + pg;
 		}
 		else if (inbox) {
-			window.location.href = ev.target.parentNode.parentNode.firstChild.href 
+			return ev.target.parentNode.parentNode.firstChild.href 
 					+ '&page=' + pg;
 		}
 		else {
-			window.location.href = ev.target.parentNode.parentNode.parentNode.parentNode
+			return ev.target.parentNode.parentNode.parentNode.parentNode
 					.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
 					+ '&page=' + pg;
 		}
-	},
-	getTopics : function() {
-		return document.getElementsByClassName('grid')[0]
-				.getElementsByTagName('tr');
 	},
 	chkTags : function() {
 		var atags = document.getElementById('bookmarks').getElementsByTagName(
@@ -451,6 +446,22 @@ var topicListHelper = {
 		} catch (e) {
 			console.log("Error finding tags");
 		}
+	},
+	addListeners : function() {
+		document.body.addEventListener('click', function(ev) {
+			if (ev.target.id.match(/(jump)([Last|Window])/)) {
+				ev.preventDefault();
+				var url = topicListHelper.jumpHandlerTopic(ev);
+				if (ev.which == 1) {
+					// left click - open in same tab
+					window.location.href = url;
+				}
+				else if (ev.which == 2) {
+					// middle click - open new tab
+					window.open(url);
+				}
+			}
+		});
 	},
 	init : function() {
 		// connect to background page
@@ -496,29 +507,19 @@ var topicListHelper = {
 			if (document.readyState == 'loading') {
 				// wait for DOM to load before calling topicList functions
 				document.addEventListener('DOMContentLoaded', function() {
+					topicListHelper.callFunctions(pm);					
 					if (config.page_jump_buttons 
 							|| config.page_jump_buttons_pm) {
-						document.body.addEventListener('click', function(ev) {
-							if (ev.target.id.match(/(jump)([Last|Window])/)) {
-								ev.preventDefault();
-								topicListHelper.jumpHandlerTopic(ev);
-							}
-						});
+						topicListHelper.addListeners();
 					}
-					topicListHelper.callFunctions(pm);
 				});
 			} else {
 				// DOM is ready - call topicList functions
+				topicListHelper.callFunctions(pm);					
 				if (config.page_jump_buttons 
 						|| config.page_jump_buttons_pm) {
-					document.body.addEventListener('click', function(ev) {
-						if (ev.target.id.match(/(jump)([Last|Window])/)) {
-							ev.preventDefault();
-							topicListHelper.jumpHandlerTopic(ev);
-						}			
-					});
+					topicListHelper.addListeners();
 				}
-				topicListHelper.callFunctions(pm);
 			}
 		});
 	}
