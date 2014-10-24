@@ -129,7 +129,7 @@ var topicList = {
 			}
 		}
 	},*/
-	page_jump_buttons : function(tr) {
+	page_jump_buttons : function(tr, i) {
 		var inbox;
 		if (window.location.href.indexOf('inbox.php') > -1) {
 			if (!config.page_jump_buttons_pm) {
@@ -147,14 +147,13 @@ var topicList = {
 			}
 			try {
 				topic = td.getElementsByTagName('a');
-				tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
 				var space = document.createTextNode(' ');
 				var jumpWindow = document.createElement('a');
-				jumpWindow.href = '##' + tmp;
+				jumpWindow.href = '##' + i;
 				jumpWindow.id = 'jumpWindow';
 				jumpWindow.innerHTML = '#';
 				var jumpLast = document.createElement('a');
-				jumpLast.href = '##' + tmp;
+				jumpLast.href = '##' + i;
 				jumpLast.id = 'jumpLast';
 				jumpLast.innerHTML = '&gt;';
 				insert.appendChild(jumpWindow);
@@ -369,26 +368,22 @@ var topicListHelper = {
 		}
 	},
 	jumpHandlerTopic : function(ev) {
-		if (ev.id !== 'jumpWindow' 
-				&& ev.id !== 'jumpLast') {
-			return;
-		}
 		var a, history, inbox;
 		if (window.location.href.indexOf('history.php') > -1) {
 			history = true;
-			a = ev.parentNode.parentNode.parentNode.parentNode
+			a = ev.target.parentNode.parentNode.parentNode.parentNode
 					.parentNode.getElementsByTagName('td')[2];
 		}
 		else if (window.location.href.indexOf('inbox.php') > -1) {
 			inbox = true;
-			a = ev.parentNode.parentNode.nextSibling.nextSibling;
+			a = ev.target.parentNode.parentNode.nextSibling.nextSibling;
 		}
 		else {
-			a = ev.parentNode.parentNode.parentNode.parentNode
+			a = ev.target.parentNode.parentNode.parentNode.parentNode
 					.getElementsByTagName('td')[2];
 		}
 		var last = Math.ceil(a.innerHTML.split('<')[0] / 50);
-		if (ev.id == 'jumpWindow') {
+		if (ev.target.id == 'jumpWindow') {
 			pg = prompt("Page Number (" + last + " total)", "Page");
 			if (pg == undefined || pg == "Page") {
 				return 0;
@@ -398,17 +393,17 @@ var topicListHelper = {
 		}
 		// TODO - figure out why opening as new tab is broken
 		if (history) {
-			window.location.replace(ev.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
-					+ '&page=' + pg);
+			window.location.href = ev.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
+					+ '&page=' + pg;
 		}
 		else if (inbox) {
-			window.location.replace(ev.parentNode.parentNode.firstChild.href 
-					+ '&page=' + pg);
+			window.location.href = ev.target.parentNode.parentNode.firstChild.href 
+					+ '&page=' + pg;
 		}
 		else {
-			window.location.replace(ev.parentNode.parentNode.parentNode.parentNode
+			window.location.href = ev.target.parentNode.parentNode.parentNode.parentNode
 					.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
-					+ '&page=' + pg);
+					+ '&page=' + pg;
 		}
 	},
 	getTopics : function() {
@@ -504,7 +499,10 @@ var topicListHelper = {
 					if (config.page_jump_buttons 
 							|| config.page_jump_buttons_pm) {
 						document.body.addEventListener('click', function(ev) {
-							topicListHelper.jumpHandlerTopic(ev.target);
+							if (ev.target.id.match(/(jump)([Last|Window])/)) {
+								ev.preventDefault();
+								topicListHelper.jumpHandlerTopic(ev);
+							}
 						});
 					}
 					topicListHelper.callFunctions(pm);
@@ -514,7 +512,10 @@ var topicListHelper = {
 				if (config.page_jump_buttons 
 						|| config.page_jump_buttons_pm) {
 					document.body.addEventListener('click', function(ev) {
-						topicListHelper.jumpHandlerTopic(ev.target);
+						if (ev.target.id.match(/(jump)([Last|Window])/)) {
+							ev.preventDefault();
+							topicListHelper.jumpHandlerTopic(ev);
+						}			
 					});
 				}
 				topicListHelper.callFunctions(pm);
