@@ -21,11 +21,8 @@ var dramalinksFunctions = {
 		}
 	},
 	hideDrama : function() {
-		var t = document.getElementById("dramalinks_ticker");
-		var color = t.getElementsByTagName('div')[0].style.background;
-		var hone = document.getElementsByTagName('h1')[0];
-		hone.style.color = color;
-		hone.ondblclick = dramalinksFunctions.switchDrama;
+		var title = document.getElementsByTagName('h1')[0];
+		title.ondblclick = dramalinksFunctions.switchDrama;
 	},
 	switchDrama : function() {
 		var ticker = document.getElementById('dramalinks_ticker');
