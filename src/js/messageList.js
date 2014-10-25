@@ -75,7 +75,7 @@ var messageList = {
 						// calculate equivalent index of message-top for
 						// show_ignorator function
 						if (j == 0 && tops_total > 0) {
-							top_index = tops_total - tops.length;
+							top_index = tops_total - tops.length; 
 						}
 						else {
 							top_index = tops_total - j;
@@ -1475,169 +1475,6 @@ var messageListHelper = {
 		}
 		$("div.message-top").on("click", "a.archivequote", messageListHelper.quoteHandler);
 	},
-	init : function() {
-		// handle background script message passing/etc before DOM is ready
-		chrome.runtime.sendMessage({
-			need : "config",
-			tcs : true
-		}, function(conf) {
-			// set up globalPort so we can communicate with background script
-			messageListHelper.globalPort = chrome.runtime.connect();
-			config = conf.data;
-			config.tcs = conf.tcs;
-			// turn ignorator list into array before running messageList functions
-			messageListHelper.ignores = config.ignorator_list.split(',');
-			var ignore;
-			for (var r = 0, len = messageListHelper.ignores.length; r < len; r++) {
-				ignore = messageListHelper.ignores[r].toLowerCase().trim();
-				messageListHelper.ignores[r] = ignore;
-			}
-			var pm = '';
-			// add _pm to config keys to check for PM config values
-			if (window.location.href.match('inboxthread')) {
-				pm = "_pm";
-			}
-			// send ignorator data to background script
-			messageListHelper.globalPort.postMessage({
-				action : 'ignorator_update',
-				ignorator : ignorated,
-				scope : "messageList"
-			});
-			// add listener to handle showIgnorated request from popup menu
-			messageListHelper.globalPort.onMessage.addListener(function(msg) {
-				if (msg.action !== 'ignorator_update') {			
-					switch (msg.action) {
-						case "showIgnorated":				
-							if (config.debug) {
-								console.log("showing hidden msg", msg.ids);
-							}
-							var tops = document.getElementsByClassName('message-top');
-							for (var i = 0; i < msg.ids.length; i++) {
-								if (config.debug) {
-									console.log(tops[msg.ids[i]]);
-								}
-								tops[msg.ids[i]].parentNode.style.display = 'block';
-								tops[msg.ids[i]].parentNode.style.opacity = '.7';
-							}
-							break;
-						default:
-							if (config.debug)
-								console.log('invalid action', msg);
-							break;
-					}
-				}
-			});
-			console.log('finished pre-processing');
-			console.log(document.readyState);
-			if (document.readyState == 'loading') {
-				// wait for DOMContentLoaded status before calling messageList functions
-				document.addEventListener('DOMContentLoaded', function() {
-					console.log('DOMContentLoaded event fired');
-					messageListHelper.callFunctions(pm);
-				});
-			}
-			else {
-				console.log('event didnt fire - call functions');
-				console.log(document.readyState);
-				messageListHelper.callFunctions(pm);
-			}
-		});
-	},
-	callFunctions : function(pm) {
-		// iterate over miscFunctions and messageList
-		// objects & call function if config value is true
-		var msgs = document.getElementsByClassName('message-container');		
-		var msg, len;		
-		for (var k in miscFunctions) {
-			if (config[k + pm]) {
-					miscFunctions[k]();
-			}
-		}
-		// iterate over first 5 message-containers (or fewer)
-		if (msgs.length < 4) {
-			len = msgs.length;
-		}
-		else {
-			len = 4;
-		}
-		for (var j = 0; j < len; j++) {
-			msg = msgs[j];
-			// iterate over functions in messageList
-			for (var k in messageList) {
-				if (config[k + pm]) {
-						// pass msg and index value to function
-						messageList[k](msg, j);
-				}
-			}
-		}
-		// page will appear to have been fully loaded by this point
-		var t1 = performance.now();
-		console.log("Processed in " + (t1 - t0) + " milliseconds.");		
-		if (len == 4) {
-			// iterate over rest of messages
-			for (j = len, msg; msg = msgs[j]; j++) {
-				for (var k in messageList) {
-					if (config[k + pm]) {
-							messageList[k](msg, j);
-					}
-				}
-			}		
-		}
-		for (var i in otherFuncs) {
-			if (config[i + pm]) {
-				otherFuncs[i]();
-			}
-		}
-		// call any functions that don't exist in messageList object
-		messageListHelper.archiveQuoteButtons();			
-		messageListHelper.link_handler();
-		messageListHelper.addListeners();
-		messageListHelper.appendScripts();
-		if (config.new_page_notify) {
-			if (config.debug) {
-				console.log('listening for new page');
-			}
-			var target = document.getElementById('nextpage');
-			var mutation;
-			var observer = new MutationObserver(function(mutations) {
-				for (var i = 0, mutation; mutation = mutations[i]; i++) {
-					if (mutation.type === 'attributes' && target.style.display === 'block') {
-						chrome.runtime.sendMessage({
-							need: "notify",
-							title: "New Page Created",
-							message: document.title
-						});
-					}
-				}
-			});
-			var obsconfig = {
-				attributes: true
-			};
-			observer.observe(target, obsconfig);
-		}				
-		// set up observer to watch for new livelinks posts
-		var livelinks = new MutationObserver(function(mutations) {
-			var mutation;
-			for (var i = 0, len = mutations.length; i < len; i++) {
-				mutation = mutations[i];
-				if (!mutation.target.lastChild 
-						|| !mutation.target.lastChild.firstChild 
-						|| !mutation.target.lastChild.firstChild.className) {
-					return;
-				}
-				if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
-					// send new message container to livelinks method
-					messageListHelper.livelinks(mutation.target.lastChild.firstChild);
-				}
-			}
-		});
-		livelinks.observe(document.getElementById('u0_1'), {
-				subtree: true,
-				childList: true
-		});
-		var t2 = performance.now();
-		console.log("Fully processed in " + (t2 - t0) + " milliseconds.");					
-	},
 	loadNextPage : function() {
 		var page = 1;
 		if (window.location.href.match('asyncpg')) {
@@ -1684,26 +1521,6 @@ var messageListHelper = {
 		ta.selectionEnd = focusPoint;
 		ta.scrollTop = st;
 		ta.focus();
-	},
-	livelinks : function(mutation) {
-		var index = document.getElementsByClassName('message-container').length - 1;
-		var live = true;
-		var pm = '';
-		if (window.location.href.match('inboxthread')) {
-			pm = "_pm";
-		}
-		for (var i in messageList) {
-			if (config[i + pm]) {
-					messageList[i](mutation, index, live);
-			}
-		}
-		messageListHelper.link_handler(mutation);
-		// send ignorator data to background script
-		messageListHelper.globalPort.postMessage({
-			action : 'ignorator_update',
-			ignorator : ignorated,
-			scope : "messageList"
-		});				
 	},
 	wikiFix: function(anchor) {
 		window.open(anchor.href.replace("boards", "wiki"));
@@ -1934,6 +1751,185 @@ var messageListHelper = {
 			}
 		}
 		toEmbed.className = "youtube";
+	},
+	callFunctions : function(pm) {
+		// iterate over miscFunctions and messageList
+		// objects & call function if config value is true
+		var msgs = document.getElementsByClassName('message-container');		
+		var msg, len;
+		for (var k in miscFunctions) {
+			if (config[k + pm]) {
+					miscFunctions[k]();
+			}
+		}
+		// iterate over first 5 message-containers (or fewer)
+		if (msgs.length < 4) {
+			len = msgs.length;
+		}
+		else {
+			len = 4;
+		}
+		for (var j = 0; j < len; j++) {
+			msg = msgs[j];
+			// iterate over functions in messageList
+			for (var k in messageList) {
+				if (config[k + pm]) {
+						// pass msg and index value to function
+						messageList[k](msg, j);
+				}
+			}
+		}
+		// page will appear to have been fully loaded by this point
+		var t1 = performance.now();
+		console.log("Processed in " + (t1 - t0) + " milliseconds.");		
+		if (len == 4) {
+			// iterate over rest of messages
+			for (j = len; msg = msgs[j]; j++) {
+				for (var k in messageList) {
+					if (config[k + pm]) {
+							messageList[k](msg, j);
+					}
+				}
+			}		
+		}
+		// send ignorator data to background script
+		messageListHelper.globalPort.postMessage({
+			action : 'ignorator_update',
+			ignorator : ignorated,
+			scope : "messageList"
+		});
+		// call functions that dont modify DOM
+		for (var i in otherFuncs) {
+			if (config[i + pm]) {
+				otherFuncs[i]();
+			}
+		}
+		// call any functions that don't exist in messageList object
+		messageListHelper.archiveQuoteButtons();			
+		messageListHelper.link_handler();
+		messageListHelper.addListeners();
+		messageListHelper.appendScripts();
+		if (config.new_page_notify) {
+			if (config.debug) {
+				console.log('listening for new page');
+			}
+			// set up observer to watch for mutations to 'nextpage' element
+			var target = document.getElementById('nextpage');
+			var mutation;
+			var observer = new MutationObserver(function(mutations) {
+				for (var i = 0, mutation; mutation = mutations[i]; i++) {
+					if (mutation.type === 'attributes' && target.style.display === 'block') {
+						chrome.runtime.sendMessage({
+							need: "notify",
+							title: "New Page Created",
+							message: document.title
+						});
+					}
+				}
+			});
+			var obsconfig = {
+				attributes: true
+			};
+			observer.observe(target, obsconfig);
+		}	
+		// set up observer to watch for new livelinks posts
+		var livelinks = new MutationObserver(function(mutations) {
+			var mutation;
+			for (var i = 0, len = mutations.length; i < len; i++) {
+				mutation = mutations[i];
+				if (!mutation.target.lastChild 
+						|| !mutation.target.lastChild.firstChild 
+						|| !mutation.target.lastChild.firstChild.className) {
+					return;
+				}
+				if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
+					// send new message container to livelinks method
+					messageListHelper.livelinks(mutation.target.lastChild.firstChild);
+				}
+			}
+		});
+		livelinks.observe(document.getElementById('u0_1'), {
+				subtree: true,
+				childList: true
+		});
+		var t2 = performance.now();
+		console.log("Fully processed in " + (t2 - t0) + " milliseconds.");					
+	},	
+	livelinks : function(mutation) {
+		var index = document.getElementsByClassName('message-container').length - 1;
+		var live = true;
+		var pm = '';
+		if (window.location.href.match('inboxthread')) {
+			pm = "_pm";
+		}
+		for (var i in messageList) {
+			if (config[i + pm]) {
+					messageList[i](mutation, index, live);
+			}
+		}
+		messageListHelper.link_handler(mutation);
+		// send ignorator data to background script
+		messageListHelper.globalPort.postMessage({
+			action : 'ignorator_update',
+			ignorator : ignorated,
+			scope : "messageList"
+		});				
+	},	
+	init : function() {
+		// handle background script message passing (etc) before DOM is ready
+		chrome.runtime.sendMessage({
+			need : "config",
+			tcs : true
+		}, function(conf) {
+			// set up globalPort so we can communicate with background script
+			messageListHelper.globalPort = chrome.runtime.connect();
+			config = conf.data;
+			config.tcs = conf.tcs;
+			// turn ignorator list into array before running messageList functions
+			messageListHelper.ignores = config.ignorator_list.split(',');
+			var ignore;
+			for (var r = 0, len = messageListHelper.ignores.length; r < len; r++) {
+				ignore = messageListHelper.ignores[r].toLowerCase().trim();
+				messageListHelper.ignores[r] = ignore;
+			}
+			var pm = '';
+			if (window.location.href.match('inboxthread')) {
+				pm = "_pm";
+			}
+			// add listener to handle showIgnorated request from popup menu
+			messageListHelper.globalPort.onMessage.addListener(function(msg) {
+				if (msg.action !== 'ignorator_update') {			
+					switch (msg.action) {
+						case "showIgnorated":				
+							if (config.debug) {
+								console.log("showing hidden msg", msg.ids);
+							}
+							var tops = document.getElementsByClassName('message-top');
+							for (var i = 0; i < msg.ids.length; i++) {
+								if (config.debug) {
+									console.log(tops[msg.ids[i]]);
+								}
+								tops[msg.ids[i]].parentNode.style.display = 'block';
+								tops[msg.ids[i]].parentNode.style.opacity = '.7';
+							}
+							break;
+						default:
+							if (config.debug)
+								console.log('invalid action', msg);
+							break;
+					}
+				}
+			});
+			if (document.readyState == 'loading') {
+				// wait for DOMContentLoaded to fire before calling messageList functions
+				document.addEventListener('DOMContentLoaded', function() {
+					messageListHelper.callFunctions(pm);
+				});
+			}
+			else {
+				messageListHelper.callFunctions(pm);
+			}
+		});
 	}
 }
 
