@@ -18,11 +18,11 @@ var topicList = {
 			for (var f = 0, len = ignores.length; f < len; f++) {
 				if (username.innerHTML.indexOf('<td>Human</td>') > -1) {
 					return;
-				}			
+				}
 				else if (username.getElementsByTagName('a')[0]
 						&& username.getElementsByTagName('a')[0].innerHTML
 								.toLowerCase() == ignores[f]) {
-					if (config.debug)
+					if (config.debug) {
 						console
 								.log('found topic to remove: \"'
 										+ tr.getElementsByTagName('td')[0]
@@ -30,6 +30,7 @@ var topicList = {
 												.toLowerCase()
 										+ "\" author: " + ignores[f]
 										+ " topic: " + i);
+					}
 					username.parentNode.style.display = 'none';
 					username.parentNode.className = "hidden_tr";
 					ignorated.total_ignored++;
@@ -41,6 +42,7 @@ var topicList = {
 						ignorated.data.users[ignores[f]].total++;
 						ignorated.data.users[ignores[f]].trs.push(i);
 					}
+					console.log(ignorated);
 				}
 			}
 		}
@@ -446,12 +448,21 @@ var topicListHelper = {
 		} catch (e) {
 			console.log("Error finding tags");
 		}
+		// send ignorator data to background script
+		topicListHelper.globalPort.postMessage({
+			action : 'ignorator_update',
+			ignorator : ignorated,
+			scope : "topicList"
+		});		
 	},
 	addListeners : function() {
 		document.body.addEventListener('click', function(ev) {
 			if (ev.target.id.match(/(jump)([Last|Window])/)) {
 				ev.preventDefault();
 				var url = topicListHelper.jumpHandlerTopic(ev);
+				if (url === 0) {
+					return;
+				}
 				if (ev.which == 1) {
 					// left click - open in same tab
 					window.location.href = url;
@@ -475,13 +486,7 @@ var topicListHelper = {
 			topicListHelper.createArrays();
 			var pm = '';
 			if (window.location.href.match('inbox.php'))
-				pm = "_pm";		
-			// send ignorator data to background script
-			topicListHelper.globalPort.postMessage({
-				action : 'ignorator_update',
-				ignorator : ignorated,
-				scope : "topicList"
-			});
+				pm = "_pm";
 			// add listener to handle showIgnorated request from popup menu
 			topicListHelper.globalPort.onMessage.addListener(function(msg) {
 				if (msg.action !== 'ignorator_update') {
