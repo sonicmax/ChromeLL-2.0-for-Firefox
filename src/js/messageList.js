@@ -14,12 +14,8 @@ var img_observer = new MutationObserver(function(mutations) {
 var mutation;
 	for (var i = 0, len = mutations.length; i < len; i++) {
 		mutation = mutations[i];
-		// find all fullsize imgs
-		if (mutation.addedNodes.length > 0
-				&& mutation.addedNodes[0].src
-					.match(/.*\/i\/n\/.*/)) {
-			// pass to resize_imgs method
-			messageListHelper.resizeImg(mutation.target);
+		if (config.resize_imgs) {
+			messageListHelper.resizeImg(mutation.target.childNodes[0]);
 		}
 		if (mutation.type === 'attributes') {
 			// once they're loaded, thumbnails have /i/t/ in their
@@ -49,16 +45,6 @@ var mutation;
 });
 
 var messageList = {
-	resize_imgs : function(container) {
-		// exclude avatars from htmlCollection
-		var msg = container.getElementsByClassName('message')[0];
-		var imgs = msg.getElementsByTagName('img');
-		var img;
-		for (var i = 0, len = imgs.length; i < len; i++) {
-			img = imgs[i];
-			messageListHelper.resizeImg(img);
-		}
-	},
 	ignorator_messagelist : function(msg, index) {
 		if (!config.ignorator) {
 			return;
