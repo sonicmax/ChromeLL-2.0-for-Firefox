@@ -54,6 +54,10 @@
   {
     "matches": ["*://*.endoftheinter.net/search.php*"],
     "js": ["src/js/search.js"]
+  },
+  {
+    "matches": ["*://wiki.endoftheinter.net/*"],
+    "js": ["src/js/wiki.js"]
   }],
 	
   "permissions": [ "tabs", "clipboardWrite", "notifications", "http://*/*", "https://*/*", "contextMenus", "webRequest", "webRequestBlocking", "storage"]
