@@ -1,5 +1,4 @@
 var config = [];
-var t0 = performance.now();
 var ignorated = {
 	total_ignored : 0,
 	data : {
@@ -45,6 +44,16 @@ var mutation;
 });
 
 var messageList = {
+	eti_bash_quote : function(msg, index) {
+		var top = msg.getElementsByClassName('message-top')[0];
+		anchor = document.createElement('a');
+		anchor.style.cssFloat = 'right';
+		anchor.href = '##bash' + index;
+		anchor.className = 'bash';
+		anchor.innerHTML = '[&nbsp&nbsp]';
+		anchor.style.textDecoration = 'none';
+		top.appendChild(anchor);
+	},
 	ignorator_messagelist : function(msg, index) {
 		if (!config.ignorator) {
 			return;
@@ -987,6 +996,170 @@ var messageListHelper = {
 			document.addEventListener('visibilitychange', messageListHelper.pauseGfy);
 		}
 	},	
+	checkBash : function() {
+		var popup = document.getElementById('bash_popup');
+		var len = document.getElementsByClassName('bash_this').length;
+		if (popup) {
+			if (len > 1) {
+				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quotes to ETI Bash]</b>';
+				return;
+			}
+			else if (len === 1) {
+				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quote to ETI Bash]</b>';
+				return;
+			}
+			else if (len === 0) {
+				messageListHelper.closeBashPopup();
+			}
+		}
+	},
+	showBashPopup : function() {
+		var popup = document.getElementById('bash_popup');
+		if (popup) {
+			return;
+		}
+		var bottomColor = $('body, table.classic tr td').css('background-color');
+		// create divs for popup
+		var div = document.createElement('div');
+		// style divs before appending to document body
+		div.style.background = bottomColor;
+		div.style.boxShadow = "5px 5px 1.2em black";
+		div.style.position = 'fixed';
+		div.style.width = 100;
+		div.style.top = 0;
+		div.style.marginTop = '-100%';
+		div.id = 'bash_popup';
+		div.innerHTML = '<div class="message-top">'
+			+ '<a id ="submitbash" href="##submitbash"><b>[Submit quote to ETI Bash]</b></a>' 
+			+ '</div>';
+		$('body').append(div);
+		$(div).animate({'margin-top': '0'}, {
+			queue: false,
+			duration: 200
+		});
+	},
+	handleBash : function() {
+		var bashes = document.getElementsByClassName('bash_this');
+		var bash, tops, top, first_top, quotes, quote, anchors, anchor, message_detail, username, url;
+		var message_array = [];
+		var user_array = [];
+		var url;
+		for (var i = 0, len = bashes.length; i < len; i++) {
+			bash = bashes[i];
+			// check for quoted-message elements
+			quotes = bash.parentNode.parentNode.getElementsByClassName('quoted-message');
+			if (quotes.length > 0) {
+				// get username & post content from each quoted-message.
+				// loop backwards so that oldest post is pushed first
+				for (var k = quotes.length; k--;) {
+					quote = quotes[k];
+					tops = quote.getElementsByClassName('message-top');
+					message = messageListHelper.getMessage(quote, quotes, tops, k);
+					if (!message) {
+						// ignore blank posts
+						return;
+					}
+					username = messageListHelper.getUsername(quote.firstChild);
+					user_array.push(username);
+					message_array.push(message);
+				}
+				// get outermost post last 
+				top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
+				// get username and post content belonging to first message-top
+				message_to_quote = top.nextSibling.lastChild.lastChild.firstChild;
+				// pass -1 to make sure that all quoted posts are removed
+				message = messageListHelper.getMessage(message_to_quote, quotes, tops, -1);
+				if (!message) {
+					return;
+				}
+				username = messageListHelper.getUsername(top);
+				user_array.push(username);
+				message_array.push(message);	
+			}
+			else if (quotes.length === 0) {
+				top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
+				// get username and post content belonging to first message-top
+				message = messageListHelper
+						.getMessage(top.nextSibling.lastChild.lastChild.firstChild);
+				if (!message) {
+					return;
+				}
+				username = messageListHelper.getUsername(top);
+				user_array.push(username);
+				message_array.push(message);
+			}
+			if (i === 0) {
+				first_top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
+				var url = messageListHelper.getBashURL(first_top, len);
+			}
+		}
+		console.log(url);
+		console.log(user_array);
+		console.log(message_array);
+	},
+	getBashURL : function(top, len) {
+		var anchors = top.getElementsByTagName('a');
+		var anchor;
+		var url;
+		var message_detail;
+		for (var k = 0, a_len = anchors.length; k < a_len; k++) {
+			anchor = anchors[k];
+			if (anchor.innerHTML.indexOf('Message Detail') > -1) {
+				if (len === 1) {
+					url = anchor.href;							
+				}
+				else if (len > 1) {
+					message_detail = anchor.href;
+					var regex = message_detail.match(/(topic=)([0-9]+)/);
+					var topic_number = regex[0];
+					regex = message_detail.match(/(id=)([0-9]+)/);
+					var id = regex[2];
+					url = 'http://' + window.location.hostname + '/showmessages.php?' + topic_number + '#m' + id;
+				}
+			}
+		}
+		return url;
+	},
+	getUsername : function(top) {
+		var username = top.getElementsByTagName('a')[0].innerHTML;
+		if (username == 'Filter'
+		 || username == '⇗') {
+			// get human number of anon poster
+			var topHTML = top.innerHTML;
+			username = topHTML.match(/(Human\s#)([0-9]+)/)[0];
+		}
+		return username;
+	},
+	getMessage : function(quote, quotes, tops, index) {
+		if (!quotes) {
+			var message = quote.innerText;
+			var sig = message.lastIndexOf('---');
+			if (sig > -1) {
+				message = message.substring(0, sig);
+			}
+		}
+		else {
+			var message = quote.innerText;
+			var top, other_quote;
+			for (var i = 0, len = tops.length; i < len; i++) {
+				top = tops[i];
+				message = message.replace(top.innerText, '');
+				if (i !== index) {
+					other_quote = quotes[i].innerText.replace(top.innerText, '');
+					message = message.replace(other_quote, '');
+				}
+			}
+		}
+		return message.trim();
+	},
+	closeBashPopup : function() {
+		var div = document.getElementById('bash_popup');
+		$(div).animate({'margin-top': '-100%'}, {
+			queue: false,
+			duration: 200
+		});
+		$(div).remove();
+	},
 	addListeners : function() {
 		var body = document.body;
 		body.addEventListener('click', function(ev) {
@@ -1014,6 +1187,22 @@ var messageListHelper = {
 					&& ev.target.tagName == 'DIV') {
 				// prevent youtube divs from acting as anchor tags
 				ev.preventDefault();
+			}
+			else if (ev.target.className == 'bash') {
+				ev.target.className = 'bash_this';
+				ev.target.style.fontWeight = 'bold';
+				ev.target.innerHTML = '[X]';
+				messageListHelper.showBashPopup();
+				messageListHelper.checkBash();
+			}
+			else if (ev.target.className == 'bash_this') {
+				ev.target.className = 'bash';
+				ev.target.style.fontWeight = 'initial';
+				ev.target.innerHTML = '[&nbsp&nbsp]';
+				messageListHelper.checkBash();
+			}
+			else if (ev.target.parentNode.id == 'submitbash') {
+				messageListHelper.handleBash();
 			}
 		});
 	},
@@ -1225,8 +1414,9 @@ var messageListHelper = {
 	resizeImg : function(el) {
 		var width = el.width;
 		if (width > config.img_max_width) {
-			if (config.debug)
+			if (config.debug) {
 				console.log('resizing:', el);
+			}
 			el.height = (el.height / (el.width / config.img_max_width));
 			el.parentNode.style.height = el.height + 'px';
 			el.width = config.img_max_width;
@@ -1766,8 +1956,6 @@ var messageListHelper = {
 			}
 		}
 		// page will appear to have been fully loaded by this point
-		var t1 = performance.now();
-		console.log("Processed in " + (t1 - t0) + " milliseconds.");		
 		if (len == 4) {
 			// iterate over rest of messages
 			for (j = len; msg = msgs[j]; j++) {
@@ -1837,9 +2025,7 @@ var messageListHelper = {
 		livelinks.observe(document.getElementById('u0_1'), {
 				subtree: true,
 				childList: true
-		});
-		var t2 = performance.now();
-		console.log("Fully processed in " + (t2 - t0) + " milliseconds.");					
+		});				
 	},	
 	livelinks : function(mutation) {
 		var index = document.getElementsByClassName('message-container').length - 1;
@@ -1859,7 +2045,7 @@ var messageListHelper = {
 			action : 'ignorator_update',
 			ignorator : ignorated,
 			scope : "messageList"
-		});				
+		});
 	},	
 	init : function() {
 		// handle background script message passing (etc) before DOM is ready
