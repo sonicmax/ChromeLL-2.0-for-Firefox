@@ -1040,7 +1040,7 @@ var messageListHelper = {
 	},
 	handleBash : function() {
 		var bashes = document.getElementsByClassName('bash_this');
-		var bash, tops, top, first_top, quotes, quote, anchors, anchor, message_detail, username, url;
+		var bash, tops, top, first_top, quotes, quote, username;
 		var message_array = [];
 		var user_array = [];
 		var url;
