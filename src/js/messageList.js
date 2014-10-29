@@ -996,23 +996,6 @@ var messageListHelper = {
 			document.addEventListener('visibilitychange', messageListHelper.pauseGfy);
 		}
 	},	
-	checkBash : function() {
-		var popup = document.getElementById('bash_popup');
-		var len = document.getElementsByClassName('bash_this').length;
-		if (popup) {
-			if (len > 1) {
-				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quotes to ETI Bash]</b>';
-				return;
-			}
-			else if (len === 1) {
-				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quote to ETI Bash]</b>';
-				return;
-			}
-			else if (len === 0) {
-				messageListHelper.closeBashPopup();
-			}
-		}
-	},
 	showBashPopup : function() {
 		var popup = document.getElementById('bash_popup');
 		if (popup) {
@@ -1037,6 +1020,31 @@ var messageListHelper = {
 			queue: false,
 			duration: 200
 		});
+	},
+	checkBash : function() {
+		var popup = document.getElementById('bash_popup');
+		var len = document.getElementsByClassName('bash_this').length;
+		if (popup) {
+			if (len > 1) {
+				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quotes to ETI Bash]</b>';
+				return;
+			}
+			else if (len === 1) {
+				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quote to ETI Bash]</b>';
+				return;
+			}
+			else if (len === 0) {
+				messageListHelper.closeBashPopup();
+			}
+		}
+	},	
+	closeBashPopup : function() {
+		var div = document.getElementById('bash_popup');
+		$(div).animate({'margin-top': '-100%'}, {
+			queue: false,
+			duration: 200
+		});
+		$(div).remove();
 	},
 	handleBash : function() {
 		var bashes = document.getElementsByClassName('bash_this');
@@ -1065,7 +1073,6 @@ var messageListHelper = {
 				}
 				// get outermost post last 
 				top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
-				// get username and post content belonging to first message-top
 				message_to_quote = top.nextSibling.lastChild.lastChild.firstChild;
 				// pass -1 to make sure that all quoted posts are removed
 				message = messageListHelper.getMessage(message_to_quote, quotes, tops, -1);
@@ -1093,9 +1100,9 @@ var messageListHelper = {
 				var url = messageListHelper.getBashURL(first_top, len);
 			}
 		}
-		console.log(url);
-		console.log(user_array);
-		console.log(message_array);
+		// pass values to submitBash function
+		// console.log(url, user_array, message_array);
+		messageListHelper.submitBash(url, user_array, message_array) 
 	},
 	getBashURL : function(top, len) {
 		var anchors = top.getElementsByTagName('a');
@@ -1106,9 +1113,11 @@ var messageListHelper = {
 			anchor = anchors[k];
 			if (anchor.innerHTML.indexOf('Message Detail') > -1) {
 				if (len === 1) {
+					// return message detail href
 					url = anchor.href;							
 				}
 				else if (len > 1) {
+					// return equivalent of jump-arrow href
 					message_detail = anchor.href;
 					var regex = message_detail.match(/(topic=)([0-9]+)/);
 					var topic_number = regex[0];
@@ -1121,19 +1130,22 @@ var messageListHelper = {
 		return url;
 	},
 	getUsername : function(top) {
+		// returns username from message-top
 		var username = top.getElementsByTagName('a')[0].innerHTML;
 		if (username == 'Filter'
 		 || username == '⇗') {
-			// get human number of anon poster
+			// anon user
 			var topHTML = top.innerHTML;
 			username = topHTML.match(/(Human\s#)([0-9]+)/)[0];
 		}
 		return username;
 	},
 	getMessage : function(quote, quotes, tops, index) {
+		// takes message/quoted-message HTML and returns text
+		var sig;
 		if (!quotes) {
 			var message = quote.innerText;
-			var sig = message.lastIndexOf('---');
+			sig = message.lastIndexOf('---');
 			if (sig > -1) {
 				message = message.substring(0, sig);
 			}
@@ -1149,17 +1161,47 @@ var messageListHelper = {
 					message = message.replace(other_quote, '');
 				}
 			}
+			sig = message.lastIndexOf('---');
+			if (sig > -1) {
+				message = message.substring(0, sig);
+			}		
 		}
 		return message.trim();
 	},
-	closeBashPopup : function() {
-		var div = document.getElementById('bash_popup');
-		$(div).animate({'margin-top': '-100%'}, {
-			queue: false,
-			duration: 200
-		});
-		$(div).remove();
-	},
+	submitBash : function (url, user_array, message_array) {
+		console.log(url, user_array, message_array);
+		if (user_array.length !== message_array.length) {
+			console.log('Error in submitBash function');
+			console.log(url, user_array, message_array);
+			return;
+		}
+		else {
+			// create formData
+			var formData = new FormData();
+			var content = '';
+			formData.append('quotes_topic', url);
+			formData.append('quotes_user', user_array[0]);
+			if (user_array.length > 1) {
+				// format message_array into ETI Bash format
+				for (var i = 0, len = user_array.length; i < len; i++) {
+					if (i > 0) {
+						content += '<user>' + user_array[i] + '</user>' + '\n';					
+						content += '<quote>';
+					}
+					content += message_array[i] + '\n';
+					content += '</quote>' + '\n';
+				}
+				formData.append('quotes_content', content);
+			}
+			else if (user_array.length === 1) {
+				formData.append('quotes_content', message_array[0]);
+			}
+			// send formData to ETI Bash
+			var xhr = new XMLHttpRequest;
+			xhr.open('POST', 'http://fuckboi.club/bash/submit-quote.php', true);
+			xhr.send(formData);
+		}
+	},	
 	addListeners : function() {
 		var body = document.body;
 		body.addEventListener('click', function(ev) {
