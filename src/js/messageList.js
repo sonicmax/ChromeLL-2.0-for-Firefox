@@ -48,8 +48,9 @@ var messageList = {
 		var top = msg.getElementsByClassName('message-top')[0];
 		anchor = document.createElement('a');
 		anchor.style.cssFloat = 'right';
-		anchor.href = '##bash' + index;
+		anchor.href = '##bash';
 		anchor.className = 'bash';
+		anchor.id = "bash_" + index;
 		anchor.innerHTML = '[&nbsp&nbsp]';
 		anchor.style.textDecoration = 'none';
 		top.appendChild(anchor);
@@ -449,14 +450,20 @@ var miscFunctions = {
 		// handle anonymous topic
 		if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
 			// anonymous topic - check quickpost-body for human number
-			var human = document.getElementsByClassName('quickpost-body')[0]
-				.getElementsByTagName('a')[0].innerText.replace('Human #', '');
-			if (isNaN(human)) {
-				// user hasn't posted in topic
+			if (window.location.hostname == 'archives.endoftheinter.net') {
+				// archived anon topics don't have quickpost-body element
 				return;
 			}
-			var me = '&u=-' + human;
-		} 
+			if (document.getElementsByClassName('quickpost-body')) {
+				var human = document.getElementsByClassName('quickpost-body')[0]
+					.getElementsByTagName('a')[0].innerText.replace('Human #', '');
+				if (isNaN(human)) {
+					// user hasn't posted in topic
+					return;
+				}
+				var me = '&u=-' + human;
+			}
+		}
 		else {
 			// handle non anonymous topics
 			if (config.user_id) {
@@ -947,7 +954,7 @@ var messageListHelper = {
 		}
 		var link;
 		// iterate backwards to prevent errors
-		// when modifying live nodelist
+		// when modifying class of elements
 		var i = links.length;
 		var ytRegex = /youtube|youtu.be/;
 		var videoCodeRegex = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -1002,9 +1009,7 @@ var messageListHelper = {
 			return;
 		}
 		var bottomColor = $('body, table.classic tr td').css('background-color');
-		// create divs for popup
 		var div = document.createElement('div');
-		// style divs before appending to document body
 		div.style.background = bottomColor;
 		div.style.boxShadow = "5px 5px 1.2em black";
 		div.style.position = 'fixed';
@@ -1021,23 +1026,61 @@ var messageListHelper = {
 			duration: 200
 		});
 	},
-	checkBash : function() {
+	checkBash : function(target) {
 		var popup = document.getElementById('bash_popup');
-		var len = document.getElementsByClassName('bash_this').length;
+		var bashes = document.getElementsByClassName('bash_this');
+		var len = bashes.length;	
+		if (target) {
+			// check whether ev.target contains quoted messages
+			var unchecked = document.getElementsByClassName('bash');
+			var posts = document.getElementsByClassName('message-container');
+			var bash, post_number, post, uncheck;		
+			post_number = target.id.match(/[0-9]+/)[0];
+			quotes = posts[post_number].getElementsByClassName('quoted-message');
+			if (quotes.length > 0) {
+				if (len === 1) {
+					// prevent user from selecting other posts
+					for (var j = 0, u_len = unchecked.length; j < u_len; j++) {
+						uncheck = unchecked[j];
+						uncheck.setAttribute('ignore', 'true');
+						uncheck.style.opacity = 0.2;
+					}
+				}
+				else if (len > 1) {
+					// prevent user from selecting this post				
+					return true;
+				}
+			}
+		}	
 		if (popup) {
 			if (len > 1) {
 				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quotes to ETI Bash]</b>';
-				return;
 			}
 			else if (len === 1) {
 				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quote to ETI Bash]</b>';
-				return;
 			}
 			else if (len === 0) {
-				messageListHelper.closeBashPopup();
+				messageListHelper.resetBash(bashes);
 			}
 		}
-	},	
+	},
+	resetBash : function(bashes) {
+		var unchecked = document.getElementsByClassName('bash');
+		var bash, uncheck;
+		for (var i = bashes.length; i--;) {
+			bash = bashes[i];
+			bash.className = 'bash';
+			bash.className = 'bash';
+			bash.style.fontWeight = 'initial';
+			bash.innerHTML = '[&nbsp&nbsp]';			
+		}
+		for (var i = 0, len = unchecked.length; i < len; i++) {
+			uncheck = unchecked[i];
+			uncheck.removeAttribute('ignore');
+			uncheck.style.opacity = 1;
+		}
+		messageListHelper.closeBashPopup();
+	},
 	closeBashPopup : function() {
 		var div = document.getElementById('bash_popup');
 		$(div).animate({'margin-top': '-100%'}, {
@@ -1064,12 +1107,14 @@ var messageListHelper = {
 					tops = quote.getElementsByClassName('message-top');
 					message = messageListHelper.getMessage(quote, quotes, tops, k);
 					if (!message) {
-						// ignore blank posts
-						return;
+						// do nothing
 					}
-					username = messageListHelper.getUsername(quote.firstChild);
-					user_array.push(username);
-					message_array.push(message);
+					else {
+						// push username/post with content to array
+						username = messageListHelper.getUsername(quote.firstChild);
+						user_array.push(username);
+						message_array.push(message);
+					}
 				}
 				// get outermost post last 
 				top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
@@ -1077,11 +1122,13 @@ var messageListHelper = {
 				// pass -1 to make sure that all quoted posts are removed
 				message = messageListHelper.getMessage(message_to_quote, quotes, tops, -1);
 				if (!message) {
-					return;
+					// do nothing
 				}
-				username = messageListHelper.getUsername(top);
-				user_array.push(username);
-				message_array.push(message);	
+				else {
+					username = messageListHelper.getUsername(top);
+					user_array.push(username);
+					message_array.push(message);	
+				}
 			}
 			else if (quotes.length === 0) {
 				top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
@@ -1089,6 +1136,7 @@ var messageListHelper = {
 				message = messageListHelper
 						.getMessage(top.nextSibling.lastChild.lastChild.firstChild);
 				if (!message) {
+					messageListHelper.resetBash(bashes);
 					return;
 				}
 				username = messageListHelper.getUsername(top);
@@ -1101,8 +1149,9 @@ var messageListHelper = {
 			}
 		}
 		// pass values to submitBash function
-		// console.log(url, user_array, message_array);
-		messageListHelper.submitBash(url, user_array, message_array) 
+		messageListHelper.submitBash(url, user_array, message_array)
+		// reset bash elements and close popup
+		messageListHelper.resetBash(bashes);
 	},
 	getBashURL : function(top, len) {
 		var anchors = top.getElementsByTagName('a');
@@ -1166,6 +1215,7 @@ var messageListHelper = {
 				message = message.substring(0, sig);
 			}		
 		}
+		message = message.replace('[quoted text omitted]', '');
 		return message.trim();
 	},
 	submitBash : function (url, user_array, message_array) {
@@ -1186,7 +1236,7 @@ var messageListHelper = {
 				for (var i = 0, len = user_array.length; i < len; i++) {
 					if (i > 0) {
 						content += '<user>' + user_array[i] + '</user>' + '\n';					
-						content += '<quote>';
+						content += '<quote>' + '\n';
 					}
 					content += message_array[i] + '\n';
 					content += '</quote>' + '\n';
@@ -1197,9 +1247,9 @@ var messageListHelper = {
 				formData.append('quotes_content', message_array[0]);
 			}
 			// send formData to ETI Bash
-			var xhr = new XMLHttpRequest;
+			/*var xhr = new XMLHttpRequest;
 			xhr.open('POST', 'http://fuckboi.club/bash/submit-quote.php', true);
-			xhr.send(formData);
+			xhr.send(formData);*/
 		}
 	},	
 	addListeners : function() {
@@ -1230,12 +1280,18 @@ var messageListHelper = {
 				// prevent youtube divs from acting as anchor tags
 				ev.preventDefault();
 			}
-			else if (ev.target.className == 'bash') {
-				ev.target.className = 'bash_this';
-				ev.target.style.fontWeight = 'bold';
-				ev.target.innerHTML = '[X]';
-				messageListHelper.showBashPopup();
-				messageListHelper.checkBash();
+			else if (ev.target.className == 'bash' && ev.target.getAttribute('ignore') !== 'true') {
+				ev.target.className = 'bash_this';			
+				var contains_quotes = messageListHelper.checkBash(ev.target);
+				if (contains_quotes) {
+					ev.target.className = 'bash';	
+					return;
+				}
+				else {
+					messageListHelper.showBashPopup();			
+					ev.target.style.fontWeight = 'bold';
+					ev.target.innerHTML = '[X]';
+				}
 			}
 			else if (ev.target.className == 'bash_this') {
 				ev.target.className = 'bash';
