@@ -254,6 +254,14 @@ function buildContextMenu() {
 			"contexts": ["image"]
 		});
 	}
+	if (cfg.eti_bash) {
+		chrome.contextMenus.create({
+			"title": "Submit to ETI Bash",
+			"parentId": menu,
+			"onclick": bashHighlight,
+			"contexts": ["selection"]
+		});
+	}
 	for (var i in boards) {
 		if (boards[i] != boards[0]) {
 			chrome.contextMenus.create({
@@ -303,6 +311,21 @@ function imageCopy(info) {
 function searchLUE(info) {
 	chrome.tabs.create({
 			url: "http://boards.endoftheinter.net/topics/LUE?q=" + info.selectionText
+	});
+}
+
+function bashHighlight(info) {
+	var element;
+	chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
+		var tab = tabs[0];
+		var bash_data;
+		chrome.tabs.sendMessage(tab.id, {
+			action: "context_element"
+		}, function(response) {
+			bash_data = response.data;
+			console.log(bash_data);
+			console.log(info.selectionText);
+		});
 	});
 }
 
@@ -385,7 +408,7 @@ function getDrama() {
 			else if (error) {
 				dramas = "<font face='Lucida Console'>"
 						+ "<div style='background-color: " + bgcol + "; color: " + col + ";'>" 
-						+ "A problem has been detected and ETI has been shut down to prevent damage to your computer." 
+						+ "A problem has been detected and ETI has been shut down to prevent damage to your computer."
 						+ "<br><br> Technical information: </font>" + dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") 
 						+ "</div></font>";	
 			} 
@@ -405,7 +428,7 @@ function getDrama() {
 				for (var i = 0, len = tabs.length; i < len; i++) {
 					tab = tabs[i];
 					chrome.tabs.sendMessage(tab.id, {
-						action: "updatedrama"
+						action: "update_drama"
 					}, function(response) {
 						// empty callback
 					});
@@ -570,7 +593,7 @@ chrome.runtime.onMessage.addListener(
 				return true;								
 			case "getIgnored":
 				chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-						sendResponse({"ignorator": ignoratorInfo[tabs[0].id], "scope": scopeInfo[tabs[0].id]});									
+						sendResponse({"ignorator": ignoratorInfo[tabs[0].id], "scope": scopeInfo[tabs[0].id]});
 				});		
 				return true;									
 			case "showIgnorated":

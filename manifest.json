@@ -26,6 +26,11 @@
 		"run_at" : "document_start"
   },
   {
+	  "matches": ["*://*.endoftheinter.net/showmessages.php*"],
+		"js": ["src/js/bash.js"],
+		"run_at": "document_start"
+	},
+  {
     "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php"],
     "js": ["src/js/topicList.js"],
 		"run_at" : "document_start"
@@ -55,11 +60,11 @@
     "matches": ["*://*.endoftheinter.net/search.php*"],
     "js": ["src/js/search.js"]
   },
-  {
-    "matches": ["*://wiki.endoftheinter.net/*"],
-    "js": ["src/js/wiki.js"],
-    "run_at" : "document_end"
-  }],
+	{
+		"matches": ["*://wiki.endoftheinter.net/*"],
+		"js": ["src/js/wiki.js"],
+		"run_at" : "document_end"
+	}],
 	
   "permissions": [ "tabs", "clipboardWrite", "notifications", "http://*/*", "https://*/*", "contextMenus", "webRequest", "webRequestBlocking", "storage"]
 }
