@@ -38,6 +38,8 @@ var postMsg = {
 			return;
 		}
 		var txt = document.getElementById('message');
+		var input = document.getElementsByTagName('input')[0];
+		input.focus();
 		var tokendesc = document.getElementById('token_desc');
 		// deal with tagless topics/etc
 		if (!tokendesc) {
@@ -51,42 +53,49 @@ var postMsg = {
 		insM.type = 'button';
 		insM.addEventListener("click", postMsgHelper.qpTagButton, false);
 		insM.id = 'mod';
+		insM.tabIndex = -1;
 		var insQ = document.createElement('input');
 		insQ.value = 'Quote';
 		insQ.name = 'Quote';
 		insQ.type = 'button';
 		insQ.addEventListener("click", postMsgHelper.qpTagButton, false);
 		insQ.id = 'quote';
+		insQ.tabIndex = -1;
 		var insS = document.createElement('input');
 		insS.value = 'Spoiler';
 		insS.name = 'Spoiler';
 		insS.type = 'button';
 		insS.addEventListener("click", postMsgHelper.qpTagButton, false);
 		insS.id = 'spoiler';
+		insS.tabIndex = -1;
 		var insP = document.createElement('input');
 		insP.value = 'Preformated';
 		insP.name = 'Preformated';
 		insP.type = 'button';
 		insP.addEventListener("click", postMsgHelper.qpTagButton, false);
 		insP.id = 'pre';
+		insP.tabIndex = -1;
 		var insU = document.createElement('input');
 		insU.value = 'Underline';
 		insU.name = 'Underline';
 		insU.type = 'button';
 		insU.addEventListener("click", postMsgHelper.qpTagButton, false);
 		insU.id = 'u';
+		insU.tabIndex = -1;
 		var insI = document.createElement('input');
 		insI.value = 'Italic';
 		insI.name = 'Italic';
 		insI.type = 'button';
 		insI.addEventListener("click", postMsgHelper.qpTagButton, false);
 		insI.id = 'i';
+		insI.tabIndex = -1;
 		var insB = document.createElement('input');
 		insB.value = 'Bold';
 		insB.name = 'Bold';
 		insB.type = 'button';
 		insB.addEventListener("click", postMsgHelper.qpTagButton, false);
 		insB.id = 'b';
+		insB.tabIndex = -1;
 		tokendesc.insertBefore(insM, tokendesc.nextSibling.lastChild);
 		tokendesc.insertBefore(insQ, insM);
 		tokendesc.insertBefore(insS, insQ);
@@ -105,7 +114,8 @@ var postMsg = {
 		if (!m) {
 			return;
 		}
-		var txt = document.getElementById('u0_25');
+		var txt = document.getElementById('message');
+		txt.focus();
 		var insM = document.createElement('input');
 		insM.value = 'Mod';
 		insM.name = 'Mod';
