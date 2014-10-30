@@ -1017,7 +1017,7 @@ var messageListHelper = {
 		div.style.top = 0;
 		div.style.marginTop = '-100%';
 		div.id = 'bash_popup';
-		div.innerHTML = '<div class="message-top">'
+		div.innerHTML = '<div>'
 			+ '<a id ="submitbash" href="##submitbash"><b>[Submit quote to ETI Bash]</b></a>' 
 			+ '</div>';
 		$('body').append(div);
@@ -1034,24 +1034,29 @@ var messageListHelper = {
 			// check whether ev.target contains quoted messages
 			var unchecked = document.getElementsByClassName('bash');
 			var posts = document.getElementsByClassName('message-container');
-			var bash, post_number, post, uncheck;		
+			var bash, post_number, uncheck, container;		
 			post_number = target.id.match(/[0-9]+/)[0];
 			quotes = posts[post_number].getElementsByClassName('quoted-message');
 			if (quotes.length > 0) {
-				if (len === 1) {
-					// prevent user from selecting other posts
-					for (var j = 0, u_len = unchecked.length; j < u_len; j++) {
-						uncheck = unchecked[j];
-						uncheck.setAttribute('ignore', 'true');
-						uncheck.style.opacity = 0.2;
-					}
-				}
-				else if (len > 1) {
-					// prevent user from selecting this post				
-					return true;
+				// prevent user from selecting other posts
+				for (var j = 0, u_len = unchecked.length; j < u_len; j++) {
+					uncheck = unchecked[j];					
+					uncheck.setAttribute('ignore', 'true');
+					uncheck.style.opacity = 0.2;
 				}
 			}
-		}	
+			else if (quotes.length == 0) {
+				// prevent user from selecting posts containing quoted messages
+				for (var j = 0, u_len = unchecked.length; j < u_len; j++) {
+					uncheck = unchecked[j];
+					container = uncheck.parentNode.parentNode;
+					if (container.getElementsByClassName('quoted-message').length > 0) {
+						uncheck.setAttribute('ignore', 'true');
+						uncheck.style.opacity = 0.2;			
+					}
+				}				
+			}
+		}
 		if (popup) {
 			if (len > 1) {
 				popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quotes to ETI Bash]</b>';
@@ -1145,7 +1150,7 @@ var messageListHelper = {
 			}
 			if (i === 0) {
 				first_top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
-				var url = messageListHelper.getBashURL(first_top, len);
+				url = messageListHelper.getBashURL(first_top, len);
 			}
 		}
 		// pass values to submitBash function
@@ -1282,16 +1287,10 @@ var messageListHelper = {
 			}
 			else if (ev.target.className == 'bash' && ev.target.getAttribute('ignore') !== 'true') {
 				ev.target.className = 'bash_this';			
-				var contains_quotes = messageListHelper.checkBash(ev.target);
-				if (contains_quotes) {
-					ev.target.className = 'bash';	
-					return;
-				}
-				else {
-					messageListHelper.showBashPopup();			
-					ev.target.style.fontWeight = 'bold';
-					ev.target.innerHTML = '[X]';
-				}
+				ev.target.style.fontWeight = 'bold';
+				ev.target.innerHTML = '[X]';
+				messageListHelper.checkBash(ev.target);
+				messageListHelper.showBashPopup();		
 			}
 			else if (ev.target.className == 'bash_this') {
 				ev.target.className = 'bash';
