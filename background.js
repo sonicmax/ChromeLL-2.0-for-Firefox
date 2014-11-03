@@ -199,14 +199,15 @@ function chkSync() {
 function clipboardTextArea() {
 	var background = chrome.extension.getBackgroundPage();
 	var textArea = background.document.createElement("textarea");
+	var quote, clipboard;
 	textArea.id = "clipboard";
 	background.document.body.appendChild(textArea);
 	chrome.runtime.onMessage.addListener(
 		// allows text content to be copied to clipboard from content scripts
 		function(request, sender, sendResponse) {
 			if (request.quote) {
-				var quote = request.quote;
-				var clipboard = document.getElementById('clipboard');
+				quote = request.quote;
+				clipboard = document.getElementById('clipboard');
 				clipboard.value = quote;
 				clipboard.select();
 				document.execCommand("copy");
@@ -222,62 +223,56 @@ function buildContextMenu() {
 	board = null;
 	board = [];
 	var id;
-	var menu = chrome.contextMenus.create({
-		"title": "ETI",
-		"contexts": ["page", "image", "selection"]
-	});
-	chrome.contextMenus.create({
-		"title": "Search LUE",
-		"parentId": menu,
-		"onclick": searchLUE,
-		"contexts": ["selection"]
-	});
 	chrome.contextMenus.create({
 		"title": "Transload image",
-		"parentId": menu,
 		"onclick": imageTransloader,
 		"contexts": ["image"]
 	});
 	chrome.contextMenus.create({
-		"title": "View image map",
-		"parentId": menu,
-		"onclick": imageMap,
-		"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
-		"contexts": ["image"]
+		"title": "Search LUE",
+		"onclick": searchLUE,
+		"contexts": ["selection"]
 	});
-	if (cfg.copy_in_context) {
-		chrome.contextMenus.create({
-			"title": "Copy img code",
-			"parentId": menu,
-			"onclick": imageCopy,
-			"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
-			"contexts": ["image"]
-		});
-	}
 	if (cfg.eti_bash) {
 		chrome.contextMenus.create({
 			"title": "Submit to ETI Bash",
-			"parentId": menu,
 			"onclick": bashHighlight,
+			"documentUrlPatterns": ["*://boards.endoftheinter.net/*"],
 			"contexts": ["selection"]
 		});
 	}
-	for (var i in boards) {
-		if (boards[i] != boards[0]) {
+	if (cfg.extra_context_options) {
+		chrome.contextMenus.create({
+			"title": "View image map",
+			"onclick": imageMap,
+			"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
+			"contexts": ["image"]
+		});
+		if (cfg.copy_in_context) {
 			chrome.contextMenus.create({
-				"type": "separator",
-				"parentId": menu,
-				"contexts": ["page", "image"]
+				"title": "Copy img code",
+				"onclick": imageCopy,
+				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
+				"contexts": ["image"]
 			});
 		}
-		for (var j in boards[i]) {
-			id = chrome.contextMenus.create({
-				"title": j,
-				"parentId": menu,
-				"onclick": handleContext,
-				"contexts": ["page", "image"]
-			});
-			board[id] = boards[i][j];
+		for (var i in boards) {
+			if (boards[i] != boards[0]) {
+				chrome.contextMenus.create({
+					"type": "separator",
+					"parentId": menu,
+					"contexts": ["page", "image"]
+				});
+			}
+			for (var j in boards[i]) {
+				id = chrome.contextMenus.create({
+					"title": j,
+					"parentId": menu,
+					"onclick": handleContext,
+					"contexts": ["page", "image"]
+				});
+				board[id] = boards[i][j];
+			}
 		}
 	}
 }
