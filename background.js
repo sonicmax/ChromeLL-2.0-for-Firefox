@@ -310,16 +310,27 @@ function searchLUE(info) {
 }
 
 function bashHighlight(info) {
-	var element;
+	var selection_text = info.selectionText;
+	var bash_data, formData, xhr;
 	chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
-		var tab = tabs[0];
-		var bash_data;
-		chrome.tabs.sendMessage(tab.id, {
-			action: "context_element"
+		chrome.tabs.sendMessage(tabs[0].id, {
+			action: "get_bash"
 		}, function(response) {
 			bash_data = response.data;
-			console.log(bash_data);
-			console.log(info.selectionText);
+			if (bash_data[0] !== null) {
+				// create formData
+				formData = new FormData();
+				formData.append('quotes_user', bash_data[0]);
+				formData.append('quotes_topic', bash_data[1]);
+				formData.append('quotes_content', selection_text);
+				// send formData to ETI Bash
+				xhr = new XMLHttpRequest;
+				xhr.open('POST', 'http://fuckboi.club/bash/submit-quote.php', true);
+				xhr.send(formData);
+			}
+			else {
+				console.log('bash_data array contains null value', bash_data);
+			}
 		});
 	});
 }
