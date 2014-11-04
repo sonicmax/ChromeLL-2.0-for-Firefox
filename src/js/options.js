@@ -232,6 +232,16 @@ function restoreConfig() {
 			highlightClick);
 	document.getElementById('showcfg').addEventListener('click', showcfg);
 	document.getElementById('loadcfg').addEventListener('click', loadcfg);
+	document.getElementById('downloadcfg').href = downloadcfg();
+	document.getElementById('restorecfg').addEventListener('change', function(evt) {
+		restoreTextConfig(evt);
+	});
+	document.getElementById('downloadbutton').addEventListener('click', function() {
+		document.getElementById('downloadcfg').click();
+	});
+	document.getElementById('restorebutton').addEventListener('click', function() {
+		document.getElementById('restorecfg').click();
+	});
 	document.getElementById('forceignorator').addEventListener('click', forceIgnorator);
 	document.getElementById('restoreignorator').addEventListener('click', restoreIgnorator);
 	/*document.getElementById('registerfilter').addEventListener('click', repTokenLimiter);*/
@@ -576,10 +586,33 @@ function highlightClick(evt) {
 function showcfg() {
 	document.getElementById('cfg_ta').value = localStorage['ChromeLL-Config'];
 }
-function loadcfg() {
-	if (document.getElementById('cfg_ta').value != '') {
+function downloadcfg() {
+	var cfg = localStorage['ChromeLL-Config'];
+	var data = new Blob([cfg], {type: 'text/plain'});
+	var textFile = window.URL.createObjectURL(data);
+	return textFile;
+}
+function restoreTextConfig(evt) {
+	// check that file is .txt before passing to loadcfg function
+	var file = evt.target.files[0];
+	if (!file.type.match('text.*')) {
+		// report error
+		return;
+	}
+	else {
+		loadcfg(file);
+	}
+}
+function loadcfg(file) {
+	if (document.getElementById('cfg_ta').value != '' || file) {
 		try {
-			var newCfg = JSON.parse(document.getElementById('cfg_ta').value);
+			var newCfg;
+			if (!file) {
+				newCfg = JSON.parse(document.getElementById('cfg_ta').value);
+			}
+			else {
+				newCfg = file;
+			}
 			var myCfg = JSON.parse(localStorage['ChromeLL-Config']);
 			for ( var i in newCfg) {
 				myCfg[i] = newCfg[i];

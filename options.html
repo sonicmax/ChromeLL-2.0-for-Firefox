@@ -572,6 +572,7 @@ span.desc {
   color: #000000; outline: none;
   cursor: help; text-decoration: none;
   position: relative;
+  color: #0000FF;
 }
 .tooltip span {
   margin-left: -999em;
@@ -579,6 +580,9 @@ span.desc {
 }
 .tooltip:hover span {
   font-family: Calibri, Tahoma, Geneva, sans-serif;
+  font-size: 16px;
+  color: #000000;
+  font-weight: normal;
   position: absolute;
   left: 1em;
   top: 2em;
@@ -678,7 +682,19 @@ span.desc {
 									<div class="checkbox subbox">
 										<label>
 											<input type="checkbox" id="simple_context_menu" />
-												<span>Hide all context menu items except the "Transload image" option</span>
+												<span>Hide all context menu items except the "Transload image" option
+												<a class="tooltip" href="#">(?)
+													<span class="moreinfo">
+														<em>Note:</em>
+														Enabling this option will place the "Transload image" option in a slightly more convenient location.
+														<br><br>
+														You can access the hidden context menu items (options, message history, &amp; bookmarked tags) 
+														via the popup menu that appears when you click the ChromeLL icon on the navigation bar.
+														<br><br>
+														This does not affect menu items that appear when text has been highlighted.
+													</span>
+												</a>													
+												</span>
 										</label>
 									</div>																														
 									<div class="checkbox">
@@ -1044,9 +1060,9 @@ span.desc {
 									<a class="tooltip" href="#">(?)
 										<span class="moreinfo">
 											This feature allows you to store snippets of text, which can then be inserted into your posts by
-											typing the keyword &amp; pressing Tab (or Shift + Tab). 
+											typing the keyword and pressing Tab (or Shift &amp; Tab). 
 											<br><br>
-											<em>Note:</em> use Shift + Tab as the keyboard shortcut if you use Tab to quick-post.
+											<em>Note:</em> Select Shift &amp; Tab as the keyboard shortcut if you would normally use Tab to quickpost.
 										</span>
 									</a>								
 								</h1>
@@ -1727,8 +1743,14 @@ span.desc {
 						<section>
 							<h3>Config</h3>
 							<div>
+								<input type="button" value="Download ChromeLL Config as text file" id="downloadbutton" />
+								<a href="#" id="downloadcfg" download="config.txt" style="display:none"/></a>
+								<br><br>
+								<input type="button" value="Restore ChromeLL config from text file" id="restorebutton" />
+								<input type="file"  id="restorecfg" style="display:none"/> 
+								<br><br>
 								<input type="button" value="Show ChromeLL Config" id="showcfg" />
-								<input type="button" value="Load ChromeLL Config" id="loadcfg" />
+								<input type="button" value="Load ChromeLL Config" id="loadcfg" />								
 								<textarea id="cfg_ta" style="width: 90%; height: 300px; border: none;"></textarea>
 							</div>
 						</section>
