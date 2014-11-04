@@ -1,4 +1,4 @@
-function getDefault() {
+function getDefault(callback) {
 	var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
 		var temp, defaultConfig;
 		var xhr = new XMLHttpRequest();
@@ -7,7 +7,7 @@ function getDefault() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
 				temp = JSON.parse(xhr.responseText);
 				defaultConfig = JSON.stringify(temp);
-				return defaultConfig;
+				callback(defaultConfig);
 			}
 		}
 		xhr.send();	
@@ -49,8 +49,10 @@ $(document)
 					// restore config settings
 					if (localStorage['ChromeLL-Config'] == ''
 							|| localStorage['ChromeLL-Config'] == undefined) {
-						console.log("Blank Config. Rebuilding");
-						localStorage['ChromeLL-Config'] = getDefault();	
+						console.log("Blank Config. Rebuilding");						
+						getDefault(function(defaultConfig) {
+							localStorage['ChromeLL-Config'] = defaultConfig;
+						});
 						
 						if (localStorage['chromeLL_userhighlight']
 								&& localStorage['chromeLL_userhighlight'] != '') {
@@ -62,7 +64,7 @@ $(document)
 					} else {
 						restoreConfig();
 					}
-				});
+				});	
 
 function restoreConfig() {
 	console.log('loading config');
@@ -230,8 +232,10 @@ function restoreConfig() {
 			ignoratorClick);
 	document.getElementById('enable_user_highlight').addEventListener('click',
 			highlightClick);
-	document.getElementById('showcfg').addEventListener('click', showcfg);
-	document.getElementById('loadcfg').addEventListener('click', loadcfg);
+	document.getElementById('loadcfg').addEventListener('click', function() {
+		// wrapped in anonymous function to prevent mouseEvent from being passed to function
+		loadcfg();
+	});
 	document.getElementById('downloadcfg').href = downloadcfg();
 	document.getElementById('restorecfg').addEventListener('change', function(evt) {
 		restoreTextConfig(evt);
@@ -241,6 +245,12 @@ function restoreConfig() {
 	});
 	document.getElementById('restorebutton').addEventListener('click', function() {
 		document.getElementById('restorecfg').click();
+	});
+	document.getElementById('resetcfg').addEventListener('click', resetCfg);
+	document.getElementById('old_cfg_options').addEventListener('click', function() {
+		document.getElementById('old_cfg_options').style.display = "none";
+		document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
+		showcfg();
 	});
 	document.getElementById('forceignorator').addEventListener('click', forceIgnorator);
 	document.getElementById('restoreignorator').addEventListener('click', restoreIgnorator);
@@ -596,26 +606,31 @@ function restoreTextConfig(evt) {
 	// check that file is .txt before passing to loadcfg function
 	var file = evt.target.files[0];
 	if (!file.type.match('text.*')) {
-		// report error
+		alert("Not a text file...");
 		return;
 	}
 	else {
-		loadcfg(file);
+		var reader = new FileReader();
+		reader.onload = function(evt) {
+			var textFile = evt.target.result;
+			loadcfg(textFile);
+		}
+		reader.readAsText(file);
 	}
 }
-function loadcfg(file) {
-	if (document.getElementById('cfg_ta').value != '' || file) {
+function loadcfg(textFile) {
+	if (document.getElementById('cfg_ta').value != '' || textFile) {
 		try {
 			var newCfg;
-			if (!file) {
+			if (textFile !== undefined) {
+				newCfg = JSON.parse(textFile);
+			}
+			else if (textFile === undefined) {
 				newCfg = JSON.parse(document.getElementById('cfg_ta').value);
 			}
-			else {
-				newCfg = file;
-			}
 			var myCfg = JSON.parse(localStorage['ChromeLL-Config']);
-			for ( var i in newCfg) {
-				myCfg[i] = newCfg[i];
+			for (var i in newCfg) {
+				myCfg[i] = newCfg[i];				
 			}
 			myCfg.last_saved = new Date().getTime();
 			localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
@@ -626,6 +641,14 @@ function loadcfg(file) {
 		location.reload();
 	}
 }
+
+function resetCfg() {
+	getDefault(function(defaultCfg) {
+		localStorage['ChromeLL-Config'] = defaultCfg;
+		location.reload();
+	});
+}
+
 function decodeBase64(cfg) {
 	var Base64 = {
 		_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",

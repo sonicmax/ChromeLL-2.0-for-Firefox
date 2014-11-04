@@ -1737,7 +1737,8 @@ span.desc {
 							<div>
 								<input type="button" value="Force save sync" id="savesync" />
 								<input type="button" value="Force load sync" id="loadsync" />
-								<textarea id="fsync_ta" style="width: 90%; height: 100px; border: none;"></textarea>
+								<br><br>
+								<textarea id="fsync_ta" style="width: 90%; height: 100px; border: 1px solid grey;"></textarea>
 							</div>
 						</section>
 						<section>
@@ -1747,11 +1748,15 @@ span.desc {
 								<a href="#" id="downloadcfg" download="config.txt" style="display:none"/></a>
 								<br><br>
 								<input type="button" value="Restore ChromeLL config from text file" id="restorebutton" />
-								<input type="file"  id="restorecfg" style="display:none"/> 
+								<input type="file"  id="restorecfg" style="display:none"/>
 								<br><br>
-								<input type="button" value="Show ChromeLL Config" id="showcfg" />
-								<input type="button" value="Load ChromeLL Config" id="loadcfg" />								
-								<textarea id="cfg_ta" style="width: 90%; height: 300px; border: none;"></textarea>
+								<input type="button" value="Reset to default settings" id="resetcfg" />
+								<br><br>
+								<a href="#" id="old_cfg_options"/>Show config in text area</a>
+								<div class="old_cfg_options" style="display:none">
+									<input type="button" value="Load ChromeLL Config from text box" id="loadcfg" />		
+									<textarea id="cfg_ta" style="width: 90%; height: 300px; border: 1px solid grey;"></textarea>
+								</div>
 							</div>
 						</section>
 					</div>
