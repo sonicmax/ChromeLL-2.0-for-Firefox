@@ -567,6 +567,46 @@ span.desc {
     padding-left: 20px;
     padding-right: 20px;
 }
+.tooltip {
+  border-bottom: 1px dotted #000000;
+  color: #000000; outline: none;
+  cursor: help; text-decoration: none;
+  position: relative;
+}
+.tooltip span {
+  margin-left: -999em;
+  position: absolute;
+}
+.tooltip:hover span {
+  font-family: Calibri, Tahoma, Geneva, sans-serif;
+  position: absolute;
+  left: 1em;
+  top: 2em;
+  z-index: 99;
+  margin-left: 0;
+  width: 250px;
+}
+.tooltip:hover img {
+  border: 0;
+  margin: -10px 0 0 -55px;
+  float: left;
+  position: absolute;
+}
+.tooltip:hover em {
+  font-family: Candara, Tahoma, Geneva, sans-serif;
+  font-size: 1.2em;
+  font-weight: bold;
+  display: block;
+  padding: 0.2em 0 0.6em 0;
+}
+.moreinfo { 
+	padding: 0.8em 1em; 
+	background: #FFFFAA;
+	solid #FFAD33;
+	border: 1px;
+	border-radius: 5px 5px;
+	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);	
+}
 </style>
 <link rel="stylesheet" href="src/css/config/button.css">
 <link rel="stylesheet" href="src/css/config/checkbox.css">
@@ -584,7 +624,8 @@ span.desc {
 			<h1 class="title">ChromeLL</h1>	
 			<ul id="navbar">
 				<li class="navbar-item navbar-item-selected options_navigation_link" id="general_link">General</li>
-				<li class="navbar-item options_navigation_link" id="highlighter_link">User highlights</li>
+				<li class="navbar-item options_navigation_link" id="ignorator_link">Ignorator</li>
+				<li class="navbar-item options_navigation_link" id="highlighter_link">User highlighter</li>
 				<!--<li class="navbar-item options_navigation_link" id="rep_link">Rep highlights</li>-->
 				<li class="navbar-item options_navigation_link" id="bookmarks_link">Bookmarks</li>
 				<li class="navbar-item options_navigation_link" id="snippets_link">Snippets</li>
@@ -603,7 +644,7 @@ span.desc {
 							<h1>General</h1>
 							<section>
 								<h3>UI</h3>
-								<div>
+								<div>			
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="float_userbar" />
@@ -634,6 +675,12 @@ span.desc {
 											<span>Show the right click menu (disable/enable extension or restart browser to take effect)</span>
 										</label>
 									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="simple_context_menu" />
+												<span>Hide all context menu items except the "Transload image" option</span>
+										</label>
+									</div>																														
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="dramalinks" />
@@ -695,7 +742,17 @@ span.desc {
 									</div>		
 									<div class="checkbox">
 										<input type="checkbox" id="eti_bash" />
-										<span>Enable ETI Bash features</span>
+										<span>Enable ETI Bash features
+												<a class="tooltip" href="#">(?)
+													<span class="moreinfo">
+														Select posts using the boxes on the right side of the screen, and send them to ETI Bash using the popup menu
+														that appears in the top-left of the screen.
+														<br><br>									
+														Alternatively, you can submit highlighted text from an individual post
+														using the "Submit to ETI Bash" option in the right click menu.
+													</span>
+												</a>													
+										</span>
 									</div>											
 								</div>
 							</section>
@@ -751,8 +808,12 @@ span.desc {
 									</div>
 								</div>
 							</section>
+						</div>
+						
+						<div class="page hidden" id="ignorator_page">
+						<h1>Ignorator</h1>
 							<section>
-								<h3>Ignorator</h3>
+								<h3>Settings</h3>
 								<div>
 									<div class="checkbox">
 										<label>
@@ -764,7 +825,14 @@ span.desc {
 								</div>
 							</section>
 							<section>
-								<h3>Ignorator cleaner</h3>
+								<h3>Ignorator cleaner
+									<a class="tooltip" href="#">(?)
+										<span class="moreinfo">
+											This will check your ignorator list for username changes and replace the original list
+											with an updated version.
+										</span>
+									</a>	
+								</h3>
 								<div>
 									<div class="checkbox">
 										<input type="button" value="Restore backup" id="restoreignorator" />
@@ -773,7 +841,7 @@ span.desc {
 										<span style="color:#ff0000"><div class="checkbox" id = "ignorateinfo"></div></span>
 									</div>
 								</div>
-							</section>
+							</section>						
 						</div>
 						
 						<div class="page hidden" id="highlighter_page">
@@ -919,7 +987,13 @@ span.desc {
 						-->
 						
 						<div class="page hidden" id="bookmarks_page">
-								<h1>Bookmarks</h1>
+								<h1>Bookmarks
+									<a class="tooltip" href="#">(?)
+										<span class="moreinfo">
+											Accessed via the ChromeLL icon on the navigation bar (under the Bookmarks dropdown menu).
+										</span>
+									</a>
+								</h1>
 								<section>
 										<h3>Settings</h3>
 										<div>
@@ -966,7 +1040,16 @@ span.desc {
 						</div>
 						
 						<div class="page hidden" id="snippets_page">
-								<h1>Snippets</h1>
+								<h1>Snippets
+									<a class="tooltip" href="#">(?)
+										<span class="moreinfo">
+											This feature allows you to store snippets of text, which can then be inserted into your posts by
+											typing the keyword &amp; pressing Tab (or Shift + Tab). 
+											<br><br>
+											<em>Note:</em> use Shift + Tab as the keyboard shortcut if you use Tab to quick-post.
+										</span>
+									</a>								
+								</h1>
 								<section>							
 										<h3>Settings</h3>
 										<div>	
@@ -1056,7 +1139,14 @@ span.desc {
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="page_jump_buttons" />
-											<span>Show page jump buttons</span>
+											<span>Show page jump buttons
+												<a class="tooltip" href="#">(?)
+													<span class="moreinfo">
+														The '#' link will open a dialog box that lets you navigate to a particular page, and the '>' link 
+														will redirect you to the last page of the topic.
+													</span>
+												</a>																
+											</span>
 										</label>
 									</div>
 									<!--
@@ -1070,7 +1160,7 @@ span.desc {
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="ignore_keyword" />
-											<span>Ignore topics matching keywords (comma separated list or JSON array)</span>
+											<span>Ignore topics matching keywords (comma separated list)</span>
 										</label>
 									</div>
 									<input type="text" style="width: 550px;" id="ignore_keyword_list" />
@@ -1308,7 +1398,7 @@ span.desc {
 								<div class="checkbox">
 									<label>
 										<input type="checkbox" id="hide_deleted" />
-										<span>[Mod] Hide messages that have been deleted by default</span>
+										<span>Hide messages that have been deleted</span>
 									</label>
 								</div>
 								<div class="checkbox">
@@ -1345,7 +1435,15 @@ span.desc {
 								</div>
 								<div class="checkbox">
 									<input type="checkbox" id="label_self_anon" />
-									<span>Show <b>(Me)</b> next to own posts in anonymous topics</span>
+									<span>Show <b>(Me)</b> next to own posts in anonymous topics
+										<a class="tooltip" href="#">(?)
+											<span class="moreinfo">
+												<em>Note:</em>
+												ChromeLL does not store any data relating to your identity in anonymous topics - it checks for the
+												human number displayed in the quickpost box.
+											</span>
+										</a>																	
+									</span>
 								</div>
 								<div class="checkbox">
 									<input type="checkbox" id="foxlinks_quotes" />
@@ -1627,7 +1725,7 @@ span.desc {
 							</div>
 						</section>
 						<section>
-							<h3>Misc</h3>
+							<h3>Config</h3>
 							<div>
 								<input type="button" value="Show ChromeLL Config" id="showcfg" />
 								<input type="button" value="Load ChromeLL Config" id="loadcfg" />
