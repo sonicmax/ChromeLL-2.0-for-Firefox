@@ -465,11 +465,71 @@ var commonFunctions = {
 				}
 			} catch (err) {
 				console.log("error in " + i + ":", err);
-			}
-			var a1 = performance.now();
-			console.log("Processed allPages in " + (a1 - a0) + " milliseconds.");
+			}		
 		});
 	}
 }
+
+function hideOptions() {
+	var div = document.getElementById('options_div');
+	var nub = document.getElementsByClassName('quickpost-nub');	
+	var body = document.getElementsByClassName('body')[0];
+	body.style.opacity = 1;
+	document.body.removeChild(div);
+	document.body.removeEventListener('click', hideOptions);
+	document.body.removeEventListener('mousewheel', preventScroll);
+	if (nub.length !== 0) {
+		nub.style.display = 'initial';
+	}
+}
+
+function preventScroll(event) {
+	event.preventDefault();
+}
+
+chrome.runtime.onMessage.addListener(function(msg) {
+	if (msg.action == 'showOptions') {
+		var url = chrome.extension.getURL('options.html');
+		var div = document.createElement('div');
+		var iframe = document.createElement('iframe');
+		var width = window.innerWidth * 0.95;
+		var height = window.innerHeight * 0.95;
+		var nub = document.getElementsByClassName('quickpost-nub');
+		var close = document.createElement('div');
+		var body = document.getElementsByClassName('body')[0];
+		div.id = "options_div";
+		div.style.position = "fixed";
+		div.style.width = width + 'px';
+		div.style.height = height + 'px';
+		div.style.left = (width - (width * 0.975)) + 'px';
+		div.style.top = (height - (height * 0.975)) + 'px';
+		div.style.boxShadow = "5px 5px 7px black";		
+		div.style.borderRadius = '6px';	
+		div.style.opacity = 1;
+		close.style.position = "relative";
+		close.style.right = document.innerWidth;
+		close.style.top = 0;
+		close.style.backgroundColor = "white";
+		close.style.color = "red";
+		close.style.textAlign = "right";
+		close.style.fontSize = "18px";
+		close.innerHTML = '<a href="#" style="color:red; text-decoration: none" id="close_options">&#10006;</a>';
+		iframe.style.width = "inherit";
+		iframe.style.height = "inherit";
+		iframe.src = url;
+		iframe.style.backgroundColor = "white";
+		iframe.style.border = "none";	
+		div.appendChild(close);
+		div.appendChild(iframe);
+		// using the element with class "body" instead of document.body to prevent this from affecting options elements
+		body.style.opacity = 0.3;		
+		document.body.appendChild(div);
+		if (nub.length !== 0) {
+			nub.style.display = 'none';
+		}
+		document.body.addEventListener('click', hideOptions);
+		document.body.addEventListener('mousewheel', preventScroll);
+	}
+});
 
 commonFunctions.init();

@@ -241,7 +241,7 @@ function buildContextMenu() {
 			"contexts": ["selection"]
 		});
 	}
-	if (cfg.extra_context_options) {
+	if (!cfg.simple_context_menu) {
 		chrome.contextMenus.create({
 			"title": "View image map",
 			"onclick": imageMap,
@@ -260,14 +260,12 @@ function buildContextMenu() {
 			if (boards[i] != boards[0]) {
 				chrome.contextMenus.create({
 					"type": "separator",
-					"parentId": menu,
 					"contexts": ["page", "image"]
 				});
 			}
 			for (var j in boards[i]) {
 				id = chrome.contextMenus.create({
 					"title": j,
-					"parentId": menu,
 					"onclick": handleContext,
 					"contexts": ["page", "image"]
 				});
@@ -610,6 +608,25 @@ chrome.runtime.onMessage.addListener(
 					console.log('showing hidden data', request);
 				}
 				return true;
+			case "options":
+				chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+						// check whether bg script can send messages to current tab
+						if (tabPorts[tabs[0].id]) {
+							// open options in same tab
+							chrome.tabs.sendMessage(tabs[0].id, {
+								action: "showOptions"
+							}, function(response) {
+								// empty callback
+							});
+						}
+						else {
+							// open options in new tab
+							chrome.tabs.create({
+									url: chrome.extension.getURL('options.html')
+							});							
+						}
+				});	
+				break;
 			default:
 				if (cfg.debug) {
 					console.log("Error in request listener - undefined parameter?", request);

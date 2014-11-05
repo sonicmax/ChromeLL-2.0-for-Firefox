@@ -11,7 +11,10 @@ function openControl(evt) {
 }
 
 function openOptions() {
-	window.open(chrome.extension.getURL('options.html'));
+	chrome.runtime.sendMessage({
+		need : "options"
+	});
+	window.close();
 }
 
 function showHidden(i, el) {
