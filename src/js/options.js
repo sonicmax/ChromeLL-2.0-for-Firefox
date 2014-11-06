@@ -273,18 +273,6 @@ function switchMenuVisibility() {
 		// add listener to each checkbox
 		box.addEventListener('change', switchMenuVisibility);
 	}
-	/*var history_checked = document.getElementById('history_menubar').checked;
-	var context_checked = document.getElementById('context_menu').checked;
-	var drama_checked = document.getElementById('dramalinks').checked;
-	var info_checked = document.getElementById('user_info_popup').checked;	
-	var hist_opts = document.getElementById('history_options');
-	var context_opts = document.getElementById('context_options');
-	var drama_opts = document.getElementById('dramalinks_options');
-	var info_opts = document.getElementById('doubleclick_options');
-	history_checked ? hist_opts.style.display = 'initial' : hist_opts.style.display = 'none';
-	context_checked ? context_opts.style.display = 'initial' : context_opts.style.display = 'none';
-	drama_checked ? drama_opts.style.display = 'initial' : drama_opts.style.display = 'none';
-	info_checked ? info_opts.style.display = 'initial' : info_opts.style.display = 'none';*/
 }
 
 document.addEventListener('DOMContentLoaded', switchMenuVisibility);
