@@ -399,8 +399,15 @@ function setColorPicker() {
 	});
 }
 
-$(document).change(saveConfig);
-document.addEventListener('keyup', saveConfig);
+function configChangeListeners () {
+	var keyup;
+	$(document).change(saveConfig);
+	document.addEventListener('keyup', function() {
+		clearTimeout(keyup);
+		keyup = setTimeout(saveConfig, 500)
+	});
+}
+configChangeListeners();
 
 function addRepIgnoreDiv() {
 	var ins = document.getElementById('rep_ignore').getElementsByClassName(
