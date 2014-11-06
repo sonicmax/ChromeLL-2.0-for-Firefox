@@ -648,7 +648,13 @@ span.desc {
 							<h1>General</h1>
 							<section>
 								<h3>UI</h3>
-								<div>			
+								<div>	
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="options_window" />
+											<span>Always open ChromeLL Options in new window</span>
+										</label>
+									</div>
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="float_userbar" />
@@ -667,11 +673,13 @@ span.desc {
 											<span>Add "Message History" link to menubar</span>
 										</label>
 									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="history_menubar_classic" />
-											<span>Go to history.php instead of the Posted tag</span>
-										</label>
+									<div id="history_options">									
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="history_menubar_classic" />
+												<span>Go to history.php instead of the Posted tag</span>
+											</label>
+										</div>
 									</div>
 									<div class="checkbox">
 										<label>
@@ -679,47 +687,51 @@ span.desc {
 											<span>Show the right click menu (disable/enable extension or restart browser to take effect)</span>
 										</label>
 									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="simple_context_menu" />
-												<span>Hide all menu items except the "Transload image" option
-												<a class="tooltip" href="#">(?)
-													<span class="moreinfo">
-														<em>Note:</em>
-														Enabling this option will place the "Transload image" option in a slightly more convenient location.
-														<br><br>
-														You can access the hidden menu items (options, message history, &amp; bookmarked tags) 
-														via the popup menu that appears when you click the ChromeLL icon on the navigation bar.
-														<br><br>
-														This does not affect menu items that appear when text has been highlighted.
+									<div id="context_options">
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="simple_context_menu" />
+													<span>Hide all context menu items except the "Transload image" option
+													<a class="tooltip" href="#">(?)
+														<span class="moreinfo">
+															<em>Note:</em>
+															Enabling this option will place the "Transload image" option in a slightly more convenient location.
+															<br><br>
+															You can access the hidden context menu items (options, message history, &amp; bookmarked tags) 
+															via the popup menu that appears when you click the ChromeLL icon on the navigation bar.
+															<br><br>
+															This does not affect menu items that appear when text has been highlighted.
+														</span>
+													</a>													
 													</span>
-												</a>													
-												</span>
-										</label>
-									</div>																														
+											</label>
+										</div>
+									</div>
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="dramalinks" />
 											<span>Show the dramalinks ticker</span>
 										</label>
 									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="hide_dramalinks" />
-											<span>Double click board name to show dramalinks ticker</span>
-										</label>
-									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="hide_dramalinks_topiclist" />
-											<span>Only show the dramalinks ticker on the topic list</span>
-										</label>
-									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="dramalinks_below_topic" />
-											<span>Put the dramalinks ticker below the topic title</span>
-										</label>
+									<div id="dramalinks_options">
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="hide_dramalinks" />
+												<span>Double click board name to show dramalinks ticker</span>
+											</label>
+										</div>
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="hide_dramalinks_topiclist" />
+												<span>Only show the dramalinks ticker on the topic list</span>
+											</label>
+										</div>
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="dramalinks_below_topic" />
+												<span>Put the dramalinks ticker below the topic title</span>
+											</label>
+										</div>
 									</div>
 									<div class="checkbox">
 										<label>
@@ -735,19 +747,20 @@ span.desc {
 										</label>
 									</div>
 									-->
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="show_old_name" />
-											<span>Show username history in popup</span>
-										</label>
+									<div id="doubleclick_options">
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="show_old_name" />
+												<span>Show username history in popup</span>
+											</label>
+										</div>
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="hide_gs" />
+												<span>Hide "gs" in popup</span>
+											</label>
+										</div>									
 									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="hide_gs" />
-											<span>Hide "gs" in popup</span>
-										</label>
-									</div>
-									<br>
 									<div class="checkbox">
 										<input type="checkbox" id="zebra_tables" />
 										<span>Zebra tables color <input type="text" id="zebra_tables_color" class="color" style="width: 70px" value="D7DEE8" /></span>
@@ -783,36 +796,38 @@ span.desc {
 									</div>
 								</div>
 							</section>
-							<section>
-								<h3>Chrome Sync</h3>
-								<div>
-									<span class="beta_info"><b>beta!</b> Make a backup of your config(s) from the about page. Do not sync highlights if you have &gt; 40 highlighted users.</span>
-									<div class="checkbox">
-										<label>
-											<input type="checkbox" id="sync_cfg" checked="false" disabled="disabled" />
-											<span>Sync configuration with chrome profile</span>
-										</label>
+							<!--<div style="display:none">-->
+								<section>
+									<h3>Chrome Sync</h3>
+									<div>
+										<span class="beta_info"><b>beta!</b> Make a backup of your config(s) from the about page. Do not sync highlights if you have &gt; 40 highlighted users.</span>
+										<div class="checkbox">
+											<label>
+												<input type="checkbox" id="sync_cfg" checked="false" disabled="disabled" />
+												<span>Sync configuration with chrome profile</span>
+											</label>
+										</div>
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="sync_userhl" disabled="disabled" />
+												<span>Sync user highlights</span>
+											</label>
+										</div>
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="sync_usernotes" disabled="disabled" />
+												<span>Sync usernotes</span>
+											</label>
+										</div>
+										<div class="checkbox subbox">
+											<label>
+												<input type="checkbox" id="sync_ignorator" disabled="disabled" />
+												<span>Sync ignorator</span>
+											</label>
+										</div>
 									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="sync_userhl" disabled="disabled" />
-											<span>Sync user highlights</span>
-										</label>
-									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="sync_usernotes" disabled="disabled" />
-											<span>Sync usernotes</span>
-										</label>
-									</div>
-									<div class="checkbox subbox">
-										<label>
-											<input type="checkbox" id="sync_ignorator" disabled="disabled" />
-											<span>Sync ignorator</span>
-										</label>
-									</div>
-								</div>
-							</section>
+								</section>
+							<!--</div>-->
 							<section>
 								<h3>Notifications</h3>
 								<div>
@@ -1706,7 +1721,6 @@ span.desc {
 					
 					<div class="page hidden" id="about_page">
 						<h1>Version: <span id="version"></span></h1>
-						<h1>Development Options</h1>
 						<section>
 							<h3>Log</h3>
 							<div>
@@ -1744,7 +1758,7 @@ span.desc {
 						<section>
 							<h3>Config</h3>
 							<div>
-								<input type="button" value="Download ChromeLL Config as text file" id="downloadbutton" />
+								<input type="button" value="Download ChromeLL config as text file" id="downloadbutton" />
 								<a href="#" id="downloadcfg" download="config.txt" style="display:none"/></a>
 								<br><br>
 								<input type="button" value="Restore ChromeLL config from text file" id="restorebutton" />
@@ -1754,7 +1768,7 @@ span.desc {
 								<br><br>
 								<a href="#" id="old_cfg_options"/>Show config in text area</a>
 								<div class="old_cfg_options" style="display:none">
-									<input type="button" value="Load ChromeLL Config from text box" id="loadcfg" />		
+									<input type="button" value="Load ChromeLL config from text box" id="loadcfg" />		
 									<textarea id="cfg_ta" style="width: 90%; height: 300px; border: 1px solid grey;"></textarea>
 								</div>
 							</div>

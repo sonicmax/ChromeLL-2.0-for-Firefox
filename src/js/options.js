@@ -259,6 +259,36 @@ function restoreConfig() {
 	saveConfig();
 }
 
+function switchMenuVisibility() {
+	var hiddenOptions = {'history_menubar' : 'history_options', 
+			'context_menu' : 'context_options', 
+			'dramalinks' : 'dramalinks_options', 
+			'user_info_popup' : 'doubleclick_options'};
+	var box, option;
+	for (var key in hiddenOptions) {
+		box = document.getElementById(key);
+		option = document.getElementById(hiddenOptions[key]);		
+		// only display hidden options if checkbox is ticked
+		box.checked ? option.style.display = 'initial' : option.style.display = 'none';
+		// add listener to each checkbox
+		box.addEventListener('change', switchMenuVisibility);
+	}
+	/*var history_checked = document.getElementById('history_menubar').checked;
+	var context_checked = document.getElementById('context_menu').checked;
+	var drama_checked = document.getElementById('dramalinks').checked;
+	var info_checked = document.getElementById('user_info_popup').checked;	
+	var hist_opts = document.getElementById('history_options');
+	var context_opts = document.getElementById('context_options');
+	var drama_opts = document.getElementById('dramalinks_options');
+	var info_opts = document.getElementById('doubleclick_options');
+	history_checked ? hist_opts.style.display = 'initial' : hist_opts.style.display = 'none';
+	context_checked ? context_opts.style.display = 'initial' : context_opts.style.display = 'none';
+	drama_checked ? drama_opts.style.display = 'initial' : drama_opts.style.display = 'none';
+	info_checked ? info_opts.style.display = 'initial' : info_opts.style.display = 'none';*/
+}
+
+document.addEventListener('DOMContentLoaded', switchMenuVisibility);
+
 function updateIgnorator() {
 	var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 	cfg.ignorator_backup = cfg.ignorator_list;
@@ -598,7 +628,7 @@ function showcfg() {
 }
 function downloadcfg() {
 	var cfg = localStorage['ChromeLL-Config'];
-	var data = new Blob([cfg], {type: 'text/plain'});
+	var data = new Blob([cfg], {type: 'text/plain'})
 	var textFile = window.URL.createObjectURL(data);
 	return textFile;
 }
@@ -643,10 +673,16 @@ function loadcfg(textFile) {
 }
 
 function resetCfg() {
-	getDefault(function(defaultCfg) {
-		localStorage['ChromeLL-Config'] = defaultCfg;
-		location.reload();
-	});
+	var reset = confirm("Are you sure you want to reset your settings?");
+	if (reset === true) {
+		getDefault(function(defaultCfg) {
+			localStorage['ChromeLL-Config'] = defaultCfg;
+			location.reload();
+		});
+	}
+	else {
+		return;
+	}
 }
 
 function decodeBase64(cfg) {
