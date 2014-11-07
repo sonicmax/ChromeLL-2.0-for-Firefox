@@ -14,7 +14,7 @@
    "zebra_tables":false,
    "zebra_tables_color":"D7DEE8",
    "error_check":false,
-   "eti_bash":false.
+   "eti_bash":false,
    "force_https":false,
    "sys_notifications":true,
    "clear_notify":"5",
