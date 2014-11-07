@@ -351,6 +351,9 @@ function getDrama() {
 	if (cfg.debug) {
 		console.log('fetching dramalinks from wiki...');
 	}
+	var externalpng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
+			+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
+			+ 'DVmAAAAAElFTkSuQmCC';
 	var dramas;
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", "http://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30", true);
@@ -364,7 +367,7 @@ function getDrama() {
 			t = t.replace(/\[\[(.+?)\]\]/g, 
 					"<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$1</a>");
 			t = t.replace(/\[(.+?)\]/g, 
-					"<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"http://wiki.endoftheinter.net/skins/monobook/external.png\"></a>");
+					"<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + externalpng + "\"></a>");
 			t = t.replace(/href="\/index\.php/g, 
 					"href=\"http://wiki.endoftheinter.net/index.php");
 			t = t.replace(/style=/gi, "");
@@ -611,7 +614,7 @@ chrome.runtime.onMessage.addListener(
 			case "options":
 				chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 						// check whether bg script can send messages to current tab
-						if (tabPorts[tabs[0].id]) {
+						if (tabPorts[tabs[0].id] && !cfg.options_window) {
 							// open options in same tab
 							chrome.tabs.sendMessage(tabs[0].id, {
 								action: "showOptions"
