@@ -54,8 +54,8 @@ $(document)
 				});
 
 var config = {
-	functions : {
-		cleanIgnorator : function() {
+	functions: {
+		cleanIgnorator: function() {
 			var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 			cfg.ignorator_backup = cfg.ignorator_list;
 			var cleanIgnorator = cfg.clean_ignorator;
@@ -97,7 +97,7 @@ var config = {
 			cfg.last_clean = currentTime;
 			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);	
 		},
-		rateLimiter : function() {
+		rateLimiter: function() {
 			var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 			if (cfg.ignorator_list == "") {
 				document.getElementById('ignorateinfo').innerText = "no ignorator list found..."
@@ -132,7 +132,7 @@ var config = {
 				document.getElementById('ignorateinfo').innerText = "try again in " + hours + minutes + seconds;
 			}
 		},
-		restoreIgnorator : function() {
+		restoreIgnorator: function() {
 			var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 			var backup = cfg.ignorator_backup;
 			if (confirm('Are you sure you want to restore last ignorator backup?')) {
@@ -155,40 +155,50 @@ var config = {
 				return;
 			}
 		},
-		ignoratorClick : function(evt) {
+		ignoratorClick: function(evt) {
 			document.getElementById('ignorator_messagelist').checked = evt.target.checked;
 			document.getElementById('ignorator_topiclist').checked = evt.target.checked;
-			saveConfig();
+			config.save();
 		},
-		highlightClick : function(evt) {
+		highlightClick: function(evt) {
 			document.getElementById('userhl_messagelist').checked = evt.target.checked;
 			document.getElementById('userhl_topiclist').checked = evt.target.checked;
-			saveConfig();
-		},	
-		processConfig : function(textFile) {
-			if (document.getElementById('cfg_ta').value != '' || textFile) {
-				try {
-					var newCfg;
-					if (textFile !== undefined) {
-						newCfg = JSON.parse(textFile);
-					}
-					else if (textFile === undefined) {
-						newCfg = JSON.parse(document.getElementById('cfg_ta').value);
-					}
-					var myCfg = JSON.parse(localStorage['ChromeLL-Config']);
-					for (var i in newCfg) {
-						myCfg[i] = newCfg[i];				
-					}
-					myCfg.last_saved = new Date().getTime();
-					localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
-				} catch (e) {
-					console.log('This doesnt look like a config', e);
-					config.restoreV1(decodeBase64(document.getElementById('cfg_ta').value));
-				}
-				location.reload();
-			}	
+			config.save();
 		},
-		resetConfig : function() {
+		downloadClick: function() {
+			document.getElementById('downloadcfg').click();
+		},
+		restoreClick: function() {
+			document.getElementById('restorecfg').click();
+		},
+		showTextarea: function() {
+			document.getElementById('old_cfg_options').style.display = "none";
+			document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
+			config.show();
+		},		
+		processConfig: function(textfile) {
+			var base64;
+			try {
+				if (typeof textfile === 'string') {
+					newCfg = JSON.parse(textfile);
+				}
+				else if (document.getElementById('cfg_ta').value != '') {
+					newCfg = JSON.parse(document.getElementById('cfg_ta').value);
+				}		
+				var myCfg = JSON.parse(localStorage['ChromeLL-Config']);
+				for (var i in newCfg) {
+					myCfg[i] = newCfg[i];				
+				}
+				myCfg.last_saved = new Date().getTime();
+				localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
+			} catch (e) {
+				console.log('This doesnt look like a config', e);
+				base64 = config.functions.decodeBase64(document.getElementById('cfg_ta').value);
+				config.restoreV1(base64);
+			}
+			location.reload();
+		},
+		resetConfig: function() {
 			var reset = confirm("Are you sure you want to reset your settings?");
 			if (reset === true) {
 				config.getDefault(function(defaultCfg) {
@@ -200,7 +210,7 @@ var config = {
 				return;
 			}
 		},	
-		decodeBase64 : function() {
+		decodeBase64: function() {
 			var Base64 = {
 				_keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
 				decode: function(input) {
@@ -270,13 +280,17 @@ var config = {
 		}
 	},
 	listeners : {
-		click : function() {
+		click: function() {
+			// key-value pairs contain element id and function for event handler
 			var elements = {'ignorator':'ignoratorClick', 
 					'enable_user_highlight':'highlightClick',
 					'loadcfg':'processConfig',
 					'resetcfg':'resetConfig',
 					'forceignorator':'cleanIgnorator', 
-					'restoreignorator':'restoreIgnorator'};
+					'restoreignorator':'restoreIgnorator',
+					'downloadbutton':'downloadClick',
+					'restorebutton':'restoreClick',
+					'old_cfg_options':'showTextarea'};
 			var element, functionName;
 			for (var i in elements) {
 				element = document.getElementById(i);
@@ -284,15 +298,22 @@ var config = {
 				element.addEventListener('click', config.functions[functionName]);
 			}
 		},
-		change : function() {
+		change: function() {
+			var restorecfg = document.getElementById('restorecfg');
 			var keyup_timer;
-			$(document).change(config.save);
+			// use debouncing to prevent script from calling config.save after every keystroke
 			document.addEventListener('keyup', function() {
 				clearTimeout(keyup_timer);
 				keyup_timer = setTimeout(config.save, 500)
 			});
+			document.addEventListener('change', config.save);
+			
+			restorecfg.addEventListener('change', function(evt) {
+				config.restoreFromText(evt);
+			});
 		},
-		menuVisibility : function() {
+		menuVisibility: function() {
+			// array contains div ids of hidden menus
 			var hiddenOptions = ['history_menubar', 'context_menu', 'dramalinks', 'user_info_popup'];
 			var element;
 			for (var i = 0, len = hiddenOptions.length; i < len; i++) {
@@ -302,8 +323,8 @@ var config = {
 			}
 		}
 	},
-	ui : {
-		hideMenus : function() {
+	ui: {
+		hideMenus: function() {
 			var hiddenOptions = {'history_menubar' : 'history_options', 
 					'context_menu' : 'context_options', 
 					'dramalinks' : 'dramalinks_options', 
@@ -316,16 +337,16 @@ var config = {
 				box.checked ? menu.style.display = 'initial' : menu.style.display = 'none';
 			}
 		},
-		setColorPicker : function() {
+		setColorPicker: function() {
 			$('.color').ColorPicker({
 				onChange : function(hsb, hex, rgb, el) {
 					el.value = hex;
-					saveConfig();
+					config.save();
 				},
 				onSubmit : function(hsb, hex, rgb, el) {
 					$(el).val(hex);
 					$(el).ColorPickerHide();
-					saveConfig();
+					config.save();
 				},
 				livePreview : true,
 				color : "",
@@ -334,8 +355,8 @@ var config = {
 				}
 			});
 		},		
-		addDiv : {
-			userHighlight : function() {
+		addDiv: {
+			userHighlight: function() {
 				var ins = document.getElementById('user_highlight').getElementsByClassName(
 						'user_name')[0].parentNode.parentNode.cloneNode(true);
 				ins.className = "user_highlight_data";
@@ -343,21 +364,21 @@ var config = {
 				document.getElementById('user_highlight').insertBefore(ins, null);
 				config.ui.setColorPicker();
 			},
-			bookmarkName : function() {
+			bookmarkName: function() {
 				var ins = document.getElementById('bookmarked_tags').getElementsByClassName(
 						'bookmark_name')[0].parentNode.parentNode.cloneNode(true);
 				ins.className = "bookmark_data";
 				ins.style.display = "block";
 				document.getElementById('bookmarked_tags').insertBefore(ins, null);		
 			},
-			snippetName : function() {
+			snippetName: function() {
 				var ins = document.getElementById('snippets').getElementsByClassName(
 						'snippet_name')[0].parentNode.parentNode.cloneNode(true);
 				ins.className = "snippet_data";
 				ins.style.display = "block";
 				document.getElementById('snippets').insertBefore(ins, null);		
 			},
-			keywordHighlight : function() {
+			keywordHighlight: function() {
 				var ins = document.getElementById('keyword_highlight')
 						.getElementsByClassName('keyword')[0].parentNode.parentNode
 						.cloneNode(true);
@@ -366,7 +387,7 @@ var config = {
 				document.getElementById('keyword_highlight').insertBefore(ins, null);
 				config.ui.setColorPicker();
 			},
-			tagHighlight : function() {
+			tagHighlight: function() {
 				var ins = document.getElementById('tag_highlight').getElementsByClassName(
 						'tag')[0].parentNode.parentNode.cloneNode(true);
 				ins.className = "tag_highlight_data";
@@ -374,7 +395,7 @@ var config = {
 				document.getElementById('tag_highlight').insertBefore(ins, null);
 				config.ui.setColorPicker();	
 			},
-			postTemplate : function() {
+			postTemplate: function() {
 				var ins = document.getElementById('post_template').getElementsByClassName(
 						'template_text')[0].parentNode.parentNode.cloneNode(true);
 				ins.className = "post_template_data";
@@ -383,7 +404,7 @@ var config = {
 			}
 		},
 	},
-	save : function() {
+	save: function() {
 		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 			inputs = $(":checkbox");
 			for ( var i in inputs) {
@@ -496,7 +517,7 @@ var config = {
 			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
 			allBg.init_listener(cfg);	
 	},
-	getDefault : function(callback) {
+	getDefault: function(callback) {
 		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
 		var temp, defaultConfig;
 		var xhr = new XMLHttpRequest();
@@ -510,7 +531,7 @@ var config = {
 		}
 		xhr.send();	
 	},
-	restoreFromText : function(evt) {
+	restoreFromText: function(evt) {
 		// check that file is .txt before passing to loadcfg function
 		var file = evt.target.files[0];
 		if (!file.type.match('text.*')) {
@@ -526,7 +547,7 @@ var config = {
 			reader.readAsText(file);
 		}	
 	},	
-	restoreV1 : function(oC) {
+	restoreV1: function(oC) {
 		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 		var hls = oC.conf['chromeLL_userhighlight'].split(';');
 		var hl = Array();
@@ -558,17 +579,17 @@ var config = {
 		console.log(cfg);
 		localStorage['ChromeLL-Config'] = JSON.stringify(cfg);	
 	},
-	show : function() {
+	show: function() {
 		document.getElementById('cfg_ta').value = localStorage['ChromeLL-Config'];
 	},
-	download : function(textFile) {
+	download: function(textfile) {
 		config.save();
 		var cfg = localStorage['ChromeLL-Config'];
 		var data = new Blob([cfg], {type: 'text/plain'})
-		var textFile = window.URL.createObjectURL(data);
-		return textFile;	
+		var textfile = window.URL.createObjectURL(data);
+		return textfile;	
 	},	
-	init : function() {
+	init: function() {
 		console.log('loading config');
 		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 		var checkboxes = $(":checkbox");
@@ -714,40 +735,23 @@ var config = {
 		// show version
 		var app = chrome.app.getDetails();
 		document.getElementById('version').innerText = app.version;
-		/*document.getElementById('loadcfg').addEventListener('click', function() {
-			// wrapped in anonymous function to prevent mouseEvent from being passed to function
-			loadcfg();
-		});*/		
 		document.getElementById('downloadcfg').href = config.download();
-		document.getElementById('restorecfg').addEventListener('change', function(evt) {
-			config.restoreFromText(evt);
-		});
-		document.getElementById('downloadbutton').addEventListener('click', function() {
-			document.getElementById('downloadcfg').click();
-		});
-		document.getElementById('restorebutton').addEventListener('click', function() {
-			document.getElementById('restorecfg').click();
-		});
-		document.getElementById('old_cfg_options').addEventListener('click', function() {
-			document.getElementById('old_cfg_options').style.display = "none";
-			document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
-			config.show();
-		});
 		if (document.readyState == 'loading') {
 			document.addEventListener('DOMContentLoaded', function() {
 				config.ui.hideMenus();
+				config.ui.setColorPicker();
 				config.listeners.menuVisibility();
 				config.listeners.click();
 				config.listeners.change();
+				config.save();
 			});
-		}
-		else {
+		} else {
 			config.ui.hideMenus();
+			config.ui.setColorPicker();
 			config.listeners.menuVisibility();
 			config.listeners.click();
 			config.listeners.change();
+			config.save();
 		}		
-		config.ui.setColorPicker();
-		config.save();
 	}
 }
