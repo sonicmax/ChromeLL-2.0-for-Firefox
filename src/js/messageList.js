@@ -44,14 +44,14 @@ var mutation;
 });
 
 var messageList = {
-	eti_bash_quote : function(msg, index) {
+	eti_bash : function(msg, index) {
 		var top = msg.getElementsByClassName('message-top')[0];
 		anchor = document.createElement('a');
 		anchor.style.cssFloat = 'right';
 		anchor.href = '##bash';
 		anchor.className = 'bash';
 		anchor.id = "bash_" + index;
-		anchor.innerHTML = '[&nbsp&nbsp]';
+		anchor.innerHTML = '&#9744;';
 		anchor.style.textDecoration = 'none';
 		top.appendChild(anchor);
 	},
@@ -170,7 +170,7 @@ var messageList = {
 		sep.appendChild(sepIns);
 		top.appendChild(sep);
 	},	
-	userhl_messagelist : function(msg) {
+	userhl_messagelist : function(msg, index, live) {
 		if (!config.enable_user_highlight) {
 			return;
 		}
@@ -178,6 +178,7 @@ var messageList = {
 		var first_top = msg.getElementsByClassName('message-top')[0];
 		var top, anchors, anchor;
 		var user;
+		
 		if (!config.no_user_highlight_quotes) {
 			try {
 				for (var k = 0; k < tops.length; k++) {
@@ -198,12 +199,33 @@ var messageList = {
 							anchor.style.color = '#'
 									+ config.user_highlight_data[user].color;
 						}
+						if (live && config.notify_userhl_post 
+								&& k == 0
+								&& el.getElementsByClassName('message-top')[0]
+										.getElementsByTagName('a')[0].innerHTML != document
+										.getElementsByClassName('userbar')[0]
+										.getElementsByTagName('a')[0].innerHTML
+										.replace(/ \((\d+)\)$/, "")) {
+							chrome.extension.sendRequest({
+								need : "notify",
+								message : document.title.replace(
+										/End of the Internet - /i,
+										''),
+								title : "Post by "
+										+ el
+												.getElementsByClassName('message-top')[0]
+												.getElementsByTagName('a')[0].innerHTML
+							}, function(data) {
+								console.log(data);
+							});
+						}
 					}
 				}
 			} catch (e) {
 				// if (config.debug) console.log(e);
 			}			
-		} else {
+		} 
+		else {
 			user = first_top.getElementsByTagName('a')[0]
 					.innerHTML.toLowerCase();
 			if (config.user_highlight_data[user]) {
@@ -220,6 +242,23 @@ var messageList = {
 					anchor.style.color = '#'
 							+ config.user_highlight_data[user].color;
 				}
+				if (live && config.notify_userhl_post
+						&& el.getElementsByClassName('message-top')[0]
+								.getElementsByTagName('a')[0].innerHTML != document
+								.getElementsByClassName('userbar')[0]
+								.getElementsByTagName('a')[0].innerHTML
+								.replace(/ \((\d+)\)$/, "")) {
+					chrome.extension.sendRequest({
+						need : "notify",
+						message : document.title.replace(
+								/End of the Internet - /i, ''),
+						title : "Post by "
+								+ el.getElementsByClassName('message-top')[0]
+										.getElementsByTagName('a')[0].innerHTML
+					}, function(data) {
+						console.log(data);
+					});
+				}				
 			}
 		}
 	},
@@ -1252,9 +1291,9 @@ var messageListHelper = {
 				formData.append('quotes_content', message_array[0]);
 			}
 			// send formData to ETI Bash
-			/*var xhr = new XMLHttpRequest;
+			var xhr = new XMLHttpRequest;
 			xhr.open('POST', 'http://fuckboi.club/bash/submit-quote.php', true);
-			xhr.send(formData);*/
+			xhr.send(formData);
 		}
 	},	
 	addListeners : function() {
@@ -1288,14 +1327,14 @@ var messageListHelper = {
 			else if (ev.target.className == 'bash' && ev.target.getAttribute('ignore') !== 'true') {
 				ev.target.className = 'bash_this';			
 				ev.target.style.fontWeight = 'bold';
-				ev.target.innerHTML = '[X]';
+				ev.target.innerHTML = '&#9745;';
 				messageListHelper.checkBash(ev.target);
 				messageListHelper.showBashPopup();		
 			}
 			else if (ev.target.className == 'bash_this') {
 				ev.target.className = 'bash';
 				ev.target.style.fontWeight = 'initial';
-				ev.target.innerHTML = '[&nbsp&nbsp]';
+				ev.target.innerHTML = '&#9744;';
 				messageListHelper.checkBash();
 			}
 			else if (ev.target.parentNode.id == 'submitbash') {
@@ -1841,7 +1880,8 @@ var messageListHelper = {
 				placeholder.id = webmUrl;
 				placeholder.setAttribute('name', 'placeholder');
 				placeholder.innerHTML = '<video width="' + width + '" height="' + height + '" loop >'
-						+ '</video>';
+						+ '</video>'
+						+ '<span style="display:none">' + url + '</span>';
 				// prevent "Cannot read property 'replaceChild' of null" error
 				if (gfyLink.parentNode) {
 					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
@@ -1898,7 +1938,8 @@ var messageListHelper = {
 				placeholder.id = webmUrl;
 				placeholder.innerHTML = '<img src="' + thumbnailURL 
 						+ '" width="' + width + '" height="' + height + '">'
-						+ '</img>';
+						+ '</img>'
+						+ '<span style="display:none">' + url + '</span>';
 				if (gfyLink.parentNode) {
 					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
 					// add click listener to replace img with video
@@ -1909,7 +1950,8 @@ var messageListHelper = {
 						placeholder.innerHTML = '<video width="' + width 
 								+ '" height="' + height 
 								+ '" loop >'
-								+ '</video>';
+								+ '</video>'
+								+ '<span style="display:none">' + url + '</span>';
 						video = placeholder.getElementsByTagName('video')[0];
 						placeholder.setAttribute('name', 'embedded_thumb');
 						video.src = placeholder.id;
