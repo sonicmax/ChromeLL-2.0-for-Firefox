@@ -402,7 +402,7 @@ var config = {
 				ins.style.display = "block";
 				document.getElementById('post_template').insertBefore(ins, null);	
 			}
-		},
+		}
 	},
 	save: function() {
 		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
