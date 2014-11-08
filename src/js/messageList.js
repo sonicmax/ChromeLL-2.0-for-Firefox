@@ -1599,10 +1599,7 @@ var messageListHelper = {
 		var spoiler = {};
 		var quote = {};
 		var output = ''; 
-		var tagName;
-		var nestedQuote;
-		var quoteArray;
-		var quoteOutput;
+		var tagName, nestedQuote, quoteArray, quoteOutput;
 		for (var i = 0, len = nodes.length; i < len; i++) {
 			// iterate over childNodes and add relevant parts to output string
 			node = nodes[i];
@@ -1615,27 +1612,19 @@ var messageListHelper = {
 					output += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
 				}
 				if (node.tagName === 'A') {
-					if (node.title) {
-						if (node.title.indexOf("/showmessages.php") > -1) {
-							output += node.title.replace('/showmessages.php'
-									, 'http://boards.endoftheinter.net/showmessages.php');
-						}
-					}
-					else {
-						output += node.innerText;
-					}
+					output += node.href;
 				}
-			}
+			}		
 			if (node.className == 'pr') {
-				output += '<pre>' + node.innerHTML + '</pre>';								
-			}
+				output += '<pre>' + node.innerHTML.replace(/<br>/g, '') + '</pre>';								
+			}	
 			if (node.className == 'imgs') {
 				imgNodes = node.getElementsByTagName('A');
 				for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
 					imgNode = imgNodes[l];
 					output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
 				}
-			}			
+			}				
 			if (node.className == 'spoiler_closed') {
 				spoiler.caption = node.getElementsByClassName('caption')[0]
 						.innerText.replace(/<|\/>/g, '');
@@ -1648,7 +1637,7 @@ var messageListHelper = {
 				quote.nested = node.getElementsByClassName('quoted-message');
 				if (quote.nested.length > 0) {
 					for (var m = quote.nested.length; m--;) {
-						nestedQuote = quote.nested[m];						
+						nestedQuote = quote.nested[m];					
 						quoteArray = messageListHelper.nestedQuoteHandler(nestedQuote.childNodes, 
 								nestedQuote.attributes.msgid.value);
 						quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
@@ -1658,25 +1647,24 @@ var messageListHelper = {
 					output += quoteOutput;
 				}
 				else {
-					quoteArray += messageListHelper.nestedQuoteHandler(node.childNodes, quote.msgid);					
+					quoteArray = messageListHelper.nestedQuoteHandler(node.childNodes, quote.msgid);					
 					quoteOutput = quoteArray[0] + quoteArray[1];
 					output += quoteOutput;
 				}
 			}
 		}
-		// remove sig
+		// remove sig from output
 		if (output.indexOf('---') > -1) {
 			output = '<quote msgid="' + _this.id + '">' + output.substring(0, (output.lastIndexOf('---'))) + '</quote>';
 		} else {
 			output = '<quote msgid="' + _this.id + '">' + output + '</quote>';
 		}
-		console.log(output);
 		var json = {
 			"quote": ""
 		};
 		json.quote = output;
+		// copy quote to clipboard via background page
 		chrome.runtime.sendMessage(json, function(response) {
-			// copies json data to clipboard
 			if (config.debug) console.log(response.clipboard);
 		});
 		// alert user
@@ -1685,7 +1673,11 @@ var messageListHelper = {
 	nestedQuoteHandler: function(nodes, msgid) {
 		var node;
 		var output = [];
-		output[0] = '<quote msgid="' + msgid + '">';
+		if (!msgid) {
+			output[0] = '<quote>';
+		} else {
+			output[0] = '<quote msgid="' + msgid + '">';
+		}
 		output[1] = '';
 		for (var i = 0, len = nodes.length; i < len; i++) {
 			// iterate over childNodes of quoted message and add relevant parts to output string
@@ -1699,15 +1691,7 @@ var messageListHelper = {
 					output[1] += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
 				}
 				if (node.tagName === 'A') {
-					if (node.title) {
-						if (node.title.indexOf("/showmessages.php") > -1) {
-							output[1] += node.title.replace('/showmessages.php'
-									, 'http://boards.endoftheinter.net/showmessages.php');
-						}
-					}
-					else {
-						output[1] += node.innerText;
-					}
+					output += node.href;
 				}
 			}
 			if (node.className == 'pr') {
