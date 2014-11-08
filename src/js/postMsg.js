@@ -39,7 +39,6 @@ var postMsg = {
 		}
 		var txt = document.getElementById('message');
 		var input = document.getElementsByTagName('input')[0];
-		input.focus();
 		var tokendesc = document.getElementById('token_desc');
 		// deal with tagless topics/etc
 		if (!tokendesc) {

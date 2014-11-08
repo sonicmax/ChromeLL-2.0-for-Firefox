@@ -1593,11 +1593,6 @@ var messageListHelper = {
 	},
 	quoteHandler: function() {
 		var _this = this;
-		var bgColor = $(event.target.parentNode).css('background-color');
-		// create hidden notification so we can use fadeIn() later
-		$(_this).append($('<span id="copied" style="display: none; position: absolute; z-index: 1; left: 100; ' 
-				+ 'background: ' + bgColor 
-				+ ';">&nbsp<b>[copied to clipboard]</b></span>'));
 		// get childNodes from quoted message
 		var nodes = document.querySelector('[msgid="' + _this.id + '"]').childNodes;
 		console.log(nodes);
@@ -1685,13 +1680,7 @@ var messageListHelper = {
 			if (config.debug) console.log(response.clipboard);
 		});
 		// alert user
-		$("#copied").fadeIn(200);
-		setTimeout(function() {
-			$(_this).find("span:last").fadeOut(400);
-		}, 1500);
-		setTimeout(function() {
-			$(_this).find("span:last").remove();
-		}, 2000);
+		messageListHelper.displayQuoteNotification(_this);
 	},
 	nestedQuoteHandler: function(nodes, msgid) {
 		var node;
@@ -1746,8 +1735,8 @@ var messageListHelper = {
 		var output = '';
 		var childNode, imgNodes, imgNode;
 		// iterate over childNodes (ignoring first & last elements)
-		for (var k = 1, k_len = spoiler.nodes.length; k < k_len - 1; k++) {
-			childNode = spoiler.nodes[k];
+		for (var k = 1, k_len = nodes.length; k < k_len - 1; k++) {
+			childNode = nodes[k];
 			if (childNode.nodeType === 3) {
 				output += childNode.nodeValue;
 			}
@@ -1774,6 +1763,28 @@ var messageListHelper = {
 		else {
 			return '<spoiler>' + output + '</spoiler>';	
 		}
+	},
+	displayQuoteNotification: function(_this) {
+		var bgColor = $(_this.parentNode)
+			.css('background-color');
+		// create hidden notification so we can use fadeIn() later
+		$(_this)
+			.append($('<span id="copied"' 
+					+ 'style="display: none; position: absolute; z-index: 1; left: 100; '
+					+ 'background: ' + bgColor 
+					+ ';">&nbsp<b>[copied to clipboard]</b></span>'));
+		$("#copied")
+			.fadeIn(200);
+		setTimeout(function() {
+			$(_this)
+				.find("span:last")
+				.fadeOut(400);
+		}, 1500);
+		setTimeout(function() {
+			$(_this)
+				.find("span:last")
+				.remove();
+		}, 2000);
 	},
 	archiveQuoteButtons: function() {
 		var hostname = window.location.hostname;
