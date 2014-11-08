@@ -177,8 +177,7 @@ var messageList = {
 		var tops = msg.getElementsByClassName('message-top');
 		var first_top = msg.getElementsByClassName('message-top')[0];
 		var top, anchors, anchor;
-		var user;
-		
+		var user;	
 		if (!config.no_user_highlight_quotes) {
 			try {
 				for (var k = 0; k < tops.length; k++) {
@@ -201,18 +200,18 @@ var messageList = {
 						}
 						if (live && config.notify_userhl_post 
 								&& k == 0
-								&& el.getElementsByClassName('message-top')[0]
+								&& msg.getElementsByClassName('message-top')[0]
 										.getElementsByTagName('a')[0].innerHTML != document
 										.getElementsByClassName('userbar')[0]
 										.getElementsByTagName('a')[0].innerHTML
 										.replace(/ \((\d+)\)$/, "")) {
-							chrome.extension.sendRequest({
+							chrome.runtime.sendMessage({
 								need : "notify",
 								message : document.title.replace(
 										/End of the Internet - /i,
 										''),
 								title : "Post by "
-										+ el
+										+ msg
 												.getElementsByClassName('message-top')[0]
 												.getElementsByTagName('a')[0].innerHTML
 							}, function(data) {
@@ -243,17 +242,17 @@ var messageList = {
 							+ config.user_highlight_data[user].color;
 				}
 				if (live && config.notify_userhl_post
-						&& el.getElementsByClassName('message-top')[0]
+						&& msg.getElementsByClassName('message-top')[0]
 								.getElementsByTagName('a')[0].innerHTML != document
 								.getElementsByClassName('userbar')[0]
 								.getElementsByTagName('a')[0].innerHTML
 								.replace(/ \((\d+)\)$/, "")) {
-					chrome.extension.sendRequest({
+					chrome.runtime.sendMessage({
 						need : "notify",
 						message : document.title.replace(
 								/End of the Internet - /i, ''),
 						title : "Post by "
-								+ el.getElementsByClassName('message-top')[0]
+								+ msg.getElementsByClassName('message-top')[0]
 										.getElementsByTagName('a')[0].innerHTML
 					}, function(data) {
 						console.log(data);
@@ -1595,7 +1594,6 @@ var messageListHelper = {
 		var _this = this;
 		// get childNodes from quoted message
 		var nodes = document.querySelector('[msgid="' + _this.id + '"]').childNodes;
-		console.log(nodes);
 		var spoiler = {};
 		var quote = {};
 		var output = ''; 
