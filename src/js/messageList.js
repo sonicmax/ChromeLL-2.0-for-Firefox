@@ -1598,111 +1598,88 @@ var messageListHelper = {
 		$(_this).append($('<span id="copied" style="display: none; position: absolute; z-index: 1; left: 100; ' 
 				+ 'background: ' + bgColor 
 				+ ';">&nbsp<b>[copied to clipboard]</b></span>'));
-		var quotedMsg = document.querySelector('[msgid="' + _this.id + '"]');
-		var html = quotedMsg.innerHTML;
-		//var elements = quotedMsg.getElementsByTagName("*");
-		var nodes = quotedMsg.childNodes;
-		var quotedthing = '';
+		// get childNodes from quoted message
+		var nodes = document.querySelector('[msgid="' + _this.id + '"]').childNodes;
+		console.log(nodes);
 		var spoiler = {};
 		var quote = {};
+		var output = ''; 
 		var tagName;
+		var nestedQuote;
+		var quoteArray;
+		var quoteOutput;
 		for (var i = 0, len = nodes.length; i < len; i++) {
-			// iterate through elements in document and find/replace relevant parts of copied html
-			// so that formatting is maintained in quoted post
+			// iterate over childNodes and add relevant parts to output string
 			node = nodes[i];
 			if (node.nodeType === 3) {
-				quotedthing += node.nodeValue;
+				output += node.nodeValue;
 			}
-			if (node.tagName) {			
+			if (node.tagName) {
 				if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
 					tagName = node.tagName.toLowerCase(); 
-					quotedthing += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
+					output += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
 				}
 				if (node.tagName === 'A') {
-					console.log(node);
-					if (node.title.indexOf("/showmessages.php") > -1) {
-						quotedthing += node.title.replace('/showmessages.php'
-								, 'http://boards.endoftheinter.net/showmessages.php');
-					} else {
-						quotedthing += node.innerText;
+					if (node.title) {
+						if (node.title.indexOf("/showmessages.php") > -1) {
+							output += node.title.replace('/showmessages.php'
+									, 'http://boards.endoftheinter.net/showmessages.php');
+						}
+					}
+					else {
+						output += node.innerText;
 					}
 				}
 			}
 			if (node.className == 'pr') {
-				// handle pre tags 
-				quotedthing += '<pre>' + node.innerHTML + '</pre>';								
-			}		
+				output += '<pre>' + node.innerHTML + '</pre>';								
+			}
 			if (node.className == 'imgs') {
 				imgNodes = node.getElementsByTagName('A');
 				for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
 					imgNode = imgNodes[l];
-					quotedthing += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
+					output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
 				}
-			}
+			}			
 			if (node.className == 'spoiler_closed') {
-				// handle spoiler tagged content
-				spoiler.content = '';
 				spoiler.caption = node.getElementsByClassName('caption')[0]
 						.innerText.replace(/<|\/>/g, '');
 				spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-				var childNode, imgNodes, imgNode;
-				// iterate over childNodes (ignoring first & last elements)
-				for (var k = 1, k_len = spoiler.nodes.length; k < k_len - 1; k++) {
-					childNode = spoiler.nodes[k];
-					if (childNode.nodeType === 3) {
-						spoiler.content += childNode.nodeValue;
-					}
-					if (childNode.tagName) {
-						if (childNode.tagName == 'B' || childNode.tagName == 'I' || childNode.tagName == 'U') {
-							tagName = childNode.tagName.toLowerCase(); 
-							spoiler.content += '<' + tagName + '>' + childNode.innerText + '</' + tagName + '>';
-						}
-						if (childNode.tagName === 'A') {
-							spoiler.content += childNode.innerText;
-						}
-					}
-					if (childNode.className == 'imgs') {
-						imgNodes = childNode.getElementsByTagName('A');
-						for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
-							imgNode = imgNodes[l];
-							spoiler.content += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
-						}
-					}
-				}
-				spoiler.finished = '<spoiler caption="' + spoiler.caption + '">' + spoiler.content + '</spoiler>';
-				quotedthing += spoiler.finished;
+				output += messageListHelper.spoilerHandler(spoiler.caption, spoiler.nodes);
 			}	
 			if (node.className == 'quoted-message') {
+				quoteOutput = '';
 				quote.msgid = node.attributes.msgid.value;
-				if (!quote.msgid) {
-					quote.finished = '<quote>' + node.innerText + '</quote>';
-				} else if (node.lastChild.data) {
-					quote.finished = '<quote msgid="' + quote.msgid + '">' + node.lastChild.data + '</quote>';
-				} else if (node.getElementsByClassName('thumbnailed_image')) {
-					quote.html = node.lastChild.innerHTML;
-					first = quote.html.indexOf('imgsrc="');
-					last = quote.html.indexOf('lass="');
-					quote.img = quote.html.substring(first, last);
-					quote.img = quote.img.replace(/imgsrc/g, '<img src');
-					quote.img = quote.img.replace(/" c/g, '" />');
-					quote.finished = '<quote msgid="' + quote.msgid + '">' + quote.img + '</quote>';
+				quote.nested = node.getElementsByClassName('quoted-message');
+				if (quote.nested.length > 0) {
+					for (var m = quote.nested.length; m--;) {
+						nestedQuote = quote.nested[m];						
+						quoteArray = messageListHelper.nestedQuoteHandler(nestedQuote.childNodes, 
+								nestedQuote.attributes.msgid.value);
+						quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
+					}
+					quoteArray = messageListHelper.nestedQuoteHandler(node.childNodes, quote.msgid);
+					quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
+					output += quoteOutput;
 				}
-				// todo - maintain proper html for nested quotes
-				quote.finished = quote.finished.replace(/|⇗ | Notes/g, '');
-				quotedthing += quote.finished;
+				else {
+					quoteArray += messageListHelper.nestedQuoteHandler(node.childNodes, quote.msgid);					
+					quoteOutput = quoteArray[0] + quoteArray[1];
+					output += quoteOutput;
+				}
 			}
 		}
 		// remove sig
-		if (quotedthing.indexOf('---') > -1) {
-			quotedthing = '<quote msgid="' + _this.id + '">' + quotedthing.substring(0, (quotedthing.lastIndexOf('---'))) + '</quote>';
+		if (output.indexOf('---') > -1) {
+			output = '<quote msgid="' + _this.id + '">' + output.substring(0, (output.lastIndexOf('---'))) + '</quote>';
 		} else {
-			quotedthing = '<quote msgid="' + _this.id + '">' + quotedthing + '</quote>';
+			output = '<quote msgid="' + _this.id + '">' + output + '</quote>';
 		}
-		console.log(quotedthing);
+		console.log(output);
 		var json = {
 			"quote": ""
 		};
-		json.quote = quotedthing;
+		json.quote = output;
 		chrome.runtime.sendMessage(json, function(response) {
 			// copies json data to clipboard
 			if (config.debug) console.log(response.clipboard);
@@ -1715,6 +1692,88 @@ var messageListHelper = {
 		setTimeout(function() {
 			$(_this).find("span:last").remove();
 		}, 2000);
+	},
+	nestedQuoteHandler: function(nodes, msgid) {
+		var node;
+		var output = [];
+		output[0] = '<quote msgid="' + msgid + '">';
+		output[1] = '';
+		for (var i = 0, len = nodes.length; i < len; i++) {
+			// iterate over childNodes of quoted message and add relevant parts to output string
+			node = nodes[i];
+			if (node.nodeType === 3) {
+				output[1] += node.nodeValue;
+			}
+			if (node.tagName) {	
+				if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
+					tagName = node.tagName.toLowerCase(); 
+					output[1] += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
+				}
+				if (node.tagName === 'A') {
+					if (node.title) {
+						if (node.title.indexOf("/showmessages.php") > -1) {
+							output[1] += node.title.replace('/showmessages.php'
+									, 'http://boards.endoftheinter.net/showmessages.php');
+						}
+					}
+					else {
+						output[1] += node.innerText;
+					}
+				}
+			}
+			if (node.className == 'pr') {
+				output[1] += '<pre>' + node.innerHTML + '</pre>';								
+			}
+			if (node.className == 'imgs') {
+				imgNodes = node.getElementsByTagName('A');
+				for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
+					imgNode = imgNodes[l];
+					output[1] += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
+				}
+			}
+			if (node.className == 'spoiler_closed') {
+				var spoiler = {};
+				spoiler.caption = node.getElementsByClassName('caption')[0]
+						.innerText.replace(/<|\/>/g, '');
+				spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
+				output[1] += messageListHelper.spoilerHandler(spoiler.caption, spoiler.nodes);
+			}			
+		}
+		output[1] += '</quote>'
+		return output;
+	},
+	spoilerHandler: function(caption, nodes) {
+		var output = '';
+		var childNode, imgNodes, imgNode;
+		// iterate over childNodes (ignoring first & last elements)
+		for (var k = 1, k_len = spoiler.nodes.length; k < k_len - 1; k++) {
+			childNode = spoiler.nodes[k];
+			if (childNode.nodeType === 3) {
+				output += childNode.nodeValue;
+			}
+			if (childNode.tagName) {
+				if (childNode.tagName == 'B' || childNode.tagName == 'I' || childNode.tagName == 'U') {
+					tagName = childNode.tagName.toLowerCase(); 
+					output += '<' + tagName + '>' + childNode.innerText + '</' + tagName + '>';
+				}
+				if (childNode.tagName === 'A') {
+					output += childNode.innerText;
+				}
+			}
+			if (childNode.className == 'imgs') {
+				imgNodes = childNode.getElementsByTagName('A');
+				for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
+					imgNode = imgNodes[l];
+					output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
+				}
+			}
+		}
+		if (caption) {
+			return '<spoiler caption="' + caption + '">' + output + '</spoiler>';	
+		} 
+		else {
+			return '<spoiler>' + output + '</spoiler>';	
+		}
 	},
 	archiveQuoteButtons: function() {
 		var hostname = window.location.hostname;
