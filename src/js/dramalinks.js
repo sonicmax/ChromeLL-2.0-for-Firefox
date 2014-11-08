@@ -79,6 +79,9 @@ var dramalinksFunctions = {
 			need : "config"
 		}, function(response) {
 			config = response.data;
+			if (!config.dramalinks) {
+				return;
+			}
 			if (config.hide_dramalinks_topiclist
 					&& !window.location.href.match(/topics|history/i)) {
 				return;
