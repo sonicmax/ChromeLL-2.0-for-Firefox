@@ -513,6 +513,7 @@ var config = {
 							.getElementsByClassName('template_text')[0].value;
 				}
 			}
+			cfg.clear_notify = document.getElementById('clear_notify').value;
 			cfg.last_saved = new Date().getTime();
 			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
 			allBg.init_listener(cfg);	
@@ -659,6 +660,7 @@ var config = {
 					.getElementsByClassName('template_title').length - 1].value = j;
 			config.ui.addDiv.postTemplate();
 		}
+		document.getElementById('clear_notify').value = cfg.clear_notify;
 		document.addEventListener('keyup', function(evt) {
 			if (!evt.target.name)
 				return;
