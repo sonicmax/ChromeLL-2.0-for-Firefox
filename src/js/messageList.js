@@ -909,9 +909,9 @@ var messageList = {
 				}
 				else if (gfycat.tagName == 'A') {
 					if (gfycat.getAttribute('name') == 'gfycat_thumb') {
-						messageList.gfycat.createThumbnail(gfycat);
+						messageList.gfycat.thumbnail(gfycat);
 					} else {
-						messageList.gfycat.createPlaceholder(gfycat);
+						messageList.gfycat.placeholder(gfycat);
 					}
 				}
 				else if (gfycat.getAttribute('name') == 'placeholder') {
@@ -923,137 +923,129 @@ var messageList = {
 				}
 			}
 		},
-		placeholder: function(gfyLink) {
-			var https, placeholder, url, splitURL, code, xhrURL, xhr;
-			var temp, width, height, webmUrl, position;
-			placeholder = document.createElement('div');
-			url = gfyLink.getAttribute('href');
-			splitURL = url.split('/').slice(-1);
-			code = splitURL.join('/');
-			xhrURL = 'http://gfycat.com/cajax/get/' + code;
+		getAPIData: function (url, callback) {
+			var splitURL = url.split('/').slice(-1);
+			var code = splitURL.join('/');
+			var xhrURL = 'http://gfycat.com/cajax/get/' + code;
+			var https;
 			if (window.location.protocol == 'https:') {
 				https = true;
 				xhrURL = xhrURL.replace('http', 'https');
 			}
-			xhr = new XMLHttpRequest();
+			var xhr = new XMLHttpRequest();
+			var apiData = {};
+			var width, height, webm;
+			var response;
 			xhr.open("GET", xhrURL, true);
 			xhr.onreadystatechange = function() {
 				if (xhr.readyState == 4 && xhr.status == 200) {
 					// gfycat api provides width, height, & webm url
-					temp = JSON.parse(xhr.responseText);
-					if (!temp.gfyItem) {
-						// some kind of error
-						gfyLink.className = 'l';
-						return;
+					response = JSON.parse(xhr.responseText);
+					if (!response.gfyItem) {
+						callback("error");
 					}
-					width = temp.gfyItem.width;		
-					height = temp.gfyItem.height;
-					webmUrl = temp.gfyItem.webmUrl;
-					if (https) {
-						webmUrl = webmUrl.replace('http', 'https');
-					}
-					if (config.resize_gfys 
-							&& width > config.gfy_max_width) {
+					width = response.gfyItem.width;
+					height = response.gfyItem.height;
+					if (messageList.config.resize_gfys 
+							&& width > messageList.config.gfy_max_width) {
 						// scale video size to match gfy_max_width value
-						height = (height / (width / config.gfy_max_width));
-						width = config.gfy_max_width;
+						height = (height / (width / messageList.config.gfy_max_width));
+						width = messageList.config.gfy_max_width;
+					}					
+					if (https) {
+						webm = response.gfyItem.webmUrl.replace('http', 'https');
 					}
-					// create placeholder
-					placeholder.className = 'gfycat';
-					placeholder.id = webmUrl;
-					placeholder.setAttribute('name', 'placeholder');
-					placeholder.innerHTML = '<video width="' + width + '" height="' + height + '" loop >'
-							+ '</video>'
-							+ '<span style="display:none">' + url + '</span>';
-					// prevent "Cannot read property 'replaceChild' of null" error
-					if (gfyLink.parentNode) {
-						gfyLink.parentNode.replaceChild(placeholder, gfyLink);
-						// check if placeholder is visible (some placeholders will be off screen)
-						position = placeholder.getBoundingClientRect();
-						if (position.top > window.innerHeight) {
-							return;
-						} else {
-							// pass placeholder video element to embed function
-							messageList.gfycat.embed(placeholder);
-						}
+					else {
+						webm = response.gfyItem.webmUrl;
 					}
+					apiData.nsfw = response.gfyItem.nsfw;
+					apiData.height = height;
+					apiData.width = width;
+					apiData.webm = webm;
+					callback(apiData);
 				}
 			}
 			xhr.send();
 		},
+		placeholder: function(gfyLink) {
+			var placeholder, url, position;
+			url = gfyLink.getAttribute('href');
+			this.getAPIData(url, function(data) {
+				if (data === "error") {
+					// revert class name to stop loader from detecting link
+					gfyLink.className = 'l';
+					return;
+				}
+				// create placeholder
+				placeholder = document.createElement('div');
+				placeholder.className = 'gfycat';
+				placeholder.id = data.webm;
+				placeholder.setAttribute('name', 'placeholder');
+				placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
+						+ '</video>'
+						+ '<span style="display:none">' + url + '</span>';
+				// prevent "Cannot read property 'replaceChild' of null" error
+				if (gfyLink.parentNode) {
+					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
+					// check if placeholder is visible (some placeholders will be off screen)
+					position = placeholder.getBoundingClientRect();
+					if (position.top > window.innerHeight) {
+						return;
+					} else {
+						// pass placeholder video element to embed function
+						messageList.gfycat.embed(placeholder);
+					}
+				}
+			});
+		},
 		thumbnail: function(gfyLink) {
-			var https, placeholder, url, splitURL, code, xhrURL, xhr;
-			var thumbnailURL;
-			var temp, width, height, webmUrl;
-			var img, video;
-			placeholder = document.createElement('div');
+			var placeholder, url, splitURL, code, thumbnail;
 			url = gfyLink.getAttribute('href');
 			splitURL = url.split('/').slice(-1);
 			code = splitURL.join('/');
-			thumbnailURL = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
-			xhrURL = 'http://gfycat.com/cajax/get/' + code;
-			if (window.location.protocol == 'https:') {
-				https = true;
-				xhrURL = xhrURL.replace('http', 'https');
-				thumbnailURL = thumbnailURL.replace('http', 'https');
-			}
-			xhr = new XMLHttpRequest();
-			xhr.open("GET", xhrURL, true);
-			xhr.onreadystatechange = function() {
-				if (xhr.readyState == 4 && xhr.status == 200) {
-					temp = JSON.parse(xhr.responseText);			
-					if (!temp.gfyItem) {
-						gfyLink.className = 'l';
-						return;
-					}
-					width = temp.gfyItem.width;
-					height = temp.gfyItem.height;
-					webmUrl = temp.gfyItem.webmUrl;
-					if (https) {
-						webmUrl = webmUrl.replace('http', 'https');
-					}
-					if (config.resize_gfys 
-							&& width > config.gfy_max_width) {
-						height = (height / (width / config.gfy_max_width));
-						width = config.gfy_max_width;
-					}
-					placeholder.className = 'gfycat';
-					placeholder.id = webmUrl;
-					placeholder.innerHTML = '<img src="' + thumbnailURL 
-							+ '" width="' + width + '" height="' + height + '">'
-							+ '</img>'
-							+ '<span style="display:none">' + url + '</span>';
-					if (gfyLink.parentNode) {
-						gfyLink.parentNode.replaceChild(placeholder, gfyLink);
-						// add click listener to replace img with video
-						img = placeholder.getElementsByTagName('img')[0];
-						img.title = "Click to play";
-						img.addEventListener('click', function(ev) {
-							ev.preventDefault();
-							placeholder.innerHTML = '<video width="' + width 
-									+ '" height="' + height 
-									+ '" loop >'
-									+ '</video>'
-									+ '<span style="display:none">' + url + '</span>';
-							video = placeholder.getElementsByTagName('video')[0];
-							placeholder.setAttribute('name', 'embedded_thumb');
-							video.src = placeholder.id;
-							video.title = "Click to pause";
-							video.play();
-							video.addEventListener('click', function(ev) {
-								video.title = "Click to play/pause";
-								if (!video.paused) {
-									video.pause();
-								}
-								else {
-									video.play();
-								}
-							});
-						});
-					}
+			thumbnail = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
+			this.getAPIData(url, function(data) {
+				if (data === "error") {
+					// revert class name to stop loader from detecting link
+					gfyLink.className = 'l';
+					return;
 				}
-			}
-			xhr.send();
+				placeholder = document.createElement('div');
+				placeholder.className = 'gfycat';
+				placeholder.id = data.webm;
+				placeholder.innerHTML = '<img src="' + thumbnail 
+						+ '" width="' + data.width + '" height="' + data.height + '">'
+						+ '</img>'
+						+ '<span style="display:none">' + url + '</span>';
+				if (gfyLink.parentNode) {
+					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
+					// add click listener to replace img with video
+					img = placeholder.getElementsByTagName('img')[0];
+					img.title = "Click to play";
+					img.addEventListener('click', function(ev) {
+						ev.preventDefault();
+						placeholder.innerHTML = '<video width="' + data.width 
+								+ '" height="' + data.height 
+								+ '" loop >'
+								+ '</video>'
+								+ '<span style="display:none">' + url + '</span>';
+						video = placeholder.getElementsByTagName('video')[0];
+						placeholder.setAttribute('name', 'embedded_thumb');
+						video.src = placeholder.id;
+						video.title = "Click to pause";
+						video.play();
+						video.addEventListener('click', function(ev) {
+							video.title = "Click to play/pause";
+							if (!video.paused) {
+								video.pause();
+							}
+							else {
+								video.play();
+							}
+						});
+					});
+				}			
+			});
 		},
 		embed: function(placeholder) {
 			var video = placeholder.getElementsByTagName('video')[0];
