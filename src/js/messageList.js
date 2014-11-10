@@ -2090,7 +2090,6 @@ var messageList = {
 		}
 	},	
 	callFunctions: function(pm) {
-		var t0 = performance.now();
 		// iterate over objects & call function if messageList.config value is true
 		var msgs = document.getElementsByClassName('message-container');
 		var msg, len;
@@ -2098,8 +2097,9 @@ var messageList = {
 		var pageFunctions = this.page;
 		var postFunctions = this.posts;
 		var miscFunctions = this.misc;
+		var config = messageList.config;
 		for (var k in pageFunctions) {
-			if (messageList.config[k + pm]) {
+			if (config[k + pm]) {
 					pageFunctions[k]();
 			}
 		}
@@ -2116,7 +2116,7 @@ var messageList = {
 			msg = msgs[j];
 			// iterate over functions in messageList
 			for (var k in postFunctions) {
-				if (messageList.config[k + pm]) {
+				if (config[k + pm]) {
 					// pass msg and index value to function
 					postFunctions[k](msg, j);
 				}
@@ -2127,7 +2127,7 @@ var messageList = {
 			// iterate over rest of messages
 			for (j = len; msg = msgs[j]; j++) {
 				for (var k in postFunctions) {
-					if (messageList.config[k + pm]) {
+					if (config[k + pm]) {
 						postFunctions[k](msg, j);
 					}
 				}
@@ -2141,18 +2141,16 @@ var messageList = {
 		});
 		// call functions that dont modify DOM
 		for (var i in miscFunctions) {
-			if (messageList.config[i + pm]) {
+			if (config[i + pm]) {
 				miscFunctions[i]();
 			}
 		}
-		var t1 = performance.now();
-		console.log("Processed in " + (t1 - t0) + " milliseconds.");
 		// call functions that dont exist in posts/page/misc objects
 		messageList.links.check();
 		messageList.addListeners();
 		messageList.appendScripts();
-		if (messageList.config.new_page_notify) {
-			if (messageList.config.debug) {
+		if (config.new_page_notify) {
+			if (config.debug) {
 				console.log('listening for new page');
 			}
 			// set up observer to watch for mutations to 'nextpage' element
