@@ -1,46 +1,3 @@
-var config = [];
-var ignorated = {
-	total_ignored : 0,
-	data : {
-		users : {}
-	}
-};
-
-// set up an observer for when img-placeholders get populated
-var img_observer = new MutationObserver(function(mutations) {
-var mutation;
-	for (var i = 0, len = mutations.length; i < len; i++) {
-		mutation = mutations[i];
-		if (config.resize_imgs) {
-			messageList.image.resize(mutation.target.childNodes[0]);
-		}
-		if (mutation.type === 'attributes') {
-			// once they're loaded, thumbnails have /i/t/ in their
-			// url where fullsize have /i/n/
-			if (mutation.attributeName == "class"
-					&& mutation.target.getAttribute('class') == "img-loaded"
-					&& mutation.target.childNodes[0].src
-							.match(/.*\/i\/t\/.*/)) {
-				if(config.debug) console.log("found thumbnail");
-				/*
-				 * set up the onclick and do some dom manip that the
-				 * script originally did - i think only removing href
-				 * actually matters
-				 */
-				mutation.target.parentNode.addEventListener('click',
-						messageList.image.expand);
-				mutation.target.parentNode.setAttribute('class',
-						'thumbnailed_image');
-				mutation.target.parentNode
-						.setAttribute('oldHref',
-								mutation.target.parentNode
-										.getAttribute('href'));
-				mutation.target.parentNode.removeAttribute('href');
-			}
-		}
-	}
-});
-
 var messageList = {
 	posts: {
 		// live is undefined unless these functions are called 
@@ -57,12 +14,12 @@ var messageList = {
 			top.appendChild(anchor);
 		},
 		ignorator_messagelist: function(msg, index) {
-			if (!config.ignorator) {
+			if (!messageList.config.ignorator) {
 				return;
 			}
 			var tops = msg.getElementsByClassName('message-top');
 			var top, username, top_index;
-			tops_total += tops.length;
+			messageList.tops_total += tops.length;
 			for (var j = 0, len = tops.length; j < len; j++) {
 				top = tops[j];
 				if (top) {
@@ -71,25 +28,25 @@ var messageList = {
 						if (username == messageList.ignores[f]) {
 							// calculate equivalent index of message-top for
 							// show_ignorator function
-							if (j == 0 && tops_total > 0) {
-								top_index = tops_total - tops.length; 
+							if (j == 0 && messageList.tops_total > 0) {
+								top_index = messageList.tops_total - tops.length; 
 							}
 							else {
-								top_index = tops_total - j;
+								top_index = messageList.tops_total - j;
 							}
 							top.parentNode.style.display = 'none';
-							if (config.debug) {
+							if (messageList.config.debug) {
 								console.log('removed post by '
 										+ messageList.ignores[f]);
 							}
-							ignorated.total_ignored++;
-							if (!ignorated.data.users[messageList.ignores[f]]) {
-								ignorated.data.users[messageList.ignores[f]] = {};
-								ignorated.data.users[messageList.ignores[f]].total = 1; 
-								ignorated.data.users[messageList.ignores[f]].trs = [ top_index ];
+							messageList.ignorated.total_ignored++;
+							if (!messageList.ignorated.data.users[messageList.ignores[f]]) {
+								messageList.ignorated.data.users[messageList.ignores[f]] = {};
+								messageList.ignorated.data.users[messageList.ignores[f]].total = 1; 
+								messageList.ignorated.data.users[messageList.ignores[f]].trs = [ top_index ];
 							} else {
-								ignorated.data.users[messageList.ignores[f]].total++;
-								ignorated.data.users[messageList.ignores[f]].trs
+								messageList.ignorated.data.users[messageList.ignores[f]].total++;
+								messageList.ignorated.data.users[messageList.ignores[f]].trs
 										.push(top_index);
 							}
 						}
@@ -98,8 +55,8 @@ var messageList = {
 			}
 		},	
 		user_notes: function(msg) {
-			if (!config.usernote_notes) {
-				config.usernote_notes = {};
+			if (!messageList.config.usernote_notes) {
+				messageList.config.usernote_notes = {};
 			}	
 			var top = msg.getElementsByClassName('message-top')[0];
 			if (!top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
@@ -112,7 +69,7 @@ var messageList = {
 			top.appendChild(divider);
 			tempID = top.getElementsByTagName('a')[0].href
 					.match(/user=(\d+)$/i)[1];
-			notebook.innerHTML = (config.usernote_notes[tempID] != undefined && config.usernote_notes[tempID] != '') ? 'Notes*'
+			notebook.innerHTML = (messageList.config.usernote_notes[tempID] != undefined && messageList.config.usernote_notes[tempID] != '') ? 'Notes*'
 					: 'Notes';
 			notebook.href = "##note" + tempID;
 			top.appendChild(notebook);
@@ -172,34 +129,34 @@ var messageList = {
 			top.appendChild(sep);
 		},	
 		userhl_messagelist: function(msg, index, live) {
-			if (!config.enable_user_highlight) {
+			if (!messageList.config.enable_user_highlight) {
 				return;
 			}
 			var tops = msg.getElementsByClassName('message-top');
 			var first_top = msg.getElementsByClassName('message-top')[0];
 			var top, anchors, anchor;
 			var user;	
-			if (!config.no_user_highlight_quotes) {
+			if (!messageList.config.no_user_highlight_quotes) {
 				try {
 					for (var k = 0; k < tops.length; k++) {
 						top = tops[k];			
 							user = top.getElementsByTagName('a')[0].innerHTML
 									.toLowerCase();
-						if (config.user_highlight_data[user]) {
-							if (config.debug) {
+						if (messageList.config.user_highlight_data[user]) {
+							if (messageList.config.debug) {
 								console.log('highlighting post by ' + user);
 							}
 							top.style.background = '#'
-									+ config.user_highlight_data[user].bg;
+									+ messageList.config.user_highlight_data[user].bg;
 							top.style.color = '#'
-									+ config.user_highlight_data[user].color;
+									+ messageList.config.user_highlight_data[user].color;
 							anchors = top.getElementsByTagName('a');
 							for (var j = 0, len = anchors.length; j < len; j++) {
 								anchor = anchors[j];
 								anchor.style.color = '#'
-										+ config.user_highlight_data[user].color;
+										+ messageList.config.user_highlight_data[user].color;
 							}
-							if (live && config.notify_userhl_post 
+							if (live && messageList.config.notify_userhl_post 
 									&& k == 0
 									&& msg.getElementsByClassName('message-top')[0]
 											.getElementsByTagName('a')[0].innerHTML != document
@@ -222,27 +179,27 @@ var messageList = {
 						}
 					}
 				} catch (e) {
-					// if (config.debug) console.log(e);
+					// if (messageList.config.debug) console.log(e);
 				}			
 			} 
 			else {
 				user = first_top.getElementsByTagName('a')[0]
 						.innerHTML.toLowerCase();
-				if (config.user_highlight_data[user]) {
-					if (config.debug) {
+				if (messageList.config.user_highlight_data[user]) {
+					if (messageList.config.debug) {
 						console.log('highlighting post by ' + user);
 					}
 					first_top.style.background = '#'
-							+ config.user_highlight_data[user].bg;
+							+ messageList.config.user_highlight_data[user].bg;
 					first_top.style.color = '#'
-							+ config.user_highlight_data[user].color;
+							+ messageList.config.user_highlight_data[user].color;
 					anchors = first_top.getElementsByTagName('a');
 					for (var j = 0, len = anchors.length; j < len; j++) {
 						anchor = anchors[j];
 						anchor.style.color = '#'
-								+ config.user_highlight_data[user].color;
+								+ messageList.config.user_highlight_data[user].color;
 					}
-					if (live && config.notify_userhl_post
+					if (live && messageList.config.notify_userhl_post
 							&& msg.getElementsByClassName('message-top')[0]
 									.getElementsByTagName('a')[0].innerHTML != document
 									.getElementsByClassName('userbar')[0]
@@ -263,7 +220,7 @@ var messageList = {
 			}
 		},
 		foxlinks_quotes: function(msg) {
-			var color = "#" + config['foxlinks_quotes_color'];
+			var color = "#" + messageList.config['foxlinks_quotes_color'];
 			var quotes = msg.getElementsByClassName('quoted-message');
 			if (!quotes.length) {
 				return;
@@ -357,7 +314,7 @@ var messageList = {
 			var phold;
 			for (var i = 0, len = pholds.length; i < len; i++) {
 				phold = pholds[i];
-				img_observer.observe(phold, {
+				messageList.imgObserver.observe(phold, {
 					attributes : true,
 					childList: true
 				});
@@ -391,7 +348,7 @@ var messageList = {
 		post_title_notification: function(mutation, index, live) {
 			if (live) {
 				if (mutation.style.display === "none") {
-					if (config.debug) {
+					if (messageList.config.debug) {
 						console.log('not updating for ignorated post');
 					}
 					return;
@@ -502,9 +459,9 @@ var messageList = {
 			}
 			else {
 				// handle non anonymous topics
-				if (config.user_id) {
+				if (messageList.config.user_id) {
 					// use cached user id
-					var me = '&u=' + config.user_id;
+					var me = '&u=' + messageList.config.user_id;
 				} else {
 					// fallback
 					var me = '&u=' + document.getElementsByClassName('userbar')[0]
@@ -545,9 +502,9 @@ var messageList = {
 			}
 			for (var i = 0, len = tcs.length; i < len; i++) {
 				tc = tcs[i];
-				if (config.tc_highlight_color) {
+				if (messageList.config.tc_highlight_color) {
 					tc.getElementsByTagName('a')[0].style.color = '#'
-							+ config.tc_highlight_color;
+							+ messageList.config.tc_highlight_color;
 				}
 			}
 		},
@@ -557,7 +514,7 @@ var messageList = {
 				return;
 			}
 			var color, tc, span, b, text, divider;
-			if (config.tc_label_color && config.tc_label_color != '') {
+			if (messageList.config.tc_label_color && messageList.config.tc_label_color != '') {
 				color = true;
 			}
 			for (var i = 0, len = tcs.length; i < len; i++) {
@@ -568,7 +525,7 @@ var messageList = {
 				divider = document.createTextNode(' | ');
 				b.appendChild(text);
 				if (color) {
-					b.style.color = '#' + config.tc_label_color;
+					b.style.color = '#' + messageList.config.tc_label_color;
 				}
 				span.appendChild(divider);
 				span.appendChild(b);			
@@ -869,7 +826,7 @@ var messageList = {
 				var caret;
 				ta.addEventListener('keydown', 
 					function(event) {
-						if (config.snippet_alt_key) {
+						if (messageList.config.snippet_alt_key) {
 							if (event.shiftKey == true
 									&& event.keyIdentifier == 'U+0009') {
 								event.preventDefault();
@@ -877,7 +834,7 @@ var messageList = {
 								messageList.snippet.handler(ta.value, caret);				
 							}
 						}
-						else if (!config.snippet_alt_key) {
+						else if (!messageList.config.snippet_alt_key) {
 							if (event.keyIdentifier == 'U+0009') {
 								event.preventDefault();
 								caret = messageList.snippet.findCaret(ta);
@@ -1176,9 +1133,9 @@ var messageList = {
 				// first word in post
 				word = text;
 			}
-			for (var key in config.snippet_data) {
+			for (var key in messageList.config.snippet_data) {
 				if (key === word) {
-					snippet = config.snippet_data[key];
+					snippet = messageList.config.snippet_data[key];
 					index = text.lastIndexOf(word);
 					temp = text.substring(0, index);
 					ta = ta.replace(text, temp + snippet);
@@ -1455,11 +1412,11 @@ var messageList = {
 					var pg = document.getElementById('notepage');
 					userID = pg.parentNode.getElementsByTagName('a')[0].href
 							.match(/user=(\d+)$/i)[1];
-					config.usernote_notes[userID] = pg.value;
+					messageList.config.usernote_notes[userID] = pg.value;
 					pg.parentNode.removeChild(pg);
 					messageList.usernotes.save();
 				} else {
-					var note = config.usernote_notes[userID];
+					var note = messageList.config.usernote_notes[userID];
 					page = document.createElement('textarea');
 					page.id = 'notepage';
 					page.value = (note == undefined) ? "" : note;
@@ -1473,7 +1430,7 @@ var messageList = {
 			chrome.runtime.sendMessage({
 				need : "save",
 				name : "usernote_notes",
-				data : config.usernote_notes
+				data : messageList.config.usernote_notes
 			}, function(rsp) {
 				console.log(rsp);
 			});
@@ -1554,7 +1511,7 @@ var messageList = {
 			json.quote = output;
 			// copy quote to clipboard via background page
 			chrome.runtime.sendMessage(json, function(response) {
-				if (config.debug) console.log(response.clipboard);
+				if (messageList.config.debug) console.log(response.clipboard);
 			});
 			// alert user
 			messageList.quotes.notify(_this);
@@ -1696,7 +1653,7 @@ var messageList = {
 			var num_children = evt.target.parentNode.parentNode.childNodes.length;
 			// first time expanding - only span
 			if (num_children == 1) {
-				if (config.debug)
+				if (messageList.config.debug)
 					console.log("first time expanding - build span, load img");
 
 				// build new span
@@ -1721,7 +1678,7 @@ var messageList = {
 			}
 			// has been expanded before - just switch which node is hidden
 			else if (num_children == 2) {
-				if (config.debug)
+				if (messageList.config.debug)
 					console.log("not first time expanding - toggle display status");
 
 				// toggle their display statuses
@@ -1733,20 +1690,20 @@ var messageList = {
 						children[i].style.display = "none";
 					}
 				}
-			} else if (config.debug)
+			} else if (messageList.config.debug)
 				console
 						.log("I don't know what's going on with this image - weird number of siblings");
 		},
 		resize: function(el) {
 			var width = el.width;
-			if (width > config.img_max_width) {
-				if (config.debug) {
+			if (width > messageList.config.img_max_width) {
+				if (messageList.config.debug) {
 					console.log('resizing:', el);
 				}
-				el.height = (el.height / (el.width / config.img_max_width));
+				el.height = (el.height / (el.width / messageList.config.img_max_width));
 				el.parentNode.style.height = el.height + 'px';
-				el.width = config.img_max_width;
-				el.parentNode.style.width = config.img_max_width + 'px';
+				el.width = messageList.config.img_max_width;
+				el.parentNode.style.width = messageList.config.img_max_width + 'px';
 			}
 		}
 	},
@@ -1785,7 +1742,7 @@ var messageList = {
 			var videoCodeRegex = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
 			while (i--) {
 				link = links[i];
-				if (config.embed_on_hover) {
+				if (messageList.config.embed_on_hover) {
 					if (link.href.match(ytRegex)
 							&& link.href.match(videoCodeRegex)) {
 						link.className = "youtube";
@@ -1811,10 +1768,10 @@ var messageList = {
 						);
 					}
 				}
-				if (config.embed_gfycat || config.embed_gfycat_thumbs) {
+				if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
 					if (link.title.indexOf("gfycat.com/") > -1) {
 						link.className = "gfycat";
-						if (config.embed_gfycat_thumbs 
+						if (messageList.config.embed_gfycat_thumbs 
 								|| link.parentNode.className == "quoted-message") {
 							link.setAttribute('name', "gfycat_thumb");
 						}
@@ -1822,7 +1779,7 @@ var messageList = {
 				}
 			}
 			// call gfycatLoader after loop has finished
-			if (config.embed_gfycat || config.embed_gfycat_thumbs) {
+			if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
 				messageList.gfycat.loader();
 				window.addEventListener('scroll', messageList.gfycat.loader);
 				document.addEventListener('visibilitychange', messageList.gfycat.pause);
@@ -1839,8 +1796,8 @@ var messageList = {
 	},
 	tcs: {
 		getMessages: function() {
-			if (!config.tcs)
-				config.tcs = {};
+			if (!messageList.config.tcs)
+				messageList.config.tcs = {};
 			var tcs = Array();
 			var topic = window.location.href.match(/topic=(\d+)/)[1];
 			var heads = document.getElementsByClassName('message-top');
@@ -1855,16 +1812,16 @@ var messageList = {
 					&& !window.location.href.match(/u=(\d+)/))
 				tc = heads[0].getElementsByTagName('a')[0].innerHTML.toLowerCase();
 			else {
-				if (!config.tcs[topic]) {
+				if (!messageList.config.tcs[topic]) {
 					console.log('Unknown TC!');
 					return;
 				}
-				tc = config.tcs[topic].tc;
+				tc = messageList.config.tcs[topic].tc;
 			}
-			if (!config.tcs[topic]) {
-				config.tcs[topic] = {};
-				config.tcs[topic].tc = tc;
-				config.tcs[topic].date = new Date().getTime();
+			if (!messageList.config.tcs[topic]) {
+				messageList.config.tcs[topic] = {};
+				messageList.config.tcs[topic].tc = tc;
+				messageList.config.tcs[topic].date = new Date().getTime();
 			}
 			for (var i = 0; i < heads.length; i++) {
 				if (haTopic && heads[i].innerHTML.indexOf("\">Human") == -1) {
@@ -1883,22 +1840,55 @@ var messageList = {
 			var lowest = Infinity;
 			var lowestTc;
 			var numTcs = 0;
-			for ( var i in config.tcs) {
-				if (config.tcs[i].date < lowest) {
+			for ( var i in messageList.config.tcs) {
+				if (messageList.config.tcs[i].date < lowest) {
 					lowestTc = i;
-					lowest = config.tcs[i].date;
+					lowest = messageList.config.tcs[i].date;
 				}
 				numTcs++;
 			}
 			if (numTcs > max)
-				delete config.tcs[lowestTc];
+				delete messageList.config.tcs[lowestTc];
 			chrome.runtime.sendMessage({
 				need : "save",
 				name : "tcs",
-				data : config.tcs
+				data : messageList.config.tcs
 			});
 		}	
 	},
+	imgObserver: new MutationObserver(function(mutations) {
+		var mutation;
+			for (var i = 0, len = mutations.length; i < len; i++) {
+				mutation = mutations[i];
+				if (messageList.config.resize_imgs) {
+					messageList.image.resize(mutation.target.childNodes[0]);
+				}
+				if (mutation.type === 'attributes') {
+					// once they're loaded, thumbnails have /i/t/ in their
+					// url where fullsize have /i/n/
+					if (mutation.attributeName == "class"
+							&& mutation.target.getAttribute('class') == "img-loaded"
+							&& mutation.target.childNodes[0].src
+									.match(/.*\/i\/t\/.*/)) {
+						if(messageList.config.debug) console.log("found thumbnail");
+						/*
+						 * set up the onclick and do some dom manip that the
+						 * script originally did - i think only removing href
+						 * actually matters
+						 */
+						mutation.target.parentNode.addEventListener('click',
+								messageList.image.expand);
+						mutation.target.parentNode.setAttribute('class',
+								'thumbnailed_image');
+						mutation.target.parentNode
+								.setAttribute('oldHref',
+										mutation.target.parentNode
+												.getAttribute('href'));
+						mutation.target.parentNode.removeAttribute('href');
+					}
+				}
+			}
+	}),
 	autoscrollCheck: function(mutation) {
 		// checks whether user has scrolled to bottom of page
 		var position = mutation.getBoundingClientRect();
@@ -1930,7 +1920,7 @@ var messageList = {
 			ia.href = '##';
 			ins.innerHTML = '[';
 			ins.insertBefore(ia, null);
-			for ( var i in config.post_template_data) {
+			for ( var i in messageList.config.post_template_data) {
 				var title = document.createElement('a');
 				title.href = '##' + i;
 				title.className = 'post_template_title';
@@ -1960,7 +1950,7 @@ var messageList = {
 			evt.id = 'post_action';
 			var cdiv = document.getElementById('cdiv');
 			var d = {};
-			d.text = config.post_template_data[evt.parentNode.className].text;
+			d.text = messageList.config.post_template_data[evt.parentNode.className].text;
 			cdiv.innerText = JSON.stringify(d);
 			cdiv.dispatchEvent(messageList.postEvent);
 		}
@@ -2027,13 +2017,20 @@ var messageList = {
 	ignores: {},
 	scrolling: false,
 	tops_total: 0,
+	config: [],
+	ignorated: {
+		total_ignored : 0,
+		data : {
+			users : {}
+		}
+	},
 	addListeners: function() {
 		var body = document.body;
 		body.addEventListener('click', function(ev) {
-			if (config.user_notes) {
+			if (messageList.config.user_notes) {
 				messageList.usernotes.open(ev.target);
 			}
-			if (config.post_templates) {
+			if (messageList.config.post_templates) {
 				messageList.postTemplateAction(ev.target);
 			}
 			if (ev.target.title.indexOf("/index.php") == 0) {
@@ -2045,12 +2042,6 @@ var messageList = {
 				// TODO - this should point to links.fix
 				messageList.links.fix(ev.target, "imagemap");					
 				ev.preventDefault();
-			}
-			else if (ev.target.parentNode.className == 'embed') {
-				messageList.youtube.embed(ev.target.parentNode);
-			}
-			else if (ev.target.parentNode.className == 'hide') {
-				messageList.youtube.hide(ev.target.parentNode);			
 			}
 			else if (ev.target.className == 'youtube'
 					&& ev.target.tagName == 'DIV') {
@@ -2070,20 +2061,28 @@ var messageList = {
 				ev.target.innerHTML = '&#9744;';
 				messageList.bash.checkSelection(ev.target);
 			}
-			else if (ev.target.parentNode.id == 'submitbash') {
-				messageList.bash.handler();
-			}
+			else if (ev.target.parentNode) {
+				if (ev.target.parentNode.className == 'embed') {
+					messageList.youtube.embed(ev.target.parentNode);
+				}
+				else if (ev.target.parentNode.className == 'hide') {
+					messageList.youtube.hide(ev.target.parentNode);			
+				}
+				else if (ev.target.parentNode.id == 'submitbash') {
+					messageList.bash.handler();
+				}
+			}			
 		});
 	},
 	appendScripts: function() {
 		var head = document.getElementsByTagName("head")[0];
-		if (config.like_button) {
+		if (messageList.config.like_button) {
 			var like = document.createElement("script");
 			like.type = "text/javascript";
 			like.src = chrome.extension.getURL("src/js/like.js");
 			head.appendChild(like);
 		}
-		if (config.post_templates) {
+		if (messageList.config.post_templates) {
 			var templates = document.createElement('script');
 			templates.type = 'text/javascript';
 			templates.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
@@ -2091,7 +2090,8 @@ var messageList = {
 		}
 	},	
 	callFunctions: function(pm) {
-		// iterate over objects & call function if config value is true
+		var t0 = performance.now();
+		// iterate over objects & call function if messageList.config value is true
 		var msgs = document.getElementsByClassName('message-container');
 		var msg, len;
 		// cache objects
@@ -2099,7 +2099,7 @@ var messageList = {
 		var postFunctions = this.posts;
 		var miscFunctions = this.misc;
 		for (var k in pageFunctions) {
-			if (config[k + pm]) {
+			if (messageList.config[k + pm]) {
 					pageFunctions[k]();
 			}
 		}
@@ -2116,7 +2116,7 @@ var messageList = {
 			msg = msgs[j];
 			// iterate over functions in messageList
 			for (var k in postFunctions) {
-				if (config[k + pm]) {
+				if (messageList.config[k + pm]) {
 					// pass msg and index value to function
 					postFunctions[k](msg, j);
 				}
@@ -2127,7 +2127,7 @@ var messageList = {
 			// iterate over rest of messages
 			for (j = len; msg = msgs[j]; j++) {
 				for (var k in postFunctions) {
-					if (config[k + pm]) {
+					if (messageList.config[k + pm]) {
 						postFunctions[k](msg, j);
 					}
 				}
@@ -2136,21 +2136,23 @@ var messageList = {
 		// send ignorator data to background script
 		messageList.globalPort.postMessage({
 			action : 'ignorator_update',
-			ignorator : ignorated,
+			ignorator : messageList.ignorated,
 			scope : "messageList"
 		});
 		// call functions that dont modify DOM
 		for (var i in miscFunctions) {
-			if (config[i + pm]) {
+			if (messageList.config[i + pm]) {
 				miscFunctions[i]();
 			}
 		}
+		var t1 = performance.now();
+		console.log("Processed in " + (t1 - t0) + " milliseconds.");
 		// call functions that dont exist in posts/page/misc objects
 		messageList.links.check();
 		messageList.addListeners();
 		messageList.appendScripts();
-		if (config.new_page_notify) {
-			if (config.debug) {
+		if (messageList.config.new_page_notify) {
+			if (messageList.config.debug) {
 				console.log('listening for new page');
 			}
 			// set up observer to watch for mutations to 'nextpage' element
@@ -2201,7 +2203,7 @@ var messageList = {
 			pm = "_pm";
 		}
 		for (var i in messageList.posts) {
-			if (config[i + pm]) {
+			if (messageList.config[i + pm]) {
 					messageList.posts[i](mutation, index, live);
 			}
 		}
@@ -2209,7 +2211,7 @@ var messageList = {
 		// send ignorator data to background script
 		messageList.globalPort.postMessage({
 			action : 'ignorator_update',
-			ignorator : ignorated,
+			ignorator : messageList.ignorated,
 			scope : "messageList"
 		});
 	},	
@@ -2221,10 +2223,10 @@ var messageList = {
 		}, function(conf) {
 			// set up globalPort so we can communicate with background script
 			messageList.globalPort = chrome.runtime.connect();
-			config = conf.data;
-			config.tcs = conf.tcs;
+			messageList.config = conf.data;
+			messageList.config.tcs = conf.tcs;
 			// turn ignorator list into array before running messageList functions
-			messageList.ignores = config.ignorator_list.split(',');
+			messageList.ignores = messageList.config.ignorator_list.split(',');
 			var ignore;
 			for (var r = 0, len = messageList.ignores.length; r < len; r++) {
 				ignore = messageList.ignores[r].toLowerCase().trim();
@@ -2239,12 +2241,12 @@ var messageList = {
 				if (msg.action !== 'ignorator_update') {			
 					switch (msg.action) {
 						case "showIgnorated":				
-							if (config.debug) {
+							if (messageList.config.debug) {
 								console.log("showing hidden msg", msg.ids);
 							}
 							var tops = document.getElementsByClassName('message-top');
 							for (var i = 0; i < msg.ids.length; i++) {
-								if (config.debug) {
+								if (messageList.config.debug) {
 									console.log(tops[msg.ids[i]]);
 								}
 								tops[msg.ids[i]].parentNode.style.display = 'block';
@@ -2252,7 +2254,7 @@ var messageList = {
 							}
 							break;
 						default:
-							if (config.debug)
+							if (messageList.config.debug)
 								console.log('invalid action', msg);
 							break;
 					}
