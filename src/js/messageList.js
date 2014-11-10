@@ -12,7 +12,7 @@ var mutation;
 	for (var i = 0, len = mutations.length; i < len; i++) {
 		mutation = mutations[i];
 		if (config.resize_imgs) {
-			messageList.images.resize(mutation.target.childNodes[0]);
+			messageList.image.resize(mutation.target.childNodes[0]);
 		}
 		if (mutation.type === 'attributes') {
 			// once they're loaded, thumbnails have /i/t/ in their
@@ -28,7 +28,7 @@ var mutation;
 				 * actually matters
 				 */
 				mutation.target.parentNode.addEventListener('click',
-						messageList.images.expand);
+						messageList.image.expand);
 				mutation.target.parentNode.setAttribute('class',
 						'thumbnailed_image');
 				mutation.target.parentNode
@@ -45,7 +45,7 @@ var messageList = {
 	posts: {
 		// live is undefined unless these functions are called 
 		// from messageList.livelinks
-		addBash: function(msg, index) {
+		eti_bash: function(msg, index) {
 			var top = msg.getElementsByClassName('message-top')[0];
 			anchor = document.createElement('a');
 			anchor.style.cssFloat = 'right';
@@ -56,7 +56,7 @@ var messageList = {
 			anchor.style.textDecoration = 'none';
 			top.appendChild(anchor);
 		},
-		ignorator: function(msg, index) {
+		ignorator_messagelist: function(msg, index) {
 			if (!config.ignorator) {
 				return;
 			}
@@ -67,8 +67,8 @@ var messageList = {
 				top = tops[j];
 				if (top) {
 					username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-					for (var f = 0, len = messageList.vars.ignores.length; f < len; f++) {
-						if (username == messageList.vars.ignores[f]) {
+					for (var f = 0, len = messageList.ignores.length; f < len; f++) {
+						if (username == messageList.ignores[f]) {
 							// calculate equivalent index of message-top for
 							// show_ignorator function
 							if (j == 0 && tops_total > 0) {
@@ -80,16 +80,16 @@ var messageList = {
 							top.parentNode.style.display = 'none';
 							if (config.debug) {
 								console.log('removed post by '
-										+ messageList.vars.ignores[f]);
+										+ messageList.ignores[f]);
 							}
 							ignorated.total_ignored++;
-							if (!ignorated.data.users[messageList.vars.ignores[f]]) {
-								ignorated.data.users[messageList.vars.ignores[f]] = {};
-								ignorated.data.users[messageList.vars.ignores[f]].total = 1; 
-								ignorated.data.users[messageList.vars.ignores[f]].trs = [ top_index ];
+							if (!ignorated.data.users[messageList.ignores[f]]) {
+								ignorated.data.users[messageList.ignores[f]] = {};
+								ignorated.data.users[messageList.ignores[f]].total = 1; 
+								ignorated.data.users[messageList.ignores[f]].trs = [ top_index ];
 							} else {
-								ignorated.data.users[messageList.vars.ignores[f]].total++;
-								ignorated.data.users[messageList.vars.ignores[f]].trs
+								ignorated.data.users[messageList.ignores[f]].total++;
+								ignorated.data.users[messageList.ignores[f]].trs
 										.push(top_index);
 							}
 						}
@@ -97,7 +97,7 @@ var messageList = {
 				}
 			}
 		},	
-		addUserNotes: function(msg) {
+		user_notes: function(msg) {
 			if (!config.usernote_notes) {
 				config.usernote_notes = {};
 			}	
@@ -117,7 +117,7 @@ var messageList = {
 			notebook.href = "##note" + tempID;
 			top.appendChild(notebook);
 		},
-		addLikeButton: function(msg, index) {
+		like_button: function(msg, index) {
 			if (!window.location.href.match("archives")) {		
 				var top = msg.getElementsByClassName('message-top')[0];
 				var anchor = document.createElement('a');
@@ -129,7 +129,7 @@ var messageList = {
 				top.appendChild(anchor);
 			}
 		},	
-		addNumber: function(msg, index) {
+		number_posts: function(msg, index) {
 			var top = msg.getElementsByClassName('message-top')[0];
 			var page, id, postnum;
 			if (!window.location.href.match(/page=/)) {
@@ -147,7 +147,7 @@ var messageList = {
 			postnum = document.createTextNode(' | #' + id);
 			top.appendChild(postnum);
 		},	
-		addTemplates: function(msg, index) {
+		post_templates: function(msg, index) {
 			var top = msg.getElementsByClassName('message-top')[0];
 			var sep, sepIns, qr;
 			var cDiv = document.createElement('div');
@@ -171,7 +171,7 @@ var messageList = {
 			sep.appendChild(sepIns);
 			top.appendChild(sep);
 		},	
-		highlight: function(msg, index, live) {
+		userhl_messagelist: function(msg, index, live) {
 			if (!config.enable_user_highlight) {
 				return;
 			}
@@ -262,7 +262,7 @@ var messageList = {
 				}
 			}
 		},
-		addFoxlinksQuotes: function(msg) {
+		foxlinks_quotes: function(msg) {
 			var color = "#" + config['foxlinks_quotes_color'];
 			var quotes = msg.getElementsByClassName('quoted-message');
 			if (!quotes.length) {
@@ -293,7 +293,7 @@ var messageList = {
 				}
 			}
 		},		
-		labelSelf: function(msg) {
+		label_self_anon: function(msg) {
 			var tags = document.getElementsByTagName('h2')[0].innerHTML;
 			if (tags.indexOf('/topics/Anonymous') > -1) {
 				if (!window.location.href.match('archives')) {
@@ -328,7 +328,7 @@ var messageList = {
 				}
 			}
 		},
-		hideDeleted: function(msg) {
+		hide_deleted: function(msg) {
 			if (msg.getElementsByClassName('message-top')[0]
 					.getElementsByTagName('em')[0]
 					&& msg.getElementsByClassName('message-top')[0]
@@ -349,7 +349,7 @@ var messageList = {
 						a, null);
 			}
 		},
-		expandThumbs: function(container) {
+		click_expand_thumbnail: function(container) {
 			// rewritten by xdrvonscottx
 			// find all the placeholders before the images are loaded
 			var msg = container.getElementsByClassName('message')[0];
@@ -372,23 +372,23 @@ var messageList = {
 				}
 			}
 		},
-		autoscrollActive: function(mutation, index, live) {
+		autoscroll_active: function(mutation, index, live) {
 			if (live) {
 				if (!document.hidden 
 						&& messageList.autoscrollCheck(mutation)) {
 					// trigger after 10ms delay to prevent undesired 
 					// behaviour in post_title_notification
 					setTimeout(function() {
-						messageList.vars.scrolling = true;
+						messageList.scrolling = true;
 						$.scrollTo((mutation), 800);
 					}, 10);
 					setTimeout(function() {
-						messageList.vars.scrolling = false;	
+						messageList.scrolling = false;	
 					}, 850);
 				}
 			}
 		},
-		unreadPostCount: function(mutation, index, live) {
+		post_title_notification: function(mutation, index, live) {
 			if (live) {
 				if (mutation.style.display === "none") {
 					if (config.debug) {
@@ -416,7 +416,7 @@ var messageList = {
 				}
 			}
 		},
-		notifyOnQuote: function(mutation, index, live) {
+		notify_quote_post: function(mutation, index, live) {
 			if (live) {
 				if (!mutation.getElementsByClassName('quoted-message')) {
 					return;
@@ -873,15 +873,15 @@ var messageList = {
 							if (event.shiftKey == true
 									&& event.keyIdentifier == 'U+0009') {
 								event.preventDefault();
-								caret = messageList.snippets.findCaret(ta);
-								messageList.snippets.handler(ta.value, caret);				
+								caret = messageList.snippet.findCaret(ta);
+								messageList.snippet.handler(ta.value, caret);				
 							}
 						}
 						else if (!config.snippet_alt_key) {
 							if (event.keyIdentifier == 'U+0009') {
 								event.preventDefault();
-								caret = messageList.snippets.findCaret(ta);
-								messageList.snippets.handler(ta.value, caret);
+								caret = messageList.snippet.findCaret(ta);
+								messageList.snippet.handler(ta.value, caret);
 							}
 						}		
 					}
@@ -1153,7 +1153,7 @@ var messageList = {
 		toEmbed.className = "youtube";
 	}		
 	},
-	snippets: {
+	snippet: {
 		findCaret: function(ta) {
 			var caret = 0;
 			if (ta.selectionStart || ta.selectionStart == '0') {
@@ -1161,7 +1161,7 @@ var messageList = {
 			}
 			return (caret);
 		},
-		snippetHandler: function(ta, caret) {
+		handler: function(ta, caret) {
 			// detects keyword & replaces with snippet
 			var text = ta.substring(0, caret);
 			var words, word, snippet, temp, index, newCaret;
@@ -1487,7 +1487,7 @@ var messageList = {
 			});
 		}
 	},
-	quotes: {
+	archiveQuote: {
 		handler: function() {
 			var _this = this;
 			// get childNodes from quoted message
@@ -1525,7 +1525,7 @@ var messageList = {
 					spoiler.caption = node.getElementsByClassName('caption')[0]
 							.innerText.replace(/<|\/>/g, '');
 					spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-					output += messageLists.quotes.returnSpoiler(spoiler.caption, spoiler.nodes);
+					output += messageLists.archiveQuote.returnSpoiler(spoiler.caption, spoiler.nodes);
 				}	
 				if (node.className == 'quoted-message') {
 					quoteOutput = '';
@@ -1535,16 +1535,16 @@ var messageList = {
 						// iterate over nested quotes in reverse order
 						for (var m = quote.nested.length; m--;) {
 							nestedQuote = quote.nested[m];					
-							quoteArray = messageList.quotes.returnQuotes(nestedQuote.childNodes, 
+							quoteArray = messageList.archiveQuote.returnQuotes(nestedQuote.childNodes, 
 									nestedQuote.attributes.msgid.value);
 							quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
 						}
-						quoteArray = messageList.quotes.returnQuotes(node.childNodes, quote.msgid);
+						quoteArray = messageList.archiveQuote.returnQuotes(node.childNodes, quote.msgid);
 						quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
 						output += quoteOutput;
 					}
 					else {
-						quoteArray = messageList.quotes.returnQuotes(node.childNodes, quote.msgid);					
+						quoteArray = messageList.archiveQuote.returnQuotes(node.childNodes, quote.msgid);					
 						quoteOutput = quoteArray[0] + quoteArray[1];
 						output += quoteOutput;
 					}
@@ -1606,7 +1606,7 @@ var messageList = {
 					spoiler.caption = node.getElementsByClassName('caption')[0]
 							.innerText.replace(/<|\/>/g, '');
 					spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-					output[1] += messageList.quotes.returnSpoiler(spoiler.caption, spoiler.nodes);
+					output[1] += messageList.archiveQuote.returnSpoiler(spoiler.caption, spoiler.nodes);
 				}			
 			}
 			output[1] += '</quote>'
@@ -1696,10 +1696,10 @@ var messageList = {
 					tops[i].appendChild(quote);
 				}
 			}
-			$("div.message-top").on("click", "a.archivequote", messageList.quotes.handler);
+			$("div.message-top").on("click", "a.archivequote", messageList.archiveQuote.handler);
 		}
 	},
-	images: {
+	image: {
 		expand: function(evt) {
 			var num_children = evt.target.parentNode.parentNode.childNodes.length;
 			// first time expanding - only span
@@ -1836,11 +1836,13 @@ var messageList = {
 				document.addEventListener('visibilitychange', messageList.gfycat.pause);
 			}
 		},	
-		wiki: function(anchor) {
-			window.open(anchor.href.replace("boards", "wiki"));
-		},
-		imagemap: function(anchor) {
-			window.open(anchor.href.replace("boards", "images"));
+		fix: function(anchor, type) {
+			if (type === "wiki") {
+				window.open(anchor.href.replace("boards", "wiki"));
+			}
+			else if (type === "imagemap") {				
+				window.open(anchor.href.replace("boards", "images"));
+			}
 		}
 	},
 	tcs: {
@@ -1926,7 +1928,7 @@ var messageList = {
 				+ chosen.files.length + ")";
 		commonFunctions.asyncUpload(chosen.files, 0);
 	},
-	postTemplateAction: function(evt) { // check post template script
+	postTemplateAction: function(evt) {
 		if (evt.className === "expand_post_template") {
 			var ins = evt.parentNode;
 			ins.removeChild(evt);
@@ -1973,7 +1975,7 @@ var messageList = {
 	},
 	clearUnreadPosts: function(evt) {
 		if (!document.title.match(/\(\d+\+?\)/)
-				|| messageList.vars.scrolling == true
+				|| messageList.scrolling == true
 				|| document.hidden) {
 			// do nothing
 			return;
@@ -1994,47 +1996,45 @@ var messageList = {
 		var topic = window.location.href.match('topic=(\d+)')[1];
 	},
 	qpTagButton: function(e) {
-			if (e.target.tagName != 'INPUT') {
-				return 0;
-			}
-			// from foxlinks
-			var tag = e.target.id;
-			var open = new RegExp("\\*", "m");
-			var ta = document.getElementsByName('message')[0];
-			var st = ta.scrollTop;
-			var before = ta.value.substring(0, ta.selectionStart);
-			var after = ta.value.substring(ta.selectionEnd, ta.value.length);
-			var select = ta.value.substring(ta.selectionStart, ta.selectionEnd);
-
-			if (ta.selectionStart == ta.selectionEnd) {
-				if (open.test(e.target.value)) {
-					e.target.value = e.target.name;
-					var focusPoint = ta.selectionStart + tag.length + 3;
-					ta.value = before + "</" + tag + ">" + after;
-				} else {
-					e.target.value = e.target.name + "*";
-					var focusPoint = ta.selectionStart + tag.length + 2;
-					ta.value = before + "<" + tag + ">" + after;
-				}
-
-				ta.selectionStart = focusPoint;
-			} else {
-				var focusPoint = ta.selectionStart + (tag.length * 2)
-						+ select.length + 5;
-				ta.value = before + "<" + tag + ">" + select + "</" + tag + ">"
-						+ after;
-				ta.selectionStart = before.length;
-			}
-
-			ta.selectionEnd = focusPoint;
-			ta.scrollTop = st;
-			ta.focus();
+		if (e.target.tagName != 'INPUT') {
+			return 0;
 		}
-	vars: {
-		ignores: {},
-		scrolling: false,
-		tops_total = 0;
-	},	
+		// from foxlinks
+		var tag = e.target.id;
+		var open = new RegExp("\\*", "m");
+		var ta = document.getElementsByName('message')[0];
+		var st = ta.scrollTop;
+		var before = ta.value.substring(0, ta.selectionStart);
+		var after = ta.value.substring(ta.selectionEnd, ta.value.length);
+		var select = ta.value.substring(ta.selectionStart, ta.selectionEnd);
+
+		if (ta.selectionStart == ta.selectionEnd) {
+			if (open.test(e.target.value)) {
+				e.target.value = e.target.name;
+				var focusPoint = ta.selectionStart + tag.length + 3;
+				ta.value = before + "</" + tag + ">" + after;
+			} else {
+				e.target.value = e.target.name + "*";
+				var focusPoint = ta.selectionStart + tag.length + 2;
+				ta.value = before + "<" + tag + ">" + after;
+			}
+
+			ta.selectionStart = focusPoint;
+		} else {
+			var focusPoint = ta.selectionStart + (tag.length * 2)
+					+ select.length + 5;
+			ta.value = before + "<" + tag + ">" + select + "</" + tag + ">"
+					+ after;
+			ta.selectionStart = before.length;
+		}
+
+		ta.selectionEnd = focusPoint;
+		ta.scrollTop = st;
+		ta.focus();
+	},
+	ignores: {},
+	scrolling: false,
+	tops_total: 0,
 	addListeners: function() {
 		var body = document.body;
 		body.addEventListener('click', function(ev) {
@@ -2046,12 +2046,12 @@ var messageList = {
 			}
 			if (ev.target.title.indexOf("/index.php") == 0) {
 				// TODO - this should point to links.fix
-				messageList.links.wiki(ev.target);
+				messageList.links.fix(ev.target, "wiki");
 				ev.preventDefault();
 			}
 			else if (ev.target.title.indexOf("/imap/") == 0) {
 				// TODO - this should point to links.fix
-				messageList.links.imagemap(ev.target);					
+				messageList.links.fix(ev.target, "imagemap");					
 				ev.preventDefault();
 			}
 			else if (ev.target.parentNode.className == 'embed') {
@@ -2099,15 +2099,20 @@ var messageList = {
 		}
 	},	
 	callFunctions: function(pm) {
-		// iterate over miscFunctions and messageList
-		// objects & call function if config value is true
-		var msgs = document.getElementsByClassName('message-container');		
+		// iterate over objects & call function if config value is true
+		var msgs = document.getElementsByClassName('message-container');
 		var msg, len;
-		for (var k in messageList.page) {
+		// cache objects
+		var pageFunctions = this.page;
+		var postFunctions = this.posts;
+		var miscFunctions = this.misc;
+		for (var k in pageFunctions) {
 			if (config[k + pm]) {
-					messageList.page[k]();
+					pageFunctions[k]();
 			}
 		}
+		// add archive quote buttons before highlights/post numbers are added
+		messageList.archiveQuote.addButtons();
 		// iterate over first 5 message-containers (or fewer)
 		if (msgs.length < 4) {
 			len = msgs.length;
@@ -2118,10 +2123,10 @@ var messageList = {
 		for (var j = 0; j < len; j++) {
 			msg = msgs[j];
 			// iterate over functions in messageList
-			for (var k in messageList.posts) {
+			for (var k in postFunctions) {
 				if (config[k + pm]) {
-						// pass msg and index value to function
-						messageList.posts[k](msg, j);
+					// pass msg and index value to function
+					postFunctions[k](msg, j);
 				}
 			}
 		}
@@ -2129,9 +2134,9 @@ var messageList = {
 		if (len == 4) {
 			// iterate over rest of messages
 			for (j = len; msg = msgs[j]; j++) {
-				for (var k in messageList.posts) {
+				for (var k in postFunctions) {
 					if (config[k + pm]) {
-							messageList.posts[k](msg, j);
+						postFunctions[k](msg, j);
 					}
 				}
 			}		
@@ -2143,13 +2148,12 @@ var messageList = {
 			scope : "messageList"
 		});
 		// call functions that dont modify DOM
-		for (var i in messageList.misc) {
+		for (var i in miscFunctions) {
 			if (config[i + pm]) {
-				messageList.misc[i]();
+				miscFunctions[i]();
 			}
 		}
-		// call any functions that don't exist in messageList object
-		meessageList.quotes.addButtons();
+		// call functions that dont exist in posts/page/misc objects
 		messageList.links.check();
 		messageList.addListeners();
 		messageList.appendScripts();
@@ -2228,11 +2232,11 @@ var messageList = {
 			config = conf.data;
 			config.tcs = conf.tcs;
 			// turn ignorator list into array before running messageList functions
-			messageList.vars.ignores = config.ignorator_list.split(',');
+			messageList.ignores = config.ignorator_list.split(',');
 			var ignore;
-			for (var r = 0, len = messageList.vars.ignores.length; r < len; r++) {
-				ignore = messageList.vars..ignores[r].toLowerCase().trim();
-				messageList.vars..ignores[r] = ignore;
+			for (var r = 0, len = messageList.ignores.length; r < len; r++) {
+				ignore = messageList.ignores[r].toLowerCase().trim();
+				messageList.ignores[r] = ignore;
 			}
 			var pm = '';
 			if (window.location.href.match('inboxthread')) {
