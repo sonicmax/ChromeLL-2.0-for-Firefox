@@ -52,7 +52,7 @@ function upgradeConfig(defaultConfig) {
 	handleCfg();
 	checkVersion();
 	clipboardTextArea();	
-	getTCPData();
+	getUserID();
 }
 
 function handleCfg() {
@@ -639,11 +639,6 @@ chrome.runtime.onMessage.addListener(
 	}
 );
 
-function getTCPData() {
-	setTimeout(getTCPData, 86400 * 1000);
-	getUserID();
-}
-
 function getUserID() {
 	var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 	var xhr = new XMLHttpRequest();
@@ -723,5 +718,46 @@ function clearNotification(id) {
 		}
 	);
 }
+
+function omniboxSearch() {
+	var arrayForSearch = [];
+	var tags, tag; 
+	var tagsForSearch = '';
+	var query;
+	var searchURL;
+	chrome.omnibox.onInputEntered.addListener(function(data) {
+		arrayForSearch = data.split('>');
+		if (!arrayForSearch[1] && data !== '') {
+			query = data;
+			searchURL = 'http://boards.endoftheinter.net/topics/?q=' + query;
+			chrome.tabs.update({
+					url: searchURL
+			});
+		}
+		else {
+			tags = arrayForSearch[0].split(',');
+			query = arrayForSearch[1];
+			if (tags.length === 1) {
+				tagsForSearch = tags[0];
+			}
+			else {
+				for (var i = 0, len = tags.length; i < len; i++) {
+					tag = tags[i];
+					tagsForSearch += tag;
+					if (i !== tags.length - 1) {
+						// add hex character for plus sign
+						tagsForSearch += '%2B';
+					}
+				}
+				searchURL = '	http://boards.endoftheinter.net/topics/' + tagsForSearch + '?q=' + query;
+				chrome.tabs.update({
+						url: searchURL
+				});
+			}
+		}
+	});
+}
+
+omniboxSearch();
 
 init();
