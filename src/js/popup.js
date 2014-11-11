@@ -58,7 +58,7 @@ function populateMenus() {
 }
 
 function addListeners() {
-	document.getElementById('slideThree').addEventListener('change', function(ev) {
+	document.getElementById('worksafe').addEventListener('change', function(ev) {
 		if (ev.path[0].checked) {
 			cfg.hide_nws_gfycat = true;
 			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
@@ -132,7 +132,7 @@ function handleIgnorator() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-	var slider = document.getElementById('slideThree');
+	var slider = document.getElementById('worksafe');
 	var history = document.getElementById('a_msg_history');
 	cfg.hide_nws_gfycat ? slider.checked = true : slider.checked = false;
 	if (cfg.sort_history) {
