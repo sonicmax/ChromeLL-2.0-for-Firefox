@@ -78,10 +78,63 @@ h1{
     padding-right: 5px;
 }
 .button{ 
-		width: 100%; 
+		width: 100%;
+}
+.slideThree {
+	width: 80px;
+	height: 26px;
+	background: #333;
+	margin: 20px auto;
+
+	border-radius: 50px;
+	position: relative;
+
+	box-shadow: inset 0px 1px 1px rgba(0,0,0,0.5), 0px 1px 0px rgba(255,255,255,0.2);
+}
+
+.slideThree:after {
+	content: 'OFF';
+	font: 12px/26px Arial, sans-serif;
+	color: red;
+	position: absolute;
+	right: 10px;
+	z-index: 0;
+	font-weight: bold;
+	text-shadow: 1px 1px 0px rgba(255,255,255,.15);
+}
+
+.slideThree:before {
+	content: 'ON';
+	font: 12px/26px Arial, sans-serif;
+	color: #00bf00;
+	position: absolute;
+	left: 10px;
+	z-index: 0;
+	font-weight: bold;
+}
+.slideThree label {
+	display: block;
+	width: 34px;
+	height: 20px;
+
+	border-radius: 50px;
+
+	transition: all .4s ease;
+	cursor: pointer;
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	z-index: 1;
+
+	box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.3);
+	background: #fcfff4;
+}
+
+.slideThree input[type=checkbox]:checked + label {
+	left: 43px;
 }
 </style>
-<script type="text/javascript" src="/src/js/popup.js"></script>
+<script src="/src/js/popup.js"></script>
 </head>
 <body>
 <center><a href="#" id="options"><input type="button" class="button" value="ChromeLL Options"/></a></center>
@@ -96,13 +149,14 @@ h1{
     <option>Tag Control Panels:</option>
 </select>
 </form>
-<div class="info">search LUE</div>
-<form name="lue_search" action="http://boards.endoftheinter.net/topics/LUE?q=" method="get" target="_new">
-<input type="text" name="q" style="width: 100%" placeholder="search text">
-</form>
 <span id="info_test_display"></span>
 <div id="js_insert"></div>
 <br />
+<center>Work-safe mode:</center>
+<div class="slideThree">	
+	<input type="checkbox" style="visibility:hidden" title="Embed NWS Gfycats" id="slideThree"/>
+	<label for="slideThree"></label>
+</div>
 <center><div class="links"><br>
 <u><a href="http://endoftheinter.net/inbox.php" target="_new">Inbox</a></u> |
 <u><a href="http://endoftheinter.net/shop.php" target="_new">Shop</a></u> |
@@ -111,14 +165,5 @@ h1{
 </div>
 <div class="line"></div>
 </center>
-<!--
-<hr>
-<div class="clisttitle">online:</div>
-<div class="chatlist" style="font-size: 12px; color: #000"></div>
-<form name="msg_send" action="##" onsubmit="postMsg(); return false;">
-<input type="text" style="width: 20%;" name="to"><input type="text" name="msg" style="width: 80%">
-<input type="submit">
-</form>
--->
 </body>
 </html>
