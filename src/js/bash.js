@@ -2,27 +2,29 @@ var bash_functions = {
 	addListeners : function() {
 		// cache target element of contextmenu event in case
 		// user selects ETI Bash function
-		var top, container, quotes, selection_text;
+		var bash_data = [];
+		var top, element, quotes, selection_text;
 		document.addEventListener('contextmenu', function(evt) {
-			// cache relevant DOM elements in case they are needed by background script
+			// cache relevant DOM elements in case they are requested by background script
 			selection_text = window.getSelection().toString();
-			container = evt.target;
-			while (container.className !== 'message-container') {
-				container = container.parentNode;
-			}
-			top = container.firstChild;
-			quotes = container.getElementsByClassName('quoted-message');			
+			element = evt.target;
+			// traverse upwards through DOM to find nearest message-container element
+			while ((element = element.parentNode)
+					&& element.className !== 'message-container' 
+					&& element !== document.body);
+			top = element.firstChild;
+			quotes = element.getElementsByClassName('quoted-message');			
 		});
 		chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
-			if (msg.action == 'context_element') {
+			if (msg.action == 'get_bash') {
 				// check that selection_text exists in message/quoted message
-				var bash_data = bash_functions.createArray(quotes, container, top, selection_text);
+				bash_data = bash_functions.checkMessages(quotes, element, top, selection_text);
 				// respond with username and url (or null value if no match was found)
 				sendResponse({"data": bash_data});
 			}
 		});	
 	},
-	createArray : function(quotes, container, top, selection_text) {
+	checkMessages : function(quotes, container, top, selection_text) {
 		var bash_data = [];
 		var quote, tops, message;
 		if (quotes.length > 0) {
@@ -38,7 +40,7 @@ var bash_functions = {
 				}
 				else {
 					bash_data[0] = null;	
-				}						
+				}			
 			}
 			// get outermost post last
 			quote = container.getElementsByClassName('message')[0];
@@ -83,8 +85,6 @@ var bash_functions = {
 	getURL : function(top) {
 		var anchors = top.getElementsByTagName('a');
 		var anchor;
-		var url;
-		var message_detail;
 		for (var k = 0, a_len = anchors.length; k < a_len; k++) {
 			anchor = anchors[k];
 			if (anchor.innerHTML.indexOf('Message Detail') > -1) {
