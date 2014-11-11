@@ -1181,7 +1181,7 @@ var messageList = {
 					videoCode += "?start=" + seconds + "'";
 				}				
 				embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
-									+ "<a id='" + anchor.id + "' class='hide' href='javascript:void(0)'>&nbsp<b>[Hide]</b></a></span>" 
+									+ "<a id='" + anchor.id + "' class='hide' href='#hide'>&nbsp<b>[Hide]</b></a></span>" 
 									+ "<br><div class='youtube'>" 
 									+ "<iframe id='" + "yt" + anchor.id + "' type='text/html' width='640' height='390'" 
 									+ "src='https://www.youtube.com/embed/" + videoCode 
@@ -1511,24 +1511,22 @@ var messageList = {
 	},
 	usernotes: {
 		open: function(el) {
-			if (el.id == 'notebook') {
-				var userID = el.href.match(/note(\d+)$/i)[1];
-				if (document.getElementById("notepage")) {
-					var pg = document.getElementById('notepage');
-					userID = pg.parentNode.getElementsByTagName('a')[0].href
-							.match(/user=(\d+)$/i)[1];
-					messageList.config.usernote_notes[userID] = pg.value;
-					pg.parentNode.removeChild(pg);
-					messageList.usernotes.save();
-				} else {
-					var note = messageList.config.usernote_notes[userID];
-					page = document.createElement('textarea');
-					page.id = 'notepage';
-					page.value = (note == undefined) ? "" : note;
-					page.style.width = "100%";
-					page.style.opacity = '.6';
-					el.parentNode.appendChild(page);
-				}
+			var userID = el.href.match(/note(\d+)$/i)[1];
+			if (document.getElementById("notepage")) {
+				var pg = document.getElementById('notepage');
+				userID = pg.parentNode.getElementsByTagName('a')[0].href
+						.match(/user=(\d+)$/i)[1];
+				messageList.config.usernote_notes[userID] = pg.value;
+				pg.parentNode.removeChild(pg);
+				messageList.usernotes.save();
+			} else {
+				var note = messageList.config.usernote_notes[userID];
+				page = document.createElement('textarea');
+				page.id = 'notepage';
+				page.value = (note == undefined) ? "" : note;
+				page.style.width = "100%";
+				page.style.opacity = '.6';
+				el.parentNode.appendChild(page);
 			}
 		},
 		save: function() {
@@ -1862,7 +1860,7 @@ var messageList = {
 									$(_this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
 											+ "background: " + color 
 											+ ";'><a id='" + _this.id 
-											+ "' class='embed' href='javascript:void(0)'>&nbsp<b>[Embed]</b></a></span>"));
+											+ "' class='embed' href=#embed'>&nbsp<b>[Embed]</b></a></span>"));
 								}
 							}, function() {
 								var _this = this;
@@ -2133,18 +2131,19 @@ var messageList = {
 		var body = document.body;
 		var gfycatID;
 		body.addEventListener('click', function(ev) {
-			if (messageList.config.user_notes) {
+			if (ev.target.id == 'notebook') {
 				messageList.usernotes.open(ev.target);
+				ev.preventDefault();
 			}
 			if (messageList.config.post_templates) {
 				messageList.postTemplateAction(ev.target);
 			}
-			if (ev.target.title.indexOf("/index.php") == 0) {
+			if (ev.target.title.indexOf("/index.php") === 0) {
 				// TODO - this should point to links.fix
 				messageList.links.fix(ev.target, "wiki");
 				ev.preventDefault();
 			}
-			else if (ev.target.title.indexOf("/imap/") == 0) {
+			else if (ev.target.title.indexOf("/imap/") === 0) {
 				// TODO - this should point to links.fix
 				messageList.links.fix(ev.target, "imagemap");					
 				ev.preventDefault();
@@ -2159,27 +2158,33 @@ var messageList = {
 				ev.target.style.fontWeight = 'bold';
 				ev.target.innerHTML = '&#9745;';
 				messageList.bash.checkSelection(ev.target);
-				messageList.bash.showPopup();		
+				messageList.bash.showPopup();	
+				ev.preventDefault();				
 			}
 			else if (ev.target.className == 'bash_this') {
 				ev.target.className = 'bash';
 				ev.target.style.fontWeight = 'initial';
 				ev.target.innerHTML = '&#9744;';
 				messageList.bash.checkSelection(ev.target);
+				ev.preventDefault();
 			}
 			else if (ev.target.parentNode) {
 				if (ev.target.parentNode.className == 'embed') {
 					messageList.youtube.embed(ev.target.parentNode);
+					ev.preventDefault();
 				}
 				else if (ev.target.parentNode.className == 'hide') {
-					messageList.youtube.hide(ev.target.parentNode);			
+					messageList.youtube.hide(ev.target.parentNode);
+					ev.preventDefault();
 				}
 				else if (ev.target.parentNode.id == 'submitbash') {
 					messageList.bash.handler();
+					ev.preventDefault();
 				}
 				else if (ev.target.parentNode.className == 'embed_nws_gfy') {
 					gfycatID = ev.target.parentNode.id.replace('_embed', '');
 					messageList.gfycat.embed(document.getElementById(gfycatID));
+					ev.preventDefault();
 				}
 			}			
 		});
