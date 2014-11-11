@@ -5,36 +5,34 @@ var topicList = {
 			if (!ignores) {
 				return;
 			}
-			var username;
-			if (tr.getElementsByTagName('td')[1]) {
-				username = tr.getElementsByTagName('td')[1];
-				for (var f = 0, len = ignores.length; f < len; f++) {
-					if (username.innerHTML.indexOf('<td>Human</td>') > -1) {
-						return;
+			var td = tr.getElementsByTagName('td')[1];	
+			for (var f = 0, len = ignores.length; f < len; f++) {
+				if (td.innerHTML.indexOf('<td>Human</td>') > -1) {
+					return;
+				}
+				var username = td.getElementsByTagName('a')[0];
+				if (td.getElementsByTagName('a')[0]
+						&& td.getElementsByTagName('a')[0].innerHTML
+								.toLowerCase() == ignores[f]) {
+					if (topicList.config.debug) {
+						console
+								.log('found topic to remove: \"'
+										+ tr.getElementsByTagName('td')[0]
+												.getElementsByTagName('a')[0].innerHTML
+												.toLowerCase()
+										+ "\" author: " + ignores[f]
+										+ " topic: " + i);
 					}
-					else if (username.getElementsByTagName('a')[0]
-							&& username.getElementsByTagName('a')[0].innerHTML
-									.toLowerCase() == ignores[f]) {
-						if (topicList.config.debug) {
-							console
-									.log('found topic to remove: \"'
-											+ tr.getElementsByTagName('td')[0]
-													.getElementsByTagName('a')[0].innerHTML
-													.toLowerCase()
-											+ "\" author: " + ignores[f]
-											+ " topic: " + i);
-						}
-						username.parentNode.style.display = 'none';
-						username.parentNode.className = "hidden_tr";
-						topicList.ignorated.total_ignored++;
-						if (!topicList.ignorated.data.users[ignores[f]]) {
-							topicList.ignorated.data.users[ignores[f]] = {};
-							topicList.ignorated.data.users[ignores[f]].total = 1;
-							topicList.ignorated.data.users[ignores[f]].trs = [ i ];
-						} else {
-							topicList.ignorated.data.users[ignores[f]].total++;
-							topicList.ignorated.data.users[ignores[f]].trs.push(i);
-						}
+					tr.style.display = 'none';
+					tr.className = "hidden_tr";
+					topicList.ignorated.total_ignored++;
+					if (!topicList.ignorated.data.users[ignores[f]]) {
+						topicList.ignorated.data.users[ignores[f]] = {};
+						topicList.ignorated.data.users[ignores[f]].total = 1;
+						topicList.ignorated.data.users[ignores[f]].trs = [ i ];
+					} else {
+						topicList.ignorated.data.users[ignores[f]].total++;
+						topicList.ignorated.data.users[ignores[f]].trs.push(i);
 					}
 				}
 			}
@@ -300,7 +298,7 @@ var topicList = {
 		if (topicList.config.ignorator_list) {
 			if (topicList.config.ignorator_list.indexOf(',') == -1) {
 				// ignorator list only has one user
-				topicList.ignore.users[0] = topicList.config.ignorator_list;
+				topicList.ignore.users[0] = topicList.config.ignorator_list.toLowerCase()
 			}
 			else {
 				// split comma separated list into array
