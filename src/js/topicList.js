@@ -1,10 +1,10 @@
 var topicList = {
 	functions: {
 		ignorator_topiclist : function(tr, i) {
-			if (!topicList.config.ignorator) {
+			var ignores = topicList.ignore.users;
+			if (!ignores) {
 				return;
 			}
-			var ignores = topicList.ignore.users;
 			var username;
 			if (tr.getElementsByTagName('td')[1]) {
 				username = tr.getElementsByTagName('td')[1];
@@ -300,7 +300,7 @@ var topicList = {
 		if (topicList.config.ignorator_list) {
 			if (topicList.config.ignorator_list.indexOf(',') == -1) {
 				// ignorator list only has one user
-				topicList.ignore.users[0] = topicList.config.ignore_keyword_list;
+				topicList.ignore.users[0] = topicList.config.ignorator_list;
 			}
 			else {
 				// split comma separated list into array
