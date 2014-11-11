@@ -925,7 +925,7 @@ var messageList = {
 			xhr.send();
 		},
 		placeholder: function(gfyLink) {
-			var placeholder, url, position;
+			var placeholder, url, safe, position;
 			url = gfyLink.getAttribute('href');
 			this.getAPIData(url, function(data) {
 				if (data === "error") {
@@ -976,7 +976,7 @@ var messageList = {
 			});
 		},
 		thumbnail: function(gfyLink) {
-			var display, placeholder, url, splitURL, code, thumbnail;
+			var display, placeholder, url, splitURL, code, thumbnail, workSafe;
 			messageList.config.show_gfycat_link ? display = 'inline' : display = 'none';
 			url = gfyLink.getAttribute('href');
 			splitURL = url.split('/').slice(-1);
@@ -1061,6 +1061,9 @@ var messageList = {
 				else {
 					callback(true);
 				}
+			}
+			else {
+				callback(true);
 			}
 		},
 		addHoverLink: function(gfyLink, url, width, height) {
