@@ -27,7 +27,7 @@ var topicList = {
 						username.parentNode.style.display = 'none';
 						username.parentNode.className = "hidden_tr";
 						topicList.ignorated.total_ignored++;
-						if (!itopicList.gnorated.data.users[ignores[f]]) {
+						if (!topicList.ignorated.data.users[ignores[f]]) {
 							topicList.ignorated.data.users[ignores[f]] = {};
 							topicList.ignorated.data.users[ignores[f]].total = 1;
 							topicList.ignorated.data.users[ignores[f]].trs = [ i ];
