@@ -40,6 +40,9 @@ var allPages = {
 	},
 	notify_pm : function() {
 		var userbar_pms = document.getElementById('userbar_pms');
+		if (!userbar_pms) {
+			return;
+		}
 		var observer = new MutationObserver(function() {
 			// we can assume that all mutations on 
 			// userbar_pms element are relevant
@@ -175,6 +178,7 @@ var allPages = {
 			popup.insertBefore(user, null);
 			popup.insertBefore(info, null);
 			document.body.insertBefore(popup, null);
+			commonFunctions.hidePopup();
 			document.body.addEventListener('dblclick',
 					commonFunctions.handlePopup);
 			document.addEventListener('click', function(e) {
@@ -241,8 +245,10 @@ var commonFunctions = {
 			if (evt.target.parentNode.parentNode.parentNode.parentNode.className === "message-container") {
 				user = evt.target.parentNode.parentNode.parentNode.parentNode
 						.getElementsByTagName('a')[0];
+				commonFunctions.currentPost = evt.target.parentNode.parentNode.parentNode.parentNode.parentNode;
 			} else {
 				user = evt.target.getElementsByTagName('a')[0];
+				commonFunctions.currentPost = evt.target.parentNode;
 			}
 			commonFunctions.currentUser = user.innerHTML;
 			commonFunctions.currentID = user.href.match(/user=(\d+)/)[1];
@@ -263,14 +269,15 @@ var commonFunctions = {
 			}
 			}
 			// load user profile
+			var html, tds, td, profileStatus, oldUsername, profileRep;
+			var formerly, displayOnline, displayPunish, displayRep;
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", user, true);
 			xhr.onreadystatechange = function () {
 				if (xhr.readyState == 4 && xhr.status == 200) {
-					var html = document.createElement('html');
+					html = document.createElement('html');
 					html.innerHTML = xhr.responseText;
-					var tds = html.getElementsByTagName('td');
-					var td, profileStatus, oldUsername, profileRep;
+					tds = html.getElementsByTagName('td');
 					// scrape information from profile
 					for (var i = 0, len = tds.length; i < len; i++) {
 						td = tds[i];
@@ -285,10 +292,10 @@ var commonFunctions = {
 						}					
 					}
 					// prepare popup menu for updates
-					var formerly = document.getElementById("namechange");
-					var displayOnline = document.getElementById('online');
-					var displayPunish = document.getElementById('punish');
-					var displayRep = document.getElementById('rep');					
+					formerly = document.getElementById("namechange");
+					displayOnline = document.getElementById('online');
+					displayPunish = document.getElementById('punish');
+					displayRep = document.getElementById('rep');					
 					// update popup menu elements
 					displayRep.innerHTML = '<br>' + profileRep;
 					if (config.show_old_name) {
@@ -333,111 +340,167 @@ var commonFunctions = {
 		document.getElementById('user-popup-div').style.display = 'none';
 	},
 	popupClick : function(evt) {
-		var type = evt.target.innerHTML;
-		if (config.debug)
+		var user = commonFunctions.currentUser.toLowerCase();
+		var functions, list, userToCheck, target, type;
+		if (typeof (messageList) != 'undefined') {
+			list = true;
+			var containers = document.getElementsByClassName('message-container');
+			var container;
+			functions = messageList.posts;
+		}
+		else {			
+			var trs = document.getElementsByTagName('tr');
+			var tr;
+			functions = topicList.functions;
+		}
+		target = commonFunctions.currentPost;
+		type = evt.target.innerHTML;
+		if (config.debug) {
 			console.log(type, commonFunctions.currentUser);
+		}
 		switch (type) {
-		case "IGNORATE?":
-			if (!config.ignorator_list || config.ignorator_list == '') {
-				config.ignorator_list = commonFunctions.currentUser;
-			} else {
-				config.ignorator_list += ", " + commonFunctions.currentUser;
-			}
-			chrome.runtime.sendMessage({
-				need : "save",
-				name : "ignorator_list",
-				data : config.ignorator_list
-			});
-			if (typeof (messageList) != 'undefined')
-				messageList.ignorator_messagelist();
-			else
-				topicList.ignorator_topiclist();
-			commonFunctions.hidePopup();
-			evt.target.innerHTML = "IGNORATE";
-			break;
-		case "IGNORATE":
-			evt.target.innerHTML = "IGNORATE?";
-			break;
-		case "PM":
-			chrome.runtime.sendMessage({
-				need : "opentab",
-				url : "http://endoftheinter.net/postmsg.php?puser="
-						+ commonFunctions.currentID
-			});
-			commonFunctions.hidePopup();
-			break;
-		case "GT":
-			chrome.runtime.sendMessage({
-				need : "opentab",
-				url : "http://endoftheinter.net/token.php?type=2&user="
-						+ commonFunctions.currentID
-			});
-			commonFunctions.hidePopup();
-			break;
-		case "BT":
-			chrome.runtime.sendMessage({
-				need : "opentab",
-				url : "http://endoftheinter.net/token.php?type=1&user="
-						+ commonFunctions.currentID
-			});
-			commonFunctions.hidePopup();
-			break;
-		case "HIGHLIGHT":
-			var user = commonFunctions.currentUser.toLowerCase();
-			config.user_highlight_data[user] = {};
-			config.user_highlight_data[user].bg = Math.floor(
-					Math.random() * 16777215).toString(16);
-			config.user_highlight_data[user].color = Math.floor(
-					Math.random() * 16777215).toString(16);
-			chrome.runtime.sendMessage({
-				need : "save",
-				name : "user_highlight_data",
-				data : config.user_highlight_data
-			});
-			if (typeof (messageList) != 'undefined') {
-				messageList.userhl_messagelist();
-				if (config.foxlinks_quotes)
-					commonFunctions.foxlinks_quote();
-			} else {
-				topicList.userhl_topiclist();
-			}
-			break;
-		case "UNHIGHLIGHT":
-			delete config.user_highlight_data[commonFunctions.currentUser
-					.toLowerCase()];
-			chrome.runtime.sendMessage({
-				need : "save",
-				name : "user_highlight_data",
-				data : config.user_highlight_data
-			});
-			commonFunctions.hidePopup();
-			if (typeof (messageList) != 'undefined') {
-				var message_tops = document
-						.getElementsByClassName('message-top');
-				for ( var i = 0; i < message_tops.length; i++) {
-					message_tops[i].style.background = '';
-					message_tops[i].style.color = '';
-					var top_atags = message_tops[i].getElementsByTagName('a');
-					for ( var j = 0; j < curr_top_atags.length; j++)
-						top_atags[j].style.color = '';
+			case "IGNORATE?":
+				if (!config.ignorator_list || config.ignorator_list == '') {
+					config.ignorator_list = commonFunctions.currentUser;
+				} else {
+					config.ignorator_list += ", " + commonFunctions.currentUser;
 				}
-				messageList.userhl_messagelist();
-				if (config.foxlinks_quotes)
-					commonFunctions.foxlinks_quote();
-			} else {
-				var tds = document.getElementsByTagName('td');
-				for ( var i = 0; i < tds.length; i++) {
-					tds[i].style.background = '';
-					tds[i].style.color = '';
-					var td_atags = tds[i].getElementsByTagName('a');
-					for ( var j = 0; j < td_atags.length; j++)
-						td_atags[j].style.color = '';
+				chrome.runtime.sendMessage({
+					need : "save",
+					name : "ignorator_list",
+					data : config.ignorator_list
+				});
+				if (list) {
+					messageList.config.ignorator_list = config.ignorator_list;
+					// update config object in messageList script
+					for (var i = 0, len = containers.length; i < len; i++) {
+						container = containers[i];
+						 messageList.posts.ignorator_messagelist(container);
+					}
 				}
-				topicList.userhl_topiclist();
-				if (config.zebra_tables)
-					topicList.zebra_tables();
-			}
-			break;
+				else {
+					topicList.config.ignorator_list = config.ignorator_list;
+					// update config object in topicList object
+					for (var i = 1, len = trs.length; i < len; i++) {
+						tr = trs[i];
+						topicList.functions.ignorator_topiclist(tr, i);
+					}
+				}
+				commonFunctions.hidePopup();
+				evt.target.innerHTML = "IGNORATE";
+				break;
+			case "IGNORATE":
+				evt.target.innerHTML = "IGNORATE?";
+				break;
+			case "PM":
+				chrome.runtime.sendMessage({
+					need : "opentab",
+					url : "http://endoftheinter.net/postmsg.php?puser="
+							+ commonFunctions.currentID
+				});
+				commonFunctions.hidePopup();
+				break;
+			case "GT":
+				chrome.runtime.sendMessage({
+					need : "opentab",
+					url : "http://endoftheinter.net/token.php?type=2&user="
+							+ commonFunctions.currentID
+				});
+				commonFunctions.hidePopup();
+				break;
+			case "BT":
+				chrome.runtime.sendMessage({
+					need : "opentab",
+					url : "http://endoftheinter.net/token.php?type=1&user="
+							+ commonFunctions.currentID
+				});
+				commonFunctions.hidePopup();
+				break;
+			case "HIGHLIGHT":
+				config.user_highlight_data[user] = {};
+				config.user_highlight_data[user].bg = Math.floor(
+						Math.random() * 16777215).toString(16);
+				config.user_highlight_data[user].color = Math.floor(
+						Math.random() * 16777215).toString(16);
+				chrome.runtime.sendMessage({
+					need : "save",
+					name : "user_highlight_data",
+					data : config.user_highlight_data
+				});
+				if (list) {
+					// update config object in messageList script
+					messageList.config.user_highlight_data = config.user_highlight_data;
+					var top;
+					for (var i = 0, len = containers.length; i < len; i++) {
+						container = containers[i];
+						functions.userhl_messagelist(container, i);
+						if (config.foxlinks_quotes) {
+							 functions.foxlinks_quote(container);
+						}
+					}
+				} else {
+					// update config object in topicList script
+					topicList.config.user_highlight_data = config.user_highlight_data;
+					for (var i = 1, len = trs.length; i < len; i++) {
+						tr = trs[i];
+						functions.userhl_topiclist(tr);
+					}
+				}				
+				break;
+			case "UNHIGHLIGHT":
+				delete config.user_highlight_data[commonFunctions.currentUser
+						.toLowerCase()];
+				chrome.runtime.sendMessage({
+					need : "save",
+					name : "user_highlight_data",
+					data : config.user_highlight_data
+				});
+				if (list) {
+					// update config object in messageList scripts
+					messageList.config.user_highlight_data = config.user_highlight_data;
+					var message_tops = document
+							.getElementsByClassName('message-top');
+					var top;
+					for (var i = 0, len = message_tops.length; i < len; i++) {
+						top = message_tops[i];
+						if (top.getElementsByTagName('a')[0]) {
+							userToCheck = top.getElementsByTagName('a')[0].innerHTML;
+							if (userToCheck === commonFunctions.currentUser) {				
+								top.style.background = '';
+								top.style.color = '';
+								var top_atags = top.getElementsByTagName('a');
+								for ( var j = 0; j < top_atags.length; j++) {
+									top_atags[j].style.color = '';
+								}
+							}
+						}
+					}
+				} else {
+					// update config object in topicList scripts
+					topicList.config.user_highlight_data = config.user_highlight_data;
+					var tds, td, tags;
+					for (var i = 1, len = trs.length; i < len; i++) {
+						tr = trs[i];
+						tds = tr.getElementsByTagName('td');
+						if (tds[1].getElementsByTagName('a')[0]) {
+							userToCheck = tds[1].getElementsByTagName('a')[0].innerHTML;
+							if (userToCheck == commonFunctions.currentUser) {
+								for (var j = 0, tds_len = tds.length; j < tds_len; j++) {
+									td = tds[j];
+									td.style.background = '';
+									td.style.color = '';
+									tags = td.getElementsByTagName('a');
+									for (var k = 0, tags_len = tags.length; k < tags_len; k++) {
+										tags[k].style.color = '';
+									}
+								}
+							}
+						}
+					}
+						// topicList.zebra_tables();
+				}
+				commonFunctions.hidePopup();
+				break;
 		}
 	},
 	quickReplyInsert : function(text) {
@@ -511,6 +574,7 @@ chrome.runtime.onMessage.addListener(function(msg) {
 		close.innerHTML = '&#10006;';			
 		iframe.style.width = "inherit";
 		iframe.src = url;
+		iframe.style.backgroundColor = "white";
 		iframe.style.border = "none";
 		bodyClass.style.opacity = 0.3;
 		div.appendChild(close);
