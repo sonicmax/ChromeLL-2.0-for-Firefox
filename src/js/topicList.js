@@ -4,7 +4,7 @@ var topicList = {
 			if (!topicList.config.ignorator) {
 				return;
 			}
-			var ignores = topicList.ignoreUsers;
+			var ignores = topicList.ignore.users;
 			var username;
 			if (tr.getElementsByTagName('td')[1]) {
 				username = tr.getElementsByTagName('td')[1];
@@ -44,16 +44,6 @@ var topicList = {
 				return;
 			}
 			var re = false;
-			/*try {
-				keywords = JSON.parse(topicList.config.ignore_keyword_list);
-				if (topicList.config.debug) {
-					console.log("JSON keywords");
-				}
-				re = true;
-			} catch (e) {
-				keywords = topicList.config.ignore_keyword_list.split(',');
-				keywords = topicList.handleCsv(keywords);
-			}*/
 			var keywords = topicList.ignore.keywords;
 			var title;
 			var match = false;
@@ -102,7 +92,7 @@ var topicList = {
 				}
 			}
 		},
-		append_tags : function(tr) {
+		/*append_tags : function(tr) {
 			for (var i = 0; i < tags.length; i++) {
 				var tag_children = tags[i].children;
 				for (var j = 0; j < tag_children.length; j++) {
@@ -122,7 +112,7 @@ var topicList = {
 					}
 				}
 			}
-		},
+		},*/
 		page_jump_buttons : function(tr, i) {
 			var inbox;
 			if (window.location.href.indexOf('inbox.php') > -1) {
@@ -178,23 +168,6 @@ var topicList = {
 			var title;
 			var keys = topicList.highlight.keywords;
 			var re = false;
-			/*for (var j = 0; topicList.config.keyword_highlight_data[j]; j++) {
-				try {
-					keys[j] = {};
-					keys[j].match = JSON
-							.parse(topicList.config.keyword_highlight_data[j].match);
-					keys[j].bg = topicList.config.keyword_highlight_data[j].bg;
-					keys[j].color = topicList.config.keyword_highlight_data[j].color;
-					re = true;
-				} catch (e) {
-					keys[j] = {};
-					keys[j].match = topicList.config.keyword_highlight_data[j].match
-							.split(',');
-					keys[j].match = topicList.handleCsv(keys[j].match);
-					keys[j].bg = topicList.config.keyword_highlight_data[j].bg;
-					keys[j].color = topicList.config.keyword_highlight_data[j].color;
-				}
-			}*/
 			var reg;
 				title = tr.getElementsByTagName('td')[0]
 						.getElementsByClassName('fl')[0].getElementsByTagName('a')[0].innerHTML;
