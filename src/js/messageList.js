@@ -320,7 +320,7 @@ var messageList = {
 				});
 			}
 		},	
-		autoscroll: function(mutation, index, live) {
+		autoscroll_livelinks: function(mutation, index, live) {
 			if (live) {
 				if (document.hidden 
 						&& messageList.autoscrollCheck(mutation) ) {
@@ -329,7 +329,7 @@ var messageList = {
 				}
 			}
 		},
-		autoscroll_active: function(mutation, index, live) {
+		autoscroll_livelinks_active: function(mutation, index, live) {
 			if (live) {
 				if (!document.hidden 
 						&& messageList.autoscrollCheck(mutation)) {
