@@ -925,7 +925,7 @@ var messageList = {
 			xhr.send();
 		},
 		placeholder: function(gfyLink) {
-			var placeholder, url, workSafe, position;
+			var placeholder, url, position;
 			url = gfyLink.getAttribute('href');
 			this.getAPIData(url, function(data) {
 				if (data === "error") {
@@ -939,44 +939,45 @@ var messageList = {
 						return;
 					}
 				}
-				workSafe = function() {
-					messageList.gfycat.workSafe(gfyLink, data.nsfw);
-				};
-				if (!workSafe) {
-					if (messageList.config.hide_nws_gfycat) {
-						gfyLink.className = "l";
-						return;
+				messageList.gfycat.workSafe(gfyLink, data.nsfw, function(safe) {
+					if (!safe) {
+						if (messageList.config.hide_nws_gfycat) {
+							gfyLink.className = "l";
+							return;
+						}
+						else {
+							messageList.gfycat.addHoverLink(gfyLink, data.webm, data.width, data.height);
+							return;
+						}
 					}
 					else {
-						// console.log('NWS gfy', gfyLink);
-						messageList.gfycat.embedOnHover(gfyLink, data.webm, data.width, data.height);
-						return;
-					}
-				}
-				// create placeholder
-				placeholder = document.createElement('div');
-				placeholder.className = 'gfycat';
-				placeholder.id = data.webm;
-				placeholder.setAttribute('name', 'placeholder');
-				placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
-						+ '</video>'
-						+ '<span style="display:none">' + url + '</span>';
-				// prevent "Cannot read property 'replaceChild' of null" error
-				if (gfyLink.parentNode) {
-					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
-					// check if placeholder is visible (some placeholders will be off screen)
-					position = placeholder.getBoundingClientRect();
-					if (position.top > window.innerHeight) {
-						return;
-					} else {
-						// pass placeholder video element to embed function
-						messageList.gfycat.embed(placeholder);
-					}
-				}
+						// create placeholder
+						placeholder = document.createElement('div');
+						placeholder.className = 'gfycat';
+						placeholder.id = data.webm;
+						placeholder.setAttribute('name', 'placeholder');
+						placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
+								+ '</video>'
+								+ '<span style="display:none"><br><br>' + url + '</span>';
+						// prevent "Cannot read property 'replaceChild' of null" error
+						if (gfyLink.parentNode) {
+							gfyLink.parentNode.replaceChild(placeholder, gfyLink);
+							// check if placeholder is visible (some placeholders will be off screen)
+							position = placeholder.getBoundingClientRect();
+							if (position.top > window.innerHeight) {
+								return;
+							} else {
+								// pass placeholder video element to embed function
+								messageList.gfycat.embed(placeholder);
+							}
+						}
+					}					
+				});
 			});
 		},
 		thumbnail: function(gfyLink) {
-			var placeholder, url, splitURL, code, thumbnail, workSafe;
+			var display, placeholder, url, splitURL, code, thumbnail;
+			messageList.config.show_gfycat_link ? display = 'inline' : display = 'none';
 			url = gfyLink.getAttribute('href');
 			splitURL = url.split('/').slice(-1);
 			code = splitURL.join('/');
@@ -994,72 +995,75 @@ var messageList = {
 						return;
 					}
 				}
-				workSafe = function() { 
-					messageList.gfycat.workSafe(gfyLink, data.nsfw);
-				};
-				if (!workSafe) {
-					if (messageList.config.hide_nws_gfycat) {
-						gfyLink.className = "l";
-						return;
+				messageList.gfycat.workSafe(gfyLink, data.nsfw, function(safe) {
+					if (!safe) {
+						if (messageList.config.hide_nws_gfycat) {
+							gfyLink.className = "l";
+							return;
+						}
+						else {
+							messageList.gfycat.addHoverLink(gfyLink, data.webm, data.width, data.height);
+							return;
+						}
 					}
 					else {
-						// console.log('NWS gfy', gfyLink);
-						messageList.gfycat.embedOnHover(gfyLink, data.webm, data.width, data.height);
-						return;
-					}
-				}
-				// create placeholder element
-				placeholder = document.createElement('div');
-				placeholder.className = 'gfycat';
-				placeholder.id = data.webm;
-				placeholder.innerHTML = '<img src="' + thumbnail 
-						+ '" width="' + data.width + '" height="' + data.height + '">'
-						+ '</img>'
-						+ '<span style="display:none">' + url + '</span>';
-				if (gfyLink.parentNode) {
-					gfyLink.parentNode.replaceChild(placeholder, gfyLink);
-					// add click listener to replace img with video
-					img = placeholder.getElementsByTagName('img')[0];
-					img.title = "Click to play";
-					img.addEventListener('click', function(ev) {
-						ev.preventDefault();
-						placeholder.innerHTML = '<video width="' + data.width 
-								+ '" height="' + data.height 
-								+ '" loop >'
-								+ '</video>'
-								+ '<span style="display:none">' + url + '</span>';
-						video = placeholder.getElementsByTagName('video')[0];
-						placeholder.setAttribute('name', 'embedded_thumb');
-						video.src = placeholder.id;
-						video.title = "Click to pause";
-						video.play();
-						video.addEventListener('click', function(ev) {
-							video.title = "Click to play/pause";
-							if (!video.paused) {
-								video.pause();
-							}
-							else {
+						// create placeholder element
+						placeholder = document.createElement('div');
+						placeholder.className = 'gfycat';
+						placeholder.id = data.webm;
+						placeholder.innerHTML = '<img src="' + thumbnail 
+								+ '" width="' + data.width + '" height="' + data.height + '">'
+								+ '</img>'
+								+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
+						if (gfyLink.parentNode) {
+							gfyLink.parentNode.replaceChild(placeholder, gfyLink);
+							// add click listener to replace img with video
+							img = placeholder.getElementsByTagName('img')[0];
+							img.title = "Click to play";
+							img.addEventListener('click', function(ev) {
+								ev.preventDefault();
+								placeholder.innerHTML = '<video width="' + data.width 
+										+ '" height="' + data.height 
+										+ '" loop >'
+										+ '</video>'
+										+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
+								video = placeholder.getElementsByTagName('video')[0];
+								placeholder.setAttribute('name', 'embedded_thumb');
+								video.src = placeholder.id;
+								video.title = "Click to pause";
 								video.play();
-							}
-						});
-					});
-				}			
+								video.addEventListener('click', function(ev) {
+									video.title = "Click to play/pause";
+									if (!video.paused) {
+										video.pause();
+									}
+									else {
+										video.play();
+									}
+								});
+							});
+						}	
+					}
+				});
 			});
 		},
-		workSafe: function(gfyLink, nsfw) {
-			if (!document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {
-				if (nsfw === '1' || gfyLink.parentNode.innerHTML.match(/(n[wl]s)/i)) {
-					console.log('nws gfy in worksafe topic', nsfw, gfyLink.parentNode.innerHTML.match(/(n[wl]s)/i));
+		workSafe: function(gfyLink, nsfw, callback) {
+			// check whether gfycat link is nws
+			var userbar = document.getElementsByTagName('h2')[0];
+			var postHTML = gfyLink.parentNode.innerHTML;
+			if (!userbar.innerHTML.match(/N[WL]S/)) {
+				// only check topics without NWS/NLS tags
+				if (nsfw === '1' || postHTML.match(/(n[wl]s)/i)) {
+					gfyLink.className = 'nws_gfycat';
 					// gfycat video is definitely not safe for work
-					return false;
+					callback(false);
+				}
+				else {
+					callback(true);
 				}
 			}
-			else {
-				console.log('worksafe gfy');
-				return true;
-			}
 		},
-		embedOnHover: function(gfyLink, url, width, height) {
+		addHoverLink: function(gfyLink, url, width, height) {
 			// handle NWS videos
 			gfyLink.className = 'nws_gfycat';
 			gfyLink.id = url;
@@ -1084,7 +1088,18 @@ var messageList = {
 			);
 		},
 		embed: function(placeholder) {
-			if (placeholder.className = 'nws_gfycat') {
+			if (placeholder.className === 'gfycat') {
+				// use placeholder element to embed gfycat video
+				var video = placeholder.getElementsByTagName('video')[0];
+				if (messageList.config.show_gfycat_link) {
+					placeholder.getElementsByTagName('span')[0].style.display = 'inline';
+				}
+				placeholder.setAttribute('name', 'embedded');
+				// placeholder id is webm url
+				video.src = placeholder.id;
+				video.play();
+			}
+			else if (placeholder.className === 'nws_gfycat') {
 				// create video element & embed gfycat
 				var video = document.createElement('video');
 				var width = placeholder.getAttribute('w');
@@ -1095,14 +1110,6 @@ var messageList = {
 				video.setAttribute('loop', true);
 				video.src = placeholder.id;				
 				placeholder.parentNode.replaceChild(video, placeholder);			
-				video.play();
-			}
-			else {
-				// use placeholder element to embed gfycat video
-				var video = placeholder.getElementsByTagName('video')[0];
-				placeholder.setAttribute('name', 'embedded');
-				// placeholder id is webm url
-				video.src = placeholder.id;
 				video.play();
 			}
 		},
@@ -1306,7 +1313,7 @@ var messageList = {
 					popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quote to ETI Bash]</b>';
 				}
 				else if (len === 0) {
-					messageLists.bash.reset(bashes);
+					messageList.bash.reset(bashes);
 				}
 			}
 		},
@@ -1366,12 +1373,12 @@ var messageList = {
 					top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
 					message_to_quote = top.nextSibling.lastChild.lastChild.firstChild;
 					// pass -1 to make sure that all quoted posts are removed
-					message = messageLists.bash.getMessage(message_to_quote, quotes, tops, -1);
+					message = messageList.bash.getMessage(message_to_quote, quotes, tops, -1);
 					if (!message) {
 						// do nothing
 					}
 					else {
-						username = messageLists.bash.getUsername(top);
+						username = messageList.bash.getUsername(top);
 						user_array.push(username);
 						message_array.push(message);	
 					}
@@ -1379,19 +1386,19 @@ var messageList = {
 				else if (quotes.length === 0) {
 					top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
 					// get username and post content belonging to first message-top
-					message = messageLists
+					message = messageList
 							.bash.getMessage(top.nextSibling.lastChild.lastChild.firstChild);
 					if (!message) {
-						messageLists.bash.reset(bashes);
+						messageList.bash.reset(bashes);
 						return;
 					}
-					username = messageLists.bash.getUsername(top);
+					username = messageList.bash.getUsername(top);
 					user_array.push(username);
 					message_array.push(message);
 				}
 				if (i === 0) {
 					first_top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
-					url = messageLists.bash.getURL(first_top, len);
+					url = messageList.bash.getURL(first_top, len);
 				}
 			}
 			// pass values to submitBash function
@@ -1569,7 +1576,7 @@ var messageList = {
 					spoiler.caption = node.getElementsByClassName('caption')[0]
 							.innerText.replace(/<|\/>/g, '');
 					spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-					output += messageLists.archiveQuote.returnSpoiler(spoiler.caption, spoiler.nodes);
+					output += messageList.archiveQuote.returnSpoiler(spoiler.caption, spoiler.nodes);
 				}	
 				if (node.className == 'quoted-message') {
 					quoteOutput = '';
@@ -2168,7 +2175,6 @@ var messageList = {
 					messageList.bash.handler();
 				}
 				else if (ev.target.parentNode.className == 'embed_nws_gfy') {
-					console.log(ev.target.parentNode.id);
 					gfycatID = ev.target.parentNode.id.replace('_embed', '');
 					messageList.gfycat.embed(document.getElementById(gfycatID));
 				}

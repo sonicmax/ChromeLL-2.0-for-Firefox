@@ -51,6 +51,7 @@
    "embed_on_hover":true,
    "embed_gfycat":true,
 	 "embed_gfycat_thumbs":false,
+	 "show_gfycat_link":false,
 	 "hide_nws_gfycat":false,
    "resize_gfys":true,
    "gfy_max_width":1440,
