@@ -749,11 +749,11 @@ function omniboxSearch() {
 						tagsForSearch += '%2B';
 					}
 				}
-				searchURL = '	http://boards.endoftheinter.net/topics/' + tagsForSearch + '?q=' + query;
-				chrome.tabs.update({
-						url: searchURL
-				});
 			}
+			searchURL = '	http://boards.endoftheinter.net/topics/' + tagsForSearch + '?q=' + query;
+			chrome.tabs.update({
+					url: searchURL
+			});
 		}
 	});
 }
