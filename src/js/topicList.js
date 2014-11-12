@@ -322,23 +322,16 @@ var topicList = {
 		}
 		for (var i = 0; topicList.config.keyword_highlight_data[i]; i++) {
 			topicList.highlight.keywords[i] = {};
-			topicList.highlight.keywords[i].match = JSON
-					.parse(topicList.config.keyword_highlight_data[i].match);
 			topicList.highlight.keywords[i].bg = topicList.config.keyword_highlight_data[i].bg;
 			topicList.highlight.keywords[i].color = topicList.config.keyword_highlight_data[i].color;
-			topicList.highlight.keywords[i] = {};
 			topicList.highlight.keywords[i].match = topicList.config.keyword_highlight_data[i].match
 					.split(',');
-			// note - may have to convert match values into strings & use toLowerCase() & trim() on them
-			topicList.highlight.keywords[i].bg = topicList.config.keyword_highlight_data[i].bg;
-			topicList.highlight.keywords[i].color = topicList.config.keyword_highlight_data[i].color;
 		}
 		for (var i = 0; topicList.config.tag_highlight_data[i]; i++) {
-			topicList.highlight.tags[i] = {};
-			topicList.highlight.tags[i].match = topicList.config.tag_highlight_data[i].match.split(',');
-			// note - may have to convert match values into strings & use toLowerCase() & trim() on them			
+			topicList.highlight.tags[i] = {};	
 			topicList.highlight.tags[i].bg = topicList.config.tag_highlight_data[i].bg;
-			topicList.highlight.tags[i].color = topicList.config.tag_highlight_data[i].color;
+			topicList.highlight.tags[i].color = topicList.config.tag_highlight_data[i].color;	
+			topicList.highlight.tags[i].match = topicList.config.tag_highlight_data[i].match.split(',');
 		}
 	},
 	jumpHandlerTopic : function(ev) {
