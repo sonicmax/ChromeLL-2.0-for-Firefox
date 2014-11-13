@@ -532,6 +532,17 @@ var messageList = {
 				username = tc.getElementsByTagName('a')[0];
 				username.outerHTML += span.innerHTML;
 			}
+		},
+		quick_imagemap: function() {
+			if (document.getElementsByClassName('quickpost-body')) {
+				var quickpost = document.getElementsByClassName('quickpost-body')[0];
+				var button = document.createElement('button');
+				var divider = document.createTextNode(' ');
+				button.textContent = " Browse Imagemap";
+				button.id = "quick_image";
+				quickpost.appendChild(divider);
+				quickpost.appendChild(button);
+			}
 		}
 	},
 	misc: {
@@ -1808,6 +1819,165 @@ var messageList = {
 				el.width = messageList.config.img_max_width;
 				el.parentNode.style.width = messageList.config.img_max_width + 'px';
 			}
+		},
+		map: {
+			get: function(number, callback) {
+				// handle page number for url
+				if (number === 1) {
+					var page = '';
+				}
+				else if (number > 1) {
+					var page = '?page=' + number;
+				}				
+				var url = "http://images.endoftheinter.net/imagemap.php" + page;
+				// deal with https users
+				if (window.location.protocol == 'https:') {
+					url = url.replace('http', 'https');
+				}
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", url, true);
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState == 4 && xhr.status == 200) {
+						// set innerHTML of html element to xhr response so we can iterate over imagemap
+						var html = document.createElement('html');
+						html.innerHTML = xhr.responseText;						
+						callback(html, number);
+					}
+				}
+				xhr.send();
+			},
+			store: function(grid, page) {
+				/*if (localStorage['ChromeLL-Imagemap'] != undefined
+						&& localStorage['ChromeLL-Imagemap'] != '') {
+					var imagemapCache = JSON.parse(localStorage['ChromeLL-Imagemap']);
+					imagemapCache[page] = grid.innerHTML;				
+					localStorage['ChromeLL-Imagemap'] = JSON.stringify(imagemapCache);
+				}
+				else {
+					var imagemapCache = {};
+					imagemapCache[page] = grid.innerHTML;
+					localStorage['ChromeLL-Imagemap'] = JSON.stringify(imagemapCache);
+				}*/
+			},
+			handler: function() {
+				var _this = this;				
+				var page = 1;
+				this.get(page, function(imagemap, page) {
+					//var gridElements = imagemap.getElementsByClassName('grid_block');
+					var imageGrid = _this.process(imagemap);
+					var infobar = imagemap.getElementsByClassName('infobar')[1];
+					var anchors = infobar.getElementsByTagName('a');					
+					var lastPage = anchors[anchors.length - 1].innerHTML;
+					// _this.store(imageGrid, page);
+					_this.create(imageGrid, page, lastPage);
+				});
+			},
+			process: function(imagemap) {
+				// return grid of images from the imagemap html
+				var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
+				var blockDescs = imageGrid.getElementsByClassName('block_desc');
+				var gridBlocks = imageGrid.getElementsByClassName('grid_block');
+				for (var i = 0, len = blockDescs.length; i < len; i++) {
+					var blockDesc = blockDescs[i];
+					blockDesc.style.display = 'none';
+				}
+				for (var i = 0, len = gridBlocks.length; i < len; i++) {
+					var gridBlock = gridBlocks[i];
+					gridBlock.title = "Copy to clipboard";		
+				}
+				return imageGrid;
+			},
+			create: function(grid, page, lastPage) {
+				var _this = this;
+				var div = document.createElement('div');
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+				//var close = document.createElement('a');
+				var bodyClass = document.getElementsByClassName('body')[0];
+				var anchorHeight;	
+				div.id = "map_div";
+				div.style.position = "fixed";
+				div.style.width = (width * 0.95) + 'px';
+				div.style.height = (height * 0.95) / 2 + 'px';
+				div.style.left = (width - (width * 0.975)) + 'px';
+				div.style.top = (height - (height * 0.975)) + 'px';
+				div.style.boxShadow = "5px 5px 7px black";		
+				div.style.borderRadius = '6px';	
+				div.style.opacity = 1;
+				div.style.backgroundColor = 'white';
+				div.style.overFlow = 'scroll';
+				// TODO - figure out how to position anchor
+				/*close.style.cssFloat = "right";
+				close.style.fontSize = "18px";
+				close.href = '#';
+				close.style.textDecoration = "none";
+				close.id = "close_options";
+				close.innerHTML = '&#10006;';		*/
+				// account for borderRadius in grid maxWidth
+				grid.style.maxWidth = (width * 0.95) - 6 + 'px';
+				grid.style.maxHeight = ((height * 0.95) / 2) - 5 + 'px';
+				grid.style.overflow = 'scroll';
+				grid.style.overflowX = 'hidden';
+				bodyClass.style.opacity = 0.3;
+				//div.appendChild(close);
+				div.appendChild(grid);
+				document.body.appendChild(div);
+				document.body.style.overflow = 'hidden';
+				bodyClass.addEventListener('mousewheel', preventScroll);
+				bodyClass.addEventListener('click', messageList.image.map.close); 
+				div.addEventListener('click', function(ev) {
+					_this.clickHandler(ev);
+					ev.preventDefault();
+				});
+				grid.addEventListener('scroll', function(ev) {
+					// check whether user is at end of page
+					// (minus 5 pixels to account for weird zoom levels)
+					if (grid.scrollTop >= grid.scrollHeight - grid.clientHeight - 5) {						
+						if (page === lastPage) {
+							// no more pages to load
+							return;
+						}
+						else {
+							// load next page and append to current grid
+							page++;
+							/*var imageCache = JSON.parse(localStorage['ChromeLL-Imagemap']);
+							if (imageCache[page]) {
+								var cachedGrid = document.createElement('div');
+								cachedGrid.innerHTML = imageCache[page];
+								grid.appendChild(cachedGrid);
+							}
+							else {*/
+								_this.get(page, function(imagemap) {
+									var imageGrid = _this.process(imagemap);
+									grid.appendChild(imageGrid);
+									// _this.store(imageGrid, page);
+								});
+							//  }
+						}
+					}
+				});
+			},
+			close: function() {
+				var div = document.getElementById('map_div');
+				var bodyClass = document.getElementsByClassName('body')[0];
+				document.body.removeChild(div);
+				bodyClass.style.opacity = 1;
+				document.body.style.overflow = 'initial';
+				bodyClass.removeEventListener('mousewheel', preventScroll);
+				bodyClass.removeEventListener('click',  messageList.image.map.close);
+			},
+			clickHandler: function(ev) {
+				// get img src and copy generated link to clipboard
+				var _this = this;
+				var clipboard = {};
+				var src = ev.target.src;
+				if (src) {
+					clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
+					chrome.runtime.sendMessage(clipboard, function(response) {
+						_this.close();
+					});
+				}
+			}
 		}
 	},
 	spoilers: {
@@ -2135,6 +2305,10 @@ var messageList = {
 				messageList.usernotes.open(ev.target);
 				ev.preventDefault();
 			}
+			if (ev.target.id == 'quick_image') {
+				messageList.image.map.handler(ev.target.id);
+				ev.preventDefault();
+			}			
 			if (messageList.config.post_templates) {
 				messageList.postTemplateAction(ev.target);
 			}
