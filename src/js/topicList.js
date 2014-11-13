@@ -1,5 +1,21 @@
 var topicList = {
-	functions: {
+	ignore: {
+		users: [],
+		keywords: []
+	},
+	highlight: {
+		keywords: {},
+		tags: {}
+	},
+	config: {},
+	ignorated: {
+		total_ignored: 0,
+		data: {
+			users: {},
+			keywords: {}
+		}
+	},
+	mainFunctions: {
 		ignorator_topiclist : function(tr, i) {
 			var ignores = topicList.ignore.users;
 			if (!ignores) {
@@ -24,7 +40,6 @@ var topicList = {
 										+ " topic: " + i);
 					}
 					tr.style.display = 'none';
-					tr.className = "hidden_tr";
 					topicList.ignorated.total_ignored++;
 					if (!topicList.ignorated.data.users[ignores[f]]) {
 						topicList.ignorated.data.users[ignores[f]] = {};
@@ -66,7 +81,7 @@ var topicList = {
 										keywords[f].toLowerCase()) != -1;
 					}
 					if (match) {
-						if (topicList.config.debug)
+						if (topicList.config.debug) {
 							console
 									.log('found topic to remove: \"'
 											+ tr.getElementsByTagName('td')[0]
@@ -74,18 +89,17 @@ var topicList = {
 													.toLowerCase()
 											+ "\" keyword: " + keywords[f]
 											+ " topic: " + i);
-						title.parentNode.style.display = 'none';
-						title.parentNode.className = "hidden_tr";
-						ignorated.total_ignored++;
-						if (!ignorated.data.keywords[keywords[f]]) {
-							ignorated.data.keywords[keywords[f]] = {};
-							ignorated.data.keywords[keywords[f]].total = 1;
-							ignorated.data.keywords[keywords[f]].trs = [ i ];
-						} else {
-							ignorated.data.keywords[keywords[f]].total++;
-							ignorated.data.keywords[keywords[f]].trs.push(i);
 						}
-						// break;
+						title.parentNode.style.display = 'none';
+						topicList.ignorated.total_ignored++;
+						if (!topicList.ignorated.data.keywords[keywords[f]]) {
+							topicList.ignorated.data.keywords[keywords[f]] = {};
+							topicList.ignorated.data.keywords[keywords[f]].total = 1;
+							topicList.ignorated.data.keywords[keywords[f]].trs = [ i ];
+						} else {
+							topicList.ignorated.data.keywords[keywords[f]].total++;
+							topicList.ignorated.data.keywords[keywords[f]].trs.push(i);
+						}
 					}
 				}
 			}
@@ -165,14 +179,16 @@ var topicList = {
 		enable_keyword_highlight : function(tr) {
 			var title;
 			var keys = topicList.highlight.keywords;
+			if (!keys) {
+				return;
+			}
 			var re = false;
-			var reg;
 				title = tr.getElementsByTagName('td')[0]
 						.getElementsByClassName('fl')[0].getElementsByTagName('a')[0].innerHTML;
 				for (var j = 0; keys[j]; j++) {
 					for (var k = 0; keys[j].match[k]; k++) {
 						if (keys[j].match[k].substring(0, 1) == '/') {
-							reg = new RegExp(keys[j].match[k].substring(1,
+							var reg = new RegExp(keys[j].match[k].substring(1,
 									keys[j].match[k].lastIndexOf('/')),
 									keys[j].match[k].substring(keys[j].match[k]
 											.lastIndexOf('/') + 1,
@@ -180,18 +196,16 @@ var topicList = {
 							match = title.match(reg);
 						} else {
 							reg = keys[j].match[k].toLowerCase();
-							match = title.toLowerCase().indexOf(reg) != -1;
+							var match = title.toLowerCase().indexOf(reg) != -1;
 						}
 						if (match) {
-							tr.getElementsByTagName('td')[0].style.background = '#'
-									+ keys[j].bg;
-							tr.getElementsByTagName('td')[0].style.color = '#'
-									+ keys[j].color;
-							for (var m = 0; tr.getElementsByTagName('td')[0]
-									.getElementsByTagName('a')[m]; m++) {
-								tr.getElementsByTagName('td')[0]
-										.getElementsByTagName('a')[m].style.color = '#'
-										+ keys[j].color;
+							var node = tr.getElementsByTagName('td')[0];
+							var nodeAnchors = node.getElementsByTagName('a');
+							node.style.background = '#' + keys[j].bg;
+							node.style.color = '#' + keys[j].color;
+							for (var m = 0, anchorLen = nodeAnchors.length; m < anchorLen; m++) {
+								var nodeAnchor = nodeAnchors[m];
+								nodeAnchor.style.color = '#' + keys[j].color;
 							}
 							if (topicList.config.debug) {
 								console.log('highlight topic ' + title
@@ -202,34 +216,31 @@ var topicList = {
 				}
 		},
 		enable_tag_highlight : function(tr) {
-			var keys = topicList.highlight.tags;
-			tags = tr.getElementsByTagName('td')[0]
-					.getElementsByClassName('fr')[0].getElementsByTagName('a');
-			for (var j = 0; tags[j]; j++) {
-				for (var k = 0; keys[k]; k++) {
-					for (var l = 0; keys[k].match[l]; l++) {
-						if (tags[j].innerHTML.toLowerCase().match(
-								keys[k].match[l])) {
-							for (var m = 0; tr
-									.getElementsByTagName('td')[m]; m++) {
-								if (tr.getElementsByTagName('td')[m].style.background == '') {
-									tr.getElementsByTagName('td')[m].style.background = '#'
-											+ keys[k].bg;
-									tr.getElementsByTagName('td')[m].style.color = '#'
-											+ keys[k].color;
-									for (var n = 0; tr
-											.getElementsByTagName('td')[m]
-											.getElementsByTagName('a')[n]; n++) {
-										tr.getElementsByTagName('td')[m]
-												.getElementsByTagName('a')[n].style.color = '#'
-												+ keys[k].color;
-									}
-									break;
-								}
+			var highlightTags = topicList.highlight.tags;
+			if (!highlightTags) {
+				return;
+			}
+			var tagsToCheck = tr.getElementsByTagName('td')[0]
+					.getElementsByClassName('fr')[0].getElementsByTagName('a');			
+			for (var j = 0, len = tagsToCheck.length; j < len; j++) {
+				tagToCheck = tagsToCheck[j];		
+				for (var k = 0; highlightTags[k]; k++) {
+					for (var l = 0; highlightTags[k].match[l]; l++) {
+						var highlightTag = highlightTags[k].match[l];
+						if (tagToCheck.innerHTML.toLowerCase()
+								.match(highlightTag)) {
+							var node = tr.getElementsByTagName('td')[0];
+							var nodeAnchors = node.getElementsByTagName('a');
+							node.style.background = '#' + highlightTags[k].bg;
+							node.style.color = '#' + highlightTags[k].color;							
+							for (var n = 0, anchorLen = nodeAnchors.length; n < anchorLen; n++) {
+								nodeAnchor = nodeAnchors[n];
+								nodeAnchor.style.color = '#' + highlightTags[k].color;
 							}
-							if (topicList.config.debug)
-								console.log('highlight topic ' + tr
-										+ ' tag ' + keys[k].match[l]);
+						}
+						if (topicList.config.debug) {
+							console.log('highlight topic ' + tr
+									+ ' tag ' + highlightTags[k].match[l]);
 						}
 					}
 				}
@@ -249,24 +260,21 @@ var topicList = {
 					if (topicList.config.debug) {
 						console.log('highlighting topic by ' + user);
 					}
-					for (var j = 0; tr.getElementsByTagName('td')[j]; j++) {
-						tr.getElementsByTagName('td')[j].style.background = '#'
-								+ highlightData[user].bg;
-						tr.getElementsByTagName('td')[j].style.color = '#'
-								+ highlightData[user].color;
+					var tds = tr.getElementsByTagName('td');
+					for (var j = 0, tdsLen = tds.length; j < tdsLen; j++) {
+						var td = tds[j];
+						var tdAnchors = td.getElementsByTagName('a');
+						td.style.background = '#'	+ highlightData[user].bg;
+						td.style.color = '#' + highlightData[user].color;
+						for (var k = 0, anchorLen = tdAnchors.length; k < anchorLen; k++) {
+							var anchor = tdAnchors[k];
+							anchor.style.color = '#' + highlightData[user].color;
+						}				
 					}
-					for (var j = 0; tr.getElementsByTagName('a')[j]; j++) {
-						tr.getElementsByTagName('a')[j].style.color = '#'
-								+ highlightData[user].color;
-					}
-					tr.className = 'highlighted_tr';
 				}
 			}
 		},
 		zebra_tables : function(tr, i) {
-			/*if (tr.className !== 'live_tr' && i === 0) {
-				var i = 1;
-			}*/
 			if (i % 2 === 0) {
 				for (var j = 0; tr.getElementsByTagName('td')[j]; j++) {
 					if (tr.getElementsByTagName('td')[j].style.background === '') {
@@ -275,22 +283,6 @@ var topicList = {
 					}
 				}
 			}
-		}
-	},
-	ignore: {
-		users: [],
-		keywords: []
-	},
-	highlight: {
-		keywords: {},
-		tags: {}
-	},
-	config: {},
-	ignorated: {
-		total_ignored: 0,
-		data: {
-			users: {},
-			keywords: {}
 		}
 	},
 	createArrays : function() {
@@ -396,7 +388,7 @@ var topicList = {
 		var trs = document.getElementsByClassName('grid')[0]
 				.getElementsByTagName('tr');
 		var tr;
-		var functions = topicList.functions;
+		var functions = topicList.mainFunctions;
 		var config = topicList.config;
 		// iterate over trs and pass tr nodes to topicList functions
 		// (ignoring trs[0] as it's not a topic)
@@ -495,6 +487,6 @@ var topicList = {
 			}
 		});
 	}
-}
+};
 
 topicList.init();
