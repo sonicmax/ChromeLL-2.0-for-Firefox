@@ -1979,12 +1979,19 @@ var messageList = {
 				bodyClass.removeEventListener('click',  messageList.image.map.close);
 			},
 			clickHandler: function(ev) {
-				// get img src and copy generated link to clipboard
 				var _this = this;
 				var clipboard = {};
 				var src = ev.target.src;
 				if (src) {
+					var href = ev.target.parentNode.href;					
+					var regex = /\.(gif|jpg|jpeg|png)$/i;
+					var extension = href.match(regex);
+					var extensionToReplace = src.match(regex);
+					// replace thumbnail file extension with file extension of fullsize image
+					src = src.replace(extensionToReplace[0], extension[0]);
+					// replaces thumbnail location with location of fullsize image
 					clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
+					// copy to cipboard
 					chrome.runtime.sendMessage(clipboard, function(response) {
 						_this.close();
 					});
