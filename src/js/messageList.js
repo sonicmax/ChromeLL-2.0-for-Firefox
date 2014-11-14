@@ -545,8 +545,8 @@ var messageList = {
 				}
 			},
 			quick_imagemap: function() {
-				if (document.getElementsByClassName('quickpost-body')) {
-					var quickpost = document.getElementsByClassName('quickpost-body')[0];
+				var quickpost = document.getElementsByClassName('quickpost-body')[0];
+				if (quickpost) {
 					var button = document.createElement('button');
 					var divider = document.createTextNode(' ');
 					button.textContent = " Browse Imagemap";
