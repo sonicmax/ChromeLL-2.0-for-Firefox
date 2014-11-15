@@ -1971,11 +1971,9 @@ var messageList = {
 				}
 				return imageGrid;
 			},
-			createPopup: function(grid, page, lastPage) {
+			createPopup: function(grid, page, lastPage, query) {
 				var searchResults = false;
-				if (!page && !lastPage) {
-					searchResults = true;
-				}
+
 				var _this = this;
 				var div = document.createElement('div');
 				var width = window.innerWidth;
@@ -1993,14 +1991,39 @@ var messageList = {
 				div.style.opacity = 1;
 				div.style.backgroundColor = 'white';
 				div.style.overFlow = 'scroll';
-				// account for borderRadius in grid maxWidth/maxHeight
-				// so that scroll bar doesn't overlap rounded corners
-				grid.style.maxWidth = (width * 0.95) - 6 + 'px';
-				grid.style.maxHeight = ((height * 0.95) / 2) - 6 + 'px';
+				if (!page && !lastPage) {		
+					searchResults = true;
+					var header = document.createElement('div');
+					var text = document.createTextNode('Displaying results for query "' + query + '" :');
+					header.appendChild(text);
+					header.style.color = 'black';
+					header.style.position = 'relative';
+					header.style.left = '15px';
+					header.style.right = '15px';
+					header.style.top = '15px';
+					header.style.cssFloat = 'left';
+					header.style.textAlign = 'left';
+					header.style.width = '100%';
+					header.style.fontSize = '16px';
+					div.appendChild(header);
+				}
+				if (searchResults) {
+					// account for header's style properties
+					grid.style.maxHeight = ((height * 0.95) / 2) - 51 + 'px';
+					grid.style.maxWidth = (width * 0.95) - 21 + 'px';
+				}
+				else {
+					// account for borderRadius in grid maxWidth/maxHeight
+					// so that scroll bar doesn't overlap rounded corners
+					grid.style.maxWidth = (width * 0.95) - 6 + 'px';
+					grid.style.maxHeight = ((height * 0.95) / 2)  - 6 + 'px';
+				}
+				grid.style.position = 'relative';
+				grid.style.top = '5px';
 				grid.style.overflow = 'scroll';
 				grid.style.overflowX = 'hidden';
 				bodyClass.style.opacity = 0.3;
-				div.appendChild(grid);
+				header.appendChild(grid);
 				document.body.appendChild(div);
 				document.body.style.overflow = 'hidden';
 				bodyClass.addEventListener('mousewheel', preventScroll);
@@ -2063,7 +2086,17 @@ var messageList = {
 				});
 			},
 			search: {
-				find: function(query, callback) {
+				handler: function() {
+					var _this = messageList.image.map.search;
+					var query = document.getElementById('image_search').value;					
+						if (query !== '' 
+							&& query !== ' ') {
+						_this.lookUp(query, function(results, query) {
+							_this.prepare(results, query);
+						});
+					}
+				},				
+				lookUp: function(query, callback) {
 					var _this = this;
 					var word = query;
 					var results = [];
@@ -2075,17 +2108,7 @@ var messageList = {
 							}
 						}
 						callback(results, query);
-					});
-				},
-				handler: function() {
-					var _this = messageList.image.map.search;
-					var query = document.getElementById('image_search').value;					
-						if (query !== '' 
-							&& query !== ' ') {
-						_this.find(query, function(results, query) {
-							_this.prepare(results, query);
-						});
-					}
+					});				
 				},
 				prepare: function(results, query) {
 					var _this = this;
@@ -2107,29 +2130,21 @@ var messageList = {
 					}
 				},
 				display: function(data, query) {
-					var grid = document.createElement('div');
-					var block = document.createElement('div');
-					var header = document.createElement('div');
-					var text = document.createTextNode('Displaying results for query "' + query + '" ');
-					header.appendChild(text);
-					header.style.color = 'black';
-					header.style.display = 'inline';
-					header.style.cssFloat = 'left';
-					header.style.textAlign = 'center';
-					header.style.width = '100%';
+					var grid = document.createElement('div');	
 					grid.className = 'image_grid';
-					block.className = 'grid_block';
+					grid.style.clear = 'left';		
 					for (var i in data) {
 						var block = document.createElement('div');
 						block.className = 'grid_block';
 						var img = document.createElement('img');
 						img.setAttribute('oldsrc', data[i].filename);
 						img.src = data[i].data;
-						block.appendChild(img);
-						grid.appendChild(header);
-						header.appendChild(block);					
-					}
-					messageList.image.map.createPopup(grid);
+						block.className = 'grid_block';
+						block.style.display = 'inline';
+						block.appendChild(img);	
+						grid.appendChild(block);
+					}	
+					messageList.image.map.createPopup(grid, null, null, query);
 				}
 			}
 		}
