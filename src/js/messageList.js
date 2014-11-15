@@ -1859,8 +1859,20 @@ var messageList = {
 				}
 				xhr.send();
 			},
+			restore: function(callback) {
+				chrome.storage.local.get("imagemap", function(cache) {
+					if (chrome.runtime.lastError) {
+						// hopefully this won't happen
+						console.log(chrome.runtime.lastError);
+					}
+					else if (cache) {
+						console.log('Returning cache from chrome.storage');
+						callback(cache);
+					}
+				});
+			},
 			store: function(grid) {
-				var _this = this;
+				var _this = this;	
 				var imgs = grid.getElementsByTagName('img');
 				for (var i = 0, len = imgs.length; i < len; i++) {
 					var img = imgs[i];
@@ -1881,10 +1893,19 @@ var messageList = {
 						var filename = src.replace('.jpg', extension);
 						_this.cache[src] = {"filename": filename, "data": dataURI};
 						if (i === imgs.length - 1) {
-							// every image element has been iterated over
-							chrome.storage.local.set({"imagemapCache": _this.cache}, function() {
-								console.log(_this.cache);
-								console.log('cache saved.');
+							_this.restore(function(old) {
+								// create new object containing old cache and new cache
+								var cache = {};
+								for (var i in old.imagemap) {
+									cache[i] = old.imagemap[i];									
+								}
+								for (var i in _this.cache) {
+									cache[i] = _this.cache[i];
+								}
+								chrome.storage.local.set({"imagemap": cache}, function() {								
+									// empty cache variable - not needed any more
+									_this.cache = {};
+								});		
 							});
 						}
 					});
