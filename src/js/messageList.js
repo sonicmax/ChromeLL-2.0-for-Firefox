@@ -549,10 +549,15 @@ var messageList = {
 				if (quickpost) {
 					var button = document.createElement('button');
 					var divider = document.createTextNode(' ');
-					button.textContent = " Browse Imagemap";
+					var search = document.createElement('input');
+					button.textContent = "Browse Imagemap";					
 					button.id = "quick_image";
+					search.placeholder = "Search Imagemap...";
+					search.id = "image_search";
 					quickpost.appendChild(divider);
 					quickpost.appendChild(button);
+					quickpost.appendChild(divider);
+					quickpost.appendChild(search);
 				}
 			}
 		},
@@ -1834,6 +1839,19 @@ var messageList = {
 		},
 		map: {
 			cache: {},
+			handler: function() {
+				var _this = this;				
+				var page = 1;
+				this.get(page, function(imagemap, page) {
+					//var gridElements = imagemap.getElementsByClassName('grid_block');
+					var imageGrid = _this.process(imagemap);
+					var infobar = imagemap.getElementsByClassName('infobar')[1];
+					var anchors = infobar.getElementsByTagName('a');					
+					var lastPage = anchors[anchors.length - 1].innerHTML;
+					_this.createPopup(imageGrid, page, lastPage);
+					_this.save(imageGrid);
+				});
+			},			
 			get: function(number, callback) {
 				// handle page number for url
 				if (number === 1) {
@@ -1862,16 +1880,15 @@ var messageList = {
 			restore: function(callback) {
 				chrome.storage.local.get("imagemap", function(cache) {
 					if (chrome.runtime.lastError) {
-						// hopefully this won't happen
+						// this shouldn't happen
 						console.log(chrome.runtime.lastError);
 					}
 					else if (cache) {
-						console.log('Returning cache from chrome.storage');
 						callback(cache);
 					}
 				});
 			},
-			store: function(grid) {
+			save: function(grid) {
 				var _this = this;	
 				var imgs = grid.getElementsByTagName('img');
 				for (var i = 0, len = imgs.length; i < len; i++) {
@@ -1886,74 +1903,59 @@ var messageList = {
 					else {
 						var href = img.parentNode.href;
 					}
-					// pass src, href and value of i to convertToBase64 so we can use them
+					// pass current values of src, href and i to convertToBase64 so we can use them
 					// in callback function
-					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {				
+					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {			
 						var extension = href.match(/\.(gif|jpg|jpeg|png)$/i)[0];
 						var filename = src.replace('.jpg', extension);
 						_this.cache[src] = {"filename": filename, "data": dataURI};
 						if (i === imgs.length - 1) {
 							_this.restore(function(old) {
-								// create new object containing old cache and new cache
-								var cache = {};
-								for (var i in old.imagemap) {
-									cache[i] = old.imagemap[i];									
-								}
+								// add cache of current page to existing imagemap cache
 								for (var i in _this.cache) {
-									cache[i] = _this.cache[i];
+									old.imagemap[i] = _this.cache[i];							
 								}
-								chrome.storage.local.set({"imagemap": cache}, function() {								
-									// empty cache variable - not needed any more
+								var cache = old.imagemap;
+								chrome.storage.local.set({"imagemap": cache}, function() {						
+									// empty cache variables - not needed any more
 									_this.cache = {};
+									cache = {};
 								});		
 							});
 						}
 					});
 				}
-			},
-			convertToBase64: function(src, href, i, callback, outputFormat) {
+			},		
+			convertToBase64: function(src, href, i, callback, output) {
 				var _this = this.convertToBase64;
 				var canvas = document.createElement('CANVAS');
 				var context = canvas.getContext('2d');
 				var img = new Image;
 				img.crossOrigin = "Anonymous";
 				img.onload = function() {
-					var dataURL;
+					var dataURI;
 					canvas.height = img.height;
 					canvas.width = img.width;
 					context.drawImage(img, 0, 0);
-					dataURL = canvas.toDataURL(outputFormat);
-					callback.call(_this, dataURL, src, href, i);
-					canvas = null;
+					dataURI = canvas.toDataURL(output);
+					// 
+					callback.call(_this, dataURI, src, href, i);
+					canvas = null; 
 				};
 				img.src = 'http://cors-anywhere.herokuapp.com/' + src;
-			},
-			handler: function() {
-				var _this = this;				
-				var page = 1;
-				this.get(page, function(imagemap, page) {
-					//var gridElements = imagemap.getElementsByClassName('grid_block');
-					var imageGrid = _this.process(imagemap);
-					var infobar = imagemap.getElementsByClassName('infobar')[1];
-					var anchors = infobar.getElementsByTagName('a');					
-					var lastPage = anchors[anchors.length - 1].innerHTML;
-					// _this.store(imageGrid, page);
-					_this.create(imageGrid, page, lastPage);
-					_this.store(imageGrid);
-				});
 			},
 			process: function(imagemap) {
 				// return grid of images from the imagemap html
 				var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
 				this.restore(function(cached) {
-					// replace img src with cached base64 strings to limit load on eti servers
 					var imgs = imageGrid.getElementsByTagName('img');
 					for (var i = 0, len = imgs.length; i < len; i++) {
 						var img = imgs[i];
 						var src = img.src;
 						if (cached.imagemap[src]) {
-							// we can assume that all thumbnails are of type image/jpg
-							img.src = cached.imagemap[src].data;
+							// replace img src with cached base64 strings to reduce load on eti servers
+							img.setAttribute('oldsrc', img.src);
+							img.src = cached.imagemap[src].data;							
 						}
 					}
 				});
@@ -1969,7 +1971,11 @@ var messageList = {
 				}
 				return imageGrid;
 			},
-			create: function(grid, page, lastPage) {
+			createPopup: function(grid, page, lastPage) {
+				var searchResults = false;
+				if (!page && !lastPage) {
+					searchResults = true;
+				}
 				var _this = this;
 				var div = document.createElement('div');
 				var width = window.innerWidth;
@@ -1977,7 +1983,7 @@ var messageList = {
 				var bodyClass = document.getElementsByClassName('body')[0];
 				var anchorHeight;	
 				div.id = "map_div";
-				div.style.position = "fixed";
+				div.style.position = "fixed";				
 				div.style.width = (width * 0.95) + 'px';
 				div.style.height = (height * 0.95) / 2 + 'px';
 				div.style.left = (width - (width * 0.975)) + 'px';
@@ -1987,9 +1993,10 @@ var messageList = {
 				div.style.opacity = 1;
 				div.style.backgroundColor = 'white';
 				div.style.overFlow = 'scroll';
-				// account for borderRadius in grid maxWidth
+				// account for borderRadius in grid maxWidth/maxHeight
+				// so that scroll bar doesn't overlap rounded corners
 				grid.style.maxWidth = (width * 0.95) - 6 + 'px';
-				grid.style.maxHeight = ((height * 0.95) / 2) - 5 + 'px';
+				grid.style.maxHeight = ((height * 0.95) / 2) - 6 + 'px';
 				grid.style.overflow = 'scroll';
 				grid.style.overflowX = 'hidden';
 				bodyClass.style.opacity = 0.3;
@@ -1997,57 +2004,132 @@ var messageList = {
 				document.body.appendChild(div);
 				document.body.style.overflow = 'hidden';
 				bodyClass.addEventListener('mousewheel', preventScroll);
-				bodyClass.addEventListener('click', messageList.image.map.close); 
+				bodyClass.addEventListener('click', _this.closePopup); 
 				div.addEventListener('click', function(ev) {
 					_this.clickHandler(ev);
 					ev.preventDefault();
 				});
-				grid.addEventListener('scroll', function(ev) {
-					// check whether user is at end of page
-					// (minus 5 pixels from clientHeight to account for weird zoom levels)
-					if (grid.scrollTop >= grid.scrollHeight - grid.clientHeight - 5) {						
-						if (page === lastPage) {
-							// no more pages to load
-							return;
+				if (!searchResults) {
+					grid.addEventListener('scroll', function(ev) {
+						// check whether user is at end of page
+						// (minus 5 pixels from clientHeight to account for weird zoom levels)
+						if (grid.scrollTop >= grid.scrollHeight - grid.clientHeight - 5) {						
+							if (page === lastPage) {
+								// no more pages to load
+								return;
+							}
+							else {
+								// load next page and append to current grid
+								page++;
+								_this.get(page, function(imagemap) {
+									var imageGrid = _this.process(imagemap);
+									grid.appendChild(imageGrid);
+									_this.save(imageGrid, page);
+								});
+							}
 						}
-						else {
-							// load next page and append to current grid
-							page++;
-							_this.get(page, function(imagemap) {
-								var imageGrid = _this.process(imagemap);
-								grid.appendChild(imageGrid);
-								_this.store(imageGrid, page);
-							});
-						}
-					}
-				});
+					});
+				}
 			},
-			close: function() {
+			closePopup: function() {
 				var div = document.getElementById('map_div');
 				var bodyClass = document.getElementsByClassName('body')[0];
 				document.body.removeChild(div);
 				bodyClass.style.opacity = 1;
 				document.body.style.overflow = 'initial';
 				bodyClass.removeEventListener('mousewheel', preventScroll);
-				bodyClass.removeEventListener('click',  messageList.image.map.close);
+				bodyClass.removeEventListener('click',  this.closePopup);
 			},
 			clickHandler: function(ev) {
 				// get img code & copy to clipboard via background page
 				var _this = this;
 				var clipboard = {};
-				var src = ev.target.src;
-				if (src) {
+				// check whether thumbnail is taken from cache
+				var src = ev.target.getAttribute('oldsrc'); 
+				if (!src) {
+					// image is not cached
+					var src = ev.target.src;
 					var href = ev.target.parentNode.href;					
 					var regex = /\.(gif|jpg|jpeg|png)$/i;
 					var extension = href.match(regex);
 					var extensionToReplace = src.match(regex);
 					// replace thumbnail file extension with file extension of fullsize image
 					src = src.replace(extensionToReplace[0], extension[0]);
-					// replaces thumbnail location with location of fullsize image
-					clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
-					chrome.runtime.sendMessage(clipboard, function(response) {
-						_this.close();
+				}
+				// replaces thumbnail location with location of fullsize image
+				clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
+				chrome.runtime.sendMessage(clipboard, function(response) {
+					_this.closePopup();
+				});
+			},
+			search: {
+				find: function(query, callback) {
+					var _this = this;
+					var word = query;
+					var results = [];
+					messageList.image.map.restore(function(cached) {
+						var cache = cached.imagemap;
+						for (var i in cache) {
+							if (i.indexOf(word) > -1) {
+								results.push(i);
+							}
+						}
+						callback(results, query);
 					});
+				},
+				handler: function() {
+					var _this = messageList.image.map.search;
+					var query = document.getElementById('image_search').value;					
+						if (query !== '' 
+							&& query !== ' ') {
+						_this.find(query, function(results, query) {
+							_this.prepare(results, query);
+						});
+					}
+				},
+				prepare: function(results, query) {
+					var _this = this;
+					var query = query;
+					var resultsToShow = results;
+					if (results.length === 0) {
+						console.log('no matches');
+					}
+					else {
+						messageList.image.map.restore(function(cached) {
+							var cache = cached.imagemap;
+							var data = {};
+							for (var i = 0, len = results.length; i < len; i++) {
+								var result = results[i];
+								data[result] = cache[result];
+							}
+							_this.display(data, query);
+						});
+					}
+				},
+				display: function(data, query) {
+					var grid = document.createElement('div');
+					var block = document.createElement('div');
+					var header = document.createElement('div');
+					var text = document.createTextNode('Displaying results for query "' + query + '" ');
+					header.appendChild(text);
+					header.style.color = 'black';
+					header.style.display = 'inline';
+					header.style.cssFloat = 'left';
+					header.style.textAlign = 'center';
+					header.style.width = '100%';
+					grid.className = 'image_grid';
+					block.className = 'grid_block';
+					for (var i in data) {
+						var block = document.createElement('div');
+						block.className = 'grid_block';
+						var img = document.createElement('img');
+						img.setAttribute('oldsrc', data[i].filename);
+						img.src = data[i].data;
+						block.appendChild(img);
+						grid.appendChild(header);
+						header.appendChild(block);					
+					}
+					messageList.image.map.createPopup(grid);
 				}
 			}
 		}
@@ -2360,8 +2442,11 @@ var messageList = {
 		ta.focus();
 	},
 	addListeners: function() {
+		var _this = this;
 		var body = document.body;
+		var search = document.getElementById('image_search');
 		var gfycatID;
+		var debounceTimer;
 		body.addEventListener('click', function(ev) {
 			if (ev.target.id == 'notebook') {
 				messageList.usernotes.open(ev.target);
@@ -2423,6 +2508,11 @@ var messageList = {
 					ev.preventDefault();
 				}
 			}			
+		});
+		search.addEventListener('keyup', function() {
+			// use debouncing to prevent search from triggering on every key stroke
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(_this.image.map.search.handler, 500)
 		});
 	},
 	appendScripts: function() {
