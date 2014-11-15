@@ -1833,6 +1833,7 @@ var messageList = {
 			}
 		},
 		map: {
+			cache: {},
 			get: function(number, callback) {
 				// handle page number for url
 				if (number === 1) {
@@ -1858,18 +1859,53 @@ var messageList = {
 				}
 				xhr.send();
 			},
-			store: function(grid, page) {
-				/*if (localStorage['ChromeLL-Imagemap'] != undefined
-						&& localStorage['ChromeLL-Imagemap'] != '') {
-					var imagemapCache = JSON.parse(localStorage['ChromeLL-Imagemap']);
-					imagemapCache[page] = grid.innerHTML;				
-					localStorage['ChromeLL-Imagemap'] = JSON.stringify(imagemapCache);
+			store: function(grid) {
+				var _this = this;
+				var imgs = grid.getElementsByTagName('img');
+				for (var i = 0, len = imgs.length; i < len; i++) {
+					var img = imgs[i];
+					var src = img.src;
+					if (img.src == 'http://static.endoftheinter.net/bhm.png') {
+						return;
+					}
+					if (img.parentNode.className == 'img-loaded') {
+						var href = img.parentNode.parentNode.href;
+					}
+					else {
+						var href = img.parentNode.href;
+					}
+					// pass src, href and value of i to convertToBase64 so we can use them
+					// in callback function
+					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {				
+						var extension = href.match(/\.(gif|jpg|jpeg|png)$/i)[0];
+						var filename = src.replace('.jpg', extension);
+						_this.cache[src] = {"filename": filename, "data": dataURI};
+						if (i === imgs.length - 1) {
+							// every image element has been iterated over
+							chrome.storage.local.set({"imagemapCache": _this.cache}, function() {
+								console.log(_this.cache);
+								console.log('cache saved.');
+							});
+						}
+					});
 				}
-				else {
-					var imagemapCache = {};
-					imagemapCache[page] = grid.innerHTML;
-					localStorage['ChromeLL-Imagemap'] = JSON.stringify(imagemapCache);
-				}*/
+			},
+			convertToBase64: function(src, href, i, callback, outputFormat) {
+				var _this = this.convertToBase64;
+				var canvas = document.createElement('CANVAS');
+				var context = canvas.getContext('2d');
+				var img = new Image;
+				img.crossOrigin = "Anonymous";
+				img.onload = function() {
+					var dataURL;
+					canvas.height = img.height;
+					canvas.width = img.width;
+					context.drawImage(img, 0, 0);
+					dataURL = canvas.toDataURL(outputFormat);
+					callback.call(_this, dataURL, src, href, i);
+					canvas = null;
+				};
+				img.src = 'http://cors-anywhere.herokuapp.com/' + src;
 			},
 			handler: function() {
 				var _this = this;				
@@ -1882,6 +1918,7 @@ var messageList = {
 					var lastPage = anchors[anchors.length - 1].innerHTML;
 					// _this.store(imageGrid, page);
 					_this.create(imageGrid, page, lastPage);
+					_this.store(imageGrid);
 				});
 			},
 			process: function(imagemap) {
@@ -1895,7 +1932,7 @@ var messageList = {
 				}
 				for (var i = 0, len = gridBlocks.length; i < len; i++) {
 					var gridBlock = gridBlocks[i];
-					gridBlock.title = "Copy to clipboard";		
+					gridBlock.title = "Click here to copy image code to clipboard";
 				}
 				return imageGrid;
 			},
@@ -1904,7 +1941,6 @@ var messageList = {
 				var div = document.createElement('div');
 				var width = window.innerWidth;
 				var height = window.innerHeight;
-				//var close = document.createElement('a');
 				var bodyClass = document.getElementsByClassName('body')[0];
 				var anchorHeight;	
 				div.id = "map_div";
@@ -1918,20 +1954,12 @@ var messageList = {
 				div.style.opacity = 1;
 				div.style.backgroundColor = 'white';
 				div.style.overFlow = 'scroll';
-				// TODO - figure out how to position anchor
-				/*close.style.cssFloat = "right";
-				close.style.fontSize = "18px";
-				close.href = '#';
-				close.style.textDecoration = "none";
-				close.id = "close_options";
-				close.innerHTML = '&#10006;';		*/
 				// account for borderRadius in grid maxWidth
 				grid.style.maxWidth = (width * 0.95) - 6 + 'px';
 				grid.style.maxHeight = ((height * 0.95) / 2) - 5 + 'px';
 				grid.style.overflow = 'scroll';
 				grid.style.overflowX = 'hidden';
 				bodyClass.style.opacity = 0.3;
-				//div.appendChild(close);
 				div.appendChild(grid);
 				document.body.appendChild(div);
 				document.body.style.overflow = 'hidden';
@@ -1943,7 +1971,7 @@ var messageList = {
 				});
 				grid.addEventListener('scroll', function(ev) {
 					// check whether user is at end of page
-					// (minus 5 pixels to account for weird zoom levels)
+					// (minus 5 pixels from clientHeight to account for weird zoom levels)
 					if (grid.scrollTop >= grid.scrollHeight - grid.clientHeight - 5) {						
 						if (page === lastPage) {
 							// no more pages to load
@@ -1952,19 +1980,11 @@ var messageList = {
 						else {
 							// load next page and append to current grid
 							page++;
-							/*var imageCache = JSON.parse(localStorage['ChromeLL-Imagemap']);
-							if (imageCache[page]) {
-								var cachedGrid = document.createElement('div');
-								cachedGrid.innerHTML = imageCache[page];
-								grid.appendChild(cachedGrid);
-							}
-							else {*/
-								_this.get(page, function(imagemap) {
-									var imageGrid = _this.process(imagemap);
-									grid.appendChild(imageGrid);
-									// _this.store(imageGrid, page);
-								});
-							//  }
+							_this.get(page, function(imagemap) {
+								var imageGrid = _this.process(imagemap);
+								grid.appendChild(imageGrid);
+								_this.store(imageGrid, page);
+							});
 						}
 					}
 				});
@@ -1979,6 +1999,7 @@ var messageList = {
 				bodyClass.removeEventListener('click',  messageList.image.map.close);
 			},
 			clickHandler: function(ev) {
+				// get img code & copy to clipboard via background page
 				var _this = this;
 				var clipboard = {};
 				var src = ev.target.src;
@@ -1991,7 +2012,6 @@ var messageList = {
 					src = src.replace(extensionToReplace[0], extension[0]);
 					// replaces thumbnail location with location of fullsize image
 					clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
-					// copy to cipboard
 					chrome.runtime.sendMessage(clipboard, function(response) {
 						_this.close();
 					});
