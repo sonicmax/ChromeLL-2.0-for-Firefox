@@ -1945,6 +1945,18 @@ var messageList = {
 			process: function(imagemap) {
 				// return grid of images from the imagemap html
 				var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
+				this.restore(function(cached) {
+					// replace img src with cached base64 strings to limit load on eti servers
+					var imgs = imageGrid.getElementsByTagName('img');
+					for (var i = 0, len = imgs.length; i < len; i++) {
+						var img = imgs[i];
+						var src = img.src;
+						if (cached.imagemap[src]) {
+							// we can assume that all thumbnails are of type image/jpg
+							img.src = cached.imagemap[src].data;
+						}
+					}
+				});
 				var blockDescs = imageGrid.getElementsByClassName('block_desc');
 				var gridBlocks = imageGrid.getElementsByClassName('grid_block');
 				for (var i = 0, len = blockDescs.length; i < len; i++) {
