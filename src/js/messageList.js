@@ -1973,7 +1973,6 @@ var messageList = {
 			},
 			createPopup: function(grid, page, lastPage, query) {
 				var searchResults = false;
-
 				var _this = this;
 				var div = document.createElement('div');
 				var width = window.innerWidth;
@@ -2023,7 +2022,12 @@ var messageList = {
 				grid.style.overflow = 'scroll';
 				grid.style.overflowX = 'hidden';
 				bodyClass.style.opacity = 0.3;
-				header.appendChild(grid);
+				if (searchResults) {
+					header.appendChild(grid);
+				}
+				else {
+					div.appendChild(grid);
+				}
 				document.body.appendChild(div);
 				document.body.style.overflow = 'hidden';
 				bodyClass.addEventListener('mousewheel', preventScroll);
@@ -2066,12 +2070,17 @@ var messageList = {
 			clickHandler: function(ev) {
 				// get img code & copy to clipboard via background page
 				var _this = this;
-				var clipboard = {};
-				// check whether thumbnail is taken from cache
-				var src = ev.target.getAttribute('oldsrc'); 
-				if (!src) {
-					// image is not cached
-					var src = ev.target.src;
+				var clipboard = {};				
+				if (ev.target.getAttribute('searchresult')) {
+					var src = ev.target.getAttribute('oldsrc'); 
+				}
+				else {
+					if (ev.target.getAttribute('oldsrc')) {
+						var src = ev.target.getAttribute('oldsrc'); 
+					}
+					else {
+						var src = ev.target.src;
+					}
 					var href = ev.target.parentNode.href;					
 					var regex = /\.(gif|jpg|jpeg|png)$/i;
 					var extension = href.match(regex);
@@ -2138,6 +2147,7 @@ var messageList = {
 						block.className = 'grid_block';
 						var img = document.createElement('img');
 						img.setAttribute('oldsrc', data[i].filename);
+						img.setAttribute('searchresult', true);
 						img.src = data[i].data;
 						block.className = 'grid_block';
 						block.style.display = 'inline';
