@@ -1840,10 +1840,10 @@ var messageList = {
 		map: {
 			cache: {},
 			handler: function() {
+				// handles initial click of "Browse Imagemap" button
 				var _this = this;				
 				var page = 1;
 				this.get(page, function(imagemap, page) {
-					//var gridElements = imagemap.getElementsByClassName('grid_block');
 					var imageGrid = _this.process(imagemap);
 					var infobar = imagemap.getElementsByClassName('infobar')[1];
 					var anchors = infobar.getElementsByTagName('a');					
@@ -1905,7 +1905,9 @@ var messageList = {
 					}
 					// pass current values of src, href and i to convertToBase64 so we can use them
 					// in callback function
-					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {			
+					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {	
+						// thumbnails are automatically converted to jpg - fullsize image could have 
+						// a different file format (found in href)
 						var extension = href.match(/\.(gif|jpg|jpeg|png)$/i)[0];
 						var filename = src.replace('.jpg', extension);
 						_this.cache[src] = {"filename": filename, "data": dataURI};
@@ -1972,7 +1974,7 @@ var messageList = {
 				return imageGrid;
 			},
 			createPopup: function(grid, page, lastPage, query) {
-				var searchResults = false;
+				var searchResults;
 				var _this = this;
 				var div = document.createElement('div');
 				var width = window.innerWidth;
@@ -2091,19 +2093,32 @@ var messageList = {
 				// replaces thumbnail location with location of fullsize image
 				clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
 				chrome.runtime.sendMessage(clipboard, function(response) {
-					_this.closePopup();
+					if (document.getElementById('search_results')) {
+						_this.search.closePopup();
+					}
+					else {
+						_this.closePopup();
+					}
 				});
 			},
 			search: {
 				handler: function() {
+					// cache parent object as "this" refers to event
 					var _this = messageList.image.map.search;
 					var query = document.getElementById('image_search').value;					
-						if (query !== '' 
-							&& query !== ' ') {
-						_this.lookUp(query, function(results, query) {
-							_this.prepare(results, query);
-						});
-					}
+						if (/\S/.test(query)) {
+							_this.lookUp(query, function(results, query) {
+								if (!document.getElementById('search_results')) {
+									_this.createPopup(query);
+								}
+								_this.prepare(results, query);
+							});
+						}
+						else {
+							if (document.getElementById('search_results')) {
+								_this.closePopup();
+							}
+						}
 				},				
 				lookUp: function(query, callback) {
 					var _this = this;
@@ -2124,7 +2139,7 @@ var messageList = {
 					var query = query;
 					var resultsToShow = results;
 					if (results.length === 0) {
-						console.log('no matches');
+						_this.display(false, query);
 					}
 					else {
 						messageList.image.map.restore(function(cached) {
@@ -2139,22 +2154,117 @@ var messageList = {
 					}
 				},
 				display: function(data, query) {
-					var grid = document.createElement('div');	
-					grid.className = 'image_grid';
-					grid.style.clear = 'left';		
-					for (var i in data) {
-						var block = document.createElement('div');
-						block.className = 'grid_block';
-						var img = document.createElement('img');
-						img.setAttribute('oldsrc', data[i].filename);
-						img.setAttribute('searchresult', true);
-						img.src = data[i].data;
-						block.className = 'grid_block';
-						block.style.display = 'inline';
-						block.appendChild(img);	
-						grid.appendChild(block);
-					}	
-					messageList.image.map.createPopup(grid, null, null, query);
+					if (!data) {
+						this.updatePopup(data, query);
+					}
+					else {
+						var grid = document.createElement('div');	
+						grid.className = 'image_grid';
+						grid.id = 'results_grid';
+						grid.style.clear = 'left';		
+						for (var i in data) {
+							var block = document.createElement('div');
+							block.className = 'grid_block';
+							var img = document.createElement('img');
+							img.setAttribute('oldsrc', data[i].filename);
+							img.setAttribute('searchresult', true);
+							img.src = data[i].data;
+							block.className = 'grid_block';
+							block.style.display = 'inline';
+							block.appendChild(img);
+							grid.appendChild(block);						
+						}
+						this.updatePopup(grid, query);
+					}
+				},
+				createPopup: function(query) {
+					var header = document.createElement('div');
+					header.innerHTML = 'Displaying results for query "<span id="query">' + query + '</span>" :';					
+					var div = document.createElement('div');
+					var width = window.innerWidth;
+					var height = window.innerHeight;
+					var bodyClass = document.getElementsByClassName('body')[0];		
+					div.id = "search_results";
+					div.style.position = "fixed";				
+					div.style.width = (width * 0.95) + 'px';
+					div.style.height = (height * 0.95) / 2 + 'px';
+					div.style.left = (width - (width * 0.975)) + 'px';
+					div.style.top = (height - (height * 0.975)) + 'px';
+					div.style.boxShadow = "5px 5px 7px black";		
+					div.style.borderRadius = '6px';	
+					div.style.backgroundColor = 'white';
+					div.style.overFlow = 'scroll';
+					header.style.color = 'black';
+					header.style.position = 'relative';
+					header.style.left = '15px';
+					header.style.right = '15px';
+					header.style.top = '15px';
+					header.style.cssFloat = 'left';
+					header.style.textAlign = 'left';
+					header.style.width = '100%';
+					header.style.fontSize = '16px';
+					header.id = 'results_header';
+					div.appendChild(header);
+					document.body.appendChild(div);
+					document.body.style.overflow = 'hidden';
+					bodyClass.addEventListener('mousewheel', preventScroll);
+					div.addEventListener('click', function(ev) {
+						messageList.image.map.clickHandler(ev);
+						ev.preventDefault();
+					});
+				},
+				updatePopup: function(results, query) {
+					var popup = document.getElementById('search_results');
+					var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');
+					var header = document.getElementById('results_header');	
+					var querySpan = document.getElementById('query');
+					var width = window.innerWidth;
+					var height = window.innerHeight;					
+					if (querySpan.innerHTML != query) {							
+							querySpan.innerHTML = query;
+					}
+					if (!results) {					
+						var textDiv = document.createElement('div');
+						var text = document.createTextNode('No matches found.');
+						textDiv.id = 'no_results_grid'
+						textDiv.style.position = 'relative';
+						textDiv.style.top = '5px';
+						textDiv.appendChild(text);
+						if (oldGrid) {
+							if (oldGrid.id === 'no_results_grid') {
+								return;
+							}
+							else {
+								oldGrid.remove();	
+								header.appendChild(textDiv);
+								return;
+							}
+						}
+						else {
+							header.appendChild(textDiv);
+							return;
+						}
+					}
+					else {
+						// account for header's style properties
+						results.style.maxHeight = ((height * 0.95) / 2) - 51 + 'px';
+						results.style.maxWidth = (width * 0.95) - 21 + 'px';
+						results.style.position = 'relative';
+						results.style.top = '5px';
+						results.style.overflow = 'scroll';
+						results.style.overflowX = 'hidden';
+						if (oldGrid) {
+							oldGrid.remove();
+						}
+						header.appendChild(results);
+					}
+				},
+				closePopup: function() {
+					var div = document.getElementById('search_results');
+					var bodyClass = document.getElementsByClassName('body')[0];
+					document.body.removeChild(div);
+					document.body.style.overflow = 'initial';
+					bodyClass.removeEventListener('mousewheel', preventScroll);
 				}
 			}
 		}
