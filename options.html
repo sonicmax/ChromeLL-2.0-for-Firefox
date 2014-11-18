@@ -636,6 +636,7 @@ span.desc {
 				<li class="navbar-item options_navigation_link" id="topiclist_link">Topic List</li>
 				<li class="navbar-item options_navigation_link" id="messagelist_link">Message List</li>
 				<li class="navbar-item options_navigation_link" id="profile_link">Profile/PM<small>s</small></li>
+				<li class="navbar-item options_navigation_link" id="imagemap_link">Imagemap</li>
 				<br />
 				<li class="navbar-item options_navigation_link" id="about_link">About</li>
 			</ul>
@@ -1757,6 +1758,22 @@ span.desc {
 							</div>
 						</section>
 					</div>		
+					 
+					<div class="page hidden" id="imagemap_page">
+						<h1>Imagemap Cache</h1>
+						<section>
+							<h3>Size on disk:</h3>
+								<div>
+									<span id="cache_size"></span> MB <br><br>
+									<input type="button" id="cache_empty" value="Empty cache" />
+								</div>
+						</section>
+						<section>
+							<h3>Contents:</h1>
+							<table id="cache_contents" border=1>
+							</table>
+						</section>
+					</div>	
 					
 					<div class="page hidden" id="about_page">
 						<h1>Version: <span id="version"></span></h1>

@@ -1851,17 +1851,16 @@ var messageList = {
 					_this.createPopup(imageGrid, page, lastPage);
 					_this.save(imageGrid);
 				});
-			},			
+			},
 			get: function(number, callback) {
-				// handle page number for url
+				// handle page number for imagemap url
 				if (number === 1) {
 					var page = '';
 				}
 				else if (number > 1) {
 					var page = '?page=' + number;
-				}				
+				}
 				var url = "http://images.endoftheinter.net/imagemap.php" + page;
-				// deal with https users
 				if (window.location.protocol == 'https:') {
 					url = url.replace('http', 'https');
 				}
@@ -1869,7 +1868,7 @@ var messageList = {
 				xhr.open("GET", url, true);
 				xhr.onreadystatechange = function() {
 					if (xhr.readyState == 4 && xhr.status == 200) {
-						// set innerHTML of html element to xhr response so we can iterate over imagemap
+						// set innerHTML to xhr response so we can iterate over imagemap elements
 						var html = document.createElement('html');
 						html.innerHTML = xhr.responseText;						
 						callback(html, number);
@@ -1880,8 +1879,12 @@ var messageList = {
 			restore: function(callback) {
 				chrome.storage.local.get("imagemap", function(cache) {
 					if (chrome.runtime.lastError) {
-						// this shouldn't happen
+						// this shouldn't happen...
 						console.log(chrome.runtime.lastError);
+					}
+					if (!cache) {
+						var emptyCache = {};
+						callback(emptyCache);
 					}
 					else if (cache) {
 						callback(cache);
@@ -1894,6 +1897,7 @@ var messageList = {
 				for (var i = 0, len = imgs.length; i < len; i++) {
 					var img = imgs[i];
 					var src = img.src;
+					// make sure we dont get any unwanted imgs
 					if (img.src == 'http://static.endoftheinter.net/bhm.png') {
 						return;
 					}
@@ -1902,22 +1906,32 @@ var messageList = {
 					}
 					else {
 						var href = img.parentNode.href;
-					}
-					// pass current values of src, href and i to convertToBase64 so we can use them
-					// in callback function
+					}					
 					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {	
 						// thumbnails are automatically converted to jpg - fullsize image could have 
 						// a different file format (found in href)
 						var extension = href.match(/\.(gif|jpg|jpeg|png)$/i)[0];
-						var filename = src.replace('.jpg', extension);
-						_this.cache[src] = {"filename": filename, "data": dataURI};
+						var fullsize = src.replace('.jpg', extension);
+						var filename = fullsize.match(/\/([^/]*)$/)[1];						
+						filename = decodeURIComponent(filename);
+						if (!filename || !fullsize || !dataURI) {
+							console.log('Error while caching image: ', src, filename, fullsize, dataURI);
+							return;
+						}
+						_this.cache[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
 						if (i === imgs.length - 1) {
 							_this.restore(function(old) {
-								// add cache of current page to existing imagemap cache
-								for (var i in _this.cache) {
-									old.imagemap[i] = _this.cache[i];							
+								if (!old.imagemap) {
+									// first time caching
+									var cache = _this.cache;
 								}
-								var cache = old.imagemap;
+								else {
+									// add cache of current page to existing imagemap cache
+									for (var i in _this.cache) {
+										old.imagemap[i] = _this.cache[i];							
+									}							
+									var cache = old.imagemap;
+								}
 								chrome.storage.local.set({"imagemap": cache}, function() {						
 									// empty cache variables - not needed any more
 									_this.cache = {};
@@ -1928,7 +1942,7 @@ var messageList = {
 					});
 				}
 			},		
-			convertToBase64: function(src, href, i, callback, output) {
+			convertToBase64: function(src, href, i, callback, output) {				
 				var _this = this.convertToBase64;
 				var canvas = document.createElement('CANVAS');
 				var context = canvas.getContext('2d');
@@ -1940,7 +1954,6 @@ var messageList = {
 					canvas.width = img.width;
 					context.drawImage(img, 0, 0);
 					dataURI = canvas.toDataURL(output);
-					// 
 					callback.call(_this, dataURI, src, href, i);
 					canvas = null; 
 				};
@@ -1954,7 +1967,8 @@ var messageList = {
 					for (var i = 0, len = imgs.length; i < len; i++) {
 						var img = imgs[i];
 						var src = img.src;
-						if (cached.imagemap[src]) {
+						if (cached.imagemap 
+								&& cached.imagemap[src]) {
 							// replace img src with cached base64 strings to reduce load on eti servers
 							img.setAttribute('oldsrc', img.src);
 							img.src = cached.imagemap[src].data;							
@@ -2127,7 +2141,8 @@ var messageList = {
 					messageList.image.map.restore(function(cached) {
 						var cache = cached.imagemap;
 						for (var i in cache) {
-							if (i.indexOf(word) > -1) {
+							var filename = cache[i].filename;
+							if (filename.indexOf(word) > -1) {
 								results.push(i);
 							}
 						}

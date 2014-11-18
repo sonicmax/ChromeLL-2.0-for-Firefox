@@ -277,20 +277,29 @@ var config = {
 				}
 			}
 			return JSON.parse(Base64.decode(cfg));
+		},
+		emptyCache: function() {
+			chrome.storage.local.remove('imagemap', function() {
+				console.log('Cleared imagemap cache.');
+				location.reload();
+			});
 		}
 	},
 	listeners : {
 		click: function() {
 			// key-value pairs contain element id and function for event handler
-			var elements = {'ignorator':'ignoratorClick', 
-					'enable_user_highlight':'highlightClick',
-					'loadcfg':'processConfig',
-					'resetcfg':'resetConfig',
-					'forceignorator':'cleanIgnorator', 
-					'restoreignorator':'restoreIgnorator',
-					'downloadbutton':'downloadClick',
-					'restorebutton':'restoreClick',
-					'old_cfg_options':'showTextarea'};
+			var elements = {
+				'ignorator': 'ignoratorClick',
+				'enable_user_highlight': 'highlightClick',
+				'loadcfg': 'processConfig',
+				'resetcfg': 'resetConfig',
+				'forceignorator': 'cleanIgnorator',
+				'restoreignorator': 'restoreIgnorator',
+				'downloadbutton': 'downloadClick',
+				'restorebutton': 'restoreClick',
+				'old_cfg_options': 'showTextarea',
+				'cache_empty': 'emptyCache'
+			};
 			var element, functionName;
 			for (var i in elements) {
 				element = document.getElementById(i);
@@ -738,6 +747,46 @@ var config = {
 		var app = chrome.app.getDetails();
 		document.getElementById('version').innerText = app.version;
 		document.getElementById('downloadcfg').href = config.download();
+		chrome.storage.local.getBytesInUse("imagemap", function(bytes) {
+			var megabytes = bytes / 1048576;
+			// round to 2 decimal places
+			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100
+		});
+		chrome.storage.local.get("imagemap", function(cached) {
+			var table = document.getElementById('cache_contents');
+			var cachedImagemap = cached.imagemap;
+			if (!cachedImagemap) {
+				var empty = document.createElement('tr');
+				empty.innerHTML = 'Empty';
+				table.appendChild(empty);
+				return;
+			}
+			else {		
+				var table = document.getElementById('cache_contents');
+				var firstRow = document.createElement('tr');				
+				var firstData = document.createElement('td');
+				var secondData = document.createElement('td');	
+				firstData.innerHTML = '<b>Filename:</b>';
+				secondData.innerHTML = '<b>URL:</b>';
+				table.appendChild(firstRow);
+				firstRow.appendChild(firstData);
+				firstRow.appendChild(secondData);
+				for (var i in cachedImagemap) {
+					var cachedImage = cachedImagemap[i];
+					var tableRow = document.createElement('tr');				
+					var filenameData = document.createElement('td');
+					var urlData = document.createElement('td');								
+					var filename = cachedImage.filename;
+					var url = cachedImage.fullsize;
+					tableRow.id = i;
+					filenameData.innerHTML = filename;
+					urlData.innerHTML = url;
+					table.appendChild(tableRow);
+					tableRow.appendChild(filenameData);
+					tableRow.appendChild(urlData);
+				}
+			}
+		});
 		if (document.readyState == 'loading') {
 			document.addEventListener('DOMContentLoaded', function() {
 				config.ui.hideMenus();
