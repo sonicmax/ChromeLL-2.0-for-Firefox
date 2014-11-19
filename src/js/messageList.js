@@ -2181,7 +2181,7 @@ var messageList = {
 							var block = document.createElement('div');
 							block.className = 'grid_block';
 							var img = document.createElement('img');
-							img.setAttribute('oldsrc', data[i].filename);
+							img.setAttribute('oldsrc', data[i].fullsize);
 							img.setAttribute('searchresult', true);
 							img.src = data[i].data;
 							block.className = 'grid_block';

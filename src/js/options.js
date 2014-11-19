@@ -416,14 +416,16 @@ var config = {
 	save: function() {
 		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 			inputs = $(":checkbox");
-			for ( var i in inputs) {
+			for (var i in inputs) {
 				cfg[inputs[i].id] = inputs[i].checked;
 			}
 			var textboxes = $(":text");
-			for ( var i in textboxes) {
-				if (textboxes[i].name && textboxes[i].name.match('user_highlight_')) {
-					// textboxes[i].ColorPicker();
-				} else {
+			for (var i in textboxes) {
+				if (textboxes[i].className && textboxes[i].className == ('cache_filenames')) {
+					// do nothing
+					return;
+				}
+				else {
 					cfg[textboxes[i].id] = textboxes[i].value;
 				}
 			}
@@ -747,11 +749,13 @@ var config = {
 		var app = chrome.app.getDetails();
 		document.getElementById('version').innerText = app.version;
 		document.getElementById('downloadcfg').href = config.download();
+		// show size on disk of imagemap cache
 		chrome.storage.local.getBytesInUse("imagemap", function(bytes) {
 			var megabytes = bytes / 1048576;
 			// round to 2 decimal places
-			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100
+			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100;
 		});
+		// display table of imagemap cache contents
 		chrome.storage.local.get("imagemap", function(cached) {
 			var table = document.getElementById('cache_contents');
 			var cachedImagemap = cached.imagemap;
@@ -779,7 +783,9 @@ var config = {
 					var filename = cachedImage.filename;
 					var url = cachedImage.fullsize;
 					tableRow.id = i;
-					filenameData.innerHTML = filename;
+					// filename table row contains input field
+					filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + filename 
+							+ '" value="' + filename +'" style="width:400px;">';
 					urlData.innerHTML = url;
 					table.appendChild(tableRow);
 					tableRow.appendChild(filenameData);
