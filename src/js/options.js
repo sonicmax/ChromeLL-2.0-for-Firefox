@@ -781,12 +781,19 @@ var config = {
 					var filenameData = document.createElement('td');
 					var urlData = document.createElement('td');								
 					var filename = cachedImage.filename;
-					var url = cachedImage.fullsize;
+					var fullsize = cachedImage.fullsize;
+					if (fullsize.length > 100) {
+						var url = fullsize.substring(0, 99) + '...';
+					}
+					else {
+						var url = fullsize;
+					}
+					var data = cachedImage.data;
 					tableRow.id = i;
 					// filename table row contains input field
 					filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + filename 
 							+ '" value="' + filename +'" style="width:400px;">';
-					urlData.innerHTML = url;
+					urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
 					table.appendChild(tableRow);
 					tableRow.appendChild(filenameData);
 					tableRow.appendChild(urlData);
