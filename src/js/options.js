@@ -54,6 +54,7 @@ $(document)
 				});
 
 var config = {
+	cache: {},
 	functions: {
 		cleanIgnorator: function() {
 			var cfg = JSON.parse(localStorage['ChromeLL-Config']);
@@ -308,18 +309,31 @@ var config = {
 			}
 		},
 		change: function() {
-			var restorecfg = document.getElementById('restorecfg');
-			var keyup_timer;
+			var restoreCfg = document.getElementById('restorecfg');
+			var table = document.getElementById('cache_contents');
+			var keyupTimer;
+			var cacheTimer;
 			// use debouncing to prevent script from calling config.save after every keystroke
 			document.addEventListener('keyup', function() {
-				clearTimeout(keyup_timer);
-				keyup_timer = setTimeout(config.save, 500)
+				clearTimeout(keyupTimer);
+				keyupTimer = setTimeout(config.save, 500);
 			});
+			// call config.save if checkbox value is changed
 			document.addEventListener('change', config.save);
-			
-			restorecfg.addEventListener('change', function(evt) {
+			// listens for changes to file input to trigger config restore
+			restoreCfg.addEventListener('change', function(evt) {
 				config.restoreFromText(evt);
-			});
+			});	
+			table.addEventListener('keyup', function(evt) {						
+				var newFilename = evt.target.value;
+				var src = evt.target.id;
+				if (src && newFilename) {					
+					config.cache[src] = newFilename;
+				}
+				clearTimeout(cacheTimer);
+				cacheTimer = setTimeout(config.saveCache, 500);
+				
+			});			
 		},
 		menuVisibility: function() {
 			// array contains div ids of hidden menus
@@ -363,7 +377,53 @@ var config = {
 					$(this).ColorPickerSetColor(this.value);
 				}
 			});
-		},		
+		},
+		populateCacheTable: function() {
+			var table = document.getElementById('cache_contents');	
+			// display table of imagemap cache contents
+			chrome.storage.local.get("imagemap", function(cached) {
+				var cachedImagemap = cached.imagemap;
+				if (!cachedImagemap) {
+					var empty = document.createElement('tr');
+					empty.innerHTML = 'Empty';
+					table.appendChild(empty);
+					return;
+				}
+				else {
+					var firstRow = document.createElement('tr');				
+					var firstData = document.createElement('td');
+					var secondData = document.createElement('td');	
+					firstData.innerHTML = '<b>Filename:</b>';
+					secondData.innerHTML = '<b>URL:</b>';
+					table.appendChild(firstRow);
+					firstRow.appendChild(firstData);
+					firstRow.appendChild(secondData);
+					for (var i in cachedImagemap) {
+						var cachedImage = cachedImagemap[i];
+						var tableRow = document.createElement('tr');				
+						var filenameData = document.createElement('td');
+						var urlData = document.createElement('td');								
+						var filename = cachedImage.filename;
+						var fullsize = cachedImage.fullsize;
+						if (fullsize.length > 100) {
+							var url = fullsize.substring(0, 99) + '...';
+						}
+						else {
+							var url = fullsize;
+						}
+						var data = cachedImage.data;
+						tableRow.id = i;
+						// filename table row contains input field
+						filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
+								+ '" value="' + filename +'" style="width:400px;">';
+						urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
+						table.appendChild(tableRow);
+						tableRow.appendChild(filenameData);
+						tableRow.appendChild(urlData);
+					}
+				}
+			});
+		},
 		addDiv: {
 			userHighlight: function() {
 				var ins = document.getElementById('user_highlight').getElementsByClassName(
@@ -422,7 +482,7 @@ var config = {
 			var textboxes = $(":text");
 			for (var i in textboxes) {
 				if (textboxes[i].className && textboxes[i].className == ('cache_filenames')) {
-					// do nothing
+					// do nothing					
 					return;
 				}
 				else {
@@ -529,6 +589,31 @@ var config = {
 			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
 			allBg.init_listener(cfg);	
 	},
+	saveCache: function() {
+		var cacheChanges = config.cache;
+		config.loadCache(function(cached) {
+			var cache = cached.imagemap;
+			// replace old filename value with value from cacheChanges
+			for (var i in cacheChanges) {
+				cache[i].filename = cacheChanges[i];
+			}
+			chrome.storage.local.set({"imagemap": cache}, function() {
+				console.log('Cache updated:', cacheChanges);
+			});
+		});
+	},
+	loadCache: function(callback) {
+		chrome.storage.local.get("imagemap", function(cache) {
+			if (chrome.runtime.lastError) {
+				// this shouldn't happen...
+				console.log(chrome.runtime.lastError);
+				return;
+			}
+			else if (cache) {
+				callback(cache);
+			}
+		});	
+	},
 	getDefault: function(callback) {
 		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
 		var temp, defaultConfig;
@@ -600,7 +685,7 @@ var config = {
 		var data = new Blob([cfg], {type: 'text/plain'})
 		var textfile = window.URL.createObjectURL(data);
 		return textfile;	
-	},	
+	},
 	init: function() {
 		console.log('loading config');
 		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
@@ -755,51 +840,6 @@ var config = {
 			// round to 2 decimal places
 			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100;
 		});
-		// display table of imagemap cache contents
-		chrome.storage.local.get("imagemap", function(cached) {
-			var table = document.getElementById('cache_contents');
-			var cachedImagemap = cached.imagemap;
-			if (!cachedImagemap) {
-				var empty = document.createElement('tr');
-				empty.innerHTML = 'Empty';
-				table.appendChild(empty);
-				return;
-			}
-			else {		
-				var table = document.getElementById('cache_contents');
-				var firstRow = document.createElement('tr');				
-				var firstData = document.createElement('td');
-				var secondData = document.createElement('td');	
-				firstData.innerHTML = '<b>Filename:</b>';
-				secondData.innerHTML = '<b>URL:</b>';
-				table.appendChild(firstRow);
-				firstRow.appendChild(firstData);
-				firstRow.appendChild(secondData);
-				for (var i in cachedImagemap) {
-					var cachedImage = cachedImagemap[i];
-					var tableRow = document.createElement('tr');				
-					var filenameData = document.createElement('td');
-					var urlData = document.createElement('td');								
-					var filename = cachedImage.filename;
-					var fullsize = cachedImage.fullsize;
-					if (fullsize.length > 100) {
-						var url = fullsize.substring(0, 99) + '...';
-					}
-					else {
-						var url = fullsize;
-					}
-					var data = cachedImage.data;
-					tableRow.id = i;
-					// filename table row contains input field
-					filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + filename 
-							+ '" value="' + filename +'" style="width:400px;">';
-					urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
-					table.appendChild(tableRow);
-					tableRow.appendChild(filenameData);
-					tableRow.appendChild(urlData);
-				}
-			}
-		});
 		if (document.readyState == 'loading') {
 			document.addEventListener('DOMContentLoaded', function() {
 				config.ui.hideMenus();
@@ -807,6 +847,7 @@ var config = {
 				config.listeners.menuVisibility();
 				config.listeners.click();
 				config.listeners.change();
+				config.ui.populateCacheTable();
 				config.save();
 			});
 		} else {
@@ -815,6 +856,7 @@ var config = {
 			config.listeners.menuVisibility();
 			config.listeners.click();
 			config.listeners.change();
+			config.ui.populateCacheTable();
 			config.save();
 		}		
 	}
