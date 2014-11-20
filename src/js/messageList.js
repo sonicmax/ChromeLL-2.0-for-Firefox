@@ -31,7 +31,7 @@ var messageList = {
 				var tops = msg.getElementsByClassName('message-top');
 				var top, username, top_index;
 				messageList.tops_total += tops.length;
-				for (var j = 0, len = tops.length; j < len; j++) {
+				for (var j = 0; j < tops.length; j++) {
 					top = tops[j];
 					if (top) {
 						username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
@@ -1912,6 +1912,7 @@ var messageList = {
 						// a different file format (found in href)
 						var extension = href.match(/\.(gif|jpg|jpeg|png)$/i)[0];
 						var fullsize = src.replace('.jpg', extension);
+						fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
 						var filename = fullsize.match(/\/([^/]*)$/)[1];						
 						filename = decodeURIComponent(filename);
 						if (!filename || !fullsize || !dataURI) {
@@ -1929,10 +1930,10 @@ var messageList = {
 									// add cache of current page to existing imagemap cache
 									for (var i in _this.cache) {
 										old.imagemap[i] = _this.cache[i];							
-									}							
+									}
 									var cache = old.imagemap;
 								}
-								chrome.storage.local.set({"imagemap": cache}, function() {						
+								chrome.storage.local.set({"imagemap": cache}, function() {
 									// empty cache variables - not needed any more
 									_this.cache = {};
 									cache = {};
@@ -2121,7 +2122,7 @@ var messageList = {
 					var _this = messageList.image.map.search;
 					var query = document.getElementById('image_search').value;					
 						if (/\S/.test(query)) {
-							_this.lookUp(query, function(results, query) {
+							_this.lookup(query, function(results, query) {
 								if (!document.getElementById('search_results')) {
 									_this.createPopup(query);
 								}
@@ -2134,7 +2135,7 @@ var messageList = {
 							}
 						}
 				},				
-				lookUp: function(query, callback) {
+				lookup: function(query, callback) {
 					var _this = this;
 					var word = query;
 					var results = [];
