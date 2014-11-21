@@ -5,7 +5,6 @@
 <link href='/src/css/config/opensans.css' rel='stylesheet' type='text/css'>
 <title>ChromeLL Options</title>
 <style type="text/css">
-
 body {
   cursor: default;
   font-family: 'Open Sans', sans-serif;
@@ -610,6 +609,13 @@ span.desc {
 	border: 1px;
 	border-radius: 5px 5px;
 	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);	
+}
+.loading {
+	-webkit-animation:spin 2s linear infinite;
+}
+@-webkit-keyframes spin { 100% { 
+	-webkit-transform:rotate(360deg); 
+	}
 }
 </style>
 <link rel="stylesheet" href="src/css/config/button.css">
@@ -1770,7 +1776,8 @@ span.desc {
 						</section>
 						<section>
 							<h3>Contents:</h3>
-							<table id="cache_contents" border=1>
+							<img class="loading" id="loading_img" src='/src/images/loading.png' width="50px" height="50px"/>
+							<table id="cache_contents" border=1 style="display:none;">
 								<tr>
 									<td><b>Filename:</b>
 										<select id="cache_sort" style="float:right;">

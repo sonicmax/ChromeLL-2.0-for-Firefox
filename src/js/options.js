@@ -293,7 +293,7 @@ var config = {
 			var filenames = [];
 			var srcs = [];
 			var duplicateCheck = {};
-			config.loadCache(function(cached) {
+			config.cache.restore(function(cached) {
 				var cache = cached.imagemap;
 				for (var src in cache) {
 					var filename = cache[src].filename;
@@ -373,7 +373,7 @@ var config = {
 					config.cache[src] = newFilename;
 				}
 				clearTimeout(cacheTimer);
-				cacheTimer = setTimeout(config.saveCache, 500);				
+				cacheTimer = setTimeout(config.cache.save, 500);				
 			});
 			dropdown.addEventListener('change', function(evt) {
 				config.functions.sortCache(evt.target.value);			
@@ -423,15 +423,18 @@ var config = {
 			});
 		},
 		populateCacheTable: function(sortedCache) {
-			var table = document.getElementById('cache_contents');	
-			if (sortedCache && sortedCache !== 'default') {
+			var table = document.getElementById('cache_contents');
+			var loadingImage = document.getElementById('loading_img');
+			if (sortedCache && sortedCache !== 'default') {				
+				table.style.display = "none";
+				loadingImage.style.display = "block";
 				// remove cache data from table
 				var nodes = table.childNodes;
 				for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
 					var child = nodes[i];
 					table.removeChild(child);
 				}
-				config.loadCache(function(cached) {
+				config.cache.restore(function(cached) {
 					var cache = cached.imagemap;
 					for (var i = 0, len = sortedCache.length; i < len; i++) {
 						var srcFromArray = sortedCache[i];
@@ -457,11 +460,13 @@ var config = {
 						tableRow.appendChild(filenameData);
 						tableRow.appendChild(urlData);
 					}
+					loadingImage.style.display = "none";
+					table.style.display = "block";
 				});
 			}
 			else {
 				// display table of imagemap cache contents
-				chrome.storage.local.get("imagemap", function(cached) {
+				config.cache.restore(function(cached) {
 					var cachedImagemap = cached.imagemap;
 					if (!cachedImagemap) {
 						var empty = document.createElement('tr');
@@ -471,6 +476,8 @@ var config = {
 					}
 					else {
 						if (sortedCache == 'default') {
+							table.style.display = "none";
+							loadingImage.style.display = "block";
 							// remove existing cache data from table							
 							var nodes = table.childNodes;
 							for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
@@ -501,6 +508,8 @@ var config = {
 							tableRow.appendChild(filenameData);
 							tableRow.appendChild(urlData);
 						}
+						loadingImage.style.display = "none";
+						table.style.display = "block";				
 					}
 				});
 			}
@@ -564,7 +573,6 @@ var config = {
 			for (var i in textboxes) {
 				if (textboxes[i].className && textboxes[i].className == ('cache_filenames')) {
 					// do nothing					
-					return;
 				}
 				else {
 					cfg[textboxes[i].id] = textboxes[i].value;
@@ -670,30 +678,32 @@ var config = {
 			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
 			allBg.init_listener(cfg);	
 	},
-	saveCache: function() {
-		var cacheChanges = config.cache;
-		config.loadCache(function(cached) {
-			var cache = cached.imagemap;
-			// replace old filename value with value from cacheChanges
-			for (var i in cacheChanges) {
-				cache[i].filename = cacheChanges[i];
-			}
-			chrome.storage.local.set({"imagemap": cache}, function() {
-				console.log('Cache updated:', cacheChanges);
+	cache: {
+		save: function() {
+			var cacheChanges = config.cache;
+			config.cache.restore(function(cached) {
+				var cache = cached.imagemap;
+				// replace old filename value with value from cacheChanges
+				for (var i in cacheChanges) {
+					cache[i].filename = cacheChanges[i];
+				}
+				chrome.storage.local.set({"imagemap": cache}, function() {
+					console.log('Cache updated:', cacheChanges);
+				});
 			});
-		});
-	},
-	loadCache: function(callback) {
-		chrome.storage.local.get("imagemap", function(cache) {
-			if (chrome.runtime.lastError) {
-				// this shouldn't happen...
-				console.log(chrome.runtime.lastError);
-				return;
-			}
-			else if (cache) {
-				callback(cache);
-			}
-		});	
+		},
+		restore: function(callback) {
+			chrome.storage.local.get("imagemap", function(cache) {
+				if (chrome.runtime.lastError) {
+					// this shouldn't happen...
+					console.log(chrome.runtime.lastError);
+					return;
+				}
+				else if (cache) {
+					callback(cache);
+				}
+			});	
+		}	
 	},
 	getDefault: function(callback) {
 		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
