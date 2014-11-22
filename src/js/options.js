@@ -280,12 +280,6 @@ var config = {
 			return JSON.parse(Base64.decode(cfg));
 		},
 		sortCache: function(sortType) {
-			// sort filenames in alphabetical order - then create array of 
-			// corresponding src values
-			var reverse = false;
-			if (sortType === 'z_a') {
-				var reverse = true;			
-			}
 			if (sortType === 'default') {
 				config.ui.populateCacheTable(sortType);
 				return;
@@ -293,16 +287,44 @@ var config = {
 			var filenames = [];
 			var srcs = [];
 			var duplicateCheck = {};
+			var filetypes = {};
 			config.cache.restore(function(cached) {
 				var cache = cached.imagemap;
-				for (var src in cache) {
-					var filename = cache[src].filename;
-					filenames.push(filename);
+				if (sortType === 'filetype') {
+					filetypes["none"] = [];
+					filetypes[".gif"] = [];
+					filetypes[".jpg"] = [];
+					filetypes[".jpeg"] = [];
+					filetypes[".png"] = [];
+					for (var src in cache) {
+						var filename = cache[src].filename;
+						var extension = filename.match(/\.(gif|jpg|jpeg|png)$/i);
+						if (extension) {
+							filetypes[extension[0]].push(filename);
+						} else {							
+							filetypes["none"].push(filename);
+						}
+					}
+					for (var filetype in filetypes) {
+						if (filetypes[filetype] === []) {
+							return;
+						}
+						else {
+							filenames = filenames.concat(filetypes[filetype]);
+						}
+					}
 				}
-				filenames.sort()		
-				if (reverse) {
-					filenames.reverse();
+				else {
+					for (var src in cache) {
+						var filename = cache[src].filename;
+						filenames.push(filename);
+					}
+					filenames.sort()		
+					if (sortType === 'z_a') {
+						filenames.reverse();
+					}
 				}
+				// iterate over filenames array and match with their respective src values from cache
 				for (var i = 0, len = filenames.length; i < len; i++) {
 					var sortedFilename = filenames[i];
 					for (var src in cache) {
@@ -310,7 +332,7 @@ var config = {
 						if (cacheFilename == sortedFilename) {
 							if (!duplicateCheck[src]) {
 								// check that src hasn't been pushed to array before - this ensures that
-								//  duplicate filenames are assigned different src values
+								//  duplicate filenames arent assigned the same src value
 								srcs.push(src);
 								duplicateCheck[src] = {"filename": sortedFilename, "index": i};
 							}
