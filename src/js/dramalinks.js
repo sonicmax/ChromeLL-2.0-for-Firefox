@@ -1,7 +1,12 @@
 var dramalinks = {
 	html: '',
 	config: [],
-	append : function(ticker) {
+	append : function() {
+		var ticker = document.createElement("center");
+		ticker.id = "dramalinks_ticker";
+		if (config.hide_dramalinks) {
+			ticker.style.display = "none";
+		}
 		var title;
 		if (document.getElementsByTagName('h2')[0]) {
 			title = document.getElementsByTagName('h2')[0];
@@ -16,6 +21,9 @@ var dramalinks = {
 			if (this.config.hide_dramalinks) {
 				title.addEventListener('doubleclick', this.switchDrama);
 			}
+		}
+		else {
+			// waiting for update_drama action
 		}
 	},
 	switchDrama : function() {
@@ -54,7 +62,7 @@ var dramalinks = {
 				if (document.getElementById('dramalinks_ticker')) {
 					that.updateTicker();
 				}
-				else if (document.readyState == 'loading') {						
+				else if (document.readyState == 'loading') {
 					document.addEventListener('DOMContentLoaded', function() {
 						that.updateTicker();
 					});
@@ -66,38 +74,23 @@ var dramalinks = {
 			}
 		});
 	},
-	init: function() {		
+	init: function() {
 		var config = this.config;
-		if (!config.dramalinks 
-				|| config.hide_dramalinks_topiclist 
-						&& !window.location.href.match(/topics|history/i)) {
+		if (config.hide_dramalinks_topiclist 
+				&& !window.location.href.match(/topics|history/i)) {
 			return;
 		}
 		else {
 			this.listenForUpdates();
-			chrome.runtime.sendMessage({
-				need : "dramalinks"
-			}, function(response) {
-				if (response.data) {
-					// cache data so that we dont have to wait for response
-					// from background page	once DOMContentLoaded has fired
-					dramalinks.html = response.data;
-				}
-			});
 			// create ticker & wait for DOMContentLoaded to fire
-			ticker = document.createElement("center");
-			ticker.id = "dramalinks_ticker";
-			if (config.hide_dramalinks) {
-				ticker.style.display = "none";
-			}
 			if (document.readyState == 'loading') {
 				var that = this;
 				document.addEventListener('DOMContentLoaded', function() {
-					that.append(ticker);
+					that.append();
 				});
 			}
 			else {
-				this.append(ticker);
+				this.append();
 			}
 		}
 	}
