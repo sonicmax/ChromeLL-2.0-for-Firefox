@@ -2736,7 +2736,8 @@ var messageList = {
 	newPage: new MutationObserver(function(mutations) {
 		for (var i = 0, len = mutations.length; i < len; i++) {
 			var mutation = mutations[i];
-			if (mutation.type === 'attributes' && target.style.display === 'block') {
+			if (mutation.type === 'attributes' 
+					&& mutation.target.style.display === 'block') {
 				chrome.runtime.sendMessage({
 					need: "notify",
 					title: "New Page Created",
@@ -2776,25 +2777,21 @@ var messageList = {
 					console.log(mutation);
 					messageList.passToFunctions(mutation.target);
 				}*/
-				if (mutation.addedNodes[0].tagName
+				if (mutation.addedNodes[0].className == 'message-container') {
+					messageList.passToFunctions(mutation.addedNodes[0]);
+					messageList.links.check(mutation.addedNodes[0]);
+				}				
+				else if (mutation.addedNodes[0].tagName
 						&& mutation.addedNodes[0].tagName.match('H2')
 						&& messageList.config.dramalinks) {
-					console.log('title/tags parsed');
 					/*dramalinks.config = messageList.config;				
 					dramalinks.init();*/		
 				}
-				if (mutation.target.className == 'infobar'
+				else if (mutation.target.className == 'infobar'
 					&& mutation.addedNodes[0].textContent.match('There')) {
-					console.log('infobar parsed');
 					messageList.passToFunctions(mutation.target);					
 				}
-				if (mutation.addedNodes[0].className == 'message-container') {
-					console.log('message-container parsed');
-					messageList.passToFunctions(mutation.addedNodes[0]);
-					messageList.links.check(mutation.addedNodes[0]);
-				}
-				if (mutation.addedNodes[0].value == 'Upload Image') {
-					console.log('quickpost-body parsed');
+				else if (mutation.addedNodes[0].value == 'Upload Image') {
 					messageList.passToFunctions(mutation.target);
 				}
 			}
@@ -2964,10 +2961,20 @@ var messageList = {
 		}
 	},
 	init: function(config) {
+		this.config = config.data;
+		if (this.config.dramalinks) {			
+			chrome.runtime.sendMessage({
+				need : "dramalinks"
+			}, function(response) {
+				if (response.data) {
+					// (dramalinks object is contained in dramalinks.js)
+					dramalinks.html = response.data;
+				}
+			});
+		}
 		// set up globalPort so we can communicate with background script
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
-		this.config = config.data;
 		this.config.tcs = config.tcs;
 		this.ignores = this.config.ignorator_list.split(',');			
 		this.prepareIgnoratorArray();	
