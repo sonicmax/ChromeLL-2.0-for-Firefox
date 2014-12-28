@@ -506,22 +506,24 @@ var topicList = {
 	}),
 	init: function(config) {
 		this.config = config.data;		
-		if (this.config.dramalinks) {
-			chrome.runtime.sendMessage({
-					need : "dramalinks"
-			}, function(response) {
-				if (response.data) {
-					dramalinks.html = response.data;
-				}
-			});
+		if (!window.location.href.match('inbox.php')) {
+			if (this.config.dramalinks) {
+				chrome.runtime.sendMessage({
+						need : "dramalinks"
+				}, function(response) {
+					if (response.data) {
+						dramalinks.html = response.data;
+					}
+				});
+			}
+		}
+		else {
+			this.pm = "_pm";		
 		}
 		// connect to background page
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
-		this.prepareArrays();
-		if (window.location.href.match('inbox.php')) {
-			this.pm = "_pm";
-		}			
+		this.prepareArrays();	
 		if (document.readyState == 'loading') {
 			// apply DOM modifications as elements are parsed by browser
 			this.initObserver.observe(document.documentElement, {
