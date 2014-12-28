@@ -321,6 +321,10 @@ var messageList = {
 				// rewritten by xdrvonscottx
 				// find all the placeholders before the images are loaded
 				var msg = container.getElementsByClassName('message')[0];
+				if (!msg) {
+					// use message-container instead
+					msg = container;
+				}
 				var pholds = msg.getElementsByClassName('img-placeholder');
 				var phold;
 				for (var i = 0, len = pholds.length; i < len; i++) {
@@ -2557,7 +2561,7 @@ var messageList = {
 			// do nothing
 			return;
 		}
-		if (document.title.match(/\(\d+\+?\)/)) {
+		else if (document.title.match(/\(\d+\+?\)/)) {
 			var newTitle = document.title.replace(/\(\d+\+?\) /, "");
 			document.title = newTitle;
 		}
@@ -2612,7 +2616,6 @@ var messageList = {
 	addListeners: function() {
 		var body = document.body;
 		var searchBox = document.getElementById('image_search');
-		var gfycatID;
 		var debounceTimer;
 		body.addEventListener('click', function(ev) {
 			if (ev.target.id == 'notebook') {
@@ -2674,11 +2677,11 @@ var messageList = {
 					ev.preventDefault();
 				}
 				else if (ev.target.parentNode.className == 'embed_nws_gfy') {
-					gfycatID = ev.target.parentNode.id.replace('_embed', '');
+					var gfycatID = ev.target.parentNode.id.replace('_embed', '');
 					messageList.gfycat.embed(document.getElementById(gfycatID));
 					ev.preventDefault();
 				}
-			}			
+			}
 		});
 		if (searchBox) {
 			searchBox.addEventListener('keyup', function() {
@@ -2690,13 +2693,14 @@ var messageList = {
 	},
 	appendScripts: function() {
 		var head = document.getElementsByTagName("head")[0];
-		if (this.config.post_templates) {
+		if (messageList.config.post_templates) {
 			var templates = document.createElement('script');
 			templates.type = 'text/javascript';
 			templates.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
 			head.appendChild(templates);
+			console.log('appended scripts');
 		}
-	},
+	},	
 	imgObserver: new MutationObserver(function(mutations) {
 		var mutation;
 			for (var i = 0, len = mutations.length; i < len; i++) {
@@ -2775,7 +2779,7 @@ var messageList = {
 					messageList.passToFunctions(mutation.target);
 				}*/
 				if (mutation.addedNodes[0].tagName
-						&& mutation.addedNodes[0].tagName.match(/H2/)
+						&& mutation.addedNodes[0].tagName.match('H2')
 						&& messageList.config.dramalinks) {
 					console.log('title/tags parsed');
 					/*dramalinks.config = messageList.config;				
@@ -2784,18 +2788,19 @@ var messageList = {
 				if (mutation.target.className == 'infobar'
 					&& mutation.addedNodes[0].textContent.match('There')) {
 					console.log('infobar parsed');
-					messageList.passToFunctions(mutation.target);
+					messageList.passToFunctions(mutation.target);					
 				}
 				if (mutation.addedNodes[0].className == 'message-container') {
 					console.log('message-container parsed');
 					messageList.passToFunctions(mutation.addedNodes[0]);
+					messageList.links.check(mutation.addedNodes[0]);
 				}
 				if (mutation.addedNodes[0].value == 'Upload Image') {
 					console.log('quickpost-body parsed');
 					messageList.passToFunctions(mutation.target);
 				}
 			}
-		}				
+		}	
 	}),
 	callFunctions: function(pm) {
 		// iterate over objects & call function if messageList.config value is true
@@ -2803,8 +2808,9 @@ var messageList = {
 		var msgs = document.getElementsByClassName('message-container');
 		var msg, len;
 		// cache objects
-		var pageFunctions = this.functions.page;
-		var postFunctions = this.functions.posts;
+		var pageFunctions = this.functions.infobar;
+		var postFunctions = this.functions.messagecontainer;
+		var quickpostFunctions = this.functions.quickpostbody;
 		var miscFunctions = this.functions.misc;
 		var config = this.config;
 		for (var k in pageFunctions) {
@@ -2848,6 +2854,11 @@ var messageList = {
 			ignorator: this.ignorated,
 			scope: "messageList"
 		});
+		for (var i in quickpostFunctions) {
+			if (config[i + pm]) {
+				quickpostFunctions[i]();
+			}
+		}
 		// call functions that dont modify DOM
 		for (var i in miscFunctions) {
 			if (config[i + pm]) {
@@ -2861,12 +2872,13 @@ var messageList = {
 	},
 	passToFunctions: function(element) {
 		var config = this.config;
+		var elementName;
 		if (element.className) {
 			var index = document.getElementsByClassName(element.className).length - 1;			
-			var elementName = element.className.replace('-', '');
+			elementName = element.className.replace('-', '');
 		}
 		else {
-			// element = 'misc'			
+			elementName = element;
 		}
 		var functions = this.functions[elementName];
 		var pm = '';
@@ -2894,7 +2906,7 @@ var messageList = {
 			}
 		}
 		this.links.check(mutation);
-		// send ignorator data to background script
+		// send updated ignorator data to background script
 		this.globalPort.postMessage({
 			action: 'ignorator_update',
 			ignorator: this.ignorated,
@@ -2907,78 +2919,82 @@ var messageList = {
 			messageList.ignores[r] = ignore;
 		}	
 	},
-	init: function() {
-		// handle background script message passing (etc) before DOM is ready
-		chrome.runtime.sendMessage({
-			need: "config",
-			tcs: true
-		}, function(conf) {
-			// set up globalPort so we can communicate with background script
-			messageList.globalPort = chrome.runtime.connect();
-			messageList.config = conf.data;
-			messageList.config.tcs = conf.tcs;
-			messageList.ignores = messageList.config.ignorator_list.split(',');			
-			messageList.prepareIgnoratorArray();
+	messageHandler: function(msg) {
+		if (msg.action !== 'ignorator_update') {			
+			switch (msg.action) {
+				case "showIgnorated":				
+					if (messageList.config.debug) {
+						console.log("showing hidden msg", msg.ids);
+					}
+					var tops = document.getElementsByClassName('message-top');
+					for (var i = 0; i < msg.ids.length; i++) {
+						if (messageList.config.debug) {
+							console.log(tops[msg.ids[i]]);
+						}
+						tops[msg.ids[i]].parentNode.style.display = 'block';
+						tops[msg.ids[i]].parentNode.style.opacity = '.7';
+					}
+					break;
+				default:
+					if (messageList.config.debug)
+						console.log('invalid action', msg);
+					break;
+			}
+		}
+	},
+	loadHandler: function() {
+		this.initObserver.disconnect();
+		this.passToFunctions('misc');					
+		this.addListeners();
+		this.appendScripts();
+		this.livelinks.observe(document.getElementById('u0_1'), {
+				subtree: true,
+				childList: true
+		});
+		this.globalPort.postMessage({
+			action: 'ignorator_update',
+			ignorator: this.ignorated,
+			scope: "messageList"
+		});	
+		if (this.config.new_page_notify) {
+			// set up observer to watch for attribute mutations to 'nextpage' element
+			this.newPage.observe(document.getElementById('nextpage'), {
+					attributes: true
+			});
+		}
+	},
+	init: function(config) {
+		// set up globalPort so we can communicate with background script
+		this.globalPort = chrome.runtime.connect();
+		this.globalPort.onMessage.addListener(this.messageHandler);
+		this.config = config.data;
+		this.config.tcs = config.tcs;
+		this.ignores = this.config.ignorator_list.split(',');			
+		this.prepareIgnoratorArray();	
+		if (document.readyState == 'loading') {
+			// apply DOM modifications as elements are parsed by browser
+			this.initObserver.observe(document.documentElement, {
+				childList: true,
+				subtree: true
+			});
+			document.addEventListener('DOMContentLoaded', function() {
+				messageList.loadHandler.call(messageList);
+			});
+		}
+		else {
+			// DOM already loaded - use old method
 			var pm = '';
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";
-			}
-			// add listener to handle showIgnorated request from popup menu
-			messageList.globalPort.onMessage.addListener(function(msg) {
-				if (msg.action !== 'ignorator_update') {			
-					switch (msg.action) {
-						case "showIgnorated":				
-							if (messageList.config.debug) {
-								console.log("showing hidden msg", msg.ids);
-							}
-							var tops = document.getElementsByClassName('message-top');
-							for (var i = 0; i < msg.ids.length; i++) {
-								if (messageList.config.debug) {
-									console.log(tops[msg.ids[i]]);
-								}
-								tops[msg.ids[i]].parentNode.style.display = 'block';
-								tops[msg.ids[i]].parentNode.style.opacity = '.7';
-							}
-							break;
-						default:
-							if (messageList.config.debug)
-								console.log('invalid action', msg);
-							break;
-					}
-				}
-			});
-			if (document.readyState == 'loading') {
-				// apply DOM modifications as elements are parsed by browser
-				console.log('page not loaded - using MutationObserver method');		
-				messageList.initObserver.observe(document.documentElement, {
-					childList: true,
-					subtree: true
-				});
-				document.addEventListener('DOMContentLoaded', function() {
-					console.log('DOMContentLoaded fired - disconnecting observer');
-					messageList.initObserver.disconnect();
-					messageList.passToFunctions('misc');
-					if (config.new_page_notify) {
-						// set up observer to watch for attribute mutations to 'nextpage' element
-						messageList.newPage.observe(document.getElementById('nextpage'), {
-								attributes: true
-						});
-					}
-					// set up observer to watch for new livelinks posts
-					messageList.livelinks.observe(document.getElementById('u0_1'), {
-							subtree: true,
-							childList: true
-					});
-					
-				});
-			}
-			else {
-				// DOM already loaded - use old method
-				console.log('page loaded - using old method');
-				messageList.callFunctions(pm);
-			}
-		});
+			}	
+			this.callFunctions(pm);
+		}
 	}
 };
 
-messageList.init();
+chrome.runtime.sendMessage({
+	need: "config",
+	tcs: true
+}, function(config) {
+	messageList.init.call(messageList, config);
+});
