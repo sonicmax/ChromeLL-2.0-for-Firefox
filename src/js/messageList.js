@@ -9,6 +9,7 @@ var messageList = {
 			users: {}
 		}
 	},
+	pm: '',
 	functions: {
 		messagecontainer: {
 			// live is undefined unless these functions are called 
@@ -2783,9 +2784,10 @@ var messageList = {
 				}				
 				else if (mutation.addedNodes[0].tagName
 						&& mutation.addedNodes[0].tagName.match('H2')
-						&& messageList.config.dramalinks) {
-					/*dramalinks.config = messageList.config;				
-					dramalinks.init();*/		
+						&& messageList.config.dramalinks
+						&& !this.pm) {			
+					dramalinks.config = messageList.config;				
+					dramalinks.init();	
 				}
 				else if (mutation.target.className == 'infobar'
 					&& mutation.addedNodes[0].textContent.match('There')) {
@@ -2876,12 +2878,8 @@ var messageList = {
 			elementName = element;
 		}
 		var functions = this.functions[elementName];
-		var pm = '';
-		if (window.location.href.match('inboxthread')) {
-			pm = "_pm";
-		}
 		for (var i in functions) {
-			if (config[i + pm]) {
+			if (config[i + this.pm]) {
 				functions[i](element, index);
 			}
 		}		
@@ -2962,15 +2960,19 @@ var messageList = {
 	},
 	init: function(config) {
 		this.config = config.data;
-		if (this.config.dramalinks) {			
-			chrome.runtime.sendMessage({
-				need : "dramalinks"
-			}, function(response) {
-				if (response.data) {
-					// (dramalinks object is contained in dramalinks.js)
-					dramalinks.html = response.data;
-				}
-			});
+		if (!window.location.href.match('inboxthread.php')) {
+			if (this.config.dramalinks) {
+				chrome.runtime.sendMessage({
+						need : "dramalinks"
+				}, function(response) {
+					if (response.data) {
+						dramalinks.html = response.data;
+					}
+				});
+			}
+		}
+		else {
+			this.pm = "_pm";		
 		}
 		// set up globalPort so we can communicate with background script
 		this.globalPort = chrome.runtime.connect();
@@ -2981,8 +2983,8 @@ var messageList = {
 		if (document.readyState == 'loading') {
 			// apply DOM modifications as elements are parsed by browser
 			this.initObserver.observe(document.documentElement, {
-				childList: true,
-				subtree: true
+					childList: true,
+					subtree: true
 			});
 			document.addEventListener('DOMContentLoaded', function() {
 				messageList.handle.loadEvent.call(messageList);
@@ -2990,11 +2992,7 @@ var messageList = {
 		}
 		else {
 			// DOM already loaded - use old method
-			var pm = '';
-			if (window.location.href.match('inboxthread')) {
-				pm = "_pm";
-			}	
-			this.callFunctions(pm);
+			this.callFunctions(this.pm);
 		}
 	}
 };

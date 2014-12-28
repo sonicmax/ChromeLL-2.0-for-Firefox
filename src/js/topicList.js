@@ -23,33 +23,35 @@ var topicList = {
 			if (!ignores) {
 				return;
 			}
-			var td = tr.getElementsByTagName('td')[1];	
+			var td = tr.getElementsByTagName('td')[1];
 			for (var f = 0, len = ignores.length; f < len; f++) {
-				if (td.innerHTML.indexOf('<td>Human</td>') > -1) {
+				if (!td || td.innerHTML.indexOf('<td>Human</td>') > -1) {
 					return;
 				}
-				var username = td.getElementsByTagName('a')[0];
-				if (td.getElementsByTagName('a')[0]
-						&& td.getElementsByTagName('a')[0].innerHTML
-								.toLowerCase() == ignores[f]) {
-					if (topicList.config.debug) {
-						console
-								.log('found topic to remove: \"'
-										+ tr.getElementsByTagName('td')[0]
-												.getElementsByTagName('a')[0].innerHTML
-												.toLowerCase()
-										+ "\" author: " + ignores[f]
-										+ " topic: " + i);
-					}
-					tr.style.display = 'none';
-					topicList.ignorated.total_ignored++;
-					if (!topicList.ignorated.data.users[ignores[f]]) {
-						topicList.ignorated.data.users[ignores[f]] = {};
-						topicList.ignorated.data.users[ignores[f]].total = 1;
-						topicList.ignorated.data.users[ignores[f]].trs = [ i ];
-					} else {
-						topicList.ignorated.data.users[ignores[f]].total++;
-						topicList.ignorated.data.users[ignores[f]].trs.push(i);
+				else {
+					var username = td.getElementsByTagName('a')[0];
+					if (td.getElementsByTagName('a')[0]
+							&& td.getElementsByTagName('a')[0].innerHTML
+									.toLowerCase() == ignores[f]) {
+						if (topicList.config.debug) {
+							console
+									.log('found topic to remove: \"'
+											+ tr.getElementsByTagName('td')[0]
+													.getElementsByTagName('a')[0].innerHTML
+													.toLowerCase()
+											+ "\" author: " + ignores[f]
+											+ " topic: " + i);
+						}
+						tr.style.display = 'none';
+						topicList.ignorated.total_ignored++;
+						if (!topicList.ignorated.data.users[ignores[f]]) {
+							topicList.ignorated.data.users[ignores[f]] = {};
+							topicList.ignorated.data.users[ignores[f]].total = 1;
+							topicList.ignorated.data.users[ignores[f]].trs = [i];
+						} else {
+							topicList.ignorated.data.users[ignores[f]].total++;
+							topicList.ignorated.data.users[ignores[f]].trs.push(i);
+						}
 					}
 				}
 			}
@@ -288,82 +290,43 @@ var topicList = {
 		}
 	},
 	prepareArrays: function() {
-		// prepare ignorator arrays for topicList functions
-		if (topicList.config.ignorator_list) {
-			if (topicList.config.ignorator_list.indexOf(',') == -1) {
+		if (this.config.ignorator_list) {
+			if (this.config.ignorator_list.indexOf(',') == -1) {
 				// ignorator list only has one user
-				topicList.ignore.users[0] = topicList.config.ignorator_list.toLowerCase()
+				this.ignore.users[0] = this.config.ignorator_list.toLowerCase()
 			}
 			else {
 				// split comma separated list into array
-				var ignore_users = topicList.config.ignorator_list.split(',');
+				var ignore_users = this.config.ignorator_list.split(',');
 				for (var i = 0, len = ignore_users.length; i < len; i++) {
-					topicList.ignore.users[i] = ignore_users[i].toLowerCase().trim();
+					this.ignore.users[i] = ignore_users[i].toLowerCase().trim();
 				}
 			}
 		}
-		if (topicList.config.ignore_keyword_list) {
-			if (topicList.config.ignore_keyword_list.indexOf(',') == -1) {
-				topicList.ignore.keywords[0] = topicList.config.ignore_keyword_list;
+		if (this.config.ignore_keyword_list) {
+			if (this.config.ignore_keyword_list.indexOf(',') == -1) {
+				this.ignore.keywords[0] = this.config.ignore_keyword_list;
 			}
 			else {
-				var ignore_words = topicList.config.ignore_keyword_list.split(',');		
+				var ignore_words = this.config.ignore_keyword_list.split(',');		
 				for (var i = 0, len = ignore_words.length; i < len; i++) {
-					topicList.ignore.keywords[i] = ignore_words[i]
+					this.ignore.keywords[i] = ignore_words[i]
 							.toLowerCase().trim();
 				}
 			}
 		}
-		for (var i = 0; topicList.config.keyword_highlight_data[i]; i++) {
-			topicList.highlight.keywords[i] = {};
-			topicList.highlight.keywords[i].bg = topicList.config.keyword_highlight_data[i].bg;
-			topicList.highlight.keywords[i].color = topicList.config.keyword_highlight_data[i].color;
-			topicList.highlight.keywords[i].match = topicList.config.keyword_highlight_data[i].match
+		for (var i = 0; this.config.keyword_highlight_data[i]; i++) {
+			this.highlight.keywords[i] = {};
+			this.highlight.keywords[i].bg = this.config.keyword_highlight_data[i].bg;
+			this.highlight.keywords[i].color = this.config.keyword_highlight_data[i].color;
+			this.highlight.keywords[i].match = this.config.keyword_highlight_data[i].match
 					.split(',');
 		}
-		for (var i = 0; topicList.config.tag_highlight_data[i]; i++) {
-			topicList.highlight.tags[i] = {};	
-			topicList.highlight.tags[i].bg = topicList.config.tag_highlight_data[i].bg;
-			topicList.highlight.tags[i].color = topicList.config.tag_highlight_data[i].color;	
-			topicList.highlight.tags[i].match = topicList.config.tag_highlight_data[i].match.split(',');
-		}
-	},
-	jumpHandlerTopic: function(ev) {
-		var a, history, inbox;
-		if (window.location.href.indexOf('history.php') > -1) {
-			history = true;
-			a = ev.target.parentNode.parentNode.parentNode.parentNode
-					.parentNode.getElementsByTagName('td')[2];
-		}
-		else if (window.location.href.indexOf('inbox.php') > -1) {
-			inbox = true;
-			a = ev.target.parentNode.parentNode.nextSibling.nextSibling;
-		}
-		else {
-			a = ev.target.parentNode.parentNode.parentNode.parentNode
-					.getElementsByTagName('td')[2];
-		}
-		var last = Math.ceil(a.innerHTML.split('<')[0] / 50);
-		if (ev.target.id == 'jumpWindow') {
-			pg = prompt("Page Number (" + last + " total)", "Page");
-			if (pg == undefined || pg == "Page") {
-				return 0;
-			}
-		} else {
-			pg = last;
-		}
-		if (history) {
-			return ev.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
-					+ '&page=' + pg;
-		}
-		else if (inbox) {
-			return ev.target.parentNode.parentNode.firstChild.href 
-					+ '&page=' + pg;
-		}
-		else {
-			return ev.target.parentNode.parentNode.parentNode.parentNode
-					.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
-					+ '&page=' + pg;
+		for (var i = 0; this.config.tag_highlight_data[i]; i++) {
+			this.highlight.tags[i] = {};	
+			this.highlight.tags[i].bg = this.config.tag_highlight_data[i].bg;
+			this.highlight.tags[i].color = this.config.tag_highlight_data[i].color;	
+			this.highlight.tags[i].match = this.config.tag_highlight_data[i].match.split(',');
 		}
 	},
 	checkTags: function() {
@@ -386,7 +349,7 @@ var topicList = {
 			data: ctags
 		});
 	},
-	callFunctions: function(pm) {		
+	callFunctions: function(pm) {	
 		var trs = document.getElementsByClassName('grid')[0]
 				.getElementsByTagName('tr');
 		var tr;
@@ -417,18 +380,18 @@ var topicList = {
 		});		
 	},
 	addListeners: function() {
-		document.addEventListener('click', function(ev) {
-			if (ev.target.id.match(/(jump)([Last|Window])/)) {
-				ev.preventDefault();
-				var url = topicList.jumpHandlerTopic(ev);
+		document.addEventListener('click', function(evt) {
+			if (evt.target.id.match(/(jump)([Last|Window])/)) {
+				evt.preventDefault();
+				var url = topicList.handle.pageJump(evt);
 				if (url === 0) {
 					return;
 				}
-				if (ev.which == 1) {
+				if (evt.which == 1) {
 					// left click - open in same tab
 					window.location.href = url;
 				}
-				else if (ev.which == 2) {
+				else if (evt.which == 2) {
 					// middle click - open new tab
 					window.open(url);
 				}
@@ -440,7 +403,7 @@ var topicList = {
 			if (msg.action !== 'ignorator_update') {
 				switch (msg.action) {
 					case "showIgnorated":
-						if (topicList.config.debug) {
+						if (this.config.debug) {
 							console.log("showing hidden trs", msg.ids);
 						}
 						var tr = document.getElementsByTagName('tr');
@@ -450,15 +413,14 @@ var topicList = {
 						}
 						break;
 					default:
-						if (topicList.config.debug) {
+						if (this.config.debug) {
 							console.log('invalid action', msg);
 						}
 						break;
 				}
 			}
 		},
-		loadEvent: function() {
-			console.log('DOMContentLoaded fired');
+		loadEvent: function() {			
 			if (this.config['page_jump_buttons' + this.pm]) {
 				this.addListeners();
 			}
@@ -468,17 +430,55 @@ var topicList = {
 				ignorator: this.ignorated,
 				scope: "topicList"
 			});			
+		},
+		pageJump: function(evt) {
+			var a, history, inbox;
+			if (window.location.href.indexOf('history.php') > -1) {
+				history = true;
+				a = evt.target.parentNode.parentNode.parentNode.parentNode
+						.parentNode.getElementsByTagName('td')[2];
+			}
+			else if (window.location.href.indexOf('inbox.php') > -1) {
+				inbox = true;
+				a = evt.target.parentNode.parentNode.nextSibling.nextSibling;
+			}
+			else {
+				a = evt.target.parentNode.parentNode.parentNode.parentNode
+						.getElementsByTagName('td')[2];
+			}
+			var last = Math.ceil(a.innerHTML.split('<')[0] / 50);
+			if (evt.target.id == 'jumpWindow') {
+				pg = prompt("Page Number (" + last + " total)", "Page");
+				if (pg == undefined || pg == "Page") {
+					return 0;
+				}
+			} else {
+				pg = last;
+			}
+			if (history) {
+				return evt.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
+						+ '&page=' + pg;
+			}
+			else if (inbox) {
+				return evt.target.parentNode.parentNode.firstChild.href 
+						+ '&page=' + pg;
+			}
+			else {
+				return evt.target.parentNode.parentNode.parentNode.parentNode
+						.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
+						+ '&page=' + pg;
+			}
 		}
 	},
 	passToFunctions: function(tr) {
-		var functions = topicList.mainFunctions;
-		var config = topicList.config;
-		var index = topicList.index;
+		var functions = this.mainFunctions;
+		var config = this.config;
+		var index = this.index;
 		for (var i in functions) {
 			if (config[i + this.pm]) {
 				// pass tr node & index to function
 				functions[i](tr, index);
-				topicList.index++;
+				this.index++;
 			}
 		}
 	},
@@ -492,11 +492,12 @@ var topicList = {
 				}
 				else if (mutation.addedNodes[0].tagName
 						&& mutation.addedNodes[0].tagName.match('H1')
-						&& topicList.config.dramalinks) {
+						&& topicList.config.dramalinks
+						&& !topicList.pm) {
 					dramalinks.config = topicList.config;
 					dramalinks.init();
 				}
-				if (mutation.target.id == 'bookmarks' 
+				else if (mutation.target.id == 'bookmarks' 
 						&& mutation.addedNodes[0].innerHTML == '[+]') {
 					topicList.checkTags();
 				}
@@ -504,7 +505,16 @@ var topicList = {
 		}
 	}),
 	init: function(config) {
-		this.config = config.data;	
+		this.config = config.data;		
+		if (this.config.dramalinks) {
+			chrome.runtime.sendMessage({
+					need : "dramalinks"
+			}, function(response) {
+				if (response.data) {
+					dramalinks.html = response.data;
+				}
+			});
+		}
 		// connect to background page
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
@@ -515,11 +525,11 @@ var topicList = {
 		if (document.readyState == 'loading') {
 			// apply DOM modifications as elements are parsed by browser
 			this.initObserver.observe(document.documentElement, {
-				childList: true,
-				subtree: true
+					childList: true,
+					subtree: true
 			});
 			document.addEventListener('DOMContentLoaded', 
-				this.handle.loadEvent.call(topicList)
+					this.handle.loadEvent.call(topicList)
 			);
 		}
 		else {
