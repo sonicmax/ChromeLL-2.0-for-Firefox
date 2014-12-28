@@ -4,9 +4,9 @@ var messageList = {
 	tops_total: 0,
 	config: [],
 	ignorated: {
-		total_ignored : 0,
-		data : {
-			users : {}
+		total_ignored: 0,
+		data: {
+			users: {}
 		}
 	},
 	functions: {
@@ -175,11 +175,11 @@ var messageList = {
 												.getElementsByTagName('a')[0].innerHTML
 												.replace(/ \((\d+)\)$/, "")) {
 									chrome.runtime.sendMessage({
-										need : "notify",
-										message : document.title.replace(
+										need: "notify",
+										message: document.title.replace(
 												/End of the Internet - /i,
 												''),
-										title : "Post by "
+										title: "Post by "
 												+ msg
 														.getElementsByClassName('message-top')[0]
 														.getElementsByTagName('a')[0].innerHTML
@@ -217,10 +217,10 @@ var messageList = {
 										.getElementsByTagName('a')[0].innerHTML
 										.replace(/ \((\d+)\)$/, "")) {
 							chrome.runtime.sendMessage({
-								need : "notify",
-								message : document.title.replace(
+								need: "notify",
+								message: document.title.replace(
 										/End of the Internet - /i, ''),
-								title : "Post by "
+								title: "Post by "
 										+ msg.getElementsByClassName('message-top')[0]
 												.getElementsByTagName('a')[0].innerHTML
 							}, function(data) {
@@ -326,7 +326,7 @@ var messageList = {
 				for (var i = 0, len = pholds.length; i < len; i++) {
 					phold = pholds[i];
 					messageList.imgObserver.observe(phold, {
-						attributes : true,
+						attributes: true,
 						childList: true
 					});
 				}
@@ -411,11 +411,11 @@ var messageList = {
 					}
 					if (notify) {
 						chrome.runtime.sendMessage({
-							need : "notify",
-							title : "Quoted by "
+							need: "notify",
+							title: "Quoted by "
 									+ mutation.getElementsByClassName('message-top')[0]
 											.getElementsByTagName('a')[0].innerHTML,
-							message : document.title.replace(/End of the Internet - /i, '')
+							message: document.title.replace(/End of the Internet - /i, '')
 						}, function(data) {
 							console.log(data);
 						});
@@ -618,8 +618,8 @@ var messageList = {
 			},
 			quickpost_on_pgbottom: function() {
 				chrome.runtime.sendMessage({
-					need : "insertcss",
-					file : "src/css/quickpost_on_pgbottom.css"
+					need: "insertcss",
+					file: "src/css/quickpost_on_pgbottom.css"
 				});
 			},
 			loadquotes: function() {
@@ -1005,7 +1005,7 @@ var messageList = {
 		},
 		thumbnail: function(gfyLink) {
 			var display, placeholder, url, splitURL, code, thumbnail, workSafe;
-			messageList.config.show_gfycat_link ? display = 'inline' : display = 'none';
+			messageList.config.show_gfycat_link ? display = 'inline': display = 'none';
 			url = gfyLink.getAttribute('href');
 			splitURL = url.split('/').slice(-1);
 			code = splitURL.join('/');
@@ -1550,7 +1550,7 @@ var messageList = {
 				var note = messageList.config.usernote_notes[userID];
 				page = document.createElement('textarea');
 				page.id = 'notepage';
-				page.value = (note == undefined) ? "" : note;
+				page.value = (note == undefined) ? "": note;
 				page.style.width = "100%";
 				page.style.opacity = '.6';
 				el.parentNode.appendChild(page);
@@ -1558,9 +1558,9 @@ var messageList = {
 		},
 		save: function() {
 			chrome.runtime.sendMessage({
-				need : "save",
-				name : "usernote_notes",
-				data : messageList.config.usernote_notes
+				need: "save",
+				name: "usernote_notes",
+				data: messageList.config.usernote_notes
 			}, function(rsp) {
 				console.log(rsp);
 			});
@@ -2309,7 +2309,7 @@ var messageList = {
 				obj = obj.parentNode;
 			}
 			obj.className = obj.className.indexOf('closed') != -1 ? obj.className
-					.replace('closed', 'opened') : obj.className.replace('opened',
+					.replace('closed', 'opened'): obj.className.replace('opened',
 					'closed');
 			return false;
 		}
@@ -2438,9 +2438,9 @@ var messageList = {
 			if (numTcs > max)
 				delete messageList.config.tcs[lowestTc];
 			chrome.runtime.sendMessage({
-				need : "save",
-				name : "tcs",
-				data : messageList.config.tcs
+				need: "save",
+				name: "tcs",
+				data: messageList.config.tcs
 			});
 		}	
 	},
@@ -2458,7 +2458,6 @@ var messageList = {
 							&& mutation.target.getAttribute('class') == "img-loaded"
 							&& mutation.target.childNodes[0].src
 									.match(/.*\/i\/t\/.*/)) {
-						if(messageList.config.debug) console.log("found thumbnail");
 						/*
 						 * set up the onclick and do some dom manip that the
 						 * script originally did - i think only removing href
@@ -2773,9 +2772,9 @@ var messageList = {
 		}
 		// send ignorator data to background script
 		this.globalPort.postMessage({
-			action : 'ignorator_update',
-			ignorator : this.ignorated,
-			scope : "messageList"
+			action: 'ignorator_update',
+			ignorator: this.ignorated,
+			scope: "messageList"
 		});
 		// call functions that dont modify DOM
 		for (var i in miscFunctions) {
@@ -2850,28 +2849,33 @@ var messageList = {
 		this.links.check(mutation);
 		// send ignorator data to background script
 		this.globalPort.postMessage({
-			action : 'ignorator_update',
-			ignorator : this.ignorated,
-			scope : "messageList"
+			action: 'ignorator_update',
+			ignorator: this.ignorated,
+			scope: "messageList"
 		});
-	},	
+	},
+	prepareIgnoratorArray: function() {
+		for (var r = 0, len = messageList.ignores.length; r < len; r++) {
+			var ignore = messageList.ignores[r].toLowerCase().trim();
+			messageList.ignores[r] = ignore;
+		}	
+	},
 	init: function() {
 		// handle background script message passing (etc) before DOM is ready
 		chrome.runtime.sendMessage({
-			need : "config",
-			tcs : true
+			need: "config",
+			tcs: true
 		}, function(conf) {
 			// set up globalPort so we can communicate with background script
 			messageList.globalPort = chrome.runtime.connect();
 			messageList.config = conf.data;
 			messageList.config.tcs = conf.tcs;
-			// turn ignorator list into array before running messageList functions
-			messageList.ignores = messageList.config.ignorator_list.split(',');
-			var ignore;
-			for (var r = 0, len = messageList.ignores.length; r < len; r++) {
-				ignore = messageList.ignores[r].toLowerCase().trim();
-				messageList.ignores[r] = ignore;
+			if (messageList.config.dramalinks) {
+				dramalinks.config = messageList.config;
+				dramalinks.init();
 			}
+			messageList.ignores = messageList.config.ignorator_list.split(',');			
+			messageList.prepareIgnoratorArray();
 			var pm = '';
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";

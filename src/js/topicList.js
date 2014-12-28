@@ -16,7 +16,7 @@ var topicList = {
 		}
 	},
 	mainFunctions: {
-		ignorator_topiclist : function(tr, i) {
+		ignorator_topiclist: function(tr, i) {
 			var ignores = topicList.ignore.users;
 			if (!ignores) {
 				return;
@@ -52,7 +52,7 @@ var topicList = {
 				}
 			}
 		},
-		ignore_keyword : function(tr, i) {
+		ignore_keyword: function(tr, i) {
 			if (!topicList.config.ignore_keyword_list) {
 				return;
 			}
@@ -104,7 +104,7 @@ var topicList = {
 				}
 			}
 		},
-		/*append_tags : function(tr) {
+		/*append_tags: function(tr) {
 			for (var i = 0; i < tags.length; i++) {
 				var tag_children = tags[i].children;
 				for (var j = 0; j < tag_children.length; j++) {
@@ -125,7 +125,7 @@ var topicList = {
 				}
 			}
 		},*/
-		page_jump_buttons : function(tr, i) {
+		page_jump_buttons: function(tr, i) {
 			var inbox;
 			if (window.location.href.indexOf('inbox.php') > -1) {
 				if (!topicList.config.page_jump_buttons_pm) {
@@ -176,7 +176,7 @@ var topicList = {
 				}
 			}
 		},
-		enable_keyword_highlight : function(tr) {
+		enable_keyword_highlight: function(tr) {
 			var title;
 			var keys = topicList.highlight.keywords;
 			if (!keys) {
@@ -215,7 +215,7 @@ var topicList = {
 					}
 				}
 		},
-		enable_tag_highlight : function(tr) {
+		enable_tag_highlight: function(tr) {
 			var highlightTags = topicList.highlight.tags;
 			if (!highlightTags) {
 				return;
@@ -246,7 +246,7 @@ var topicList = {
 				}
 			}
 		},
-		userhl_topiclist : function(tr) {
+		userhl_topiclist: function(tr) {
 			if (!topicList.config.enable_user_highlight) {
 				return;
 			}
@@ -274,7 +274,7 @@ var topicList = {
 				}
 			}
 		},
-		zebra_tables : function(tr, i) {
+		zebra_tables: function(tr, i) {
 			if (i % 2 === 0) {
 				for (var j = 0; tr.getElementsByTagName('td')[j]; j++) {
 					if (tr.getElementsByTagName('td')[j].style.background === '') {
@@ -285,7 +285,7 @@ var topicList = {
 			}
 		}
 	},
-	createArrays : function() {
+	prepareArrays: function() {
 		// prepare ignorator arrays for topicList functions
 		if (topicList.config.ignorator_list) {
 			if (topicList.config.ignorator_list.indexOf(',') == -1) {
@@ -326,7 +326,7 @@ var topicList = {
 			topicList.highlight.tags[i].match = topicList.config.tag_highlight_data[i].match.split(',');
 		}
 	},
-	jumpHandlerTopic : function(ev) {
+	jumpHandlerTopic: function(ev) {
 		var a, history, inbox;
 		if (window.location.href.indexOf('history.php') > -1) {
 			history = true;
@@ -364,7 +364,7 @@ var topicList = {
 					+ '&page=' + pg;
 		}
 	},
-	checkTags : function() {
+	checkTags: function() {
 		var atags = document.getElementById('bookmarks').getElementsByTagName(
 				'span');
 		var ctags = {};
@@ -379,12 +379,12 @@ var topicList = {
 			}
 		}
 		chrome.runtime.sendMessage({
-			need : "save",
-			name : "saved_tags",
-			data : ctags
+			need: "save",
+			name: "saved_tags",
+			data: ctags
 		});
 	},
-	callFunctions : function(pm) {
+	callFunctions: function(pm) {
 		var trs = document.getElementsByClassName('grid')[0]
 				.getElementsByTagName('tr');
 		var tr;
@@ -409,12 +409,12 @@ var topicList = {
 		}
 		// send ignorator data to background script
 		topicList.globalPort.postMessage({
-			action : 'ignorator_update',
-			ignorator : topicList.ignorated,
-			scope : "topicList"
+			action: 'ignorator_update',
+			ignorator: topicList.ignorated,
+			scope: "topicList"
 		});		
 	},
-	addListeners : function() {
+	addListeners: function() {
 		document.body.addEventListener('click', function(ev) {
 			if (ev.target.id.match(/(jump)([Last|Window])/)) {
 				ev.preventDefault();
@@ -433,16 +433,20 @@ var topicList = {
 			}
 		});
 	},
-	init : function() {
+	init: function() {
 		// connect to background page
 		topicList.globalPort = chrome.runtime.connect();
 		// request config
 		chrome.runtime.sendMessage({
-			need : "config"
+			need: "config"
 		}, function(conf) {
 			topicList.config = conf.data;
 			// set up ignorator/highlighter arrays
-			topicList.createArrays();
+			topicList.prepareArrays();
+			if (messageList.config.dramalinks) {
+				dramalinks.config = messageList.config;
+				dramalinks.init();
+			}				
 			var pm = '';
 			if (window.location.href.match('inbox.php'))
 				pm = "_pm";
