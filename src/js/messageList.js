@@ -2881,7 +2881,7 @@ var messageList = {
 	},
 	livelinksHandler: function(mutation) {
 		var index = document.getElementsByClassName('message-container').length - 1;
-		var functions = this.functions.posts;
+		var functions = this.functions.messagecontainer;
 		var config = this.config;
 		var live = true;
 		var pm = '';
@@ -2957,6 +2957,7 @@ var messageList = {
 				document.addEventListener('DOMContentLoaded', function() {
 					console.log('DOMContentLoaded fired - disconnecting observer');
 					messageList.initObserver.disconnect();
+					messageList.passToFunctions('misc');
 					if (config.new_page_notify) {
 						// set up observer to watch for attribute mutations to 'nextpage' element
 						messageList.newPage.observe(document.getElementById('nextpage'), {
@@ -2968,7 +2969,7 @@ var messageList = {
 							subtree: true,
 							childList: true
 					});
-					messageList.passToFunctions('misc');
+					
 				});
 			}
 			else {
