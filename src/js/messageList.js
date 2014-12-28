@@ -10,7 +10,7 @@ var messageList = {
 		}
 	},
 	functions: {
-		posts: {
+		messagecontainer: {
 			// live is undefined unless these functions are called 
 			// from messageList.livelinks
 			eti_bash: function(msg, index) {
@@ -423,7 +423,7 @@ var messageList = {
 				}	
 			}
 		},
-		page: {
+		infobar: {
 			imagemap_on_infobar: function() {
 				var regex = window.location.search.match(/(topic=)([0-9]+)/);
 				if (regex) {
@@ -449,6 +449,7 @@ var messageList = {
 				}
 			},
 			filter_me: function() {
+				// TODO - get user number from config, find anon tag using h2 element
 				var infobar = document.getElementsByClassName('infobar')[0];
 				var tops = document.getElementsByClassName('message-top');
 				// handle anonymous topic
@@ -504,7 +505,173 @@ var messageList = {
 				infobar.appendChild(divider);
 				infobar.appendChild(anchor);
 				anchor.addEventListener('click', messageList.spoilers.find);		
+			}
+		},
+		quickpostbody: {
+			quick_imagemap: function() {
+				var quickpost = document.getElementsByClassName('quickpost-body')[0];
+				if (quickpost) {
+					var button = document.createElement('button');
+					var divider = document.createTextNode(' ');
+					var search = document.createElement('input');
+					button.textContent = "Browse Imagemap";					
+					button.id = "quick_image";
+					search.placeholder = "Search Imagemap...";
+					search.id = "image_search";
+					quickpost.appendChild(divider);
+					quickpost.appendChild(button);
+					quickpost.appendChild(divider);
+					quickpost.appendChild(search);
+				}
 			},
+			post_before_preview: function() {
+				var inputs = document.getElementsByClassName('quickpost-body')[0]
+						.getElementsByTagName('input');
+				var input;
+				var preview;
+				var post;
+				for (var i = 0, len = inputs.length; i < len; i++) {
+					input = inputs[i];
+					if (input.name == 'preview') {
+						preview = input;
+					}
+					if (input.name == 'post') {
+						post = input;
+					}
+				}
+				post.parentNode.removeChild(post);
+				preview.parentNode.insertBefore(post, preview);
+			},	
+			batch_uploader: function() {
+				var quickpost_body = document.getElementsByClassName('quickpost-body')[0];
+				var ulBox = document.createElement('input');
+				var ulButton = document.createElement('input');		
+				ulBox.type = 'file';
+				ulBox.multiple = true;
+				ulBox.id = "batch_uploads";
+				ulButton.type = "button";
+				ulButton.value = "Batch Upload";
+				ulButton.addEventListener('click', messageList.startBatchUpload);
+				quickpost_body.insertBefore(ulBox, null);
+				quickpost_body.insertBefore(ulButton, ulBox);
+			},
+			quickpost_on_pgbottom: function() {
+				chrome.runtime.sendMessage({
+					need: "insertcss",
+					file: "src/css/quickpost_on_pgbottom.css"
+				});
+			},
+			quickpost_tag_buttons: function() {
+				if (!window.location.href.match('archives')) {
+					var m = document.getElementsByClassName('quickpost-body')[0];
+					var txt = document.getElementById('u0_13');
+					var insM = document.createElement('input');
+					insM.value = 'Mod';
+					insM.name = 'Mod';
+					insM.type = 'button';
+					insM.id = 'mod';
+					insM.addEventListener("click", messageList.qpTagButton, false);
+					var insA = document.createElement('input');
+					insA.value = 'Admin';
+					insA.name = 'Admin';
+					insA.type = 'button';
+					insA.addEventListener("click", messageList.qpTagButton, false);
+					insA.id = 'adm';
+					var insQ = document.createElement('input');
+					insQ.value = 'Quote';
+					insQ.name = 'Quote';
+					insQ.type = 'button';
+					insQ.addEventListener("click", messageList.qpTagButton, false);
+					insQ.id = 'quote';
+					var insS = document.createElement('input');
+					insS.value = 'Spoiler';
+					insS.name = 'Spoiler';
+					insS.type = 'button';
+					insS.addEventListener("click", messageList.qpTagButton, false);
+					insS.id = 'spoiler';
+					var insP = document.createElement('input');
+					insP.value = 'Preformated';
+					insP.name = 'Preformated';
+					insP.type = 'button';
+					insP.addEventListener("click", messageList.qpTagButton, false);
+					insP.id = 'pre';
+					var insU = document.createElement('input');
+					insU.value = 'Underline';
+					insU.name = 'Underline';
+					insU.type = 'button';
+					insU.addEventListener("click", messageList.qpTagButton, false);
+					insU.id = 'u';
+					var insI = document.createElement('input');
+					insI.value = 'Italic';
+					insI.name = 'Italic';
+					insI.type = 'button';
+					insI.addEventListener("click", messageList.qpTagButton, false);
+					insI.id = 'i';
+					var insB = document.createElement('input');
+					insB.value = 'Bold';
+					insB.name = 'Bold';
+					insB.type = 'button';
+					insB.addEventListener("click", messageList.qpTagButton, false);
+					insB.id = 'b';
+					m.insertBefore(insM, m.getElementsByTagName('textarea')[0]);
+					m.insertBefore(insQ, insM);
+					m.insertBefore(insS, insQ);
+					m.insertBefore(insP, insS);
+					m.insertBefore(insU, insP);
+					m.insertBefore(insI, insU);
+					m.insertBefore(insB, insI);
+					m.insertBefore(document.createElement('br'), insB);
+				}
+			},
+			drop_batch_uploader: function() {
+				if (window.location.href.indexOf('postmsg.php') > -1 
+				|| window.location.hostname.indexOf("archives") > -1) {
+					return;
+				}
+				var quickreply = document.getElementsByTagName('textarea')[0];
+				quickreply
+						.addEventListener(
+								'drop',
+								function(evt) {
+									evt.preventDefault();
+									if (evt.dataTransfer.files.length == 0) {
+										console.log(evt);
+										return;
+									}
+									document.getElementsByClassName('quickpost-body')[0]
+											.getElementsByTagName('b')[0].innerHTML += " (Uploading: 1/"
+											+ evt.dataTransfer.files.length + ")";
+									commonFunctions.asyncUpload(evt.dataTransfer.files);
+								});
+			},
+			snippet_listener: function() {
+				if (window.location.hostname.indexOf("archives") == -1) {
+					var ta = document.getElementsByName('message')[0];
+					var caret;
+					ta.addEventListener('keydown', 
+						function(event) {
+							if (messageList.config.snippet_alt_key) {
+								if (event.shiftKey == true
+										&& event.keyIdentifier == 'U+0009') {
+									event.preventDefault();
+									caret = messageList.snippet.findCaret(ta);
+									messageList.snippet.handler(ta.value, caret);				
+								}
+							}
+							else if (!messageList.config.snippet_alt_key) {
+								if (event.keyIdentifier == 'U+0009') {
+									event.preventDefault();
+									caret = messageList.snippet.findCaret(ta);
+									messageList.snippet.handler(ta.value, caret);
+								}
+							}		
+						}
+					);
+				}
+			}			
+		},
+		misc: {
+			// contains functions which require the whole page to be loaded			
 			highlight_tc: function() {
 				var tcs = messageList.tcs.getMessages();
 				var tc;
@@ -544,24 +711,6 @@ var messageList = {
 					username.outerHTML += span.innerHTML;
 				}
 			},
-			quick_imagemap: function() {
-				var quickpost = document.getElementsByClassName('quickpost-body')[0];
-				if (quickpost) {
-					var button = document.createElement('button');
-					var divider = document.createTextNode(' ');
-					var search = document.createElement('input');
-					button.textContent = "Browse Imagemap";					
-					button.id = "quick_image";
-					search.placeholder = "Search Imagemap...";
-					search.id = "image_search";
-					quickpost.appendChild(divider);
-					quickpost.appendChild(button);
-					quickpost.appendChild(divider);
-					quickpost.appendChild(search);
-				}
-			}
-		},
-		misc: {
 			pm_title: function() {
 				if (window.location.href.indexOf('inboxthread.php') == -1) {
 					return;
@@ -579,48 +728,11 @@ var messageList = {
 					}
 				}
 				document.title = "PM - " + other;
-			},	
-			post_before_preview: function() {
-				var inputs = document.getElementsByClassName('quickpost-body')[0]
-						.getElementsByTagName('input');
-				var input;
-				var preview;
-				var post;
-				for (var i = 0, len = inputs.length; i < len; i++) {
-					input = inputs[i];
-					if (input.name == 'preview') {
-						preview = input;
-					}
-					if (input.name == 'post') {
-						post = input;
-					}
-				}
-				post.parentNode.removeChild(post);
-				preview.parentNode.insertBefore(post, preview);
-			},	
-			batch_uploader: function() {
-				var quickpost_body = document.getElementsByClassName('quickpost-body')[0];
-				var ulBox = document.createElement('input');
-				var ulButton = document.createElement('input');		
-				ulBox.type = 'file';
-				ulBox.multiple = true;
-				ulBox.id = "batch_uploads";
-				ulButton.type = "button";
-				ulButton.value = "Batch Upload";
-				ulButton.addEventListener('click', messageList.startBatchUpload);
-				quickpost_body.insertBefore(ulBox, null);
-				quickpost_body.insertBefore(ulButton, ulBox);
 			},
 			post_title_notification: function() {
 				document.addEventListener('visibilitychange', messageList.clearUnreadPosts);
 				document.addEventListener('scroll', messageList.clearUnreadPosts);
 				document.addEventListener('mousemove', messageList.clearUnreadPosts);
-			},
-			quickpost_on_pgbottom: function() {
-				chrome.runtime.sendMessage({
-					need: "insertcss",
-					file: "src/css/quickpost_on_pgbottom.css"
-				});
 			},
 			loadquotes: function() {
 				function getElementsByClass(searchClass, node, tag) {
@@ -760,117 +872,9 @@ var messageList = {
 				}
 				var interval = window.setInterval(checkMssgs, 1000);
 			},
-			quickpost_tag_buttons: function() {
-				if (!window.location.href.match('archives')) {
-					var m = document.getElementsByClassName('quickpost-body')[0];
-					var txt = document.getElementById('u0_13');
-					var insM = document.createElement('input');
-					insM.value = 'Mod';
-					insM.name = 'Mod';
-					insM.type = 'button';
-					insM.id = 'mod';
-					insM.addEventListener("click", messageList.qpTagButton, false);
-					var insA = document.createElement('input');
-					insA.value = 'Admin';
-					insA.name = 'Admin';
-					insA.type = 'button';
-					insA.addEventListener("click", messageList.qpTagButton, false);
-					insA.id = 'adm';
-					var insQ = document.createElement('input');
-					insQ.value = 'Quote';
-					insQ.name = 'Quote';
-					insQ.type = 'button';
-					insQ.addEventListener("click", messageList.qpTagButton, false);
-					insQ.id = 'quote';
-					var insS = document.createElement('input');
-					insS.value = 'Spoiler';
-					insS.name = 'Spoiler';
-					insS.type = 'button';
-					insS.addEventListener("click", messageList.qpTagButton, false);
-					insS.id = 'spoiler';
-					var insP = document.createElement('input');
-					insP.value = 'Preformated';
-					insP.name = 'Preformated';
-					insP.type = 'button';
-					insP.addEventListener("click", messageList.qpTagButton, false);
-					insP.id = 'pre';
-					var insU = document.createElement('input');
-					insU.value = 'Underline';
-					insU.name = 'Underline';
-					insU.type = 'button';
-					insU.addEventListener("click", messageList.qpTagButton, false);
-					insU.id = 'u';
-					var insI = document.createElement('input');
-					insI.value = 'Italic';
-					insI.name = 'Italic';
-					insI.type = 'button';
-					insI.addEventListener("click", messageList.qpTagButton, false);
-					insI.id = 'i';
-					var insB = document.createElement('input');
-					insB.value = 'Bold';
-					insB.name = 'Bold';
-					insB.type = 'button';
-					insB.addEventListener("click", messageList.qpTagButton, false);
-					insB.id = 'b';
-					m.insertBefore(insM, m.getElementsByTagName('textarea')[0]);
-					m.insertBefore(insQ, insM);
-					m.insertBefore(insS, insQ);
-					m.insertBefore(insP, insS);
-					m.insertBefore(insU, insP);
-					m.insertBefore(insI, insU);
-					m.insertBefore(insB, insI);
-					m.insertBefore(document.createElement('br'), insB);
-				}
-			},
-			drop_batch_uploader: function() {
-				if (window.location.href.indexOf('postmsg.php') > -1 
-				|| window.location.hostname.indexOf("archives") > -1) {
-					return;
-				}
-				var quickreply = document.getElementsByTagName('textarea')[0];
-				quickreply
-						.addEventListener(
-								'drop',
-								function(evt) {
-									evt.preventDefault();
-									if (evt.dataTransfer.files.length == 0) {
-										console.log(evt);
-										return;
-									}
-									document.getElementsByClassName('quickpost-body')[0]
-											.getElementsByTagName('b')[0].innerHTML += " (Uploading: 1/"
-											+ evt.dataTransfer.files.length + ")";
-									commonFunctions.asyncUpload(evt.dataTransfer.files);
-								});
-			},
 			load_next_page: function() {
 				document.getElementById('u0_3').addEventListener('dblclick',
 						messageList.loadNextPage);
-			},	
-			snippet_listener: function() {
-				if (window.location.hostname.indexOf("archives") == -1) {
-					var ta = document.getElementsByName('message')[0];
-					var caret;
-					ta.addEventListener('keydown', 
-						function(event) {
-							if (messageList.config.snippet_alt_key) {
-								if (event.shiftKey == true
-										&& event.keyIdentifier == 'U+0009') {
-									event.preventDefault();
-									caret = messageList.snippet.findCaret(ta);
-									messageList.snippet.handler(ta.value, caret);				
-								}
-							}
-							else if (!messageList.config.snippet_alt_key) {
-								if (event.keyIdentifier == 'U+0009') {
-									event.preventDefault();
-									caret = messageList.snippet.findCaret(ta);
-									messageList.snippet.handler(ta.value, caret);
-								}
-							}		
-						}
-					);
-				}
 			}
 		}
 	},
@@ -2444,38 +2448,6 @@ var messageList = {
 			});
 		}	
 	},
-	imgObserver: new MutationObserver(function(mutations) {
-		var mutation;
-			for (var i = 0, len = mutations.length; i < len; i++) {
-				mutation = mutations[i];
-				if (messageList.config.resize_imgs) {
-					messageList.image.resize(mutation.target.childNodes[0]);
-				}
-				if (mutation.type === 'attributes') {
-					// once they're loaded, thumbnails have /i/t/ in their
-					// url where fullsize have /i/n/
-					if (mutation.attributeName == "class"
-							&& mutation.target.getAttribute('class') == "img-loaded"
-							&& mutation.target.childNodes[0].src
-									.match(/.*\/i\/t\/.*/)) {
-						/*
-						 * set up the onclick and do some dom manip that the
-						 * script originally did - i think only removing href
-						 * actually matters
-						 */
-						mutation.target.parentNode.addEventListener('click',
-								messageList.image.expand);
-						mutation.target.parentNode.setAttribute('class',
-								'thumbnailed_image');
-						mutation.target.parentNode
-								.setAttribute('oldHref',
-										mutation.target.parentNode
-												.getAttribute('href'));
-						mutation.target.parentNode.removeAttribute('href');
-					}
-				}
-			}
-	}),
 	autoscrollCheck: function(mutation) {
 		// checks whether user has scrolled to bottom of page
 		var position = mutation.getBoundingClientRect();
@@ -2724,7 +2696,107 @@ var messageList = {
 			templates.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
 			head.appendChild(templates);
 		}
-	},	
+	},
+	imgObserver: new MutationObserver(function(mutations) {
+		var mutation;
+			for (var i = 0, len = mutations.length; i < len; i++) {
+				mutation = mutations[i];
+				if (messageList.config.resize_imgs) {
+					messageList.image.resize(mutation.target.childNodes[0]);
+				}
+				if (mutation.type === 'attributes') {
+					// once they're loaded, thumbnails have /i/t/ in their
+					// url where fullsize have /i/n/
+					if (mutation.attributeName == "class"
+							&& mutation.target.getAttribute('class') == "img-loaded"
+							&& mutation.target.childNodes[0].src
+									.match(/.*\/i\/t\/.*/)) {
+						/*
+						 * set up the onclick and do some dom manip that the
+						 * script originally did - i think only removing href
+						 * actually matters
+						 */
+						mutation.target.parentNode.addEventListener('click',
+								messageList.image.expand);
+						mutation.target.parentNode.setAttribute('class',
+								'thumbnailed_image');
+						mutation.target.parentNode
+								.setAttribute('oldHref',
+										mutation.target.parentNode
+												.getAttribute('href'));
+						mutation.target.parentNode.removeAttribute('href');
+					}
+				}
+			}
+	}),	
+	newPage: new MutationObserver(function(mutations) {
+		for (var i = 0, len = mutations.length; i < len; i++) {
+			var mutation = mutations[i];
+			if (mutation.type === 'attributes' && target.style.display === 'block') {
+				chrome.runtime.sendMessage({
+					need: "notify",
+					title: "New Page Created",
+					message: document.title
+				});
+			}
+		}
+	}),
+	livelinks: new MutationObserver(function(mutations) {
+		for (var i = 0, len = mutations.length; i < len; i++) {
+			var mutation = mutations[i];
+			if (!mutation.target.lastChild 
+					|| !mutation.target.lastChild.firstChild 
+					|| !mutation.target.lastChild.firstChild.className) {
+				return;
+			}
+			else if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
+				// send new message container to livelinks method
+				messageList.livelinksHandler(mutation.target.lastChild.firstChild);
+			}
+		}
+	}),
+	initObserver: new MutationObserver(function(mutations) {
+		for (var i = 0, len = mutations.length; i < len; i++) {
+			var mutation = mutations[i];
+			if (mutation.addedNodes.length > 0) {
+				/*if (mutation.target.className == 'menubar'
+						&& mutation.addedNodes[0].innerHTML == 'Logout') {
+					messageList.passToFunctions(mutation.target);
+				}*/
+				/*if (mutation.target.id == 'bookmarks' 
+						&& mutation.addedNodes[0].innerHTML == '[+]') {
+					console.log('saved tags parsed');
+					console.log(mutation);
+				}
+				if (mutation.target.className == 'userbar' 
+						&& mutation.addedNodes[0].innerHTML == 'Help') {
+					console.log('userbar parsed');
+					console.log(mutation);
+					messageList.passToFunctions(mutation.target);
+				}*/
+				if (mutation.addedNodes[0].tagName
+						&& mutation.addedNodes[0].tagName.match(/H2/)
+						&& messageList.config.dramalinks) {
+					console.log('title/tags parsed');
+					/*dramalinks.config = messageList.config;				
+					dramalinks.init();*/		
+				}
+				if (mutation.target.className == 'infobar'
+					&& mutation.addedNodes[0].textContent.match('There')) {
+					console.log('infobar parsed');
+					messageList.passToFunctions(mutation.target);
+				}
+				if (mutation.addedNodes[0].className == 'message-container') {
+					console.log('message-container parsed');
+					messageList.passToFunctions(mutation.addedNodes[0]);
+				}
+				if (mutation.addedNodes[0].value == 'Upload Image') {
+					console.log('quickpost-body parsed');
+					messageList.passToFunctions(mutation.target);
+				}
+			}
+		}				
+	}),
 	callFunctions: function(pm) {
 		// iterate over objects & call function if messageList.config value is true
 		var t0 = performance.now();
@@ -2786,53 +2858,28 @@ var messageList = {
 		this.links.check();
 		this.addListeners();
 		this.appendScripts();
-		if (config.new_page_notify) {
-			if (config.debug) {
-				console.log('listening for new page');
+	},
+	passToFunctions: function(element) {
+		var config = this.config;
+		if (element.className) {
+			var index = document.getElementsByClassName(element.className).length - 1;			
+			var elementName = element.className.replace('-', '');
+		}
+		else {
+			// element = 'misc'			
+		}
+		var functions = this.functions[elementName];
+		var pm = '';
+		if (window.location.href.match('inboxthread')) {
+			pm = "_pm";
+		}
+		for (var i in functions) {
+			if (config[i + pm]) {
+				functions[i](element, index);
 			}
-			// set up observer to watch for mutations to 'nextpage' element
-			var target = document.getElementById('nextpage');
-			var mutation;
-			var observer = new MutationObserver(function(mutations) {
-				for (var i = 0, mutation; mutation = mutations[i]; i++) {
-					if (mutation.type === 'attributes' && target.style.display === 'block') {
-						chrome.runtime.sendMessage({
-							need: "notify",
-							title: "New Page Created",
-							message: document.title
-						});
-					}
-				}
-			});
-			var obsconfig = {
-				attributes: true
-			};
-			observer.observe(target, obsconfig);
-		}	
-		// set up observer to watch for new livelinks posts
-		var livelinks = new MutationObserver(function(mutations) {
-			var mutation;
-			for (var i = 0, len = mutations.length; i < len; i++) {
-				mutation = mutations[i];
-				if (!mutation.target.lastChild 
-						|| !mutation.target.lastChild.firstChild 
-						|| !mutation.target.lastChild.firstChild.className) {
-					return;
-				}
-				if (mutation.target.lastChild.firstChild.getAttribute('class') == 'message-container') {
-					// send new message container to livelinks method
-					this.livelinks(mutation.target.lastChild.firstChild);
-				}
-			}
-		});
-		livelinks.observe(document.getElementById('u0_1'), {
-				subtree: true,
-				childList: true
-		});
-		var t1 = performance.now();
-		console.log("Processed in " + (t1 - t0) + " milliseconds.");
-	},	
-	livelinks: function(mutation) {
+		}		
+	},
+	livelinksHandler: function(mutation) {
 		var index = document.getElementsByClassName('message-container').length - 1;
 		var functions = this.functions.posts;
 		var config = this.config;
@@ -2870,10 +2917,6 @@ var messageList = {
 			messageList.globalPort = chrome.runtime.connect();
 			messageList.config = conf.data;
 			messageList.config.tcs = conf.tcs;
-			if (messageList.config.dramalinks) {
-				dramalinks.config = messageList.config;
-				dramalinks.init();
-			}
 			messageList.ignores = messageList.config.ignorator_list.split(',');			
 			messageList.prepareIgnoratorArray();
 			var pm = '';
@@ -2905,12 +2948,32 @@ var messageList = {
 				}
 			});
 			if (document.readyState == 'loading') {
-				// wait for DOMContentLoaded to fire before calling messageList functions
+				// apply DOM modifications as elements are parsed by browser
+				console.log('page not loaded - using MutationObserver method');		
+				messageList.initObserver.observe(document.documentElement, {
+					childList: true,
+					subtree: true
+				});
 				document.addEventListener('DOMContentLoaded', function() {
-					messageList.callFunctions(pm);
+					console.log('DOMContentLoaded fired - disconnecting observer');
+					messageList.initObserver.disconnect();
+					if (config.new_page_notify) {
+						// set up observer to watch for attribute mutations to 'nextpage' element
+						messageList.newPage.observe(document.getElementById('nextpage'), {
+								attributes: true
+						});
+					}
+					// set up observer to watch for new livelinks posts
+					messageList.livelinks.observe(document.getElementById('u0_1'), {
+							subtree: true,
+							childList: true
+					});
+					messageList.passToFunctions('misc');
 				});
 			}
 			else {
+				// DOM already loaded - use old method
+				console.log('page loaded - using old method');
 				messageList.callFunctions(pm);
 			}
 		});
