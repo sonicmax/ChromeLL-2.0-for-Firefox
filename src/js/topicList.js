@@ -15,6 +15,8 @@ var topicList = {
 			keywords: {}
 		}
 	},
+	index: 1,
+	pm: '',
 	mainFunctions: {
 		ignorator_topiclist: function(tr, i) {
 			var ignores = topicList.ignore.users;
@@ -384,7 +386,7 @@ var topicList = {
 			data: ctags
 		});
 	},
-	callFunctions: function(pm) {
+	callFunctions: function(pm) {		
 		var trs = document.getElementsByClassName('grid')[0]
 				.getElementsByTagName('tr');
 		var tr;
@@ -415,7 +417,7 @@ var topicList = {
 		});		
 	},
 	addListeners: function() {
-		document.body.addEventListener('click', function(ev) {
+		document.addEventListener('click', function(ev) {
 			if (ev.target.id.match(/(jump)([Last|Window])/)) {
 				ev.preventDefault();
 				var url = topicList.jumpHandlerTopic(ev);
@@ -433,64 +435,105 @@ var topicList = {
 			}
 		});
 	},
-	init: function() {
-		// connect to background page
-		topicList.globalPort = chrome.runtime.connect();
-		// request config
-		chrome.runtime.sendMessage({
-			need: "config"
-		}, function(conf) {
-			topicList.config = conf.data;
-			// set up ignorator/highlighter arrays
-			topicList.prepareArrays();
-			if (topicList.config.dramalinks) {
-				dramalinks.config = topicList.config;
-				dramalinks.init();
-			}				
-			var pm = '';
-			if (window.location.href.match('inbox.php'))
-				pm = "_pm";
-			// add listener to handle showIgnorated request from popup menu
-			topicList.globalPort.onMessage.addListener(function(msg) {
-				if (msg.action !== 'ignorator_update') {
-					switch (msg.action) {
-						case "showIgnorated":
-							if (topicList.config.debug) {
-								console.log("showing hidden trs", msg.ids);
-							}
-							var tr = document.getElementsByTagName('tr');
-							for (var i; i = msg.ids.pop();) {
-								tr[i].style.display = '';
-								tr[i].style.opacity = '.7';
-							}
-							break;
-						default:
-							if (topicList.config.debug) {
-								console.log('invalid action', msg);
-							}
-							break;
-					}
-				}
-			});
-			if (document.readyState == 'loading') {
-				// wait for DOM to load before calling topicList functions
-				document.addEventListener('DOMContentLoaded', function() {
-					topicList.callFunctions(pm);					
-					if (topicList.config.page_jump_buttons 
-							|| topicList.config.page_jump_buttons_pm) {
-						topicList.addListeners();
-					}
-				});
-			} else {
-				// DOM is ready - call topicList functions
-				topicList.callFunctions(pm);					
-				if (topicList.config.page_jump_buttons 
-						|| topicList.config.page_jump_buttons_pm) {
-					topicList.addListeners();
+	handle: {
+		message: function(msg) {
+			if (msg.action !== 'ignorator_update') {
+				switch (msg.action) {
+					case "showIgnorated":
+						if (topicList.config.debug) {
+							console.log("showing hidden trs", msg.ids);
+						}
+						var tr = document.getElementsByTagName('tr');
+						for (var i; i = msg.ids.pop();) {
+							tr[i].style.display = '';
+							tr[i].style.opacity = '.7';
+						}
+						break;
+					default:
+						if (topicList.config.debug) {
+							console.log('invalid action', msg);
+						}
+						break;
 				}
 			}
-		});
+		},
+		loadEvent: function() {
+			console.log('DOMContentLoaded fired');
+			if (this.config['page_jump_buttons' + this.pm]) {
+				this.addListeners();
+			}
+			// send ignorator data to background script
+			this.globalPort.postMessage({
+				action: 'ignorator_update',
+				ignorator: this.ignorated,
+				scope: "topicList"
+			});			
+		}
+	},
+	passToFunctions: function(tr) {
+		var functions = topicList.mainFunctions;
+		var config = topicList.config;
+		var index = topicList.index;
+		for (var i in functions) {
+			if (config[i + this.pm]) {
+				// pass tr node & index to function
+				functions[i](tr, index);
+				topicList.index++;
+			}
+		}
+	},
+	initObserver: new MutationObserver(function(mutations) {
+		for (var i = 0, len = mutations.length; i < len; i++) {
+			var mutation = mutations[i];
+			if (mutation.addedNodes.length > 0) {
+				if (mutation.addedNodes[0].tagName == 'TR'
+						&& mutation.previousSibling) {
+					topicList.passToFunctions(mutation.addedNodes[0]);
+				}
+				else if (mutation.addedNodes[0].tagName
+						&& mutation.addedNodes[0].tagName.match('H1')
+						&& topicList.config.dramalinks) {
+					dramalinks.config = topicList.config;
+					dramalinks.init();
+				}
+				if (mutation.target.id == 'bookmarks' 
+						&& mutation.addedNodes[0].innerHTML == '[+]') {
+					topicList.checkTags();
+				}
+			}
+		}
+	}),
+	init: function(config) {
+		this.config = config.data;	
+		// connect to background page
+		this.globalPort = chrome.runtime.connect();
+		this.globalPort.onMessage.addListener(this.handle.message);
+		this.prepareArrays();
+		if (window.location.href.match('inbox.php')) {
+			this.pm = "_pm";
+		}			
+		if (document.readyState == 'loading') {
+			// apply DOM modifications as elements are parsed by browser
+			this.initObserver.observe(document.documentElement, {
+				childList: true,
+				subtree: true
+			});
+			document.addEventListener('DOMContentLoaded', 
+				this.handle.loadEvent.call(topicList)
+			);
+		}
+		else {
+			// DOM is ready - use old method
+			this.callFunctions(this.pm);			
+			if (this.config['page_jump_buttons' + this.pm]) {
+				this.addListeners();
+			}
+		}
 	}
 };
 
-topicList.init();
+chrome.runtime.sendMessage({
+	need: "config"
+}, function(config) {
+	topicList.init.call(topicList, config);
+});
