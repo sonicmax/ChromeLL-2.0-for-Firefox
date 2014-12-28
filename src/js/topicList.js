@@ -443,8 +443,8 @@ var topicList = {
 			topicList.config = conf.data;
 			// set up ignorator/highlighter arrays
 			topicList.prepareArrays();
-			if (messageList.config.dramalinks) {
-				dramalinks.config = messageList.config;
+			if (topicList.config.dramalinks) {
+				dramalinks.config = topicList.config;
 				dramalinks.init();
 			}				
 			var pm = '';
