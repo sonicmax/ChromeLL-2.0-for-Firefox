@@ -2,6 +2,7 @@ var messageList = {
 	ignores: {},
 	scrolling: false,
 	tops_total: 0,
+	containers_total: 0,
 	config: [],
 	ignorated: {
 		total_ignored: 0,
@@ -2869,8 +2870,7 @@ var messageList = {
 	passToFunctions: function(element) {
 		var config = this.config;
 		var elementName;
-		if (element.className) {
-			var index = document.getElementsByClassName(element.className).length - 1;			
+		if (element.className) {		
 			elementName = element.className.replace('-', '');
 		}
 		else {
@@ -2879,9 +2879,12 @@ var messageList = {
 		var functions = this.functions[elementName];
 		for (var i in functions) {
 			if (config[i + this.pm]) {
-				functions[i](element, index);
+				functions[i](element, this.containers_total);
 			}
 		}		
+		if (elementName == 'messagecontainer') {
+			this.containers_total++;
+		}
 	},
 	prepareIgnoratorArray: function() {
 		this.ignores = this.config.ignorator_list.split(',');
