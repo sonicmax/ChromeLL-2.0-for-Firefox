@@ -2785,9 +2785,8 @@ var messageList = {
 				else if (mutation.addedNodes[0].tagName
 						&& mutation.addedNodes[0].tagName.match('H2')
 						&& messageList.config.dramalinks
-						&& !this.pm) {			
-					dramalinks.config = messageList.config;				
-					dramalinks.init();	
+						&& !this.pm) {					
+					dramalinks.init(mutation.addedNodes[0]);	
 				}
 				else if (mutation.target.className == 'infobar'
 					&& mutation.addedNodes[0].textContent.match('There')) {
@@ -2885,9 +2884,10 @@ var messageList = {
 		}		
 	},
 	prepareIgnoratorArray: function() {
-		for (var r = 0, len = messageList.ignores.length; r < len; r++) {
-			var ignore = messageList.ignores[r].toLowerCase().trim();
-			messageList.ignores[r] = ignore;
+		this.ignores = this.config.ignorator_list.split(',');
+		for (var r = 0, len = this.ignores.length; r < len; r++) {
+			var ignore = this.ignores[r].toLowerCase().trim();
+			this.ignores[r] = ignore;
 		}	
 	},
 	handle: {
@@ -2960,6 +2960,9 @@ var messageList = {
 	},
 	init: function(config) {
 		this.config = config.data;
+		this.config.tcs = config.tcs;
+		this.prepareIgnoratorArray();
+		
 		if (!window.location.href.match('inboxthread.php')) {
 			if (this.config.dramalinks) {
 				chrome.runtime.sendMessage({
@@ -2967,6 +2970,7 @@ var messageList = {
 				}, function(response) {
 					if (response.data) {
 						dramalinks.html = response.data;
+						dramalinks.config = messageList.config;
 					}
 				});
 			}
@@ -2977,9 +2981,7 @@ var messageList = {
 		// set up globalPort so we can communicate with background script
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
-		this.config.tcs = config.tcs;
-		this.ignores = this.config.ignorator_list.split(',');			
-		this.prepareIgnoratorArray();	
+		
 		if (document.readyState == 'loading') {
 			// apply DOM modifications as elements are parsed by browser
 			this.initObserver.observe(document.documentElement, {

@@ -26,6 +26,7 @@ var topicList = {
 			var td = tr.getElementsByTagName('td')[1];
 			for (var f = 0, len = ignores.length; f < len; f++) {
 				if (!td || td.innerHTML.indexOf('<td>Human</td>') > -1) {
+					console.log(tr);
 					return;
 				}
 				else {
@@ -494,8 +495,7 @@ var topicList = {
 						&& mutation.addedNodes[0].tagName.match('H1')
 						&& topicList.config.dramalinks
 						&& !topicList.pm) {
-					dramalinks.config = topicList.config;
-					dramalinks.init();
+					dramalinks.init(mutation.addedNodes[0]);	
 				}
 				else if (mutation.target.id == 'bookmarks' 
 						&& mutation.addedNodes[0].innerHTML == '[+]') {
@@ -505,7 +505,9 @@ var topicList = {
 		}
 	}),
 	init: function(config) {
-		this.config = config.data;		
+		this.config = config.data;	
+		this.prepareArrays();
+		
 		if (!window.location.href.match('inbox.php')) {
 			if (this.config.dramalinks) {
 				chrome.runtime.sendMessage({
@@ -513,6 +515,7 @@ var topicList = {
 				}, function(response) {
 					if (response.data) {
 						dramalinks.html = response.data;
+						dramalinks.config = topicList.config;
 					}
 				});
 			}
@@ -523,7 +526,7 @@ var topicList = {
 		// connect to background page
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
-		this.prepareArrays();	
+
 		if (document.readyState == 'loading') {
 			// apply DOM modifications as elements are parsed by browser
 			this.initObserver.observe(document.documentElement, {
@@ -535,7 +538,7 @@ var topicList = {
 			);
 		}
 		else {
-			// DOM is ready - use old method
+			// DOM was already loaded (???) - use old method
 			this.callFunctions(this.pm);			
 			if (this.config['page_jump_buttons' + this.pm]) {
 				this.addListeners();

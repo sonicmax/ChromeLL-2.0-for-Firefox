@@ -1,24 +1,16 @@
 var dramalinks = {
 	html: '',
 	config: [],
-	append : function() {
-		var title;
+	append : function(element) {
 		var ticker = document.createElement("center");
 		ticker.id = "dramalinks_ticker";
 		ticker.innerHTML = dramalinks.html;
 		if (this.config.hide_dramalinks) {
 			ticker.style.display = "none";
 		}
-		// TODO - pass required element directly from messageList/topicList script
-		if (document.getElementsByTagName('h2')[0]) {
-			title = document.getElementsByTagName('h2')[0];
-		}
-		else {
-			title = document.getElementsByTagName('h1')[0];
-		}
-		title.parentNode.insertBefore(ticker, title.nextSibling);
+		element.parentNode.insertBefore(ticker, element.nextSibling);
 		if (this.config.hide_dramalinks) {
-			title.addEventListener('doubleclick', this.switchDrama);
+			element.addEventListener('doubleclick', this.switchDrama);
 		}
 		var retry = document.getElementById('retry');
 		if (retry) {
@@ -54,13 +46,13 @@ var dramalinks = {
 			}
 		});
 	},
-	init: function() {
+	init: function(element) {
 		if (this.config.hide_dramalinks_topiclist 
 				&& !window.location.href.match(/topics|history/i)) {
 			return;
 		}
 		else {
-			this.append();
+			dramalinks.append(element);
 		}
 	}
 };
