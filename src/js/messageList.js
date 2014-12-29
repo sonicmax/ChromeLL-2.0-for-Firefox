@@ -1926,7 +1926,7 @@ var messageList = {
 					else {
 						var href = img.parentNode.href;
 					}					
-					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {	
+					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {
 						// thumbnails are automatically converted to jpg - fullsize image could have 
 						// a different file format (found in href)
 						var extension = href.match(/\.(gif|jpg|jpeg|png)$/i)[0];
@@ -1978,7 +1978,7 @@ var messageList = {
 					callback.call(_this, dataURI, src, href, i);
 					canvas = null; 
 				};
-				img.src = 'http://cors-anywhere.herokuapp.com/' + src;
+				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
 			},
 			process: function(imagemap) {
 				// return grid of images from the imagemap html
@@ -2138,8 +2138,7 @@ var messageList = {
 			},
 			search: {
 				handler: function() {
-					// cache parent object as "this" refers to event
-					var _this = messageList.image.map.search;
+					var that = messageList.image.map.search;
 					var query = document.getElementById('image_search').value;					
 						if (/\S/.test(query)) {
 							_this.lookup(query, function(results, query) {
@@ -2616,80 +2615,18 @@ var messageList = {
 		ta.focus();
 	},
 	addListeners: function() {
+		var that = this;
 		var body = document.body;
 		var searchBox = document.getElementById('image_search');
 		var debounceTimer;
-		body.addEventListener('click', function(ev) {
-			if (ev.target.id == 'notebook') {
-				messageList.usernotes.open(ev.target);
-				ev.preventDefault();
-			}
-			if (ev.target.id == 'quick_image') {
-				messageList.image.map.handler(ev.target.id);
-				ev.preventDefault();
-			}
-			if (ev.target.id == 'like_button') {
-				messageList.like(ev.target);
-				ev.preventDefault();
-			}
-			if (messageList.config.post_templates) {
-				messageList.postTemplateAction(ev.target);
-			}
-			if (ev.target.title.indexOf("/index.php") === 0) {
-				// TODO - this should point to links.fix
-				messageList.links.fix(ev.target, "wiki");
-				ev.preventDefault();
-			}
-			else if (ev.target.title.indexOf("/imap/") === 0) {
-				// TODO - this should point to links.fix
-				messageList.links.fix(ev.target, "imagemap");					
-				ev.preventDefault();
-			}
-			else if (ev.target.className.match(/youtube|gfycat/)
-					&& ev.target.tagName == 'DIV') {
-				// prevent youtube divs from acting as anchor tags
-				ev.preventDefault();
-			}
-			else if (ev.target.className == 'bash' && ev.target.getAttribute('ignore') !== 'true') {
-				ev.target.className = 'bash_this';			
-				ev.target.style.fontWeight = 'bold';
-				ev.target.innerHTML = '&#9745;';
-				messageList.bash.checkSelection(ev.target);
-				messageList.bash.showPopup();	
-				ev.preventDefault();				
-			}
-			else if (ev.target.className == 'bash_this') {
-				ev.target.className = 'bash';
-				ev.target.style.fontWeight = 'initial';
-				ev.target.innerHTML = '&#9744;';
-				messageList.bash.checkSelection(ev.target);
-				ev.preventDefault();
-			}
-			else if (ev.target.parentNode) {
-				if (ev.target.parentNode.className == 'embed') {
-					messageList.youtube.embed(ev.target.parentNode);
-					ev.preventDefault();
-				}
-				else if (ev.target.parentNode.className == 'hide') {
-					messageList.youtube.hide(ev.target.parentNode);
-					ev.preventDefault();
-				}
-				else if (ev.target.parentNode.id == 'submitbash') {
-					messageList.bash.handler();
-					ev.preventDefault();
-				}
-				else if (ev.target.parentNode.className == 'embed_nws_gfy') {
-					var gfycatID = ev.target.parentNode.id.replace('_embed', '');
-					messageList.gfycat.embed(document.getElementById(gfycatID));
-					ev.preventDefault();
-				}
-			}
+		body.addEventListener('click', function(evt) {
+			that.handle.clickEvent.call(that, evt);
 		});
 		if (searchBox) {
 			searchBox.addEventListener('keyup', function() {
 				// use debouncing to prevent search from triggering on every key stroke
 				clearTimeout(debounceTimer);
-				debounceTimer = setTimeout(_this.image.map.search.handler, 500)
+				debounceTimer = setTimeout(that.image.map.search.handler, 500)
 			});
 		}
 	},
@@ -2895,6 +2832,7 @@ var messageList = {
 	},
 	handle: {
 		message: function(msg) {
+			// handles messages from background script
 			if (msg.action !== 'ignorator_update') {			
 				switch (msg.action) {
 					case "showIgnorated":				
@@ -2959,6 +2897,72 @@ var messageList = {
 				ignorator: this.ignorated,
 				scope: "messageList"
 			});
+		},
+		clickEvent: function(evt) {
+			if (evt.target.id == 'notebook') {
+				messageList.usernotes.open(evt.target);
+				evt.preventDefault();
+			}
+			if (evt.target.id == 'quick_image') {
+				messageList.image.map.handler(evt.target.id);
+				evt.preventDefault();
+			}
+			if (evt.target.id == 'like_button') {
+				messageList.like(evt.target);
+				evt.preventDefault();
+			}
+			if (messageList.config.post_templates) {
+				messageList.postTemplateAction(evt.target);
+			}
+			if (evt.target.title.indexOf("/index.php") === 0) {
+				// TODO - this should point to links.fix
+				messageList.links.fix(evt.target, "wiki");
+				evt.preventDefault();
+			}
+			else if (evt.target.title.indexOf("/imap/") === 0) {
+				// TODO - this should point to links.fix
+				messageList.links.fix(evt.target, "imagemap");					
+				evt.preventDefault();
+			}
+			else if (evt.target.className.match(/youtube|gfycat/)
+					&& evt.target.tagName == 'DIV') {
+				// prevent youtube divs from acting as anchor tags
+				evt.preventDefault();
+			}
+			else if (evt.target.className == 'bash' && evt.target.getAttribute('ignore') !== 'true') {
+				evt.target.className = 'bash_this';			
+				evt.target.style.fontWeight = 'bold';
+				evt.target.innerHTML = '&#9745;';
+				messageList.bash.checkSelection(evt.target);
+				messageList.bash.showPopup();	
+				evt.preventDefault();				
+			}
+			else if (evt.target.className == 'bash_this') {
+				evt.target.className = 'bash';
+				evt.target.style.fontWeight = 'initial';
+				evt.target.innerHTML = '&#9744;';
+				messageList.bash.checkSelection(evt.target);
+				evt.preventDefault();
+			}
+			else if (evt.target.parentNode) {
+				if (evt.target.parentNode.className == 'embed') {
+					messageList.youtube.embed(evt.target.parentNode);
+					evt.preventDefault();
+				}
+				else if (evt.target.parentNode.className == 'hide') {
+					messageList.youtube.hide(evt.target.parentNode);
+					evt.preventDefault();
+				}
+				else if (evt.target.parentNode.id == 'submitbash') {
+					messageList.bash.handler();
+					evt.preventDefault();
+				}
+				else if (evt.target.parentNode.className == 'embed_nws_gfy') {
+					var gfycatID = evt.target.parentNode.id.replace('_embed', '');
+					messageList.gfycat.embed(document.getElementById(gfycatID));
+					evt.preventDefault();
+				}
+			}
 		}
 	},
 	init: function(config) {
