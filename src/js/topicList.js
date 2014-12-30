@@ -1,3 +1,5 @@
+var t0 = performance.now();
+var t1 = 0;
 var topicList = {
 	ignore: {
 		users: [],
@@ -290,6 +292,9 @@ var topicList = {
 			}
 		}
 	},
+	functionArray: ["ignorator_topiclist","ignore_keyword", 
+			"page_jump_buttons","enable_keyword_highlight", 
+			"enable_tag_highlight","userhl_topiclist","zebra_tables"],
 	prepareArrays: function() {
 		if (this.config.ignorator_list) {
 			if (this.config.ignorator_list.indexOf(',') == -1) {
@@ -331,8 +336,8 @@ var topicList = {
 		}
 	},
 	checkTags: function() {
-		var atags = document.getElementById('bookmarks').getElementsByTagName(
-				'span');
+		var atags = document.getElementById('bookmarks')
+				.getElementsByTagName('span');
 		var ctags = {};
 		var tag, name;
 		for (var i = 0, len = atags.length; i < len; i++) {
@@ -362,12 +367,11 @@ var topicList = {
 		 tr = trs[j];
 			for (var i in functions) {
 				if (config[i + pm]) {
-					// pass tr node & index to function
 					functions[i](tr, j);
 				}
 			}
 		}
-		// scrape bookmarked tags from page
+		dramalinks.init();
 		try {
 			topicList.checkTags();
 		} catch (e) {
@@ -472,16 +476,22 @@ var topicList = {
 		}
 	},
 	passToFunctions: function(tr) {
+		var t1 = performance.now();
 		var functions = this.mainFunctions;
+		var functionArray = this.functionArray;
 		var config = this.config;
 		var index = this.index;
-		for (var i in functions) {
-			if (config[i + this.pm]) {
+		for (var i = 0; i < 7; i++) {
+			var functionName = functionArray[i];
+			if (config[functionName + this.pm]) {
 				// pass tr node & index to function
-				functions[i](tr, index);
+				functions[functionName](tr, this.index);
 				this.index++;
 			}
 		}
+		var t2 = performance.now();
+		t0 += (t2 - t1);
+		console.log('Current total: ' + (t1 - t0));
 	},
 	initObserver: new MutationObserver(function(mutations) {
 		for (var i = 0, len = mutations.length; i < len; i++) {
@@ -513,10 +523,8 @@ var topicList = {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
 				}, function(response) {
-					if (response.data) {
-						dramalinks.html = response.data;
-						dramalinks.config = topicList.config;
-					}
+					dramalinks.html = response.data;
+					dramalinks.config = topicList.config;
 				});
 			}
 		}
@@ -538,7 +546,8 @@ var topicList = {
 			);
 		}
 		else {
-			// DOM was already loaded (???) - use old method
+			// DOM was already loaded
+			// (user pressed back button to reach topic list)
 			this.callFunctions(this.pm);			
 			if (this.config['page_jump_buttons' + this.pm]) {
 				this.addListeners();
