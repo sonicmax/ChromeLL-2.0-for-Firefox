@@ -1857,27 +1857,17 @@ var messageList = {
 			}
 		},
 		map: {
-			cache: {},
-			handler: function() {
-				// handles initial click of "Browse Imagemap" button
-				var _this = this;				
-				var page = 1;
-				this.get(page, function(imagemap, page) {
-					var imageGrid = _this.process(imagemap);
-					var infobar = imagemap.getElementsByClassName('infobar')[1];
-					var anchors = infobar.getElementsByTagName('a');					
-					var lastPage = anchors[anchors.length - 1].innerHTML;
-					_this.createPopup(imageGrid, page, lastPage);
-					_this.save(imageGrid);
-				});
+			init: function() {	
+				this.getImagemap(this.processImagemap);
 			},
-			get: function(number, callback) {
+			getImagemap: function(callback) {
+				var that = this;
 				// handle page number for imagemap url
-				if (number === 1) {
+				if (this.currentPage === 1) {
 					var page = '';
 				}
-				else if (number > 1) {
-					var page = '?page=' + number;
+				else if (this.currentPage > 1) {
+					var page = '?page=' + this.currentPage;
 				}
 				var url = "http://images.endoftheinter.net/imagemap.php" + page;
 				if (window.location.protocol == 'https:') {
@@ -1890,97 +1880,20 @@ var messageList = {
 						// set innerHTML to xhr response so we can iterate over imagemap elements
 						var html = document.createElement('html');
 						html.innerHTML = xhr.responseText;						
-						callback(html, number);
+						callback.call(that, html);
 					}
 				}
 				xhr.send();
+			},			
+			processImagemap: function(imagemap) {
+				var imageGrid = this.scrape(imagemap);
+				var infobar = imagemap.getElementsByClassName('infobar')[1];
+				var anchors = infobar.getElementsByTagName('a');					
+				this.lastPage = anchors[anchors.length - 1].innerHTML;
+				this.createPopup.call(this, imageGrid);
+				this.save(imageGrid);
 			},
-			restore: function(callback) {
-				chrome.storage.local.get("imagemap", function(cache) {
-					if (chrome.runtime.lastError) {
-						// this shouldn't happen...
-						console.log(chrome.runtime.lastError);
-					}
-					if (!cache) {
-						var emptyCache = {};
-						callback(emptyCache);
-					}
-					else if (cache) {
-						callback(cache);
-					}
-				});
-			},
-			save: function(grid) {
-				var _this = this;	
-				var imgs = grid.getElementsByTagName('img');
-				for (var i = 0, len = imgs.length; i < len; i++) {
-					var img = imgs[i];
-					var src = img.src;
-					// make sure we dont get any unwanted imgs
-					if (img.src == 'http://static.endoftheinter.net/bhm.png') {
-						return;
-					}
-					if (img.parentNode.className == 'img-loaded') {
-						var href = img.parentNode.parentNode.href;
-					}
-					else {
-						var href = img.parentNode.href;
-					}					
-					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {
-						// thumbnails are automatically converted to jpg - fullsize image could have 
-						// a different file format (found in href)
-						var extension = href.match(/\.(gif|jpg|jpeg|png)$/i)[0];
-						var fullsize = src.replace('.jpg', extension);
-						fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
-						var filename = fullsize.match(/\/([^/]*)$/)[1];						
-						filename = decodeURIComponent(filename);
-						if (!filename || !fullsize || !dataURI) {
-							console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
-							return;
-						}
-						_this.cache[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
-						if (i === imgs.length - 1) {
-							// convertToBase64 has finished encoding - update cache with new images
-							_this.restore(function(old) {
-								if (!old.imagemap) {
-									// first time caching
-									var cache = _this.cache;
-								}
-								else {
-									// add cache of current page to existing imagemap cache
-									for (var i in _this.cache) {
-										old.imagemap[i] = _this.cache[i];							
-									}
-									var cache = old.imagemap;
-								}
-								chrome.storage.local.set({"imagemap": cache}, function() {
-									// empty cache variables - not needed any more
-									_this.cache = {};
-									cache = {};
-								});		
-							});
-						}
-					});
-				}
-			},		
-			convertToBase64: function(src, href, i, callback, output) {				
-				var _this = this.convertToBase64;
-				var canvas = document.createElement('CANVAS');
-				var context = canvas.getContext('2d');
-				var img = new Image;
-				img.crossOrigin = "Anonymous";
-				img.onload = function() {
-					var dataURI;
-					canvas.height = img.height;
-					canvas.width = img.width;
-					context.drawImage(img, 0, 0);
-					dataURI = canvas.toDataURL(output);
-					callback.call(_this, dataURI, src, href, i);
-					canvas = null; 
-				};
-				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
-			},
-			process: function(imagemap) {
+			scrape: function(imagemap) {
 				// return grid of images from the imagemap html
 				var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
 				this.restore(function(cached) {
@@ -2007,10 +1920,95 @@ var messageList = {
 					gridBlock.title = "Click here to copy image code to clipboard";
 				}
 				return imageGrid;
+			},			
+			restore: function(callback) {
+				chrome.storage.local.get("imagemap", function(cache) {
+					if (chrome.runtime.lastError) {
+						// this shouldn't happen...
+						console.log(chrome.runtime.lastError);
+					}
+					if (!cache) {
+						var emptyCache = {};
+						callback(emptyCache);
+					}
+					else if (cache) {
+						callback(cache);
+					}
+				});
 			},
-			createPopup: function(grid, page, lastPage, query) {
-				var searchResults;
-				var _this = this;
+			save: function(imageGrid) {
+				var that = this;	
+				var imgs = imageGrid.getElementsByTagName('img');
+				for (var i = 0, len = imgs.length; i < len; i++) {
+					var img = imgs[i];
+					var src = img.src;
+					
+					if (img.parentNode.className === 'img-loaded') {
+						var href = img.parentNode.parentNode.href;
+					}
+					else {
+						var href = img.parentNode.href;
+					}		
+					
+					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {
+						// thumbnails are always jpgs - fullsize image could have 
+						// a different file format (found in href)
+						var extension = href.match(/\.(gif|jpg|png)$/i)[0];
+						var fullsize = src.replace('.jpg', extension);
+						fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
+						var filename = fullsize.match(/\/([^/]*)$/)[1];						
+						filename = decodeURIComponent(filename);
+						
+						if (!filename || !fullsize || !dataURI) {
+							console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
+							return;
+						}
+						else {
+							that.cache[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
+							if (i === imgs.length - 1) {
+								// convertToBase64 has finished encoding - update cache with new images
+								that.restore(function(old) {
+									if (!old.imagemap) {
+										// first time caching
+										var cache = that.cache;
+									}
+									else {
+										// add cache of current page to existing imagemap cache
+										for (var i in that.cache) {
+											old.imagemap[i] = that.cache[i];							
+										}
+										var cache = old.imagemap;
+									}
+									chrome.storage.local.set({"imagemap": cache}, function() {
+										// empty cache variables - not needed any more
+										that.cache = {};
+										cache = {};
+									});		
+								});
+							}
+						}
+					});
+				}
+			},		
+			convertToBase64: function(src, href, i, callback) {				
+				var that = this.convertToBase64;
+				var canvas = document.createElement('CANVAS');
+				var context = canvas.getContext('2d');
+				var img = new Image;
+				img.crossOrigin = "Anonymous";
+				img.onload = function() {
+					var dataURI;
+					canvas.height = img.height;
+					canvas.width = img.width;
+					context.drawImage(img, 0, 0);
+					dataURI = canvas.toDataURL();
+					callback.call(that, dataURI, src, href, i);
+					canvas = null; 
+				};
+				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
+			},
+			createPopup: function(imageGrid, searchResults) {
+				var that = this;
 				var div = document.createElement('div');
 				var width = window.innerWidth;
 				var height = window.innerHeight;
@@ -2027,8 +2025,7 @@ var messageList = {
 				div.style.opacity = 1;
 				div.style.backgroundColor = 'white';
 				div.style.overFlow = 'scroll';
-				if (!page && !lastPage) {		
-					searchResults = true;
+				if (searchResults) {
 					var header = document.createElement('div');
 					var text = document.createTextNode('Displaying results for query "' + query + '" :');
 					header.appendChild(text);
@@ -2041,84 +2038,87 @@ var messageList = {
 					header.style.textAlign = 'left';
 					header.style.width = '100%';
 					header.style.fontSize = '16px';
-					div.appendChild(header);
-				}
-				if (searchResults) {
+					div.appendChild(header);				
 					// account for header's style properties
-					grid.style.maxHeight = ((height * 0.95) / 2) - 51 + 'px';
-					grid.style.maxWidth = (width * 0.95) - 21 + 'px';
+					imageGrid.style.maxHeight = ((height * 0.95) / 2) - 51 + 'px';
+					imageGrid.style.maxWidth = (width * 0.95) - 21 + 'px';
 				}
 				else {
-					// account for borderRadius in grid maxWidth/maxHeight
+					// account for borderRadius in imageGrid maxWidth/maxHeight
 					// so that scroll bar doesn't overlap rounded corners
-					grid.style.maxWidth = (width * 0.95) - 6 + 'px';
-					grid.style.maxHeight = ((height * 0.95) / 2)  - 6 + 'px';
+					imageGrid.style.maxWidth = (width * 0.95) - 6 + 'px';
+					imageGrid.style.maxHeight = ((height * 0.95) / 2)  - 6 + 'px';
 				}
-				grid.style.position = 'relative';
-				grid.style.top = '5px';
-				grid.style.overflow = 'scroll';
-				grid.style.overflowX = 'hidden';
+				imageGrid.style.position = 'relative';
+				imageGrid.style.top = '5px';
+				imageGrid.style.overflow = 'scroll';
+				imageGrid.style.overflowX = 'hidden';
 				bodyClass.style.opacity = 0.3;
 				if (searchResults) {
-					header.appendChild(grid);
+					header.appendChild(imageGrid);
 				}
 				else {
-					div.appendChild(grid);
+					div.appendChild(imageGrid);
 				}
 				document.body.appendChild(div);
 				document.body.style.overflow = 'hidden';
 				bodyClass.addEventListener('mousewheel', preventScroll);
-				bodyClass.addEventListener('click', _this.closePopup); 
-				div.addEventListener('click', function(ev) {
-					_this.clickHandler(ev);
-					ev.preventDefault();
+				bodyClass.addEventListener('click', this.closePopup);
+				div.addEventListener('click', function(evt) {
+					that.clickHandler(evt);
+					evt.preventDefault();
 				});
 				if (!searchResults) {
-					grid.addEventListener('scroll', function(ev) {
-						// check whether user is at end of page
-						// (minus 5 pixels from clientHeight to account for weird zoom levels)
-						if (grid.scrollTop >= grid.scrollHeight - grid.clientHeight - 5) {						
-							if (page === lastPage) {
-								// no more pages to load
-								return;
-							}
-							else {
-								// load next page and append to current grid
-								page++;
-								_this.get(page, function(imagemap) {
-									var imageGrid = _this.process(imagemap);
-									grid.appendChild(imageGrid);
-									_this.save(imageGrid, page);
-								});
-							}
-						}
+					imageGrid.addEventListener('scroll', function() {
+						that.scrollHandler.call(that, imageGrid);
 					});
+				}
+			},
+			scrollHandler: function(imageGrid) {
+				var that = this;
+				// check whether user is at end of page
+				// (minus 5 pixels from clientHeight to account for large zoom levels)
+				if (imageGrid.scrollTop >= imageGrid.scrollHeight - imageGrid.clientHeight - 5) {			
+					if (this.page === this.lastPage) {
+						// no more pages to load
+						return;
+					}
+					else {
+						// load next page and append to current grid
+						this.page++;
+						this.getImagemap(function(imagemap) {
+							var newGrid = that.scrape(imagemap);
+							imageGrid.appendChild(newGrid);
+							that.save(newGrid);
+						});
+					}
 				}
 			},
 			closePopup: function() {
 				var div = document.getElementById('map_div');
 				var bodyClass = document.getElementsByClassName('body')[0];
-				document.body.removeChild(div);
-				bodyClass.style.opacity = 1;
-				document.body.style.overflow = 'initial';
-				bodyClass.removeEventListener('mousewheel', preventScroll);
-				bodyClass.removeEventListener('click',  this.closePopup);
+				if (div) {
+					document.body.removeChild(div);
+					bodyClass.style.opacity = 1;
+					document.body.style.overflow = 'initial';
+					bodyClass.removeEventListener('mousewheel', preventScroll);
+				}
 			},
-			clickHandler: function(ev) {
+			clickHandler: function(evt) {
 				// get img code & copy to clipboard via background page
-				var _this = this;
+				var that = this;
 				var clipboard = {};				
-				if (ev.target.getAttribute('searchresult')) {
-					var src = ev.target.getAttribute('oldsrc'); 
+				if (evt.target.getAttribute('searchresult')) {
+					var src = evt.target.getAttribute('oldsrc'); 
 				}
 				else {
-					if (ev.target.getAttribute('oldsrc')) {
-						var src = ev.target.getAttribute('oldsrc'); 
+					if (evt.target.getAttribute('oldsrc')) {
+						var src = evt.target.getAttribute('oldsrc'); 
 					}
 					else {
-						var src = ev.target.src;
+						var src = evt.target.src;
 					}
-					var href = ev.target.parentNode.href;					
+					var href = evt.target.parentNode.href;					
 					var regex = /\.(gif|jpg|jpeg|png)$/i;
 					var extension = href.match(regex);
 					var extensionToReplace = src.match(regex);
@@ -2129,13 +2129,16 @@ var messageList = {
 				clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
 				chrome.runtime.sendMessage(clipboard, function(response) {
 					if (document.getElementById('search_results')) {
-						_this.search.closePopup();
+						that.search.closePopup.call(that);
 					}
 					else {
-						_this.closePopup();
+						that.closePopup.call(that);
 					}
 				});
 			},
+			cache: {},
+			currentPage: 1,
+			lastPage: '?',
 			search: {
 				handler: function() {
 					var that = messageList.image.map.search;
@@ -2692,6 +2695,7 @@ var messageList = {
 					&& mutation.addedNodes[0].childNodes.length > 0) {
 				if (mutation.addedNodes[0].childNodes[0].className == 'message-container') {
 					// send new message container to livelinks method
+					console.log(mutation.addedNodes[0]);
 					messageList.handle.newPost.call(messageList, mutation.addedNodes[0]);
 				}
 			}
@@ -2900,66 +2904,63 @@ var messageList = {
 		},
 		clickEvent: function(evt) {
 			if (evt.target.id == 'notebook') {
-				messageList.usernotes.open(evt.target);
+				this.usernotes.open(evt.target);
 				evt.preventDefault();
 			}
 			if (evt.target.id == 'quick_image') {
-				messageList.image.map.handler(evt.target.id);
+				this.image.map.init(evt.target.id);
 				evt.preventDefault();
 			}
 			if (evt.target.id == 'like_button') {
-				messageList.like(evt.target);
+				this.like(evt.target);
 				evt.preventDefault();
 			}
-			if (messageList.config.post_templates) {
-				messageList.postTemplateAction(evt.target);
+			if (this.config.post_templates) {
+				this.postTemplateAction(evt.target);
 			}
 			if (evt.target.title.indexOf("/index.php") === 0) {
-				// TODO - this should point to links.fix
-				messageList.links.fix(evt.target, "wiki");
+				this.links.fix(evt.target, "wiki");
 				evt.preventDefault();
 			}
 			else if (evt.target.title.indexOf("/imap/") === 0) {
-				// TODO - this should point to links.fix
-				messageList.links.fix(evt.target, "imagemap");					
+				this.links.fix(evt.target, "imagemap");					
 				evt.preventDefault();
 			}
 			else if (evt.target.className.match(/youtube|gfycat/)
 					&& evt.target.tagName == 'DIV') {
-				// prevent youtube divs from acting as anchor tags
 				evt.preventDefault();
 			}
 			else if (evt.target.className == 'bash' && evt.target.getAttribute('ignore') !== 'true') {
 				evt.target.className = 'bash_this';			
 				evt.target.style.fontWeight = 'bold';
 				evt.target.innerHTML = '&#9745;';
-				messageList.bash.checkSelection(evt.target);
-				messageList.bash.showPopup();	
+				this.bash.checkSelection(evt.target);
+				this.bash.showPopup();	
 				evt.preventDefault();				
 			}
 			else if (evt.target.className == 'bash_this') {
 				evt.target.className = 'bash';
 				evt.target.style.fontWeight = 'initial';
 				evt.target.innerHTML = '&#9744;';
-				messageList.bash.checkSelection(evt.target);
+				this.bash.checkSelection(evt.target);
 				evt.preventDefault();
 			}
 			else if (evt.target.parentNode) {
 				if (evt.target.parentNode.className == 'embed') {
-					messageList.youtube.embed(evt.target.parentNode);
+					this.youtube.embed(evt.target.parentNode);
 					evt.preventDefault();
 				}
 				else if (evt.target.parentNode.className == 'hide') {
-					messageList.youtube.hide(evt.target.parentNode);
+					this.youtube.hide(evt.target.parentNode);
 					evt.preventDefault();
 				}
 				else if (evt.target.parentNode.id == 'submitbash') {
-					messageList.bash.handler();
+					this.bash.handler();
 					evt.preventDefault();
 				}
 				else if (evt.target.parentNode.className == 'embed_nws_gfy') {
 					var gfycatID = evt.target.parentNode.id.replace('_embed', '');
-					messageList.gfycat.embed(document.getElementById(gfycatID));
+					this.gfycat.embed(document.getElementById(gfycatID));
 					evt.preventDefault();
 				}
 			}
@@ -2975,10 +2976,8 @@ var messageList = {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
 				}, function(response) {
-					if (response.data) {
-						dramalinks.html = response.data;
-						dramalinks.config = messageList.config;
-					}
+					dramalinks.html = response.data;
+					dramalinks.config = messageList.config;
 				});
 			}
 		}
