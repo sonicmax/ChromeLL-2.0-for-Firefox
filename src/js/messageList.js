@@ -2004,13 +2004,10 @@ var messageList = {
 			},
 			getImagemap: function(callback) {
 				var that = this;
-				// handle page number for imagemap url
-				if (this.currentPage === 1) {
-					var page = '';
-				}
-				else if (this.currentPage > 1) {
-					var page = '?page=' + this.currentPage;
-				}
+				var page;
+				(this.currentPage === 1) 
+						? page = '' 
+						: page = '?page=' + this.currentPage;						
 				var url = "http://images.endoftheinter.net/imagemap.php" + page;
 				if (window.location.protocol == 'https:') {
 					url = url.replace('http', 'https');
