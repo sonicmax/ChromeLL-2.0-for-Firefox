@@ -885,6 +885,147 @@ var messageList = {
 			}
 		}
 	},
+	handlers: {
+		message: function(msg) {
+			// handles messages from background script
+			if (msg.action !== 'ignorator_update') {			
+				switch (msg.action) {
+					case "showIgnorated":				
+						if (messageList.config.debug) {
+							console.log("showing hidden msg", msg.ids);
+						}
+						var tops = document.getElementsByClassName('message-top');
+						for (var i = 0; i < msg.ids.length; i++) {
+							if (messageList.config.debug) {
+								console.log(tops[msg.ids[i]]);
+							}
+							tops[msg.ids[i]].parentNode.style.display = 'block';
+							tops[msg.ids[i]].parentNode.style.opacity = '.7';
+						}
+						break;
+					default:
+						if (messageList.config.debug)
+							console.log('invalid action', msg);
+						break;
+				}
+			}
+		},
+		loadEvent: function() {
+			this.initObserver.disconnect();
+			this.passToFunctions('misc');					
+			this.addListeners();
+			this.appendScripts();
+			this.livelinks.observe(document.getElementById('u0_1'), {
+					subtree: true,
+					childList: true
+			});
+			this.globalPort.postMessage({
+				action: 'ignorator_update',
+				ignorator: this.ignorated,
+				scope: "messageList"
+			});	
+			if (this.config.new_page_notify) {
+				// set up observer to watch for attribute mutations to 'nextpage' element
+				this.newPage.observe(document.getElementById('nextpage'), {
+						attributes: true
+				});
+			}
+		},
+		newPost: function(container) {
+			var index = document.getElementsByClassName('message-container').length - 1;
+			var functions = this.functions.messagecontainer;
+			var config = this.config;
+			var live = true;
+			var pm = '';
+			if (window.location.href.match('inboxthread')) {
+				pm = "_pm";
+			}
+			for (var i in functions) {
+				if (config[i + pm]) {
+						functions[i](container, index, live);
+				}
+			}
+			this.links.check(container);
+			// send updated ignorator data to background script
+			this.globalPort.postMessage({
+				action: 'ignorator_update',
+				ignorator: this.ignorated,
+				scope: "messageList"
+			});
+		},
+		clickEvent: function(evt) {
+			if (evt.target.id == 'notebook') {
+				this.usernotes.open(evt.target);
+				evt.preventDefault();
+			}
+			if (evt.target.id == 'quick_image') {
+				this.image.map.init(evt.target.id);
+				evt.preventDefault();
+			}
+			if (evt.target.id == 'like_button') {
+				this.like(evt.target);
+				evt.preventDefault();
+			}
+			if (this.config.post_templates) {
+				this.postTemplateAction(evt.target);
+			}
+			if (evt.target.title.indexOf("/index.php") === 0) {
+				this.links.fix(evt.target, "wiki");
+				evt.preventDefault();
+			}
+			else if (evt.target.title.indexOf("/imap/") === 0) {
+				this.links.fix(evt.target, "imagemap");					
+				evt.preventDefault();
+			}
+			else if (evt.target.className.match(/youtube|gfycat/)
+					&& evt.target.tagName == 'DIV') {
+				evt.preventDefault();
+			}
+			else if (evt.target.className == 'bash' && evt.target.getAttribute('ignore') !== 'true') {
+				evt.target.className = 'bash_this';			
+				evt.target.style.fontWeight = 'bold';
+				evt.target.innerHTML = '&#9745;';
+				this.bash.checkSelection(evt.target);
+				this.bash.showPopup();	
+				evt.preventDefault();				
+			}
+			else if (evt.target.className == 'bash_this') {
+				evt.target.className = 'bash';
+				evt.target.style.fontWeight = 'initial';
+				evt.target.innerHTML = '&#9744;';
+				this.bash.checkSelection(evt.target);
+				evt.preventDefault();
+			}
+			else if (evt.target.parentNode) {
+				if (evt.target.parentNode.className == 'embed') {
+					this.youtube.embed(evt.target.parentNode);
+					evt.preventDefault();
+				}
+				else if (evt.target.parentNode.className == 'hide') {
+					this.youtube.hide(evt.target.parentNode);
+					evt.preventDefault();
+				}
+				else if (evt.target.parentNode.id == 'submitbash') {
+					this.bash.handler();
+					evt.preventDefault();
+				}
+				else if (evt.target.parentNode.className == 'embed_nws_gfy') {
+					var gfycatID = evt.target.parentNode.id.replace('_embed', '');
+					this.gfycat.embed(document.getElementById(gfycatID));
+					evt.preventDefault();
+				}
+			}
+		},
+		searchEvent: function() {
+			var that = this;
+			// use debouncing to prevent search from triggering on every key stroke
+			clearTimeout(this.debounceTimer);
+			this.debounceTimer = setTimeout(function() {				
+				that.image.map.search.init
+						.call(that.image.map.search);
+			}, 500);
+		}
+	},	
 	gfycat: {
 		loader: function() {
 			var gfycats = document.getElementsByClassName('gfycat');
@@ -2032,6 +2173,7 @@ var messageList = {
 			prepareForCache: function(dataObject, imgs) {
 				// thumbnails are always jpgs - fullsize image could have 
 				// a different file format (found in href)
+				var that = this;
 				var dataURI = dataObject.dataURI;
 				var href = dataObject.href;
 				var src = dataObject.src;
@@ -2051,27 +2193,30 @@ var messageList = {
 					if (i === imgs.length - 1) {
 						// convertToBase64 has finished encoding - update cache with new images
 						this.restore(function(old) {
-							if (!old.imagemap) {
-								// first time caching
-								var cache = this.cacheData;
-							}
-							else {
-								// add cache of current page to existing imagemap cache
-								for (var i in this.cache) {
-									old.imagemap[i] = this.cacheData[i];							
-								}
-								var cache = old.imagemap;
-							}
-							var that = this;
-							chrome.storage.local.set({"imagemap": cache}, function() {
-								// empty cache variables - not needed any more
-								that.cacheData = {};
-								cache = {};
-							});		
+							that.saveHandler.call(that, old);
 						});
 					}
 				}
-			},			
+			},
+			saveHandler: function(old) {
+				if (!old.imagemap) {
+					// first time caching
+					var cache = this.cacheData;
+				}
+				else {
+					// add cache of current page to existing imagemap cache
+					for (var i in this.cache) {
+						old.imagemap[i] = this.cacheData[i];							
+					}
+					var cache = old.imagemap;
+				}
+				var that = this;
+				chrome.storage.local.set({"imagemap": cache}, function() {
+					// empty cache variables - not needed any more
+					that.cacheData = {};
+					cache = {};
+				});		
+			},
 			restore: function(callback) {
 				chrome.storage.local.get("imagemap", function(cache) {
 					if (chrome.runtime.lastError) {
@@ -2191,14 +2336,12 @@ var messageList = {
 				},
 				prepare: function(results, query) {
 					var that = this;
-					var query = query;
 					var resultsToShow = results;
 					if (results.length === 0) {
 						this.display(false, query);
 					}
 					else {
 						messageList.image.map.restore(function(cached) {
-							console.log('messageList.image.map.restore(function(cached):', this);
 							var cache = cached.imagemap;
 							var data = {};
 							for (var i = 0, len = results.length; i < len; i++) {
@@ -2643,13 +2786,13 @@ var messageList = {
 		var body = document.body;
 		
 		body.addEventListener('click', function(evt) {
-				that.handle.clickEvent.call(that, evt);
+				that.handlers.clickEvent.call(that, evt);
 		});
 				
 		var searchBox = document.getElementById('image_search');			
 		if (searchBox) {
 			searchBox.addEventListener('keyup', function() {
-					that.handle.searchEvent.call(that);
+					that.handlers.searchEvent.call(that);
 			});
 		}
 	},
@@ -2716,7 +2859,7 @@ var messageList = {
 				if (mutation.addedNodes[0].childNodes[0].className == 'message-container') {
 					// send new message container to livelinks method
 					console.log(mutation.addedNodes[0]);
-					messageList.handle.newPost.call(messageList, mutation.addedNodes[0]);
+					messageList.handlers.newPost.call(messageList, mutation.addedNodes[0]);
 				}
 			}
 		}
@@ -2854,147 +2997,6 @@ var messageList = {
 			this.ignores[r] = ignore;
 		}	
 	},
-	handle: {
-		message: function(msg) {
-			// handles messages from background script
-			if (msg.action !== 'ignorator_update') {			
-				switch (msg.action) {
-					case "showIgnorated":				
-						if (messageList.config.debug) {
-							console.log("showing hidden msg", msg.ids);
-						}
-						var tops = document.getElementsByClassName('message-top');
-						for (var i = 0; i < msg.ids.length; i++) {
-							if (messageList.config.debug) {
-								console.log(tops[msg.ids[i]]);
-							}
-							tops[msg.ids[i]].parentNode.style.display = 'block';
-							tops[msg.ids[i]].parentNode.style.opacity = '.7';
-						}
-						break;
-					default:
-						if (messageList.config.debug)
-							console.log('invalid action', msg);
-						break;
-				}
-			}
-		},
-		loadEvent: function() {
-			this.initObserver.disconnect();
-			this.passToFunctions('misc');					
-			this.addListeners();
-			this.appendScripts();
-			this.livelinks.observe(document.getElementById('u0_1'), {
-					subtree: true,
-					childList: true
-			});
-			this.globalPort.postMessage({
-				action: 'ignorator_update',
-				ignorator: this.ignorated,
-				scope: "messageList"
-			});	
-			if (this.config.new_page_notify) {
-				// set up observer to watch for attribute mutations to 'nextpage' element
-				this.newPage.observe(document.getElementById('nextpage'), {
-						attributes: true
-				});
-			}
-		},
-		newPost: function(container) {
-			var index = document.getElementsByClassName('message-container').length - 1;
-			var functions = this.functions.messagecontainer;
-			var config = this.config;
-			var live = true;
-			var pm = '';
-			if (window.location.href.match('inboxthread')) {
-				pm = "_pm";
-			}
-			for (var i in functions) {
-				if (config[i + pm]) {
-						functions[i](container, index, live);
-				}
-			}
-			this.links.check(container);
-			// send updated ignorator data to background script
-			this.globalPort.postMessage({
-				action: 'ignorator_update',
-				ignorator: this.ignorated,
-				scope: "messageList"
-			});
-		},
-		clickEvent: function(evt) {
-			if (evt.target.id == 'notebook') {
-				this.usernotes.open(evt.target);
-				evt.preventDefault();
-			}
-			if (evt.target.id == 'quick_image') {
-				this.image.map.init(evt.target.id);
-				evt.preventDefault();
-			}
-			if (evt.target.id == 'like_button') {
-				this.like(evt.target);
-				evt.preventDefault();
-			}
-			if (this.config.post_templates) {
-				this.postTemplateAction(evt.target);
-			}
-			if (evt.target.title.indexOf("/index.php") === 0) {
-				this.links.fix(evt.target, "wiki");
-				evt.preventDefault();
-			}
-			else if (evt.target.title.indexOf("/imap/") === 0) {
-				this.links.fix(evt.target, "imagemap");					
-				evt.preventDefault();
-			}
-			else if (evt.target.className.match(/youtube|gfycat/)
-					&& evt.target.tagName == 'DIV') {
-				evt.preventDefault();
-			}
-			else if (evt.target.className == 'bash' && evt.target.getAttribute('ignore') !== 'true') {
-				evt.target.className = 'bash_this';			
-				evt.target.style.fontWeight = 'bold';
-				evt.target.innerHTML = '&#9745;';
-				this.bash.checkSelection(evt.target);
-				this.bash.showPopup();	
-				evt.preventDefault();				
-			}
-			else if (evt.target.className == 'bash_this') {
-				evt.target.className = 'bash';
-				evt.target.style.fontWeight = 'initial';
-				evt.target.innerHTML = '&#9744;';
-				this.bash.checkSelection(evt.target);
-				evt.preventDefault();
-			}
-			else if (evt.target.parentNode) {
-				if (evt.target.parentNode.className == 'embed') {
-					this.youtube.embed(evt.target.parentNode);
-					evt.preventDefault();
-				}
-				else if (evt.target.parentNode.className == 'hide') {
-					this.youtube.hide(evt.target.parentNode);
-					evt.preventDefault();
-				}
-				else if (evt.target.parentNode.id == 'submitbash') {
-					this.bash.handler();
-					evt.preventDefault();
-				}
-				else if (evt.target.parentNode.className == 'embed_nws_gfy') {
-					var gfycatID = evt.target.parentNode.id.replace('_embed', '');
-					this.gfycat.embed(document.getElementById(gfycatID));
-					evt.preventDefault();
-				}
-			}
-		},
-		searchEvent: function() {
-			var that = this;
-			// use debouncing to prevent search from triggering on every key stroke
-			clearTimeout(this.debounceTimer);
-			this.debounceTimer = setTimeout(function() {				
-				that.image.map.search.init
-						.call(that.image.map.search);
-			}, 500);
-		}
-	},
 	init: function(config) {
 		this.config = config.data;
 		this.config.tcs = config.tcs;
@@ -3015,7 +3017,7 @@ var messageList = {
 		}
 		// set up globalPort so we can communicate with background script
 		this.globalPort = chrome.runtime.connect();
-		this.globalPort.onMessage.addListener(this.handle.message);
+		this.globalPort.onMessage.addListener(this.handlers.message);
 		
 		if (document.readyState == 'loading') {
 			// apply DOM modifications as elements are parsed by browser
@@ -3024,7 +3026,7 @@ var messageList = {
 					subtree: true
 			});
 			document.addEventListener('DOMContentLoaded', function() {
-				messageList.handle.loadEvent.call(messageList);
+				messageList.handlers.loadEvent.call(messageList);
 			});
 		}
 		else {
