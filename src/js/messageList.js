@@ -4,6 +4,7 @@ var messageList = {
 	tops_total: 0,
 	containers_total: 0,
 	config: [],
+	debounceTimer: '',
 	ignorated: {
 		total_ignored: 0,
 		data: {
@@ -2091,13 +2092,13 @@ var messageList = {
 				// check whether user is at end of page
 				// (minus 5 pixels from clientHeight to account for large zoom levels)
 				if (imageGrid.scrollTop >= imageGrid.scrollHeight - imageGrid.clientHeight - 5) {			
-					if (this.page === this.lastPage) {
+					if (this.currentPage === this.lastPage) {
 						// no more pages to load
 						return;
 					}
 					else {
 						// load next page and append to current grid
-						this.page++;
+						this.currentPage++;
 						this.getImagemap(function(imagemap) {
 							var newGrid = that.scrape(imagemap);
 							imageGrid.appendChild(newGrid);
@@ -2152,25 +2153,23 @@ var messageList = {
 			currentPage: 1,
 			lastPage: '?',
 			search: {
-				handler: function() {
-					var that = messageList.image.map.search;
+				init: function() {
+					var that = this;
 					var query = document.getElementById('image_search').value;					
-						if (/\S/.test(query)) {
-							_this.lookup(query, function(results, query) {
-								if (!document.getElementById('search_results')) {
-									_this.createPopup(query);
-								}
-								_this.prepare(results, query);
-							});
+					if (/\S/.test(query)) {
+						var that = this;
+						this.lookup(query, function(results, query) {
+							that.checkExisting
+									.call(that, results, query);
+						});
+					}
+					else {
+						if (document.getElementById('search_results')) {
+							that.closePopup();
 						}
-						else {
-							if (document.getElementById('search_results')) {
-								_this.closePopup();
-							}
-						}
-				},				
+					}
+				},
 				lookup: function(query, callback) {
-					var _this = this;
 					var word = query;
 					var results = [];
 					messageList.image.map.restore(function(cached) {
@@ -2183,23 +2182,30 @@ var messageList = {
 						}
 						callback(results, query);
 					});				
+				},				
+				checkExisting: function (results, query) {
+					if (!document.getElementById('search_results')) {
+						this.createPopup(query);
+					}
+					this.prepare(results, query);
 				},
 				prepare: function(results, query) {
-					var _this = this;
+					var that = this;
 					var query = query;
 					var resultsToShow = results;
 					if (results.length === 0) {
-						_this.display(false, query);
+						this.display(false, query);
 					}
 					else {
 						messageList.image.map.restore(function(cached) {
+							console.log('messageList.image.map.restore(function(cached):', this);
 							var cache = cached.imagemap;
 							var data = {};
 							for (var i = 0, len = results.length; i < len; i++) {
 								var result = results[i];
 								data[result] = cache[result];
 							}
-							_this.display(data, query);
+							that.display(data, query);
 						});
 					}
 				},
@@ -2258,6 +2264,7 @@ var messageList = {
 					document.body.appendChild(div);
 					document.body.style.overflow = 'hidden';
 					bodyClass.addEventListener('mousewheel', preventScroll);
+					bodyClass.addEventListener('click', this.closePopup);
 					div.addEventListener('click', function(ev) {
 						messageList.image.map.clickHandler(ev);
 						ev.preventDefault();
@@ -2311,10 +2318,12 @@ var messageList = {
 				},
 				closePopup: function() {
 					var div = document.getElementById('search_results');
-					var bodyClass = document.getElementsByClassName('body')[0];
-					document.body.removeChild(div);
-					document.body.style.overflow = 'initial';
-					bodyClass.removeEventListener('mousewheel', preventScroll);
+					if (div) {
+						var bodyClass = document.getElementsByClassName('body')[0];						
+						document.body.removeChild(div);
+						document.body.style.overflow = 'initial';
+						bodyClass.removeEventListener('mousewheel', preventScroll);
+					}
 				}
 			}
 		}
@@ -2632,16 +2641,15 @@ var messageList = {
 	addListeners: function() {
 		var that = this;
 		var body = document.body;
-		var searchBox = document.getElementById('image_search');
-		var debounceTimer;
+		
 		body.addEventListener('click', function(evt) {
-			that.handle.clickEvent.call(that, evt);
+				that.handle.clickEvent.call(that, evt);
 		});
+				
+		var searchBox = document.getElementById('image_search');			
 		if (searchBox) {
 			searchBox.addEventListener('keyup', function() {
-				// use debouncing to prevent search from triggering on every key stroke
-				clearTimeout(debounceTimer);
-				debounceTimer = setTimeout(that.image.map.search.handler, 500)
+					that.handle.searchEvent.call(that);
 			});
 		}
 	},
@@ -2976,6 +2984,15 @@ var messageList = {
 					evt.preventDefault();
 				}
 			}
+		},
+		searchEvent: function() {
+			var that = this;
+			// use debouncing to prevent search from triggering on every key stroke
+			clearTimeout(this.debounceTimer);
+			this.debounceTimer = setTimeout(function() {				
+				that.image.map.search.init
+						.call(that.image.map.search);
+			}, 500);
 		}
 	},
 	init: function(config) {
