@@ -1891,7 +1891,7 @@ var messageList = {
 				var anchors = infobar.getElementsByTagName('a');					
 				this.lastPage = anchors[anchors.length - 1].innerHTML;
 				this.createPopup.call(this, imageGrid);
-				this.save(imageGrid);
+				this.getDataForCache(imageGrid);
 			},
 			scrape: function(imagemap) {
 				// return grid of images from the imagemap html
@@ -1936,7 +1936,7 @@ var messageList = {
 					}
 				});
 			},
-			save: function(imageGrid) {
+			getDataForCache: function(imageGrid) {
 				var that = this;	
 				var imgs = imageGrid.getElementsByTagName('img');
 				for (var i = 0, len = imgs.length; i < len; i++) {
@@ -1948,50 +1948,12 @@ var messageList = {
 					}
 					else {
 						var href = img.parentNode.href;
-					}		
-					
-					this.convertToBase64(src, href, i, function(dataURI, src, href, i) {
-						// thumbnails are always jpgs - fullsize image could have 
-						// a different file format (found in href)
-						var extension = href.match(/\.(gif|jpg|png)$/i)[0];
-						var fullsize = src.replace('.jpg', extension);
-						fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
-						var filename = fullsize.match(/\/([^/]*)$/)[1];						
-						filename = decodeURIComponent(filename);
-						
-						if (!filename || !fullsize || !dataURI) {
-							console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
-							return;
-						}
-						else {
-							that.cache[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
-							if (i === imgs.length - 1) {
-								// convertToBase64 has finished encoding - update cache with new images
-								that.restore(function(old) {
-									if (!old.imagemap) {
-										// first time caching
-										var cache = that.cache;
-									}
-									else {
-										// add cache of current page to existing imagemap cache
-										for (var i in that.cache) {
-											old.imagemap[i] = that.cache[i];							
-										}
-										var cache = old.imagemap;
-									}
-									chrome.storage.local.set({"imagemap": cache}, function() {
-										// empty cache variables - not needed any more
-										that.cache = {};
-										cache = {};
-									});		
-								});
-							}
-						}
-					});
+					}	
+					this.convertToBase64(src, href, i, imgs);
 				}
-			},		
-			convertToBase64: function(src, href, i, callback) {				
-				var that = this.convertToBase64;
+			},
+			convertToBase64: function(src, href, i, imgs) {
+				var that = this;
 				var canvas = document.createElement('CANVAS');
 				var context = canvas.getContext('2d');
 				var img = new Image;
@@ -2002,10 +1964,60 @@ var messageList = {
 					canvas.width = img.width;
 					context.drawImage(img, 0, 0);
 					dataURI = canvas.toDataURL();
-					callback.call(that, dataURI, src, href, i);
-					canvas = null; 
+					dataObject = 
+					{
+							'dataURI': dataURI, 
+							'src': src, 
+							'href': href, 
+							'i': i
+					};
+					that.prepareForCache.call(that, dataObject, imgs);
+					canvas = null;
 				};
 				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
+			},
+			prepareForCache: function(dataObject, imgs) {
+				// thumbnails are always jpgs - fullsize image could have 
+				// a different file format (found in href)
+				var dataURI = dataObject.dataURI;
+				var href = dataObject.href;
+				var src = dataObject.src;
+				var i = dataObject.i;
+				var extension = href.match(/\.(gif|jpg|png)$/i)[0];
+				var fullsize = src.replace('.jpg', extension);
+				fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
+				var filename = fullsize.match(/\/([^/]*)$/)[1];						
+				filename = decodeURIComponent(filename);
+				
+				if (!filename || !fullsize || !dataURI) {
+					console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
+					return;
+				}
+				else {
+					this.cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
+					if (i === imgs.length - 1) {
+						// convertToBase64 has finished encoding - update cache with new images
+						this.restore(function(old) {
+							if (!old.imagemap) {
+								// first time caching
+								var cache = this.cacheData;
+							}
+							else {
+								// add cache of current page to existing imagemap cache
+								for (var i in this.cache) {
+									old.imagemap[i] = this.cacheData[i];							
+								}
+								var cache = old.imagemap;
+							}
+							var that = this;
+							chrome.storage.local.set({"imagemap": cache}, function() {
+								// empty cache variables - not needed any more
+								that.cacheData = {};
+								cache = {};
+							});		
+						});
+					}
+				}
 			},
 			createPopup: function(imageGrid, searchResults) {
 				var that = this;
@@ -2089,7 +2101,7 @@ var messageList = {
 						this.getImagemap(function(imagemap) {
 							var newGrid = that.scrape(imagemap);
 							imageGrid.appendChild(newGrid);
-							that.save(newGrid);
+							that.getDataForCache(newGrid);
 						});
 					}
 				}
@@ -2136,7 +2148,7 @@ var messageList = {
 					}
 				});
 			},
-			cache: {},
+			cacheData: {},
 			currentPage: 1,
 			lastPage: '?',
 			search: {
