@@ -1921,104 +1921,6 @@ var messageList = {
 				}
 				return imageGrid;
 			},			
-			restore: function(callback) {
-				chrome.storage.local.get("imagemap", function(cache) {
-					if (chrome.runtime.lastError) {
-						// this shouldn't happen...
-						console.log(chrome.runtime.lastError);
-					}
-					if (!cache) {
-						var emptyCache = {};
-						callback(emptyCache);
-					}
-					else if (cache) {
-						callback(cache);
-					}
-				});
-			},
-			getDataForCache: function(imageGrid) {
-				var that = this;	
-				var imgs = imageGrid.getElementsByTagName('img');
-				for (var i = 0, len = imgs.length; i < len; i++) {
-					var img = imgs[i];
-					var src = img.src;
-					
-					if (img.parentNode.className === 'img-loaded') {
-						var href = img.parentNode.parentNode.href;
-					}
-					else {
-						var href = img.parentNode.href;
-					}	
-					this.convertToBase64(src, href, i, imgs);
-				}
-			},
-			convertToBase64: function(src, href, i, imgs) {
-				var that = this;
-				var canvas = document.createElement('CANVAS');
-				var context = canvas.getContext('2d');
-				var img = new Image;
-				img.crossOrigin = "Anonymous";
-				img.onload = function() {
-					var dataURI;
-					canvas.height = img.height;
-					canvas.width = img.width;
-					context.drawImage(img, 0, 0);
-					dataURI = canvas.toDataURL();
-					dataObject = 
-					{
-							'dataURI': dataURI, 
-							'src': src, 
-							'href': href, 
-							'i': i
-					};
-					that.prepareForCache.call(that, dataObject, imgs);
-					canvas = null;
-				};
-				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
-			},
-			prepareForCache: function(dataObject, imgs) {
-				// thumbnails are always jpgs - fullsize image could have 
-				// a different file format (found in href)
-				var dataURI = dataObject.dataURI;
-				var href = dataObject.href;
-				var src = dataObject.src;
-				var i = dataObject.i;
-				var extension = href.match(/\.(gif|jpg|png)$/i)[0];
-				var fullsize = src.replace('.jpg', extension);
-				fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
-				var filename = fullsize.match(/\/([^/]*)$/)[1];						
-				filename = decodeURIComponent(filename);
-				
-				if (!filename || !fullsize || !dataURI) {
-					console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
-					return;
-				}
-				else {
-					this.cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
-					if (i === imgs.length - 1) {
-						// convertToBase64 has finished encoding - update cache with new images
-						this.restore(function(old) {
-							if (!old.imagemap) {
-								// first time caching
-								var cache = this.cacheData;
-							}
-							else {
-								// add cache of current page to existing imagemap cache
-								for (var i in this.cache) {
-									old.imagemap[i] = this.cacheData[i];							
-								}
-								var cache = old.imagemap;
-							}
-							var that = this;
-							chrome.storage.local.set({"imagemap": cache}, function() {
-								// empty cache variables - not needed any more
-								that.cacheData = {};
-								cache = {};
-							});		
-						});
-					}
-				}
-			},
 			createPopup: function(imageGrid, searchResults) {
 				var that = this;
 				var div = document.createElement('div');
@@ -2085,6 +1987,104 @@ var messageList = {
 						that.scrollHandler.call(that, imageGrid);
 					});
 				}
+			},			
+			getDataForCache: function(imageGrid) {
+				var that = this;	
+				var imgs = imageGrid.getElementsByTagName('img');
+				for (var i = 0, len = imgs.length; i < len; i++) {
+					var img = imgs[i];
+					var src = img.src;
+					
+					if (img.parentNode.className === 'img-loaded') {
+						var href = img.parentNode.parentNode.href;
+					}
+					else {
+						var href = img.parentNode.href;
+					}	
+					this.convertToBase64(src, href, i, imgs);
+				}
+			},						
+			convertToBase64: function(src, href, i, imgs) {
+				var that = this;
+				var canvas = document.createElement('CANVAS');
+				var context = canvas.getContext('2d');
+				var img = new Image;
+				img.crossOrigin = "Anonymous";
+				img.onload = function() {
+					var dataURI;
+					canvas.height = img.height;
+					canvas.width = img.width;
+					context.drawImage(img, 0, 0);
+					dataURI = canvas.toDataURL();
+					dataObject = 
+					{
+							'dataURI': dataURI, 
+							'src': src, 
+							'href': href, 
+							'i': i
+					};
+					that.prepareForCache.call(that, dataObject, imgs);
+					canvas = null;
+				};
+				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
+			},			
+			prepareForCache: function(dataObject, imgs) {
+				// thumbnails are always jpgs - fullsize image could have 
+				// a different file format (found in href)
+				var dataURI = dataObject.dataURI;
+				var href = dataObject.href;
+				var src = dataObject.src;
+				var i = dataObject.i;
+				var extension = href.match(/\.(gif|jpg|png)$/i)[0];
+				var fullsize = src.replace('.jpg', extension);
+				fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
+				var filename = fullsize.match(/\/([^/]*)$/)[1];						
+				filename = decodeURIComponent(filename);
+				
+				if (!filename || !fullsize || !dataURI) {
+					console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
+					return;
+				}
+				else {
+					this.cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
+					if (i === imgs.length - 1) {
+						// convertToBase64 has finished encoding - update cache with new images
+						this.restore(function(old) {
+							if (!old.imagemap) {
+								// first time caching
+								var cache = this.cacheData;
+							}
+							else {
+								// add cache of current page to existing imagemap cache
+								for (var i in this.cache) {
+									old.imagemap[i] = this.cacheData[i];							
+								}
+								var cache = old.imagemap;
+							}
+							var that = this;
+							chrome.storage.local.set({"imagemap": cache}, function() {
+								// empty cache variables - not needed any more
+								that.cacheData = {};
+								cache = {};
+							});		
+						});
+					}
+				}
+			},			
+			restore: function(callback) {
+				chrome.storage.local.get("imagemap", function(cache) {
+					if (chrome.runtime.lastError) {
+						// this shouldn't happen...
+						console.log(chrome.runtime.lastError);
+					}
+					if (!cache) {
+						var emptyCache = {};
+						callback(emptyCache);
+					}
+					else if (cache) {
+						callback(cache);
+					}
+				});
 			},
 			scrollHandler: function(imageGrid) {
 				var that = this;
@@ -2104,16 +2104,6 @@ var messageList = {
 							that.getDataForCache(newGrid);
 						});
 					}
-				}
-			},
-			closePopup: function() {
-				var div = document.getElementById('map_div');
-				var bodyClass = document.getElementsByClassName('body')[0];
-				if (div) {
-					document.body.removeChild(div);
-					bodyClass.style.opacity = 1;
-					document.body.style.overflow = 'initial';
-					bodyClass.removeEventListener('mousewheel', preventScroll);
 				}
 			},
 			clickHandler: function(evt) {
@@ -2148,6 +2138,16 @@ var messageList = {
 					}
 				});
 			},
+			closePopup: function() {
+				var div = document.getElementById('map_div');
+				var bodyClass = document.getElementsByClassName('body')[0];
+				if (div) {
+					document.body.removeChild(div);
+					bodyClass.style.opacity = 1;
+					document.body.style.overflow = 'initial';
+					bodyClass.removeEventListener('mousewheel', preventScroll);
+				}
+			},			
 			cacheData: {},
 			currentPage: 1,
 			lastPage: '?',
