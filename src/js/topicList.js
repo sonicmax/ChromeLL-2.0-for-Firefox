@@ -354,7 +354,7 @@ var topicList = {
 		var trs = document.getElementsByClassName('grid')[0]
 				.getElementsByTagName('tr');
 		var tr;
-		var functions = topicList.mainFunctions;
+		var functions = topicList.functions;
 		var config = topicList.config;
 		// iterate over trs and pass tr nodes to topicList functions
 		// (ignoring trs[0] as it's not a topic)
@@ -367,7 +367,14 @@ var topicList = {
 			}
 		}
 		var element = document.getElementsByTagName('h1')[0];
-		dramalinks.init(element);
+		if (!dramalinks.html) {
+			Object.observe(dramalinks, function() {
+				dramalinks.init(element);
+			});
+		}
+		else {
+			dramalinks.init(element);
+		}
 		if (this.config['page_jump_buttons' + this.pm]) {
 			this.addListeners();
 		}		
@@ -475,16 +482,21 @@ var topicList = {
 		}
 	},
 	passToFunctions: function(tr) {
-		var functions = this.mainFunctions;
+		//var t1 = performance.now();
+		var functions = this.functions;
+		var functionArray = this.functionArray;
 		var config = this.config;
 		var index = this.index;
-		for (var i in functions) {
-			if (config[i + this.pm]) {
-				// pass tr node & index to function
-				functions[i](tr, index);
-				this.index++;
+		var pm = this.pm;
+		for (var functionName in functions) {
+			if (config[functionName + pm]) {
+				functions[functionName](tr, index);
 			}
 		}
+		this.index++;
+		/*var t2 = performance.now();
+		t0 += (t2 - t1);
+		console.log('Current total: ' + (t1 - t0));*/
 	},
 	initObserver: new MutationObserver(function(mutations) {
 		for (var i = 0, len = mutations.length; i < len; i++) {
