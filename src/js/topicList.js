@@ -17,7 +17,7 @@ var topicList = {
 	},
 	index: 1,
 	pm: '',
-	mainFunctions: {
+	functions: {
 		ignorator_topiclist: function(tr, i) {
 			var ignores = topicList.ignore.users;
 			if (!ignores) {
@@ -331,8 +331,8 @@ var topicList = {
 		}
 	},
 	checkTags: function() {
-		var atags = document.getElementById('bookmarks').getElementsByTagName(
-				'span');
+		var atags = document.getElementById('bookmarks')
+				.getElementsByTagName('span');
 		var ctags = {};
 		var tag, name;
 		for (var i = 0, len = atags.length; i < len; i++) {
@@ -362,12 +362,15 @@ var topicList = {
 		 tr = trs[j];
 			for (var i in functions) {
 				if (config[i + pm]) {
-					// pass tr node & index to function
 					functions[i](tr, j);
 				}
 			}
 		}
-		// scrape bookmarked tags from page
+		var element = document.getElementByTagName('h1')[0];
+		dramalinks.init(element);
+		if (this.config['page_jump_buttons' + this.pm]) {
+			this.addListeners();
+		}		
 		try {
 			topicList.checkTags();
 		} catch (e) {
@@ -513,10 +516,8 @@ var topicList = {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
 				}, function(response) {
-					if (response.data) {
-						dramalinks.html = response.data;
-						dramalinks.config = topicList.config;
-					}
+					dramalinks.html = response.data;
+					dramalinks.config = topicList.config;
 				});
 			}
 		}
@@ -538,11 +539,9 @@ var topicList = {
 			);
 		}
 		else {
-			// DOM was already loaded (???) - use old method
-			this.callFunctions(this.pm);			
-			if (this.config['page_jump_buttons' + this.pm]) {
-				this.addListeners();
-			}
+			// DOM was already loaded
+			// (user pressed back button to reach topic list)
+			this.callFunctions(this.pm);
 		}
 	}
 };
