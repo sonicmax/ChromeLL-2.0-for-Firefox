@@ -366,7 +366,7 @@ var topicList = {
 				}
 			}
 		}
-		var element = document.getElementByTagName('h1')[0];
+		var element = document.getElementsByTagName('h1')[0];
 		dramalinks.init(element);
 		if (this.config['page_jump_buttons' + this.pm]) {
 			this.addListeners();
