@@ -367,14 +367,7 @@ var topicList = {
 			}
 		}
 		var element = document.getElementsByTagName('h1')[0];
-		if (!dramalinks.html) {
-			Object.observe(dramalinks, function() {
-				dramalinks.init(element);
-			});
-		}
-		else {
-			dramalinks.init(element);
-		}
+		dramalinks.init(element);
 		if (this.config['page_jump_buttons' + this.pm]) {
 			this.addListeners();
 		}		
@@ -523,7 +516,7 @@ var topicList = {
 		this.config = config.data;	
 		this.prepareArrays();
 		
-		if (!window.location.href.match('inbox.php')) {
+		if (!window.location.href.match(/[inbox|main].php/)			) {
 			if (this.config.dramalinks) {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"

@@ -4,23 +4,37 @@ var dramalinks = {
 	append : function(element) {
 		var ticker = document.createElement("center");
 		ticker.id = "dramalinks_ticker";
-		ticker.innerHTML = dramalinks.html;
+		element.parentNode.insertBefore(ticker, element.nextSibling);
+		if (!dramalinks.html) {					
+			Object.observe(dramalinks, function() {
+				dramalinks.updateTicker.call(dramalinks, null)
+			});
+		}
+		else {
+			this.updateTicker();
+		}		
+	},
+	updateTicker: function(data) {
+		var ticker = document.getElementById('dramalinks_ticker');
+		if (data) {
+			ticker.innerHTML = data;
+			dramalinks.html = data;
+		}
+		else {
+			ticker.innerHTML = dramalinks.html;		
+		}
 		if (this.config.hide_dramalinks) {
 			ticker.style.display = "none";
-		}
-		element.parentNode.insertBefore(ticker, element.nextSibling);
-		if (this.config.hide_dramalinks) {
 			element.addEventListener('doubleclick', this.switchDrama);
 		}
 		var retry = document.getElementById('retry');
 		if (retry) {
-			retry.addEventListener('click', this.updateTicker);
-		}		
+			retry.addEventListener('click', this.retry);
+		}
 	},
-	switchDrama : function() {
+	switchDrama: function() {
 		var ticker = document.getElementById('dramalinks_ticker');
-		ticker.style.display == 'none' ? ticker.style.display = 'block' 
-				: ticker.style.display = 'none';
+		ticker.style.display == 'none' ? ticker.style.display = 'block' : ticker.style.display = 'none';
 		if (document.selection) {
 			document.selection.empty();
 		}
@@ -28,23 +42,10 @@ var dramalinks = {
 			window.getSelection().removeAllRanges();
 		}
 	},
-	updateTicker: function() {
+	retry: function() {
 		chrome.runtime.sendMessage({
 			need: "dramalinks"
-		}, function(response) {
-			var ticker = document.getElementById('dramalinks_ticker');
-			if (ticker) {
-				ticker.innerHTML = response.data;
-				var retry = document.getElementById('retry');
-				if (retry) {
-					retry.addEventListener('click', dramalinks.updateTicker);
-				}
-			}
-			else {		
-				console.log('Error in updateTicker: required element not found');
-				console.log(document.readyState);
-			}
-		});
+		}, this.updateTicker(response.data));
 	},
 	init: function(element) {
 		if (this.config.hide_dramalinks_topiclist 

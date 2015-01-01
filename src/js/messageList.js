@@ -332,7 +332,7 @@ var messageList = {
 				var phold;
 				for (var i = 0, len = pholds.length; i < len; i++) {
 					phold = pholds[i];
-					messageList.imgObserver.observe(phold, {
+					messageList.image.observer.observe(phold, {
 						attributes: true,
 						childList: true
 					});
@@ -2466,7 +2466,39 @@ var messageList = {
 					}
 				}
 			}
-		}
+		},
+		observer: new MutationObserver(function(mutations) {
+			var mutation;
+			for (var i = 0, len = mutations.length; i < len; i++) {
+				mutation = mutations[i];
+				if (messageList.config.resize_imgs) {
+					messageList.image.resize(mutation.target.childNodes[0]);
+				}
+				if (mutation.type === 'attributes') {
+					// once they're loaded, thumbnails have /i/t/ in their
+					// url where fullsize have /i/n/
+					if (mutation.attributeName == "class"
+							&& mutation.target.getAttribute('class') == "img-loaded"
+							&& mutation.target.childNodes[0].src
+									.match(/.*\/i\/t\/.*/)) {
+						/*
+						 * set up the onclick and do some dom manip that the
+						 * script originally did - i think only removing href
+						 * actually matters
+						 */
+						mutation.target.parentNode.addEventListener('click',
+								messageList.image.expand);
+						mutation.target.parentNode.setAttribute('class',
+								'thumbnailed_image');
+						mutation.target.parentNode
+								.setAttribute('oldHref',
+										mutation.target.parentNode
+												.getAttribute('href'));
+						mutation.target.parentNode.removeAttribute('href');
+					}
+				}
+			}
+		})
 	},
 	spoilers: {
 		find: function(el) {
@@ -2803,38 +2835,6 @@ var messageList = {
 			console.log('appended scripts');
 		}
 	},	
-	imgObserver: new MutationObserver(function(mutations) {
-		var mutation;
-			for (var i = 0, len = mutations.length; i < len; i++) {
-				mutation = mutations[i];
-				if (messageList.config.resize_imgs) {
-					messageList.image.resize(mutation.target.childNodes[0]);
-				}
-				if (mutation.type === 'attributes') {
-					// once they're loaded, thumbnails have /i/t/ in their
-					// url where fullsize have /i/n/
-					if (mutation.attributeName == "class"
-							&& mutation.target.getAttribute('class') == "img-loaded"
-							&& mutation.target.childNodes[0].src
-									.match(/.*\/i\/t\/.*/)) {
-						/*
-						 * set up the onclick and do some dom manip that the
-						 * script originally did - i think only removing href
-						 * actually matters
-						 */
-						mutation.target.parentNode.addEventListener('click',
-								messageList.image.expand);
-						mutation.target.parentNode.setAttribute('class',
-								'thumbnailed_image');
-						mutation.target.parentNode
-								.setAttribute('oldHref',
-										mutation.target.parentNode
-												.getAttribute('href'));
-						mutation.target.parentNode.removeAttribute('href');
-					}
-				}
-			}
-	}),	
 	newPage: new MutationObserver(function(mutations) {
 		for (var i = 0, len = mutations.length; i < len; i++) {
 			var mutation = mutations[i];
@@ -2935,6 +2935,8 @@ var messageList = {
 				}
 			}
 		}
+		var element = document.getElementsByTagName('h2')[0];
+		dramalinks.init(element);
 		// page will appear to have been fully loaded by this point
 		if (len == 4) {
 			// iterate over rest of messages
