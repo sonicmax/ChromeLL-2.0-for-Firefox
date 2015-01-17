@@ -1,10 +1,11 @@
 var messageList = {
+	config: [],	
 	ignores: {},
 	scrolling: false,
-	tops_total: 0,
-	containers_total: 0,
-	config: [],
+	topsTotal: 0,
+	containersTotal: 0,
 	debounceTimer: '',
+	menuOpenTimer: '',
 	ignorated: {
 		total_ignored: 0,
 		data: {
@@ -32,8 +33,8 @@ var messageList = {
 					return;
 				}
 				var tops = msg.getElementsByClassName('message-top');
-				var top, username, top_index;
-				messageList.tops_total += tops.length;
+				var top, username, currentIndex;
+				messageList.topsTotal += tops.length;
 				for (var j = 0; j < tops.length; j++) {
 					top = tops[j];
 					if (top) {
@@ -42,11 +43,11 @@ var messageList = {
 							if (username == messageList.ignores[f]) {
 								// calculate equivalent index of message-top for
 								// show_ignorator function
-								if (j == 0 && messageList.tops_total > 0) {
-									top_index = messageList.tops_total - tops.length; 
+								if (j == 0 && messageList.topsTotal > 0) {
+									currentIndex = messageList.topsTotal - tops.length; 
 								}
 								else {
-									top_index = messageList.tops_total - j;
+									currentIndex = messageList.topsTotal - j;
 								}
 								top.parentNode.style.display = 'none';
 								if (messageList.config.debug) {
@@ -57,11 +58,11 @@ var messageList = {
 								if (!messageList.ignorated.data.users[messageList.ignores[f]]) {
 									messageList.ignorated.data.users[messageList.ignores[f]] = {};
 									messageList.ignorated.data.users[messageList.ignores[f]].total = 1; 
-									messageList.ignorated.data.users[messageList.ignores[f]].trs = [ top_index ];
+									messageList.ignorated.data.users[messageList.ignores[f]].trs = [ currentIndex ];
 								} else {
 									messageList.ignorated.data.users[messageList.ignores[f]].total++;
 									messageList.ignorated.data.users[messageList.ignores[f]].trs
-											.push(top_index);
+											.push(currentIndex);
 								}
 							}
 						}		
@@ -83,8 +84,9 @@ var messageList = {
 				top.appendChild(divider);
 				tempID = top.getElementsByTagName('a')[0].href
 						.match(/user=(\d+)$/i)[1];
-				notebook.innerHTML = (messageList.config.usernote_notes[tempID] != undefined && messageList.config.usernote_notes[tempID] != '') ? 'Notes*'
-						: 'Notes';
+				notebook.innerHTML = (messageList.config.usernote_notes[tempID] != undefined 
+						&& messageList.config.usernote_notes[tempID] != '') 
+								? 'Notes*' : 'Notes';
 				notebook.href = "##note" + tempID;
 				top.appendChild(notebook);
 			},
@@ -94,30 +96,33 @@ var messageList = {
 					var anchor = document.createElement('a');
 					var divider = document.createTextNode(" | ");
 					anchor.innerText = 'Like';
-					anchor.id = 'like_button';
+					anchor.className = 'like_button';
 					anchor.href = '##like';
 					top.appendChild(divider);
 					top.appendChild(anchor);
+					anchor.addEventListener('mouseenter', messageList.handle.mouseenter.bind(messageList));
+					anchor.addEventListener('mouseleave', messageList.handle.mouseleave.bind(messageList));					
 				}
 			},	
 			number_posts: function(msg, index) {
 				var top = msg.getElementsByClassName('message-top')[0];
-				var page, id, postnum;
+				var page;
 				if (!window.location.href.match(/page=/)) {
 					page = 1;
-				} else {
+				} 
+				else {
 					page = window.location.href.match(/page=(\d+)/)[1];
 				}
-				id = ((index + 1) + (50 * (page - 1)));
+				var id = (index + (50 * (page - 1)));
 				if (id < 1000)
 					id = "0" + id;
 				if (id < 100)
 					id = "0" + id;
 				if (id < 10)
 					id = "0" + id;
-				postnum = document.createTextNode(' | #' + id);
-				top.appendChild(postnum);
-			},	
+				var postNumber = document.createTextNode(' | #' + id);
+				top.appendChild(postNumber);
+			},
 			post_templates: function(msg, index) {
 				var top = msg.getElementsByClassName('message-top')[0];
 				var sep, sepIns, qr;
@@ -148,13 +153,11 @@ var messageList = {
 				}
 				var tops = msg.getElementsByClassName('message-top');
 				var first_top = msg.getElementsByClassName('message-top')[0];
-				var top, anchors, anchor;
-				var user;	
 				if (!messageList.config.no_user_highlight_quotes) {
 					try {
 						for (var k = 0; k < tops.length; k++) {
-							top = tops[k];			
-								user = top.getElementsByTagName('a')[0].innerHTML
+							var top = tops[k];			
+								var user = top.getElementsByTagName('a')[0].innerHTML
 										.toLowerCase();
 							if (messageList.config.user_highlight_data[user]) {
 								if (messageList.config.debug) {
@@ -164,13 +167,13 @@ var messageList = {
 										+ messageList.config.user_highlight_data[user].bg;
 								top.style.color = '#'
 										+ messageList.config.user_highlight_data[user].color;
-								anchors = top.getElementsByTagName('a');
+								var anchors = top.getElementsByTagName('a');
 								for (var j = 0, len = anchors.length; j < len; j++) {
-									anchor = anchors[j];
+									var anchor = anchors[j];
 									anchor.style.color = '#'
 											+ messageList.config.user_highlight_data[user].color;
 								}
-								if (live && messageList.config.notify_userhl_post 
+								/*if (live && messageList.config.notify_userhl_post 
 										&& k == 0
 										&& msg.getElementsByClassName('message-top')[0]
 												.getElementsByTagName('a')[0].innerHTML != document
@@ -179,23 +182,24 @@ var messageList = {
 												.replace(/ \((\d+)\)$/, "")) {
 									chrome.runtime.sendMessage({
 										need: "notify",
-										message: document.title.replace(
-												/End of the Internet - /i,
-												''),
-										title: "Post by "
+										message: document.title
+												.replace(/End of the Internet - /i, ''),
+										title: "Post by " + user
 												+ msg
 														.getElementsByClassName('message-top')[0]
 														.getElementsByTagName('a')[0].innerHTML
 									}, function(data) {
 										console.log(data);
 									});
-								}
+								}*/
 							}
 						}
 					} catch (e) {
-						// if (messageList.config.debug) console.log(e);
-					}			
-				} 
+						if (messageList.config.debug) {
+							console.log(e);
+						}
+					}
+				}
 				else {
 					user = first_top.getElementsByTagName('a')[0]
 							.innerHTML.toLowerCase();
@@ -299,27 +303,6 @@ var messageList = {
 					}
 				}
 			},
-			hide_deleted: function(msg) {
-				if (msg.getElementsByClassName('message-top')[0]
-						.getElementsByTagName('em')[0]
-						&& msg.getElementsByClassName('message-top')[0]
-								.getElementsByTagName('em')[0].innerHTML !== 'Moderator') {
-					msg.getElementsByClassName('message-body')[0].style.display = 'none';
-					var a = document.createElement('a');
-					a.href = 'javascript.void(0)';
-					a.innerHTML = 'Show Message';
-					a.addEventListener('click', function(evt) {
-						var hiddenMsg = evt.target.parentNode.parentNode
-								.getElementsByClassName('message-body')[0];
-						console.log(evt.target);
-						hiddenMsg.style.display === 'none' ? hiddenMsg.style.display = 'block'
-								: hiddenMsg.style.display = 'none';
-					});
-					msg.getElementsByClassName('message-top')[0].innerHTML += ' | ';
-					msg.getElementsByClassName('message-top')[0].insertBefore(
-							a, null);
-				}
-			},
 			click_expand_thumbnail: function(container) {
 				// rewritten by xdrvonscottx
 				// find all the placeholders before the images are loaded
@@ -339,28 +322,23 @@ var messageList = {
 				}
 			},	
 			autoscroll_livelinks: function(mutation, index, live) {
-				if (live) {
-					if (document.hidden 
-							&& messageList.autoscrollCheck(mutation) ) {
-						// autoscrollCheck returns true if user has scrolled to bottom of page
-						$.scrollTo(mutation);
-					}
+				if (live && document.hidden 
+						&& messageList.autoscrollCheck(mutation) ) {
+					$.scrollTo(mutation);
 				}
 			},
 			autoscroll_livelinks_active: function(mutation, index, live) {
-				if (live) {
-					if (!document.hidden 
-							&& messageList.autoscrollCheck(mutation)) {
-						// trigger after 10ms delay to prevent undesired 
-						// behaviour in post_title_notification
-						setTimeout(function() {
-							messageList.scrolling = true;
-							$.scrollTo((mutation), 800);
-						}, 10);
-						setTimeout(function() {
-							messageList.scrolling = false;	
-						}, 850);
-					}
+				if (live && !document.hidden 
+						&& messageList.autoscrollCheck(mutation)) {
+					// trigger after 10ms delay to prevent undesired 
+					// behaviour in post_title_notification
+					setTimeout(function() {
+						messageList.scrolling = true;
+						$.scrollTo((mutation), 800);
+					}, 10);
+					setTimeout(function() {
+						messageList.scrolling = false;	
+					}, 850);
 				}
 			},
 			post_title_notification: function(mutation, index, live) {
@@ -455,52 +433,6 @@ var messageList = {
 					infobar.appendChild(anchor);
 				}
 			},
-			filter_me: function() {
-				// TODO - get user number from config, find anon tag using h2 element
-				var infobar = document.getElementsByClassName('infobar')[0];
-				var tops = document.getElementsByClassName('message-top');
-				// handle anonymous topic
-				if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
-					// anonymous topic - check quickpost-body for human number
-					if (window.location.hostname == 'archives.endoftheinter.net') {
-						// archived anon topics don't have quickpost-body element
-						return;
-					}
-					if (document.getElementsByClassName('quickpost-body')) {
-						var human = document.getElementsByClassName('quickpost-body')[0]
-							.getElementsByTagName('a')[0].innerText.replace('Human #', '');
-						if (isNaN(human)) {
-							// user hasn't posted in topic
-							return;
-						}
-						var me = '&u=-' + human;
-					}
-				}
-				else {
-					// handle non anonymous topics
-					if (messageList.config.user_id) {
-						// use cached user id
-						var me = '&u=' + messageList.config.user_id;
-					} else {
-						// fallback
-						var me = '&u=' + document.getElementsByClassName('userbar')[0]
-							.getElementsByTagName('a')[0].href
-							.match(/\?user=([0-9]+)/)[1];
-					}
-				}
-				var topic = window.location.href.match(/topic=([0-9]+)/)[1];
-				var anchor = document.createElement('a');		
-				var divider = document.createTextNode(" | ");		
-				if (window.location.href.indexOf(me) == -1) {
-					anchor.href = window.location.href.split('?')[0] + '?topic=' + topic + me;
-					anchor.innerHTML = 'Filter Me';
-				} else {
-					anchor.href = window.location.href.replace(me, '');
-					anchor.innerHTML = 'Unfilter Me';
-				}
-				infobar.appendChild(divider);
-				infobar.appendChild(anchor);
-			},	
 			expand_spoilers: function() {
 				var infobar = document.getElementsByClassName('infobar')[0];
 				var ains = document.createElement('span');
@@ -515,6 +447,47 @@ var messageList = {
 			}
 		},
 		quickpostbody: {
+			filter_me: function() {
+				var quickpostElement = document.getElementsByClassName('quickpost-body')[0];				
+				var infobar = document.getElementsByClassName('infobar')[0];
+				var tops = document.getElementsByClassName('message-top');
+				if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
+					// anonymous topic - check quickpost-body for human number
+					if (window.location.hostname == 'archives.endoftheinter.net') {
+						// archived anon topics don't have quickpost-body element
+						return;
+					}
+					else if (quickpostElement.getElementsByTagName('a')) {
+						var human = quickpostElement.getElementsByTagName('a')[0]
+								.innerText.replace('Human #', '');
+						if (isNaN(human)) {
+							// user hasn't posted in topic
+							return;
+						}
+						else {
+							var me = '&u=-' + human;
+						}
+					}
+				}
+				else {
+					// handle non anonymous topics
+					var me = '&u=' + document.getElementsByClassName('userbar')[0]
+							.getElementsByTagName('a')[0].href
+							.match(/\?user=([0-9]+)/)[1];
+				}
+				var topic = window.location.href.match(/topic=([0-9]+)/)[1];
+				var anchor = document.createElement('a');		
+				var divider = document.createTextNode(" | ");		
+				if (window.location.href.indexOf(me) == -1) {
+					anchor.href = window.location.href.split('?')[0] + '?topic=' + topic + me;
+					anchor.innerHTML = 'Filter Me';
+				} else {
+					anchor.href = window.location.href.replace(me, '');
+					anchor.innerHTML = 'Unfilter Me';
+				}
+				infobar.appendChild(divider);
+				infobar.appendChild(anchor);
+			},		
 			quick_imagemap: function() {
 				var quickpost = document.getElementsByClassName('quickpost-body')[0];
 				if (quickpost) {
@@ -677,8 +650,7 @@ var messageList = {
 				}
 			}			
 		},
-		misc: {
-			// contains functions which require the whole page to be loaded			
+		misc: {		
 			highlight_tc: function() {
 				var tcs = messageList.tcs.getMessages();
 				var tc;
@@ -698,16 +670,17 @@ var messageList = {
 				if (!tcs) {
 					return;
 				}
-				var color, tc, span, b, text, divider;
-				if (messageList.config.tc_label_color && messageList.config.tc_label_color != '') {
+				var color = false;
+				if (messageList.config.tc_label_color 
+						&& messageList.config.tc_label_color != '') {
 					color = true;
 				}
 				for (var i = 0, len = tcs.length; i < len; i++) {
-					tc = tcs[i];
-					span = document.createElement('span');
-					b = document.createElement('b');
-					text = document.createTextNode('TC');
-					divider = document.createTextNode(' | ');
+					var tc = tcs[i];
+					var span = document.createElement('span');
+					var b = document.createElement('b');
+					var text = document.createTextNode('TC');
+					var divider = document.createTextNode(' | ');
 					b.appendChild(text);
 					if (color) {
 						b.style.color = '#' + messageList.config.tc_label_color;
@@ -885,10 +858,9 @@ var messageList = {
 			}
 		}
 	},
-	handlers: {
-		message: function(msg) {
-			// handles messages from background script
-			if (msg.action !== 'ignorator_update') {			
+	handle: {
+		ignoratorUpdate: function(msg) {
+			if (msg.action !== 'ignorator_update') {	
 				switch (msg.action) {
 					case "showIgnorated":				
 						if (messageList.config.debug) {
@@ -911,10 +883,11 @@ var messageList = {
 			}
 		},
 		loadEvent: function() {
-			this.initObserver.disconnect();
+			this.parseObserver.disconnect();
 			this.passToFunctions('misc');					
 			this.addListeners();
 			this.appendScripts();
+			this.addCSSRules();
 			this.livelinks.observe(document.getElementById('u0_1'), {
 					subtree: true,
 					childList: true
@@ -925,7 +898,6 @@ var messageList = {
 				scope: "messageList"
 			});	
 			if (this.config.new_page_notify) {
-				// set up observer to watch for attribute mutations to 'nextpage' element
 				this.newPage.observe(document.getElementById('nextpage'), {
 						attributes: true
 				});
@@ -953,23 +925,34 @@ var messageList = {
 				scope: "messageList"
 			});
 		},
-		clickEvent: function(evt) {
+		mouseclick: function(evt) {
+			if (this.config.post_templates) {
+				this.postTemplateAction(evt.target);
+			}
 			if (evt.target.id == 'notebook') {
 				this.usernotes.open(evt.target);
 				evt.preventDefault();
 			}
-			if (evt.target.id == 'quick_image') {
+			else if (evt.target.id == 'quick_image') {
 				this.image.map.init(evt.target.id);
 				evt.preventDefault();
 			}
-			if (evt.target.id == 'like_button') {
-				this.like(evt.target);
+			else if (evt.target.className == 'like_button') {
+				this.likeButton.process(evt.target);
 				evt.preventDefault();
 			}
-			if (this.config.post_templates) {
-				this.postTemplateAction(evt.target);
+			else if (evt.target.className == 'like_button_custom') {
+				var templateNumber = evt.target.href.match(/[0-9]+/)[0];
+				for (var i = 0, len = evt.path.length; i < len; i++) {
+					var pathNode = evt.path[i];
+					if (pathNode.className == 'like_button') {
+						this.likeButton.process(pathNode, templateNumber);			
+						return;
+					}
+				}
+				evt.preventDefault();	
 			}
-			if (evt.target.title.indexOf("/index.php") === 0) {
+			else if (evt.target.title.indexOf("/index.php") === 0) {
 				this.links.fix(evt.target, "wiki");
 				evt.preventDefault();
 			}
@@ -1016,24 +999,41 @@ var messageList = {
 				}
 			}
 		},
+		mouseenter: function(evt) {
+			if (evt.target.className == 'like_button') {
+				this.cachedEvent = evt;
+				this.menuOpenTimer = setTimeout(this.likeButton.showOptions
+					.bind(this.likeButton), 250);
+				evt.preventDefault();	
+			}
+			else if (evt.target.className == 'like_button_custom') {	
+				this.likeButton.checkHighlight.bind(this.likeButton);
+				evt.preventDefault();	
+			}
+		},
+		mouseleave: function(evt) {
+			clearTimeout(this.menuOpenTimer);
+			if (document.getElementById('hold_menu')) {
+				this.likeButton.hideOptions();
+				evt.preventDefault();
+			}			
+		},
 		searchEvent: function() {
-			var that = this;
-			// use debouncing to prevent search from triggering on every key stroke
+			// perform search after 500ms of no keyboard activity
 			clearTimeout(this.debounceTimer);
-			this.debounceTimer = setTimeout(function() {				
-				that.image.map.search.init
-						.call(that.image.map.search);
+			this.debounceTimer = setTimeout(function() {
+				messageList.image.map.search.init
+					.call(messageList.image.map.search);
 			}, 500);
 		}
-	},	
+	},
 	gfycat: {
 		loader: function() {
 			var gfycats = document.getElementsByClassName('gfycat');
-			var gfycat, position, height;
-			height = window.innerHeight;
+			var height = window.innerHeight;
 			for (var i = 0, len = gfycats.length; i < len; i++) {
-				gfycat = gfycats[i];			
-				position = gfycat.getBoundingClientRect();
+				var gfycat = gfycats[i];			
+				var position = gfycat.getBoundingClientRect();
 				// use window height + 200 to increase visibility of gfycatLoader
 				if (position.top > height + 200 
 						|| position.bottom < 0) {
@@ -1060,7 +1060,7 @@ var messageList = {
 				}
 			}
 		},
-		getAPIData: function (url, callback) {
+		queryAPI: function (url, callback) {
 			var splitURL = url.split('/').slice(-1);
 			var code = splitURL.join('/');
 			var xhrURL = 'http://gfycat.com/cajax/get/' + code;
@@ -1070,25 +1070,24 @@ var messageList = {
 				xhrURL = xhrURL.replace('http', 'https');
 			}
 			var xhr = new XMLHttpRequest();
-			var apiData = {};
-			var width, height, webm;
-			var response;
 			xhr.open("GET", xhrURL, true);
 			xhr.onreadystatechange = function() {
 				if (xhr.readyState == 4 && xhr.status == 200) {
+					var apiData = {};
 					// gfycat api provides width, height, & webm url
-					response = JSON.parse(xhr.responseText);
+					var response = JSON.parse(xhr.responseText);
 					if (!response.gfyItem) {
 						callback("error");
 					}
-					width = response.gfyItem.width;
-					height = response.gfyItem.height;
+					var width = response.gfyItem.width;
+					var height = response.gfyItem.height;
 					if (messageList.config.resize_gfys 
 							&& width > messageList.config.gfy_max_width) {
 						// scale video size to match gfy_max_width value
 						height = (height / (width / messageList.config.gfy_max_width));
 						width = messageList.config.gfy_max_width;
-					}					
+					}
+					var webm;
 					if (https) {
 						webm = response.gfyItem.webmUrl.replace('http', 'https');
 					}
@@ -1101,13 +1100,13 @@ var messageList = {
 					apiData.webm = webm;
 					callback(apiData);
 				}
-			}
+			};
 			xhr.send();
 		},
-		placeholder: function(gfyLink) {
-			var placeholder, url, safe, position;
-			url = gfyLink.getAttribute('href');
-			this.getAPIData(url, function(data) {
+		placeholder: function(link) {
+			var gfyLink = link;
+			var url = gfyLink.getAttribute('href');
+			this.queryAPI(url, function(data) {
 				if (data === "error") {
 					// revert class name to stop loader from detecting link
 					gfyLink.className = 'l';
@@ -1132,7 +1131,7 @@ var messageList = {
 					}
 					else {
 						// create placeholder
-						placeholder = document.createElement('div');
+						var placeholder = document.createElement('div');
 						placeholder.className = 'gfycat';
 						placeholder.id = data.webm;
 						placeholder.setAttribute('name', 'placeholder');
@@ -1143,7 +1142,7 @@ var messageList = {
 						if (gfyLink.parentNode) {
 							gfyLink.parentNode.replaceChild(placeholder, gfyLink);
 							// check if placeholder is visible (some placeholders will be off screen)
-							position = placeholder.getBoundingClientRect();
+							var position = placeholder.getBoundingClientRect();
 							if (position.top > window.innerHeight) {
 								return;
 							} else {
@@ -1156,78 +1155,85 @@ var messageList = {
 			});
 		},
 		thumbnail: function(gfyLink) {
-			var display, placeholder, url, splitURL, code, thumbnail, workSafe;
-			messageList.config.show_gfycat_link ? display = 'inline': display = 'none';
-			url = gfyLink.getAttribute('href');
-			splitURL = url.split('/').slice(-1);
-			code = splitURL.join('/');
-			thumbnail = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
-			this.getAPIData(url, function(data) {
+			var display;
+			(messageList.config.show_gfycat_link)
+					? display = 'inline'
+					: display = 'none';
+			var url = gfyLink.getAttribute('href');
+			var splitURL = url.split('/').slice(-1);
+			var code = splitURL.join('/');
+			var thumbnail = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
+			this.queryAPI(url, function(data) {
 				if (data === "error") {
 					// revert class name to stop loader from detecting link
 					gfyLink.className = 'l';
 					return;
 				}
-				if (messageList.config.hide_nws_gfycat) {
+				else if (messageList.config.hide_nws_gfycat) {
 					if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {
 						//console.log('NWS topic', gfyLink);
 						messageList.gfycat.embedOnHover(gfyLink, data.webm, data.width, data.height);						
 						return;
 					}
 				}
-				messageList.gfycat.workSafe(gfyLink, data.nsfw, function(safe) {
-					if (!safe) {
-						if (messageList.config.hide_nws_gfycat) {
-							gfyLink.className = "l";
-							return;
+				else {
+					messageList.gfycat.workSafe(gfyLink, data.nsfw, function(safe) {
+						if (!safe) {
+							if (messageList.config.hide_nws_gfycat) {
+								gfyLink.className = "l";
+								return;
+							}
+							else {
+								messageList.gfycat.addHoverLink(gfyLink, data.webm, data.width, data.height);
+								return;
+							}
 						}
 						else {
-							messageList.gfycat.addHoverLink(gfyLink, data.webm, data.width, data.height);
-							return;
-						}
-					}
-					else {
-						// create placeholder element
-						placeholder = document.createElement('div');
-						placeholder.className = 'gfycat';
-						placeholder.id = data.webm;
-						placeholder.innerHTML = '<img src="' + thumbnail 
-								+ '" width="' + data.width + '" height="' + data.height + '">'
-								+ '</img>'
-								+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
-						if (gfyLink.parentNode) {
-							gfyLink.parentNode.replaceChild(placeholder, gfyLink);
-							// add click listener to replace img with video
-							img = placeholder.getElementsByTagName('img')[0];
-							img.title = "Click to play";
-							img.addEventListener('click', function(ev) {
-								ev.preventDefault();
-								placeholder.innerHTML = '<video width="' + data.width 
-										+ '" height="' + data.height 
-										+ '" loop >'
-										+ '</video>'
-										+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
-								video = placeholder.getElementsByTagName('video')[0];
-								placeholder.setAttribute('name', 'embedded_thumb');
-								video.src = placeholder.id;
-								video.title = "Click to pause";
-								video.play();
-								video.addEventListener('click', function(ev) {
-									video.title = "Click to play/pause";
-									if (!video.paused) {
-										video.pause();
-									}
-									else {
-										video.play();
-									}
+							// create placeholder element
+							var placeholder = document.createElement('div');
+							placeholder.className = 'gfycat';
+							placeholder.id = data.webm;
+							placeholder.innerHTML = '<img src="' + thumbnail 
+									+ '" width="' + data.width + '" height="' + data.height + '">'
+									+ '</img>'
+									+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
+							if (gfyLink.parentNode) {
+								gfyLink.parentNode.replaceChild(placeholder, gfyLink);
+								// add click listener to replace img with video
+								var img = placeholder.getElementsByTagName('img')[0];
+								img.title = "Click to play";
+								img.addEventListener('click', function(ev) {
+									ev.preventDefault();
+									placeholder.innerHTML = '<video width="' + data.width 
+											+ '" height="' + data.height 
+											+ '" loop >'
+											+ '</video>'
+											+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
+									var video = placeholder.getElementsByTagName('video')[0];
+									placeholder.setAttribute('name', 'embedded_thumb');
+									video.src = placeholder.id;
+									video.title = "Click to pause";
+									video.play();
+									video.addEventListener('click', function(ev) {
+										video.title = "Click to play/pause";
+										if (!video.paused) {
+											video.pause();
+										}
+										else {
+											video.play();
+										}
+									});
 								});
-							});
-						}	
-					}
-				});
+							}	
+						}
+					});
+				}
 			});
 		},
 		workSafe: function(gfyLink, nsfw, callback) {
+			console.log('workSafe');
+			console.log(gfyLink);
+			console.log(gfyLink.parentNode);
 			// check whether link is nws using gfycat api & post content
 			var userbar = document.getElementsByTagName('h2')[0];
 			var postHTML = gfyLink.parentNode.innerHTML;
@@ -1253,18 +1259,18 @@ var messageList = {
 			gfyLink.setAttribute('h', height);		
 			$(gfyLink).hoverIntent(
 				function() {
-					var _this = this;
+					// var that = this;
 					var color = $("table.message-body tr td.message").css("background-color");
-					if (_this.className == "nws_gfycat") {
-						$(_this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
+					if (this.className == "nws_gfycat") {
+						$(this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
 								+ "background: " + color 
 								+ ";'><a id='" + url + '_embed'
 								+ "'class='embed_nws_gfy' href='##'>&nbsp<b>[Embed NWS Gfycat]</b></a></span>"));
 					}
 				}, function() {
-					var _this = this;
-					if (_this.className == "nws_gfycat") {
-						$(_this).find("span").remove();
+					// var that = this;
+					if (this.className == "nws_gfycat") {
+						$(this).find("span").remove();
 					}
 				}
 			);
@@ -1424,8 +1430,8 @@ var messageList = {
 					temp = text.substring(0, index);
 					ta = ta.replace(text, temp + snippet);
 					message.value = ta;
-					// manually move caret to end of pasted snippet
-					// as replacing message.value moves caret to end of input
+					// manually move caret to end of pasted snippet as changing
+					// message.value property moves caret to end of input)
 					newCaret = ta.lastIndexOf(snippet) + snippet.length;
 					message.setSelectionRange(newCaret, newCaret);
 				}
@@ -1720,7 +1726,6 @@ var messageList = {
 	},
 	quote: {
 		handler: function(evt) {
-				// get childNodes from message to be quoted
 			if (evt.likeButton) {
 				var msgID = evt.id;
 			}
@@ -1730,48 +1735,47 @@ var messageList = {
 			var nodes = document.querySelector('[msgid="' + msgID + '"]').childNodes;
 			var spoiler = {};
 			var quote = {};
-			var output = ''; 
-			var tagName, nestedQuote, quoteArray, quoteOutput;
+			var output = '';
 			for (var i = 0, len = nodes.length; i < len; i++) {
-				// iterate over childNodes and add relevant parts to output string
+				// iterate over childNodes and add required data to output string				
 				node = nodes[i];
-				if (node.nodeType === 3) {
+				if (node.nodeType === 3) {					
 					output += node.nodeValue;
 				}
-				if (node.tagName) {
+				else if (node.tagName) {
 					if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
-						tagName = node.tagName.toLowerCase(); 
+						var tagName = node.tagName.toLowerCase(); 
 						output += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
 					}
 					if (node.tagName === 'A') {
 						output += node.href;
 					}
 				}
-				if (node.className == 'pr') {
+				else if (node.className == 'pr') {
 					output += '<pre>' + node.innerHTML.replace(/<br>/g, '') + '</pre>';								
 				}	
-				if (node.className == 'imgs') {
+				else if (node.className == 'imgs') {
 					imgNodes = node.getElementsByTagName('A');
 					for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
 						imgNode = imgNodes[l];
 						output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
 					}
 				}				
-				if (node.className == 'spoiler_closed') {
+				else if (node.className == 'spoiler_closed') {
 					spoiler.caption = node.getElementsByClassName('caption')[0]
 							.innerText.replace(/<|\/>/g, '');
 					spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
 					output += messageList.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
 				}	
-				if (node.className == 'quoted-message') {
-					quoteOutput = '';
+				else if (node.className == 'quoted-message') {
+					var quoteOutput = '';
 					quote.msgid = node.attributes.msgid.value;
 					quote.nested = node.getElementsByClassName('quoted-message');
 					if (quote.nested.length > 0) {
-						// iterate over nested quotes in reverse order
+						// iterate backwards - oldest quote should be first
 						for (var m = quote.nested.length; m--;) {
-							nestedQuote = quote.nested[m];					
-							quoteArray = messageList.quote.returnQuotes(nestedQuote.childNodes, 
+							var nestedQuote = quote.nested[m];					
+							var quoteArray = messageList.quote.returnQuotes(nestedQuote.childNodes, 
 									nestedQuote.attributes.msgid.value);
 							quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
 						}
@@ -1780,18 +1784,22 @@ var messageList = {
 						output += quoteOutput;
 					}
 					else {
-						quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);					
+						var quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);					
 						quoteOutput = quoteArray[0] + quoteArray[1];
 						output += quoteOutput;
 					}
 				}
 			}
+			
 			// remove sig from output
 			if (output.indexOf('---') > -1) {
-				output = '<quote msgid="' + msgID + '">' + output.substring(0, (output.lastIndexOf('---'))) + '</quote>';
-			} else {
+				output = '<quote msgid="' + msgID + '">' 
+						+ output.substring(0, (output.lastIndexOf('---'))) + '</quote>';
+			} 
+			else {
 				output = '<quote msgid="' + msgID + '">' + output + '</quote>';
 			}
+			
 			if (evt.likeButton) {
 				return output;			
 			}	
@@ -1799,12 +1807,8 @@ var messageList = {
 				var json = {
 					"quote": ""
 				};
-				json.quote = output;
-				// copy quote to clipboard via background page
-				chrome.runtime.sendMessage(json, function(response) {
-					if (messageList.config.debug) console.log(response.clipboard);
-				});
-				// alert user
+				json.quote = output;				
+				chrome.runtime.sendMessage(json);				
 				messageList.quote.notify(this);
 			}
 		},
@@ -1823,26 +1827,26 @@ var messageList = {
 				if (node.nodeType === 3) {
 					output[1] += node.nodeValue;
 				}
-				if (node.tagName) {	
+				else if (node.tagName) {	
 					if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
 						tagName = node.tagName.toLowerCase(); 
 						output[1] += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
 					}
-					if (node.tagName === 'A') {
+					else if (node.tagName === 'A') {
 						output += node.href;
 					}
 				}
-				if (node.className == 'pr') {
+				else if (node.className == 'pr') {
 					output[1] += '<pre>' + node.innerHTML + '</pre>';								
 				}
-				if (node.className == 'imgs') {
+				else if (node.className == 'imgs') {
 					imgNodes = node.getElementsByTagName('A');
 					for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
 						imgNode = imgNodes[l];
 						output[1] += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
 					}
 				}
-				if (node.className == 'spoiler_closed') {
+				else if (node.className == 'spoiler_closed') {
 					var spoiler = {};
 					spoiler.caption = node.getElementsByClassName('caption')[0]
 							.innerText.replace(/<|\/>/g, '');
@@ -1862,16 +1866,16 @@ var messageList = {
 				if (childNode.nodeType === 3) {
 					output += childNode.nodeValue;
 				}
-				if (childNode.tagName) {
+				else if (childNode.tagName) {
 					if (childNode.tagName == 'B' || childNode.tagName == 'I' || childNode.tagName == 'U') {
 						tagName = childNode.tagName.toLowerCase(); 
 						output += '<' + tagName + '>' + childNode.innerText + '</' + tagName + '>';
 					}
-					if (childNode.tagName === 'A') {
+					else if (childNode.tagName === 'A') {
 						output += childNode.innerText;
 					}
 				}
-				if (childNode.className == 'imgs') {
+				else if (childNode.className == 'imgs') {
 					imgNodes = childNode.getElementsByTagName('A');
 					for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
 						imgNode = imgNodes[l];
@@ -1911,24 +1915,19 @@ var messageList = {
 		addButtons: function() {
 			var hostname = window.location.hostname;
 			var topicId = window.location.search.replace("?topic=", "");
-			var links;
-			var msgs;
-			var containers;
 			var container;
 			var tops = [];
-			var msgID;
-			var quote;
 			if (hostname.indexOf("archives") > -1) {
-				links = document.getElementsByTagName("a");
-				msgs = document.getElementsByClassName("message");
-				containers = document.getElementsByClassName("message-container");
+				var links = document.getElementsByTagName("a");
+				var msgs = document.getElementsByClassName("message");
+				var containers = document.getElementsByClassName("message-container");
 				for (var i = 0, len = containers.length; i < len; i++) {
-					container = containers[i];
+					var container = containers[i];
 					tops[i] = container.getElementsByClassName("message-top")[0];
-					msgID = msgs[i].getAttribute("msgid");
-					quote = document.createElement("a");
-					quoteText = document.createTextNode("Quote");
-					space = document.createTextNode(" | ");
+					var msgID = msgs[i].getAttribute("msgid");
+					var quote = document.createElement("a");
+					var quoteText = document.createTextNode("Quote");
+					var space = document.createTextNode(" | ");
 					quote.appendChild(quoteText);
 					quote.href = "#";
 					quote.id = msgID;
@@ -1989,9 +1988,7 @@ var messageList = {
 		resize: function(el) {
 			var width = el.width;
 			if (width > messageList.config.img_max_width) {
-				if (messageList.config.debug) {
-					console.log('resizing:', el);
-				}
+				// console.log('resizing:', el);
 				el.height = (el.height / (el.width / messageList.config.img_max_width));
 				el.parentNode.style.height = el.height + 'px';
 				el.width = messageList.config.img_max_width;
@@ -2000,14 +1997,14 @@ var messageList = {
 		},
 		map: {
 			init: function() {	
-				this.getImagemap(this.processImagemap);
+				this.getImagemap(this.process);
 			},
 			getImagemap: function(callback) {
 				var that = this;
 				var page;
-				(this.currentPage === 1) 
-						? page = '' 
-						: page = '?page=' + this.currentPage;						
+				(this.currentPage === 1)
+						? page = ''
+						: page = '?page=' + this.currentPage;
 				var url = "http://images.endoftheinter.net/imagemap.php" + page;
 				if (window.location.protocol == 'https:') {
 					url = url.replace('http', 'https');
@@ -2016,7 +2013,6 @@ var messageList = {
 				xhr.open("GET", url, true);
 				xhr.onreadystatechange = function() {
 					if (xhr.readyState == 4 && xhr.status == 200) {
-						// set innerHTML to xhr response so we can iterate over imagemap elements
 						var html = document.createElement('html');
 						html.innerHTML = xhr.responseText;						
 						callback.call(that, html);
@@ -2024,7 +2020,7 @@ var messageList = {
 				}
 				xhr.send();
 			},			
-			processImagemap: function(imagemap) {
+			process: function(imagemap) {
 				var imageGrid = this.scrape(imagemap);
 				var infobar = imagemap.getElementsByClassName('infobar')[1];
 				var anchors = infobar.getElementsByTagName('a');					
@@ -2033,7 +2029,6 @@ var messageList = {
 				this.getDataForCache(imageGrid);
 			},
 			scrape: function(imagemap) {
-				// return grid of images from the imagemap html
 				var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
 				this.restore(function(cached) {
 					var imgs = imageGrid.getElementsByTagName('img');
@@ -2042,7 +2037,7 @@ var messageList = {
 						var src = img.src;
 						if (cached.imagemap 
 								&& cached.imagemap[src]) {
-							// replace img src with cached base64 strings to reduce load on eti servers
+							// replace img src with cached base64 strings
 							img.setAttribute('oldsrc', img.src);
 							img.src = cached.imagemap[src].data;							
 						}
@@ -2097,8 +2092,8 @@ var messageList = {
 					imageGrid.style.maxWidth = (width * 0.95) - 21 + 'px';
 				}
 				else {
-					// account for borderRadius in imageGrid maxWidth/maxHeight
-					// so that scroll bar doesn't overlap rounded corners
+					// subtract 6px from each end of scroll bar to prevent it from overlapping
+					// rounded corners of don't overlap rounded corners
 					imageGrid.style.maxWidth = (width * 0.95) - 6 + 'px';
 					imageGrid.style.maxHeight = ((height * 0.95) / 2)  - 6 + 'px';
 				}
@@ -2128,7 +2123,6 @@ var messageList = {
 				}
 			},			
 			getDataForCache: function(imageGrid) {
-				var that = this;	
 				var imgs = imageGrid.getElementsByTagName('img');
 				for (var i = 0, len = imgs.length; i < len; i++) {
 					var img = imgs[i];
@@ -2139,7 +2133,7 @@ var messageList = {
 					}
 					else {
 						var href = img.parentNode.href;
-					}	
+					}
 					this.convertToBase64(src, href, i, imgs);
 				}
 			},						
@@ -2155,26 +2149,25 @@ var messageList = {
 					canvas.width = img.width;
 					context.drawImage(img, 0, 0);
 					dataURI = canvas.toDataURL();
-					dataObject = 
+					var imageData = 
 					{
 							'dataURI': dataURI, 
 							'src': src, 
 							'href': href, 
 							'i': i
 					};
-					that.prepareForCache.call(that, dataObject, imgs);
+					that.prepareForCache.call(that, imageData, imgs);
 					canvas = null;
 				};
 				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
 			},			
-			prepareForCache: function(dataObject, imgs) {
+			prepareForCache: function(imageData, imgs) {
 				// thumbnails are always jpgs - fullsize image could have 
 				// a different file format (found in href)
-				var that = this;
-				var dataURI = dataObject.dataURI;
-				var href = dataObject.href;
-				var src = dataObject.src;
-				var i = dataObject.i;
+				var dataURI = imageData.dataURI;
+				var href = imageData.href;
+				var src = imageData.src;
+				var i = imageData.i;
 				var extension = href.match(/\.(gif|jpg|png)$/i)[0];
 				var fullsize = src.replace('.jpg', extension);
 				fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
@@ -2189,13 +2182,11 @@ var messageList = {
 					this.cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
 					if (i === imgs.length - 1) {
 						// convertToBase64 has finished encoding - update cache with new images
-						this.restore(function(old) {
-							that.saveHandler.call(that, old);
-						});
+						this.restore(this.updateCache);
 					}
 				}
 			},
-			saveHandler: function(old) {
+			save: function(old) {
 				if (!old.imagemap) {
 					// first time caching
 					var cache = this.cacheData;
@@ -2207,19 +2198,12 @@ var messageList = {
 					}
 					var cache = old.imagemap;
 				}
-				var that = this;
 				chrome.storage.local.set({"imagemap": cache}, function() {
-					// empty cache variables - not needed any more
-					that.cacheData = {};
-					cache = {};
-				});		
+					messageList.imagemap.cacheData = {};
+				});
 			},
 			restore: function(callback) {
 				chrome.storage.local.get("imagemap", function(cache) {
-					if (chrome.runtime.lastError) {
-						// this shouldn't happen...
-						console.log(chrome.runtime.lastError);
-					}
 					if (!cache) {
 						var emptyCache = {};
 						callback(emptyCache);
@@ -2264,7 +2248,7 @@ var messageList = {
 						var src = evt.target.src;
 					}
 					var href = evt.target.parentNode.href;					
-					var regex = /\.(gif|jpg|jpeg|png)$/i;
+					var regex = /\.(gif|jpg|png)$/i;
 					var extension = href.match(regex);
 					var extensionToReplace = src.match(regex);
 					// replace thumbnail file extension with file extension of fullsize image
@@ -2274,23 +2258,24 @@ var messageList = {
 				clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
 				chrome.runtime.sendMessage(clipboard, function(response) {
 					if (document.getElementById('search_results')) {
-						that.search.closePopup.call(that);
+						that.search.closePopup.bind(that);
 					}
 					else {
-						that.closePopup.call(that);
+						that.closePopup.bind(that);
 					}
 				});
 			},
 			closePopup: function() {
 				var div = document.getElementById('map_div');
-				var bodyClass = document.getElementsByClassName('body')[0];
-				if (div) {
-					document.body.removeChild(div);
-					bodyClass.style.opacity = 1;
-					document.body.style.overflow = 'initial';
-					bodyClass.removeEventListener('mousewheel', preventScroll);
+				if (!div) {
+					div = document.getElementById('search_results');				
 				}
-			},			
+				var bodyClass = document.getElementsByClassName('body')[0];
+				document.body.removeChild(div);
+				bodyClass.style.opacity = 1;
+				document.body.style.overflow = 'initial';
+				bodyClass.removeEventListener('mousewheel', preventScroll);
+			},
 			cacheData: {},
 			currentPage: 1,
 			lastPage: '?',
@@ -2299,39 +2284,34 @@ var messageList = {
 					var that = this;
 					var query = document.getElementById('image_search').value;					
 					if (/\S/.test(query)) {
-						var that = this;
 						this.lookup(query, function(results, query) {
-							that.checkExisting
-									.call(that, results, query);
+							if (!document.getElementById('search_results')) {
+								that.createPopup(query);
+							} else {
+								that.updatePopup(results, query);
+							}
 						});
 					}
 					else {
 						if (document.getElementById('search_results')) {
-							that.closePopup();
+							messageList.image.map.closePopup();
 						}
 					}
 				},
 				lookup: function(query, callback) {
-					var word = query;
 					var results = [];
 					messageList.image.map.restore(function(cached) {
 						var cache = cached.imagemap;
 						for (var i in cache) {
 							var filename = cache[i].filename;
-							if (filename.indexOf(word) > -1) {
+							if (filename.indexOf(query) > -1) {
 								results.push(i);
 							}
 						}
 						callback(results, query);
 					});				
-				},				
-				checkExisting: function (results, query) {
-					if (!document.getElementById('search_results')) {
-						this.createPopup(query);
-					}
-					this.prepare(results, query);
 				},
-				prepare: function(results, query) {
+				prepareResults: function(results, query) {
 					var that = this;
 					var resultsToShow = results;
 					if (results.length === 0) {
@@ -2443,7 +2423,6 @@ var messageList = {
 						}
 					}
 					else {
-						// account for header's style properties
 						results.style.maxHeight = ((height * 0.95) / 2) - 51 + 'px';
 						results.style.maxWidth = (width * 0.95) - 21 + 'px';
 						results.style.position = 'relative';
@@ -2455,15 +2434,6 @@ var messageList = {
 						}
 						header.appendChild(results);
 					}
-				},
-				closePopup: function() {
-					var div = document.getElementById('search_results');
-					if (div) {
-						var bodyClass = document.getElementsByClassName('body')[0];						
-						document.body.removeChild(div);
-						document.body.style.overflow = 'initial';
-						bodyClass.removeEventListener('mousewheel', preventScroll);
-					}
 				}
 			}
 		},
@@ -2472,7 +2442,12 @@ var messageList = {
 			for (var i = 0, len = mutations.length; i < len; i++) {
 				mutation = mutations[i];
 				if (messageList.config.resize_imgs) {
-					messageList.image.resize(mutation.target.childNodes[0]);
+					var addedNodes = mutation.addedNodes;
+					var addedNode;
+					for (var j = 0, nodesLength = addedNodes.length; j < nodesLength; j++) {
+						addedNode = addedNodes[j];
+						messageList.image.resize(addedNode);
+					}
 				}
 				if (mutation.type === 'attributes') {
 					// once they're loaded, thumbnails have /i/t/ in their
@@ -2659,42 +2634,117 @@ var messageList = {
 			return true;
 		}
 	},
-	like: function(node) {
-		var container = node.parentNode.parentNode
-		var message = node.parentNode.parentNode.getElementsByClassName('message')[0];
-		var nub = document.getElementsByClassName('quickpost-nub')[0];
-		var img = '<img src="http://i3.endoftheinter.net/i/n/698e5d838cd094148836a3a07168aca0/jameis thumbs up.png" />';
-		var username = document.getElementsByClassName('userbar')[0]
-				.getElementsByTagName('a')[0].innerHTML.replace(/ \((-?\d+)\)$/, "");
-		var poster = container.getElementsByTagName('a')[0].innerHTML + "'s";
-		if (document.getElementsByTagName('h2')[0].innerHTML.match('Anonymous')) {
-			username = "Human";
-			poster = "this";
-		}
-		var ins = img + ' ' + username + ' likes ' + poster + ' post';
-		var quickreply = document.getElementsByTagName('textarea')[0];
-		var qrtext = quickreply.value;
-		var oldtxt = '', newtxt = '';
-		var sig = true;
-		if (qrtext.match('---')) {
-			oldtxt = qrtext.split('---');
-			for (var i = 0; i < oldtxt.length - 1; i++) {
-				newtxt += oldtxt[i];
+	likeButton: {
+		process: function(node, templateNumber) {
+			var container = node.parentNode.parentNode;
+			var message = node.parentNode.parentNode.getElementsByClassName('message')[0];
+			var nub = document.getElementsByClassName('quickpost-nub')[0];
+			var quickreply = document.getElementsByTagName('textarea')[0];
+			if (document.getElementsByTagName('h2')[0].innerHTML.match('Anonymous')) {
+				var username = "Human";
+				var poster = "this";
 			}
-		} else {
-			sig = false;
-			newtxt = qrtext;
+			else {
+				var username = document.getElementsByClassName('userbar')[0]
+						.getElementsByTagName('a')[0].innerHTML.replace(/ \((-?\d+)\)$/, "");
+				var poster = container.getElementsByTagName('a')[0].innerHTML + "'s";
+			}		
+			if (templateNumber) {
+				var ins = messageList.config.custom_likes[templateNumber];
+				ins = ins.replace(/[username]/g, username);
+				ins = ins.replace(/[poster]/g, poster);
+			}
+			else {
+				var img = '<img src="http://i3.endoftheinter.net/i/n/698e5d838cd094148836a3a07168aca0/jameis thumbs up.png" />';	
+				var ins = img + ' ' + username + ' likes ' + poster + ' post';
+			}
+			var qrtext = quickreply.value;
+			var oldtxt = '', newtxt = '';			
+			if (qrtext.match('---')) {
+				// remove sig from post
+				oldtxt = qrtext.split('---');
+				for (var i = 0; i < oldtxt.length - 1; i++) {
+					newtxt += oldtxt[i];
+				}
+				newtxt += ins + '\n---' + oldtxt[oldtxt.length - 1];
+			}
+			else {			
+				newtxt = qrtext;
+				newtxt += ins;
+			}
+			var msgID = message.getAttribute('msgid');
+			var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});
+			quickreply.value = quotedMessage + '\n' + newtxt;
+			if (true) {
+				// click nub element to open quickpost area after appending text
+				nub.click();
+			}
+		},
+		showOptions: function() {
+			if (!document.getElementById('hold_menu')) {
+				var menuElement = document.createElement('span');				
+				var items = ['Placeholder 1', 'Placeholder 2', 'Placeholder 3'];
+				menuElement.id = 'hold_menu';				
+				menuElement.style.position = 'absolute';
+				menuElement.style.overflow = 'auto';
+				menuElement.style.padding = '3px 3px';
+				menuElement.style.borderStyle = 'solid';
+				menuElement.style.borderWidth = '2px';
+				menuElement.style.borderRadius = '3px';
+				menuElement.style.backgroundColor = $(document.body).css('background-color');
+				for (var i = 0, len = items.length; i < len; i++) {
+					var item = items[i];
+					populateMenu.call(this, item, i, menuElement);
+				}
+				messageList.cachedEvent.target.appendChild(menuElement);
+			}
+			
+			function populateMenu(item, index, menuElement) {
+				var menuSpan = document.createElement('span');
+				var menuItem = document.createElement('anchor');
+				var lineBreak = document.createElement('br');
+				menuSpan.className = 'unhigh_span';
+				menuItem.innerHTML = '&nbsp' + item + '&nbsp';
+				menuItem.href = '#like_custom_' + index;
+				menuItem.className = 'like_button_custom';
+				menuSpan.appendChild(menuItem);
+				menuElement.appendChild(menuSpan);
+				menuElement.appendChild(lineBreak);
+				menuItem.addEventListener('mouseenter', messageList.handle.mouseenter.bind(messageList));
+			}
+		},
+		checkHighlight: function(evt) {
+			console.log('checkHighlight');
+			var item = evt.target.parentNode;
+			if (item.className == 'unhigh_span') {
+				console.log('highlight');
+				highlight(item) 
+			}
+			else {
+				console.log('unhighlight');
+				unhighlight(item);
+			}
+			
+			function highlight(item) {
+				item.className = 'high_span';
+				item.style.backgroundColor = 'grey';
+			}
+			
+			function unhighlight(item) {
+				item.className = 'unhigh_span';
+				item.style.backgroundColor = 'initial';
+			}			
+		},
+		hideOptions: function() {
+			var menu = document.getElementById('hold_menu');
+			if (menu) {
+				menu.remove();
+			}
+			else {
+				console.log('no menu found');
+			}
 		}
-		if (sig)
-			newtxt += ins + '\n---' + oldtxt[oldtxt.length - 1];
-		else
-			newtxt += ins;
-		var msgID = message.getAttribute('msgid');
-		var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});
-		quickreply.value = quotedMessage + '\n' + newtxt;
-		// click nub element to open quickpost-body
-		nub.click();
-	},	
+	},
 	startBatchUpload: function(evt) {
 		var chosen = document.getElementById('batch_uploads');
 		if (chosen.files.length == 0) {
@@ -2811,18 +2861,13 @@ var messageList = {
 		ta.focus();
 	},
 	addListeners: function() {
-		var that = this;
-		var body = document.body;
-		
-		body.addEventListener('click', function(evt) {
-				that.handlers.clickEvent.call(that, evt);
-		});
-				
+		document.body.addEventListener('click', this.handle.mouseclick.bind(this));
+		// document.body.addEventListener('mousedown', this.handle.mousedown.bind(this));
+		// document.body.addEventListener('mouseup', this.handle.mouseup.bind(this));
+		// document.body.addEventListener('dragstart', this.handle.dragEvent.bind(this));
 		var searchBox = document.getElementById('image_search');			
 		if (searchBox) {
-			searchBox.addEventListener('keyup', function() {
-					that.handlers.searchEvent.call(that);
-			});
+			searchBox.addEventListener('keyup', this.handle.searchEvent.bind(this));
 		}
 	},
 	appendScripts: function() {
@@ -2832,7 +2877,6 @@ var messageList = {
 			templates.type = 'text/javascript';
 			templates.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
 			head.appendChild(templates);
-			console.log('appended scripts');
 		}
 	},	
 	newPage: new MutationObserver(function(mutations) {
@@ -2855,43 +2899,28 @@ var messageList = {
 					&& mutation.addedNodes[0].childNodes.length > 0) {
 				if (mutation.addedNodes[0].childNodes[0].className == 'message-container') {
 					// send new message container to livelinks method
-					console.log(mutation.addedNodes[0]);
-					messageList.handlers.newPost.call(messageList, mutation.addedNodes[0]);
+					messageList.handle.newPost.call(messageList, mutation.addedNodes[0]);
 				}
 			}
 		}
 	}),
-	initObserver: new MutationObserver(function(mutations) {
+	parseObserver: new MutationObserver(function(mutations) {
 		for (var i = 0, len = mutations.length; i < len; i++) {
 			var mutation = mutations[i];
 			if (mutation.addedNodes.length > 0) {
-				/*if (mutation.target.className == 'menubar'
-						&& mutation.addedNodes[0].innerHTML == 'Logout') {
-					messageList.passToFunctions(mutation.target);
-				}*/
-				/*if (mutation.target.id == 'bookmarks' 
-						&& mutation.addedNodes[0].innerHTML == '[+]') {
-					console.log('saved tags parsed');
-					console.log(mutation);
-				}
-				if (mutation.target.className == 'userbar' 
-						&& mutation.addedNodes[0].innerHTML == 'Help') {
-					console.log('userbar parsed');
-					console.log(mutation);
-					messageList.passToFunctions(mutation.target);
-				}*/
 				if (mutation.addedNodes[0].className == 'message-container') {
 					messageList.passToFunctions(mutation.addedNodes[0]);
 					messageList.links.check(mutation.addedNodes[0]);
-				}				
+				}
 				else if (mutation.addedNodes[0].tagName
 						&& mutation.addedNodes[0].tagName.match('H2')
 						&& messageList.config.dramalinks
-						&& !this.pm) {					
-					dramalinks.init(mutation.addedNodes[0]);	
+						&& !messageList.config.hide_dramalinks_topiclist
+						&& !this.pm) {
+					dramalinks.appendTo(mutation.addedNodes[0]);	
 				}
 				else if (mutation.target.className == 'infobar'
-					&& mutation.addedNodes[0].textContent.match('There')) {
+					&& mutation.addedNodes[0].textContent.match('There')) {					
 					messageList.passToFunctions(mutation.target);					
 				}
 				else if (mutation.addedNodes[0].value == 'Upload Image') {
@@ -2901,11 +2930,8 @@ var messageList = {
 		}	
 	}),
 	callFunctions: function(pm) {
-		// iterate over objects & call function if messageList.config value is true
-		var t0 = performance.now();
 		var msgs = document.getElementsByClassName('message-container');
 		var msg, len;
-		// cache objects
 		var pageFunctions = this.functions.infobar;
 		var postFunctions = this.functions.messagecontainer;
 		var quickpostFunctions = this.functions.quickpostbody;
@@ -2936,7 +2962,9 @@ var messageList = {
 			}
 		}
 		var element = document.getElementsByTagName('h2')[0];
-		dramalinks.init(element);
+		if (config.dramalinks && !config.hide_dramalinks_topiclist) {
+			dramalinks.appendTo(element);
+		}
 		// page will appear to have been fully loaded by this point
 		if (len == 4) {
 			// iterate over rest of messages
@@ -2972,22 +3000,24 @@ var messageList = {
 	},
 	passToFunctions: function(element) {
 		var config = this.config;
+		var pm = this.pm;
 		var elementName;
 		if (element.className) {		
 			elementName = element.className.replace('-', '');
+			if (elementName == 'messagecontainer') {
+				this.containersTotal++;
+			}
 		}
 		else {
 			elementName = element;
 		}
+		
 		var functions = this.functions[elementName];
 		for (var i in functions) {
-			if (config[i + this.pm]) {
-				functions[i](element, this.containers_total);
+			if (config[i + pm]) {
+				functions[i](element, this.containersTotal);
 			}
 		}		
-		if (elementName == 'messagecontainer') {
-			this.containers_total++;
-		}
 	},
 	prepareIgnoratorArray: function() {
 		this.ignores = this.config.ignorator_list.split(',');
@@ -2996,40 +3026,37 @@ var messageList = {
 			this.ignores[r] = ignore;
 		}	
 	},
+	addCSSRules: function() {
+		var sheet = document.styleSheets[0];
+		sheet.insertRule(".like_button_custom:hover { background-color: yellow; }", 1);
+	},
 	init: function(config) {
 		this.config = config.data;
-		this.config.tcs = config.tcs;
+		this.config.tcs = config.tcs;		
 		this.prepareIgnoratorArray();
+		this.globalPort = chrome.runtime.connect();
+		this.globalPort.onMessage.addListener(this.handle.ignoratorUpdate);
 		
-		if (!window.location.href.match('inboxthread.php')) {
-			if (this.config.dramalinks) {
-				chrome.runtime.sendMessage({
-						need : "dramalinks"
-				}, function(response) {
-					dramalinks.html = response.data;
-					dramalinks.config = messageList.config;
-				});
-			}
+		if (this.config.dramalinks && !window.location.href.match('inboxthread.php')) {
+			chrome.runtime.sendMessage({
+					need : "dramalinks"
+			}, function(response) {
+				dramalinks.html = response.data;					
+				dramalinks.config = messageList.config;
+			});
 		}
 		else {
 			this.pm = "_pm";		
 		}
-		// set up globalPort so we can communicate with background script
-		this.globalPort = chrome.runtime.connect();
-		this.globalPort.onMessage.addListener(this.handlers.message);
 		
 		if (document.readyState == 'loading') {
-			// apply DOM modifications as elements are parsed by browser
-			this.initObserver.observe(document.documentElement, {
+			this.parseObserver.observe(document.documentElement, {
 					childList: true,
 					subtree: true
 			});
-			document.addEventListener('DOMContentLoaded', function() {
-				messageList.handlers.loadEvent.call(messageList);
-			});
+			document.addEventListener('DOMContentLoaded', this.handle.loadEvent.bind(this));
 		}
 		else {
-			// DOM already loaded - use old method
 			this.callFunctions(this.pm);
 		}
 	}
