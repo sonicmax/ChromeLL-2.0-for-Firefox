@@ -37,8 +37,6 @@ var messageList = {
 	},
 	functions: {		
 		messagecontainer: {
-			// live is undefined unless these functions are called 
-			// from messageList.livelinks
 			eti_bash: function(msg, index) {
 				var top = msg.getElementsByClassName('message-top')[0];
 				anchor = document.createElement('a');
@@ -2187,12 +2185,12 @@ var messageList = {
 							'href': href, 
 							'i': i
 					};
-					that.prepareForCache.call(that, imageData, imgs);
+					that.prepareData.call(that, imageData, imgs);
 					canvas = null;
 				};
 				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
 			},			
-			prepareForCache: function(imageData, imgs) {
+			prepareData: function(imageData, imgs) {
 				// thumbnails are always jpgs - fullsize image could have 
 				// a different file format (found in href)
 				var dataURI = imageData.dataURI;
@@ -2217,20 +2215,20 @@ var messageList = {
 					}
 				}
 			},
-			save: function(old) {
+			updateCache: function(old) {				
 				if (!old.imagemap) {
 					// first time caching
 					var cache = this.cacheData;
 				}
 				else {
-					// add cache of current page to existing imagemap cache
+					// add current page to existing data
 					for (var i in this.cache) {
 						old.imagemap[i] = this.cacheData[i];							
 					}
 					var cache = old.imagemap;
 				}
 				chrome.storage.local.set({"imagemap": cache}, function() {
-					messageList.imagemap.cacheData = {};
+					messageList.image.map.cacheData = {};
 				});
 			},
 			restore: function(callback) {
@@ -3047,7 +3045,7 @@ var messageList = {
 		sheet.insertRule(".like_button_custom:hover { background-color: yellow; }", 1);
 	},
 	// 'global' vars
-	config: [],	
+	config: [],
 	ignores: {},
 	scrolling: false,
 	topsTotal: 0,
@@ -3060,7 +3058,7 @@ var messageList = {
 			users: {}
 		}
 	},
-	pm: '',	
+	pm: '',
 };
 
 chrome.runtime.sendMessage({
