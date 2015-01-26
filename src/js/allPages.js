@@ -225,7 +225,7 @@ var commonFunctions = {
 					}
 				}
 				i++;
-				if (i < tgt.length) {a
+				if (i < tgt.length) {
 					commonFunctions.asyncUpload(tgt, i);
 				}
 			}
