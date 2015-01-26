@@ -1,19 +1,41 @@
 var messageList = {
-	config: [],	
-	ignores: {},
-	scrolling: false,
-	topsTotal: 0,
-	containersTotal: 0,
-	debounceTimer: '',
-	menuOpenTimer: '',
-	ignorated: {
-		total_ignored: 0,
-		data: {
-			users: {}
+	init: function(config) {
+		this.config = config.data;
+		this.config.tcs = config.tcs;		
+		this.prepareIgnoratorArray();
+		// set up globalPort so we can interact with background page
+		this.globalPort = chrome.runtime.connect();
+		this.globalPort.onMessage.addListener(this.handleEvent.ignoratorUpdate);
+		
+		// check whether we need to display dramalinks ticker
+		if (this.config.dramalinks && !window.location.href.match('inboxthread.php')) {						
+			chrome.runtime.sendMessage({
+					need : "dramalinks"
+			}, function(response) {
+				dramalinks.html = response.data;					
+				dramalinks.config = messageList.config;
+			});
+		}
+		else {
+			// (user is in PM inbox)
+			this.pm = "_pm";		
+		}
+				
+		if (document.readyState == 'loading') {
+			// pass elements to functions as they are parsed by browser			
+			this.parseObserver.observe(document, {
+					childList: true,
+					subtree: true
+			});
+			// after DOMContentLoaded fires, listen for new posts
+			document.addEventListener('DOMContentLoaded', this.handleEvent.load.bind(this));
+		}
+		else {
+			// DOM already loaded - use getElementBy... methods to pass elements to functions
+			this.callFunctions(this.pm);
 		}
 	},
-	pm: '',
-	functions: {
+	functions: {		
 		messagecontainer: {
 			// live is undefined unless these functions are called 
 			// from messageList.livelinks
@@ -100,8 +122,8 @@ var messageList = {
 					anchor.href = '##like';
 					top.appendChild(divider);
 					top.appendChild(anchor);
-					anchor.addEventListener('mouseenter', messageList.handle.mouseenter.bind(messageList));
-					anchor.addEventListener('mouseleave', messageList.handle.mouseleave.bind(messageList));					
+					anchor.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
+					anchor.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));					
 				}
 			},	
 			number_posts: function(msg, index) {
@@ -649,8 +671,8 @@ var messageList = {
 					);
 				}
 			}			
-		},
-		misc: {		
+		},	
+		misc: {
 			highlight_tc: function() {
 				var tcs = messageList.tcs.getMessages();
 				var tc;
@@ -858,7 +880,7 @@ var messageList = {
 			}
 		}
 	},
-	handle: {
+	handleEvent: {
 		ignoratorUpdate: function(msg) {
 			if (msg.action !== 'ignorator_update') {	
 				switch (msg.action) {
@@ -882,7 +904,7 @@ var messageList = {
 				}
 			}
 		},
-		loadEvent: function() {
+		load: function() {
 			this.parseObserver.disconnect();
 			this.passToFunctions('misc');					
 			this.addListeners();
@@ -917,6 +939,7 @@ var messageList = {
 						functions[i](container, index, live);
 				}
 			}
+			this.addListeners(true);
 			this.links.check(container);
 			// send updated ignorator data to background script
 			this.globalPort.postMessage({
@@ -1002,8 +1025,8 @@ var messageList = {
 		mouseenter: function(evt) {
 			if (evt.target.className == 'like_button') {
 				this.cachedEvent = evt;
-				this.menuDebouncer = setTimeout(this.likeButton.showOptions
-					.bind(this.likeButton), 250);
+				this.menuDebouncer = setTimeout(
+						this.likeButton.showOptions.bind(this.likeButton), 250);
 				evt.preventDefault();	
 			}
 			else if (evt.target.className == 'username_anchor') {			
@@ -1022,10 +1045,10 @@ var messageList = {
 				evt.preventDefault();
 			}
 		},
-		searchEvent: function() {
+		search: function() {
 			// perform search after 500ms of no keyboard activity
-			clearTimeout(this.debounceTimer);
-			this.debounceTimer = setTimeout(function() {
+			clearTimeout(this.imagemapDebouncer);
+			this.imagemapDebouncer = setTimeout(function() {
 				messageList.image.map.search.init
 					.call(messageList.image.map.search);
 			}, 500);
@@ -1064,7 +1087,7 @@ var messageList = {
 				}
 			}
 		},
-		queryAPI: function (url, callback) {
+		checkAPI: function (url, callback) {
 			var splitURL = url.split('/').slice(-1);
 			var code = splitURL.join('/');
 			var xhrURL = 'http://gfycat.com/cajax/get/' + code;
@@ -1107,88 +1130,89 @@ var messageList = {
 			};
 			xhr.send();
 		},
-		placeholder: function(link) {
-			var gfyLink = link;
-			var url = gfyLink.getAttribute('href');
-			this.queryAPI(url, function(data) {
+		placeholder: function(gfycatLink) {
+			var url = gfycatLink.getAttribute('href');
+			this.checkAPI(url, function(data) {
 				if (data === "error") {
-					// revert class name to stop loader from detecting link
-					gfyLink.className = 'l';
-					return;
-				}
-				if (messageList.config.hide_nws_gfycat) {
-					if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
-						gfyLink.className = "l";
-						return;
-					}
-				}
-				messageList.gfycat.workSafe(gfyLink, data.nsfw, function(safe) {
-					if (!safe) {
-						if (messageList.config.hide_nws_gfycat) {
-							gfyLink.className = "l";
-							return;
-						}
-						else {
-							messageList.gfycat.addHoverLink(gfyLink, data.webm, data.width, data.height);
-							return;
-						}
-					}
-					else {
-						// create placeholder
-						var placeholder = document.createElement('div');
-						placeholder.className = 'gfycat';
-						placeholder.id = data.webm;
-						placeholder.setAttribute('name', 'placeholder');
-						placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
-								+ '</video>'
-								+ '<span style="display:none"><br><br>' + url + '</span>';
-						// prevent "Cannot read property 'replaceChild' of null" error
-						if (gfyLink.parentNode) {
-							gfyLink.parentNode.replaceChild(placeholder, gfyLink);
-							// check if placeholder is visible (some placeholders will be off screen)
-							var position = placeholder.getBoundingClientRect();
-							if (position.top > window.innerHeight) {
-								return;
-							} else {
-								// pass placeholder video element to embed function
-								messageList.gfycat.embed(placeholder);
-							}
-						}
-					}					
-				});
-			});
-		},
-		thumbnail: function(gfyLink) {
-			var display;
-			(messageList.config.show_gfycat_link)
-					? display = 'inline'
-					: display = 'none';
-			var url = gfyLink.getAttribute('href');
-			var splitURL = url.split('/').slice(-1);
-			var code = splitURL.join('/');
-			var thumbnail = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
-			this.queryAPI(url, function(data) {
-				if (data === "error") {
-					// revert class name to stop loader from detecting link
-					gfyLink.className = 'l';
+					// revert class name to stop gfycat loader from detecting link
+					gfycatLink.className = 'l';
 					return;
 				}
 				else if (messageList.config.hide_nws_gfycat) {
-					if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {
-						//console.log('NWS topic', gfyLink);
-						messageList.gfycat.embedOnHover(gfyLink, data.webm, data.width, data.height);						
+					if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
+						gfycatLink.className = "l";
 						return;
 					}
 				}
 				else {
-					messageList.gfycat.workSafe(gfyLink, data.nsfw, function(safe) {
+					messageList.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
 						if (!safe) {
 							if (messageList.config.hide_nws_gfycat) {
-								gfyLink.className = "l";
+								gfycatLink.className = "l";
 								return;
 							}
 							else {
-								messageList.gfycat.addHoverLink(gfyLink, data.webm, data.width, data.height);
+								messageList.gfycat.embedOnHover(gfycatLink, data.webm, data.width, data.height);
+								return;
+							}
+						}
+						else {
+							// create placeholder
+							var placeholder = document.createElement('div');
+							placeholder.className = 'gfycat';
+							placeholder.id = data.webm;
+							placeholder.setAttribute('name', 'placeholder');
+							placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
+									+ '</video>'
+									+ '<span style="display:none"><br><br>' + url + '</span>';
+							// prevent "Cannot read property 'replaceChild' of null" error
+							if (gfycatLink.parentNode) {
+								gfycatLink.parentNode.replaceChild(placeholder, gfycatLink);
+								// check if placeholder is visible (some placeholders will be off screen)
+								var position = placeholder.getBoundingClientRect();
+								if (position.top > window.innerHeight) {
+									return;
+								} else {
+									// pass placeholder video element to embed function
+									messageList.gfycat.embed(placeholder);
+								}
+							}
+						}			
+					});
+				}
+			});
+		},
+		thumbnail: function(gfycatLink) {
+			var display;
+			(messageList.config.show_gfycat_link)
+					? display = 'inline'
+					: display = 'none';
+			var url = gfycatLink.getAttribute('href');
+			var splitURL = url.split('/').slice(-1);
+			var code = splitURL.join('/');
+			var thumbnail = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
+			this.checkAPI(url, function(data) {
+				if (data === "error") {
+					// revert class name to stop loader from detecting link
+					gfycatLink.className = 'l';
+					return;
+				}
+				else if (messageList.config.hide_nws_gfycat) {
+					if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {
+						//console.log('NWS topic', gfycatLink);
+						messageList.gfycat.embedOnHover(gfycatLink, data.webm, data.width, data.height);						
+						return;
+					}
+				}
+				else {
+					messageList.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
+						if (!safe) {
+							if (messageList.config.hide_nws_gfycat) {
+								gfycatLink.className = "l";
+								return;
+							}
+							else {
+								messageList.gfycat.addHoverLink(gfycatLink, data.webm, data.width, data.height);
 								return;
 							}
 						}
@@ -1201,8 +1225,8 @@ var messageList = {
 									+ '" width="' + data.width + '" height="' + data.height + '">'
 									+ '</img>'
 									+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
-							if (gfyLink.parentNode) {
-								gfyLink.parentNode.replaceChild(placeholder, gfyLink);
+							if (gfycatLink.parentNode) {
+								gfycatLink.parentNode.replaceChild(placeholder, gfycatLink);
 								// add click listener to replace img with video
 								var img = placeholder.getElementsByTagName('img')[0];
 								img.title = "Click to play";
@@ -1234,17 +1258,17 @@ var messageList = {
 				}
 			});
 		},
-		workSafe: function(gfyLink, nsfw, callback) {
+		workSafe: function(gfycatLink, nsfw, callback) {
 			console.log('workSafe');
-			console.log(gfyLink);
-			console.log(gfyLink.parentNode);
+			console.log(gfycatLink);
+			console.log(gfycatLink.parentNode);
 			// check whether link is nws using gfycat api & post content
 			var userbar = document.getElementsByTagName('h2')[0];
-			var postHTML = gfyLink.parentNode.innerHTML;
+			var postHTML = gfycatLink.parentNode.innerHTML;
 			// only check topics without NWS/NLS tags
 			if (!userbar.innerHTML.match(/N[WL]S/)) {				
 				if (nsfw === '1' || postHTML.match(/(n[wl]s)/i)) {
-					gfyLink.className = 'nws_gfycat';
+					gfycatLink.className = 'nws_gfycat';
 					callback(false);
 				}
 				else {
@@ -1255,13 +1279,13 @@ var messageList = {
 				callback(true);
 			}
 		},
-		addHoverLink: function(gfyLink, url, width, height) {
+		embedOnHover: function(gfycatLink, url, width, height) {
 			// handle NWS videos
-			gfyLink.className = 'nws_gfycat';
-			gfyLink.id = url;
-			gfyLink.setAttribute('w', width);
-			gfyLink.setAttribute('h', height);		
-			$(gfyLink).hoverIntent(
+			gfycatLink.className = 'nws_gfycat';
+			gfycatLink.id = url;
+			gfycatLink.setAttribute('w', width);
+			gfycatLink.setAttribute('h', height);		
+			$(gfycatLink).hoverIntent(
 				function() {
 					// var that = this;
 					var color = $("table.message-body tr td.message").css("background-color");
@@ -2000,7 +2024,10 @@ var messageList = {
 			}
 		},
 		map: {
-			init: function() {	
+			cacheData: {},
+			currentPage: 1,
+			lastPage: '?',			
+			init: function() {
 				this.getImagemap(this.process);
 			},
 			getImagemap: function(callback) {
@@ -2280,13 +2307,11 @@ var messageList = {
 				document.body.style.overflow = 'initial';
 				bodyClass.removeEventListener('mousewheel', preventScroll);
 			},
-			cacheData: {},
-			currentPage: 1,
-			lastPage: '?',
 			search: {
 				init: function() {
 					var that = this;
-					var query = document.getElementById('image_search').value;					
+					var query = document.getElementById('image_search').value;
+					// make sure that query isnt empty
 					if (/\S/.test(query)) {
 						this.lookup(query, function(results, query) {
 							if (!document.getElementById('search_results')) {
@@ -2628,16 +2653,6 @@ var messageList = {
 			});
 		}	
 	},
-	autoscrollCheck: function(mutation) {
-		// checks whether user has scrolled to bottom of page
-		var position = mutation.getBoundingClientRect();
-		if (mutation.style.display == 'none'
-				|| position.top > window.innerHeight) {
-			return false;
-		} else {
-			return true;
-		}
-	},
 	likeButton: {
 		process: function(node, templateNumber) {
 			var container = node.parentNode.parentNode;
@@ -2714,30 +2729,8 @@ var messageList = {
 				menuSpan.appendChild(menuItem);
 				menuElement.appendChild(menuSpan);
 				menuElement.appendChild(lineBreak);
-				menuItem.addEventListener('mouseenter', messageList.handle.mouseenter.bind(messageList));
+				menuItem.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
 			}
-		},
-		checkHighlight: function(evt) {
-			console.log('checkHighlight');
-			var item = evt.target.parentNode;
-			if (item.className == 'unhigh_span') {
-				console.log('highlight');
-				highlight(item) 
-			}
-			else {
-				console.log('unhighlight');
-				unhighlight(item);
-			}
-			
-			function highlight(item) {
-				item.className = 'high_span';
-				item.style.backgroundColor = 'grey';
-			}
-			
-			function unhighlight(item) {
-				item.className = 'unhigh_span';
-				item.style.backgroundColor = 'initial';
-			}			
 		},
 		hideOptions: function() {
 			var menu = document.getElementById('hold_menu');
@@ -2747,6 +2740,16 @@ var messageList = {
 			else {
 				console.log('no menu found');
 			}
+		}
+	},	
+	autoscrollCheck: function(mutation) {
+		// checks whether user has scrolled to bottom of page
+		var position = mutation.getBoundingClientRect();
+		if (mutation.style.display == 'none'
+				|| position.top > window.innerHeight) {
+			return false;
+		} else {
+			return true;
 		}
 	},
 	startBatchUpload: function(evt) {
@@ -2865,20 +2868,18 @@ var messageList = {
 		ta.focus();
 	},
 	addListeners: function() {
-	addListeners: function() {
 		document.body.addEventListener('click', this.handleEvent.mouseclick.bind(this));		
 		var searchBox = document.getElementById('image_search');			
 		if (searchBox) {
 			searchBox.addEventListener('keyup', this.handleEvent.search.bind(this));
 		}		
-		if (this.config.user_info_popup) {
+		if (this.config.user_info_popup) {	
 			var tops = document.getElementsByClassName('message-top');
 			for (var i = 0, len = tops.length; i < len; i++) {
 				var top = tops[i];
 				var usernameAnchor = top.getElementsByTagName('a')[0];
 				usernameAnchor.className = 'username_anchor';
 				if (usernameAnchor.href.indexOf('http://endoftheinter.net/profile.php?user=') > -1) {
-					// capture both mouseenter & mouseleave events so we can use debouncing					
 					usernameAnchor.addEventListener('mouseenter', this.handleEvent.mouseenter.bind(this));
 					usernameAnchor.addEventListener('mouseleave', this.handleEvent.mouseleave.bind(this));
 				}
@@ -2914,7 +2915,7 @@ var messageList = {
 					&& mutation.addedNodes[0].childNodes.length > 0) {
 				if (mutation.addedNodes[0].childNodes[0].className == 'message-container') {
 					// send new message container to livelinks method
-					messageList.handle.newPost.call(messageList, mutation.addedNodes[0]);
+					messageList.handleEvent.newPost.call(messageList, mutation.addedNodes[0]);
 				}
 			}
 		}
@@ -3042,39 +3043,24 @@ var messageList = {
 		}	
 	},
 	addCSSRules: function() {
-		var sheet = document.styleSheets[0];
+		var sheet = document.styleSheets[0];		
 		sheet.insertRule(".like_button_custom:hover { background-color: yellow; }", 1);
 	},
-	init: function(config) {
-		this.config = config.data;
-		this.config.tcs = config.tcs;		
-		this.prepareIgnoratorArray();
-		this.globalPort = chrome.runtime.connect();
-		this.globalPort.onMessage.addListener(this.handle.ignoratorUpdate);
-		
-		if (this.config.dramalinks && !window.location.href.match('inboxthread.php')) {
-			chrome.runtime.sendMessage({
-					need : "dramalinks"
-			}, function(response) {
-				dramalinks.html = response.data;					
-				dramalinks.config = messageList.config;
-			});
+	// 'global' vars
+	config: [],	
+	ignores: {},
+	scrolling: false,
+	topsTotal: 0,
+	containersTotal: 0,
+	imagemapDebouncer: '',
+	menuDebouncer: '',
+	ignorated: {
+		total_ignored: 0,
+		data: {
+			users: {}
 		}
-		else {
-			this.pm = "_pm";		
-		}
-		
-		if (document.readyState == 'loading') {
-			this.parseObserver.observe(document.documentElement, {
-					childList: true,
-					subtree: true
-			});
-			document.addEventListener('DOMContentLoaded', this.handle.loadEvent.bind(this));
-		}
-		else {
-			this.callFunctions(this.pm);
-		}
-	}
+	},
+	pm: '',	
 };
 
 chrome.runtime.sendMessage({
