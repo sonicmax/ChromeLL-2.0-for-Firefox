@@ -168,7 +168,8 @@ var allPages = {
 			var user = document.createElement('div');
 			user.id = 'popup_user';
 			var ins;
-			for (var i = 0, link; link = links[i]; i++) {
+			for (var i = 0, len = links.length; i < len; i++) {
+				var link = links[i];
 				ins = document.createElement('span');
 				ins.className = 'popup_link';
 				ins.innerHTML = link;
@@ -179,15 +180,14 @@ var allPages = {
 			popup.insertBefore(info, null);
 			document.body.insertBefore(popup, null);
 			commonFunctions.hidePopup();
-			document.body.addEventListener('dblclick',
-					commonFunctions.handlePopup);
 			document.addEventListener('click', function(e) {
-				if (e.target.className != 'popup_link')
-					commonFunctions.hidePopup(e)
-			});
+				if (e.target.className != 'popup_link') {
+					commonFunctions.hidePopup.call(commonFunctions, e);
+				}
+			});			
 		});
 	}
-}
+};
 
 var commonFunctions = {
 	asyncUpload : function(tgt, i) {
@@ -225,7 +225,7 @@ var commonFunctions = {
 					}
 				}
 				i++;
-				if (i < tgt.length) {
+				if (i < tgt.length) {a
 					commonFunctions.asyncUpload(tgt, i);
 				}
 			}
@@ -241,61 +241,62 @@ var commonFunctions = {
 	},
 	handlePopup : function(evt) {
 		try {
-			var user = false;
-			if (evt.target.parentNode.parentNode.parentNode.parentNode.className === "message-container") {
+			var coords = {};
+			coords.x = evt.x;
+			coords.y = evt.y;
+			var user;
+			if (evt.target.parentNode.parentNode.parentNode.parentNode.className === "message-container") {		
 				user = evt.target.parentNode.parentNode.parentNode.parentNode
 						.getElementsByTagName('a')[0];
 				commonFunctions.currentPost = evt.target.parentNode.parentNode.parentNode.parentNode.parentNode;
 			} else {
-				user = evt.target.getElementsByTagName('a')[0];
-				commonFunctions.currentPost = evt.target.parentNode;
+				user = evt.target.parentNode.getElementsByTagName('a')[0];
+				commonFunctions.currentPost = evt.target.parentNode;			
 			}
 			commonFunctions.currentUser = user.innerHTML;
 			commonFunctions.currentID = user.href.match(/user=(\d+)/)[1];
 			var gs = '';
 			if (!config.hide_gs) {
-			if (commonFunctions.currentID > 22682) {
-				gs = ' (gs)\u2076';
-			} else if (commonFunctions.currentID > 21289) {
-				gs = ' (gs)\u2075';
-			} else if (commonFunctions.currentID > 20176) {
-				gs = ' (gs)\u2074';
-			} else if (commonFunctions.currentID > 15258) {
-				gs = ' (gs)\u00B3';
-			} else if (commonFunctions.currentID > 13498) {
-				gs = ' (gs)\u00B2';
-			} else if (commonFunctions.currentID > 10088) {
-				gs = ' (gs)';
+				if (commonFunctions.currentID > 22682) {
+					gs = ' (gs)\u2076';
+				} else if (commonFunctions.currentID > 21289) {
+					gs = ' (gs)\u2075';
+				} else if (commonFunctions.currentID > 20176) {
+					gs = ' (gs)\u2074';
+				} else if (commonFunctions.currentID > 15258) {
+					gs = ' (gs)\u00B3';
+				} else if (commonFunctions.currentID > 13498) {
+					gs = ' (gs)\u00B2';
+				} else if (commonFunctions.currentID > 10088) {
+					gs = ' (gs)';
+				}
 			}
-			}
-			// load user profile
-			var html, tds, td, profileStatus, oldUsername, profileRep;
-			var formerly, displayOnline, displayPunish, displayRep;
+			// load user profile;
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", user, true);
-			xhr.onreadystatechange = function () {
+			xhr.onreadystatechange = function() {
 				if (xhr.readyState == 4 && xhr.status == 200) {
-					html = document.createElement('html');
+					var html = document.createElement('html');
 					html.innerHTML = xhr.responseText;
-					tds = html.getElementsByTagName('td');
+					var tds = html.getElementsByTagName('td');
 					// scrape information from profile
 					for (var i = 0, len = tds.length; i < len; i++) {
-						td = tds[i];
+						var td = tds[i];
 						if (td.innerText.indexOf('Status') > -1) {
-							profileStatus = tds[i + 1].innerText;
+							var profileStatus = tds[i + 1].innerText;
 						}
 						if (td.innerText.indexOf('Formerly') > -1) {
-							oldUsername = tds[i + 1].innerText;
+							var oldUsername = tds[i + 1].innerText;
 						}
 						if (td.innerText.indexOf('Reputation') > -1) {
-							profileRep = tds[i + 1].innerText;
+							var profileRep = tds[i + 1].innerText;
 						}					
 					}
 					// prepare popup menu for updates
-					formerly = document.getElementById("namechange");
-					displayOnline = document.getElementById('online');
-					displayPunish = document.getElementById('punish');
-					displayRep = document.getElementById('rep');					
+					var formerly = document.getElementById("namechange");
+					var displayOnline = document.getElementById('online');
+					var displayPunish = document.getElementById('punish');
+					var displayRep = document.getElementById('rep');					
 					// update popup menu elements
 					displayRep.innerHTML = '<br>' + profileRep;
 					if (config.show_old_name) {
@@ -317,44 +318,56 @@ var commonFunctions = {
 				}
 			}
 			xhr.send();
-			// create popup menu
-			document.getElementById('popup_user').innerHTML = '<div id="username">' + commonFunctions.currentUser + " " + gs + ' <span class="popup_uid">' + commonFunctions.currentID + '</div>'
-			+ '<span class="popup_uid"><div id="namechange"> </div>'
-			+ '<span class="popup_uid"><p><div id="rep"><br>loading...</div></p>' 
-			+ '<div id="online"></div><div id="punish"></div><div id="clip"></div></span>';
-			var mTop = 10;
-			var mLeft = -35;
-			var popup_div_style = document.getElementById('user-popup-div').style;
-			popup_div_style.top = (evt.pageY + mTop) + "px";
-			popup_div_style.left = (evt.pageX + mLeft) + "px";
-			popup_div_style.display = 'block';
+			document.getElementById('popup_user').innerHTML = '<div id="username">' + commonFunctions.currentUser + " " + gs 
+					+ ' <span class="popup_uid">' + commonFunctions.currentID + '</div>'
+					+ '<span class="popup_uid"><div id="namechange"> </div>'
+					+ '<span class="popup_uid"><p><div id="rep"><br>loading...</div></p>' 
+					+ '<div id="online"></div><div id="punish"></div><div id="clip"></div></span>';
+			var popupDiv = document.getElementById('user-popup-div');
+			popupDiv.style.top = (evt.y + 10) + "px";
+			popupDiv.style.left = (evt.x - 30) + "px";
+			popupDiv.style.display = 'block';			
+			setTimeout(function() {
+				document.addEventListener('mousemove', commonFunctions.mousemoveHandler);
+			}, 1500);
 			if (document.selection)
 				document.selection.empty();
 			else if (window.getSelection)
 				window.getSelection().removeAllRanges();
 		} catch (e) {
-			// ignore - element not useful for user data
+			console.log(e);
 		}
 	},
-	hidePopup : function() {
+	hidePopup: function() {
 		document.getElementById('user-popup-div').style.display = 'none';
+		document.removeEventListener('mousemove', this.mousemoveHandler);
 	},
-	popupClick : function(evt) {
+	mousemoveHandler: function(evt, coords) {
+		if (evt.target.className == 'message'
+				|| evt.target.className == 'message-container'
+				|| evt.target.className == 'message-top'
+				|| evt.target.className.match(/bar/)
+				|| evt.target.className == 'body') {
+			commonFunctions.hidePopup();
+		}
+	},
+	popupClick: function(evt) {
 		var user = commonFunctions.currentUser.toLowerCase();
-		var functions, list, userToCheck, target, type;
-		if (typeof (messageList) != 'undefined') {
+		var list = false;
+		var userToCheck;
+		if (typeof (messageList) !== 'undefined') {			
 			list = true;
 			var containers = document.getElementsByClassName('message-container');
 			var container;
-			functions = messageList.posts;
+			var functions = messageList.functions.messagecontainer;
 		}
-		else {			
+		else {		
 			var trs = document.getElementsByTagName('tr');
 			var tr;
-			functions = topicList.functions;
+			var functions = topicList.functions;
 		}
-		target = commonFunctions.currentPost;
-		type = evt.target.innerHTML;
+		var target = commonFunctions.currentPost;
+		var type = evt.target.innerHTML;
 		if (config.debug) {
 			console.log(type, commonFunctions.currentUser);
 		}
@@ -372,22 +385,21 @@ var commonFunctions = {
 				});
 				if (list) {
 					messageList.config.ignorator_list = config.ignorator_list;
-					// update config object in messageList script
 					for (var i = 0, len = containers.length; i < len; i++) {
 						container = containers[i];
-						 messageList.posts.ignorator_messagelist(container);
+						functions.ignorator_messagelist(container);
 					}
 				}
 				else {
 					topicList.config.ignorator_list = config.ignorator_list;
-					// update config object in topicList object
+					topicList.createArrays();
 					for (var i = 1, len = trs.length; i < len; i++) {
 						tr = trs[i];
-						topicList.functions.ignorator_topiclist(tr, i);
+						functions.ignorator_topiclist(tr, i);
 					}
 				}
-				commonFunctions.hidePopup();
 				evt.target.innerHTML = "IGNORATE";
+				commonFunctions.hidePopup();
 				break;
 			case "IGNORATE":
 				evt.target.innerHTML = "IGNORATE?";
@@ -524,13 +536,13 @@ var commonFunctions = {
 					if (config[i]) {
 						allPages[i]();
 					}
-				}
+				}				
 			} catch (err) {
 				console.log("error in " + i + ":", err);
 			}		
 		});
 	}
-}
+};
 
 function hideOptions() {
 	var div = document.getElementById('options_div');
@@ -588,4 +600,9 @@ chrome.runtime.onMessage.addListener(function(msg) {
 	}
 });
 
-commonFunctions.init();
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', commonFunctions.init);
+}
+else {
+	commonFunctions.init();
+}

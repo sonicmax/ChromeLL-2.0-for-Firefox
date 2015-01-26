@@ -1002,21 +1002,25 @@ var messageList = {
 		mouseenter: function(evt) {
 			if (evt.target.className == 'like_button') {
 				this.cachedEvent = evt;
-				this.menuOpenTimer = setTimeout(this.likeButton.showOptions
+				this.menuDebouncer = setTimeout(this.likeButton.showOptions
 					.bind(this.likeButton), 250);
 				evt.preventDefault();	
 			}
-			else if (evt.target.className == 'like_button_custom') {	
-				this.likeButton.checkHighlight.bind(this.likeButton);
-				evt.preventDefault();	
+			else if (evt.target.className == 'username_anchor') {			
+				commonFunctions.cachedEvent = evt;
+				this.popupDebouncer = setTimeout(function() {
+						commonFunctions.handlePopup
+								.call(commonFunctions, commonFunctions.cachedEvent);							
+				}, 1000);
 			}
 		},
 		mouseleave: function(evt) {
-			clearTimeout(this.menuOpenTimer);
+			clearTimeout(this.menuDebouncer);
+			clearTimeout(this.popupDebouncer);
 			if (document.getElementById('hold_menu')) {
 				this.likeButton.hideOptions();
 				evt.preventDefault();
-			}			
+			}
 		},
 		searchEvent: function() {
 			// perform search after 500ms of no keyboard activity
@@ -2861,13 +2865,24 @@ var messageList = {
 		ta.focus();
 	},
 	addListeners: function() {
-		document.body.addEventListener('click', this.handle.mouseclick.bind(this));
-		// document.body.addEventListener('mousedown', this.handle.mousedown.bind(this));
-		// document.body.addEventListener('mouseup', this.handle.mouseup.bind(this));
-		// document.body.addEventListener('dragstart', this.handle.dragEvent.bind(this));
+	addListeners: function() {
+		document.body.addEventListener('click', this.handleEvent.mouseclick.bind(this));		
 		var searchBox = document.getElementById('image_search');			
 		if (searchBox) {
-			searchBox.addEventListener('keyup', this.handle.searchEvent.bind(this));
+			searchBox.addEventListener('keyup', this.handleEvent.search.bind(this));
+		}		
+		if (this.config.user_info_popup) {
+			var tops = document.getElementsByClassName('message-top');
+			for (var i = 0, len = tops.length; i < len; i++) {
+				var top = tops[i];
+				var usernameAnchor = top.getElementsByTagName('a')[0];
+				usernameAnchor.className = 'username_anchor';
+				if (usernameAnchor.href.indexOf('http://endoftheinter.net/profile.php?user=') > -1) {
+					// capture both mouseenter & mouseleave events so we can use debouncing					
+					usernameAnchor.addEventListener('mouseenter', this.handleEvent.mouseenter.bind(this));
+					usernameAnchor.addEventListener('mouseleave', this.handleEvent.mouseleave.bind(this));
+				}
+			}
 		}
 	},
 	appendScripts: function() {
