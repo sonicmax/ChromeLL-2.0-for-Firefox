@@ -634,6 +634,7 @@ span.desc {
 			<h1 class="title">ChromeLL</h1>	
 			<ul id="navbar">
 				<li class="navbar-item navbar-item-selected options_navigation_link" id="general_link">General</li>
+				<li class="navbar-item options_navigation_link" id="sync_link">Sync</li>
 				<li class="navbar-item options_navigation_link" id="ignorator_link">Ignorator</li>
 				<li class="navbar-item options_navigation_link" id="highlighter_link">User highlighter</li>
 				<!--<li class="navbar-item options_navigation_link" id="rep_link">Rep highlights</li>-->
@@ -743,7 +744,7 @@ span.desc {
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="user_info_popup" />
-											<span>Double click box surrounding username for settings/info popup</span>
+											<span>Hover over username for settings/info popup</span>
 										</label>
 									</div>
 									<!--
@@ -803,38 +804,6 @@ span.desc {
 									</div>
 								</div>
 							</section>
-							<!--<div style="display:none">-->
-								<section>
-									<h3>Chrome Sync</h3>
-									<div>
-										<span class="beta_info"><b>beta!</b> Make a backup of your config(s) from the about page. Do not sync highlights if you have &gt; 40 highlighted users.</span>
-										<div class="checkbox">
-											<label>
-												<input type="checkbox" id="sync_cfg" checked="false" disabled="disabled" />
-												<span>Sync configuration with chrome profile</span>
-											</label>
-										</div>
-										<div class="checkbox subbox">
-											<label>
-												<input type="checkbox" id="sync_userhl" disabled="disabled" />
-												<span>Sync user highlights</span>
-											</label>
-										</div>
-										<div class="checkbox subbox">
-											<label>
-												<input type="checkbox" id="sync_usernotes" disabled="disabled" />
-												<span>Sync usernotes</span>
-											</label>
-										</div>
-										<div class="checkbox subbox">
-											<label>
-												<input type="checkbox" id="sync_ignorator" disabled="disabled" />
-												<span>Sync ignorator</span>
-											</label>
-										</div>
-									</div>
-								</section>
-							<!--</div>-->
 							<section>
 								<h3>Notifications</h3>
 								<div>
@@ -854,6 +823,49 @@ span.desc {
 							</section>
 						</div>
 						
+						<div class="page hidden" id="sync_page">
+							<h1>Sync</h1>
+							<section>
+								<h3>Settings</h3>
+								<div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="sync_cfg" />
+											<span>Sync ChromeLL settings with Google Account
+											</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="sync_userhl" />
+											<span>Sync user highlights</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="sync_usernotes" />
+											<span>Sync usernotes</span>
+										</label>
+									</div>
+									<div class="checkbox subbox">
+										<label>
+											<input type="checkbox" id="sync_ignorator" />
+											<span>Sync ignorator</span>
+										</label>
+									</div>
+								</div>
+							</section>					
+							<section>
+								<h3>Dev stuff</h3>
+								<div>
+									<input type="button" value="Force save sync" id="savesync" />
+									<input type="button" value="Force load sync" id="loadsync" />
+									<br><br>
+									<textarea id="fsync_ta" style="width: 90%; height: 100px; border: 1px solid grey;"></textarea>
+								</div>
+							</section>
+						</div>
+
 						<div class="page hidden" id="ignorator_page">
 						<h1>Ignorator</h1>
 							<section>
@@ -1150,7 +1162,7 @@ span.desc {
 												</div>
 										</div>
 								</section>
-						</div>			
+						</div>				
 						
 						<div class="page hidden" id="topiclist_page">
 							<h1>Topic List Enhancements</h1>
@@ -1621,7 +1633,6 @@ span.desc {
 						</section>		
 					</div>
 					
-					
 					<div class="page hidden" id="profile_page">
 						<h1>Profile</h1>
 						<section>
@@ -1775,20 +1786,23 @@ span.desc {
 								</div>
 						</section>
 						<section>
-							<h3>Contents:</h3>
+							<h3>Contents:
+								<select id="cache_sort" style="float:left;">
+									<option disabled>Sort by...</option>
+									<option value="a_z">A-Z</option>
+									<option value="z_a">Z-A</option>
+									<option value="filetype">Filetype</option>
+									<option value="default">Undo</option>
+								</select>							
+							</h3>
 							<img class="loading" id="loading_img" src='/src/images/loading.png' width="50px" height="50px"/>
 							<table id="cache_contents" border=1 style="display:none;">
 								<tr>
 									<td><b>Filename:</b>
-										<select id="cache_sort" style="float:right;">
-											<option>Options...</option>
-											<option value="a_z">Sort by name (ascending)</option>
-											<option value="z_a">Sort by name (descending)</option>
-											<option value="filetype">Sort by filetype</option>
-											<option value="default">Undo</option>
-										</select>
+									<input type="text" id="imagemap_filename_search" placeholder="Search imagemap..." style="float:right;">
 									</td>
-									<td><b>URL:</b></td>							
+									<td><b>URL:</b>
+									</td>							
 								</tr>
 							</table>						
 						</section>
@@ -1819,15 +1833,6 @@ span.desc {
 								<br />Thumbnail expansion (and other bugs) fixed and enhanced by <a href="https://endoftheinter.net/profile.php?user=1332">xDrVonScottx</a>
 								<br />Special thanks to <a href="https://endoftheinter.net/profile.php?user=3968">Letters</a> for creating the <a href="http://eti-stats.herokuapp.com/tools/clean_ignorator/">Ignorator Cleaner</a> API
 								<!--<br />Special thanks to <a href="https://endoftheinter.net/profile.php?user=25111">chrls</a> for creating the rep highlighter backend-->
-							</div>
-						</section>
-						<section>
-							<h3>Sync</h3>
-							<div>
-								<input type="button" value="Force save sync" id="savesync" />
-								<input type="button" value="Force load sync" id="loadsync" />
-								<br><br>
-								<textarea id="fsync_ta" style="width: 90%; height: 100px; border: 1px solid grey;"></textarea>
 							</div>
 						</section>
 						<section>
