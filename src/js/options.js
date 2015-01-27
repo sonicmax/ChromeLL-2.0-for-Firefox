@@ -54,7 +54,180 @@ $(document)
 				});
 
 var config = {
-	cache: {},
+	init: function() {
+		console.log('loading config');
+		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
+		var checkboxes = $(":checkbox");
+		for ( var i in checkboxes) {
+			checkboxes[i].checked = cfg[checkboxes[i].id];
+		}
+		var textboxes = $(":text");
+		for (var i in textboxes) {
+			if (textboxes[i].name
+					&& (textboxes[i].name.match('(user|keyword|tag)_highlight_') 
+							|| textboxes[i].name.match('user_book') 
+							|| textboxes[i].name.match('snippet') 
+							|| textboxes[i].name.match('rep_ignore') 
+							|| textboxes[i].name.match('users') 
+							|| textboxes[i].name.match('token') 
+							|| textboxes[i].name.match('post_template'))) {
+				// console.log('found a textbox to ignore: ' + textboxes[i]);
+			} else if (cfg[textboxes[i].id]) {
+				textboxes[i].value = cfg[textboxes[i].id];
+			}
+		}
+		for ( var j in cfg.user_highlight_data) {
+			document.getElementsByClassName('user_name')[document
+					.getElementsByClassName('user_name').length - 1].value = j;
+			document.getElementsByClassName('header_bg')[document
+					.getElementsByClassName('header_bg').length - 1].value = cfg.user_highlight_data[j].bg;
+			document.getElementsByClassName('header_color')[document
+					.getElementsByClassName('header_color').length - 1].value = cfg.user_highlight_data[j].color;
+			config.ui.addDiv.userHighlight();
+		}
+		for ( var j in cfg.bookmark_data) {
+			document.getElementsByClassName('bookmark_name')[document
+					.getElementsByClassName('bookmark_name').length - 1].value = j;
+			document.getElementsByClassName('bookmark_tag')[document
+					.getElementsByClassName('bookmark_tag').length - 1].value = cfg.bookmark_data[j];
+			config.ui.addDiv.bookmarkName();
+		}
+		for ( var j in cfg.snippet_data) {
+			document.getElementsByClassName('snippet_name')[document
+					.getElementsByClassName('snippet_name').length - 1].value = j;
+			document.getElementsByClassName('snippet')[document
+					.getElementsByClassName('snippet').length - 1].value = cfg.snippet_data[j];
+			config.ui.addDiv.snippetName();
+		}
+		for (var j = 0; cfg.keyword_highlight_data[j]; j++) {
+			document.getElementsByClassName('keyword')[document
+					.getElementsByClassName('keyword').length - 1].value = cfg.keyword_highlight_data[j].match;
+			document.getElementsByClassName('keyword_bg')[document
+					.getElementsByClassName('keyword_bg').length - 1].value = cfg.keyword_highlight_data[j].bg;
+			document.getElementsByClassName('keyword_color')[document
+					.getElementsByClassName('keyword_color').length - 1].value = cfg.keyword_highlight_data[j].color;
+			config.ui.addDiv.keywordHighlight();
+		}
+		for (var j = 0; cfg.tag_highlight_data[j]; j++) {
+			document.getElementsByClassName('tag')[document
+					.getElementsByClassName('tag').length - 1].value = cfg.tag_highlight_data[j].match;
+			document.getElementsByClassName('tag_bg')[document
+					.getElementsByClassName('tag_bg').length - 1].value = cfg.tag_highlight_data[j].bg;
+			document.getElementsByClassName('tag_color')[document
+					.getElementsByClassName('tag_color').length - 1].value = cfg.tag_highlight_data[j].color;
+			config.ui.addDiv.tagHighlight();
+		}
+		for ( var j in cfg.post_template_data) {
+			document.getElementsByClassName('template_text')[document
+					.getElementsByClassName('template_text').length - 1].value = cfg.post_template_data[j].text;
+			document.getElementsByClassName('template_title')[document
+					.getElementsByClassName('template_title').length - 1].value = j;
+			config.ui.addDiv.postTemplate();
+		}
+		document.getElementById('clear_notify').value = cfg.clear_notify;
+		document.addEventListener('keyup', function(evt) {
+			if (!evt.target.name)
+				return;
+			if (evt.target.name == "user_highlight_username") {
+				var datas = document.getElementById('user_highlight')
+						.getElementsByClassName('user_name');
+				var empty = false;
+				for (var i = 1; datas[i]; i++) {
+					if (datas[i].value == '')
+						empty = true;
+				}
+				if (!empty)
+					config.ui.addDiv.userHighlight();
+			}
+
+			if (evt.target.name == "user_book_name") {
+				var datas = document.getElementById('bookmarked_tags')
+						.getElementsByClassName('bookmark_name');
+				var empty = false;
+				for (var i = 1; datas[i]; i++) {
+					if (datas[i].value == '')
+						empty = true;
+				}
+				if (!empty)
+					config.ui.addDiv.bookmarkName();
+			}
+			
+			if (evt.target.name == "user_snippet") {
+				var datas = document.getElementById('snippets')
+						.getElementsByClassName('snippet_name');
+				var empty = false;
+				for (var i = 1; datas[i]; i++) {
+					if (datas[i].value == '')
+						empty = true;
+				}
+				if (!empty)
+					config.ui.addDiv.snippetName();
+			}
+
+			if (evt.target.name == "post_template_title") {
+				var datas = document.getElementById('post_template')
+						.getElementsByClassName('template_title');
+				var empty = false;
+				for (var i = 1; datas[i]; i++) {
+					if (datas[i].value == '')
+						empty = true;
+				}
+				if (!empty)
+					config.ui.addDiv.postTemplate();
+			}
+			if (evt.target.name == "keyword_highlight_keyword") {
+				var datas = document.getElementById('keyword_highlight')
+						.getElementsByClassName('keyword');
+				var empty = false;
+				for (var i = 1; datas[i]; i++) {
+					if (datas[i].value == '')
+						empty = true;
+				}
+				if (!empty)
+					config.ui.addDiv.keywordHighlight();
+			}
+			if (evt.target.name == "tag_highlight_keyword") {
+				var datas = document.getElementById('tag_highlight')
+						.getElementsByClassName('tag');
+				var empty = false;
+				for (var i = 1; datas[i]; i++) {
+					if (datas[i].value == '')
+						empty = true;
+				}
+				if (!empty)
+					config.ui.addDiv.tagHighlight();
+			}
+		});
+		// show version
+		var app = chrome.app.getDetails();
+		document.getElementById('version').innerText = app.version;
+		document.getElementById('downloadcfg').href = config.download();
+		// show size on disk of imagemap cache
+		chrome.storage.local.getBytesInUse("imagemap", function(bytes) {
+			var megabytes = bytes / 1048576;
+			// round to 2 decimal places
+			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100;
+		});
+		if (document.readyState == 'loading') {
+			document.addEventListener('DOMContentLoaded', function() {
+				config.ui.hideMenus();
+				config.ui.setColorPicker();
+				config.listeners.menuVisibility();
+				config.listeners.click();
+				config.listeners.change();
+				config.ui.populateCacheTable();
+				config.save();
+			});
+		} else {
+			config.ui.hideMenus();
+			config.ui.setColorPicker();
+			config.listeners.menuVisibility();
+			config.listeners.click();
+			config.listeners.change();
+			config.ui.populateCacheTable();
+			config.save();
+		}		
+	},	
 	functions: {
 		cleanIgnorator: function() {
 			var cfg = JSON.parse(localStorage['ChromeLL-Config']);
@@ -282,65 +455,91 @@ var config = {
 		sortCache: function(sortType) {
 			if (sortType === 'default') {
 				config.ui.populateCacheTable(sortType);
-				return;
 			}
-			var filenames = [];
-			var srcs = [];
-			var duplicateCheck = {};
-			var filetypes = {};
-			config.cache.restore(function(cached) {
-				var cache = cached.imagemap;
-				if (sortType === 'filetype') {
-					filetypes["none"] = [];
-					filetypes[".gif"] = [];
-					filetypes[".jpg"] = [];
-					filetypes[".jpeg"] = [];
-					filetypes[".png"] = [];
-					for (var src in cache) {
-						var filename = cache[src].filename;
-						var extension = filename.match(/\.(gif|jpg|jpeg|png)$/i);
-						if (extension) {
-							filetypes[extension[0]].push(filename);
-						} else {							
-							filetypes["none"].push(filename);
+			else {
+				var filenames = [];
+				var results = [];
+				var duplicateCheck = {};
+				var filetypes = {};
+				config.cache.restore(function(cached) {
+					var cache = cached.imagemap;
+					if (sortType === 'filetype') {
+						filetypes["none"] = [];
+						filetypes[".gif"] = [];
+						filetypes[".jpg"] = [];
+						filetypes[".jpeg"] = [];
+						filetypes[".png"] = [];
+						for (var src in cache) {
+							var filename = cache[src].filename;
+							var extension = filename.match(/\.(gif|jpg|jpeg|png)$/i);
+							if (extension) {
+								filetypes[extension[0]].push(filename);
+							} else {		
+								filetypes["none"].push(filename);
+							}
 						}
-					}
-					for (var filetype in filetypes) {
-						if (filetypes[filetype] === []) {
-							return;
-						}
-						else {
-							filenames = filenames.concat(filetypes[filetype]);
-						}
-					}
-				}
-				else {
-					for (var src in cache) {
-						var filename = cache[src].filename;
-						filenames.push(filename);
-					}
-					filenames.sort()		
-					if (sortType === 'z_a') {
-						filenames.reverse();
-					}
-				}
-				// iterate over filenames array and match with their respective src values from cache
-				for (var i = 0, len = filenames.length; i < len; i++) {
-					var sortedFilename = filenames[i];
-					for (var src in cache) {
-						var cacheFilename = cache[src].filename;
-						if (cacheFilename == sortedFilename) {
-							if (!duplicateCheck[src]) {
-								// check that src hasn't been pushed to array before - this ensures that
-								//  duplicate filenames arent assigned the same src value
-								srcs.push(src);
-								duplicateCheck[src] = {"filename": sortedFilename, "index": i};
+						for (var filetype in filetypes) {
+							if (filetypes[filetype] === []) {
+								return;
+							}
+							else {
+								filenames = filenames.concat(filetypes[filetype]);
 							}
 						}
 					}
-				}
-				config.ui.populateCacheTable(srcs);				
-			});
+					else {
+						for (var src in cache) {
+							var filename = cache[src].filename;
+							filenames.push(filename);
+						}
+						filenames.sort()		
+						if (sortType === 'z_a') {
+							filenames.reverse();
+						}
+					}
+					// iterate over filenames array and match with their respective src values from cache
+					for (var i = 0, len = filenames.length; i < len; i++) {
+						var sortedFilename = filenames[i];
+						for (var src in cache) {
+							var cacheFilename = cache[src].filename;
+							if (cacheFilename == sortedFilename) {
+								if (!duplicateCheck[src]) {
+									// check that src hasn't been pushed to array before - this ensures that
+									// duplicate filenames arent assigned the same src value
+									results.push(src);
+									duplicateCheck[src] = {"filename": sortedFilename, "index": i};
+								}
+							}
+						}
+					}
+					config.ui.populateCacheTable(results);				
+				});
+			}
+		},
+		searchCache: function() {
+			var query = document.getElementById('imagemap_search').value;
+			var results = [];
+			var duplicateCheck = {};
+			if (/\S/.test(query)) {
+				config.cache.restore(function(cached) {
+					var cache = cached.imagemap;
+					for (var src in cache) {
+						var filename = cache[src].filename;
+						// check that src hasn't been pushed to array before - this ensures that
+						// duplicate filenames arent assigned the same src value
+						if (!duplicateCheck[src]) {
+							if (filename.indexOf(query) > -1) {
+								results.push(src);
+								duplicateCheck[src] = filename;
+							}
+						}
+					}
+					config.ui.populateCacheTable(results);
+				});
+			}
+			else {
+				config.ui.populateCacheTable('default');
+			}
 		},
 		emptyCache: function() {
 			chrome.storage.local.remove('imagemap', function() {
@@ -371,16 +570,21 @@ var config = {
 				element.addEventListener('click', config.functions[functionName]);
 			}
 		},
-		change: function() {
+		change: function() {			
 			var restoreCfg = document.getElementById('restorecfg');
 			var table = document.getElementById('cache_contents');
 			var dropdown = document.getElementById('cache_sort');
-			var keyupTimer;
-			var cacheTimer;
-			// use debouncing to prevent script from calling config.save after every keystroke
-			document.addEventListener('keyup', function() {
-				clearTimeout(keyupTimer);
-				keyupTimer = setTimeout(config.save, 500);
+			var keyupTimer, cacheTimer, searchTimer;		
+			// use debouncing to prevent script from calling event handler after each keystroke
+			document.addEventListener('keyup', function(evt) {
+				if (evt.target.id == 'imagemap_search') {
+					clearTimeout(searchTimer);
+					searchTimer = setTimeout(config.functions.searchCache, 500);
+				}
+				else {
+					clearTimeout(keyupTimer);
+					keyupTimer = setTimeout(config.save, 500);
+				}
 			});
 			// call config.save if checkbox value is changed
 			document.addEventListener('change', config.save);
@@ -392,7 +596,7 @@ var config = {
 				var newFilename = evt.target.value;
 				var src = evt.target.id;
 				if (src && newFilename) {					
-					config.cache[src] = newFilename;
+					config.cache.data[src] = newFilename;
 				}
 				clearTimeout(cacheTimer);
 				cacheTimer = setTimeout(config.cache.save, 500);				
@@ -410,7 +614,7 @@ var config = {
 				element = document.getElementById(hiddenOptions[i]);
 				element.addEventListener('change', config.ui.hideMenus);
 			}
-		}
+		}		
 	},
 	ui: {
 		hideMenus: function() {
@@ -585,6 +789,48 @@ var config = {
 			}
 		}
 	},
+	cache: {
+		save: function() {
+			var cacheData = config.cache.data;
+			config.cache.restore(function(cached) {
+				var cache = cached.imagemap;
+				// replace old filename value with value from cacheChanges
+				for (var i in cacheData) {
+					cache[i].filename = cacheData[i];
+				}
+				chrome.storage.local.set({"imagemap": cache}, function() {
+					console.log('Cache updated:', cacheData);
+				});
+			});
+		},
+		restore: function(callback) {
+			chrome.storage.local.get("imagemap", function(cache) {
+				if (chrome.runtime.lastError) {
+					// this shouldn't happen...
+					console.log(chrome.runtime.lastError);
+					return;
+				}
+				else if (cache) {
+					callback(cache);
+				}
+			});	
+		},
+		data: {}
+	},
+	getDefault: function(callback) {
+		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
+		var temp, defaultConfig;
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", defaultURL, true);
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				temp = JSON.parse(xhr.responseText);
+				defaultConfig = JSON.stringify(temp);
+				callback(defaultConfig);
+			}
+		}
+		xhr.send();	
+	},
 	save: function() {
 		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 			inputs = $(":checkbox");
@@ -593,8 +839,9 @@ var config = {
 			}
 			var textboxes = $(":text");
 			for (var i in textboxes) {
-				if (textboxes[i].className && textboxes[i].className == ('cache_filenames')) {
-					// do nothing					
+				if (textboxes[i].className && textboxes[i].className == ('cache_filenames')
+						|| textboxes[i].id == 'imagemap_search') {
+					// do nothing
 				}
 				else {
 					cfg[textboxes[i].id] = textboxes[i].value;
@@ -700,47 +947,6 @@ var config = {
 			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
 			allBg.init_listener(cfg);	
 	},
-	cache: {
-		save: function() {
-			var cacheChanges = config.cache;
-			config.cache.restore(function(cached) {
-				var cache = cached.imagemap;
-				// replace old filename value with value from cacheChanges
-				for (var i in cacheChanges) {
-					cache[i].filename = cacheChanges[i];
-				}
-				chrome.storage.local.set({"imagemap": cache}, function() {
-					console.log('Cache updated:', cacheChanges);
-				});
-			});
-		},
-		restore: function(callback) {
-			chrome.storage.local.get("imagemap", function(cache) {
-				if (chrome.runtime.lastError) {
-					// this shouldn't happen...
-					console.log(chrome.runtime.lastError);
-					return;
-				}
-				else if (cache) {
-					callback(cache);
-				}
-			});	
-		}	
-	},
-	getDefault: function(callback) {
-		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
-		var temp, defaultConfig;
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", defaultURL, true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				temp = JSON.parse(xhr.responseText);
-				defaultConfig = JSON.stringify(temp);
-				callback(defaultConfig);
-			}
-		}
-		xhr.send();	
-	},
 	restoreFromText: function(evt) {
 		// check that file is .txt before passing to loadcfg function
 		var file = evt.target.files[0];
@@ -755,8 +961,8 @@ var config = {
 				config.functions.processConfig(textFile);
 			}
 			reader.readAsText(file);
-		}	
-	},	
+		}
+	},
 	restoreV1: function(oC) {
 		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
 		var hls = oC.conf['chromeLL_userhighlight'].split(';');
@@ -798,179 +1004,5 @@ var config = {
 		var data = new Blob([cfg], {type: 'text/plain'})
 		var textfile = window.URL.createObjectURL(data);
 		return textfile;	
-	},
-	init: function() {
-		console.log('loading config');
-		var cfg = JSON.parse(localStorage['ChromeLL-Config']);
-		var checkboxes = $(":checkbox");
-		for ( var i in checkboxes) {
-			checkboxes[i].checked = cfg[checkboxes[i].id];
-		}
-		var textboxes = $(":text");
-		for (var i in textboxes) {
-			if (textboxes[i].name
-					&& (textboxes[i].name.match('(user|keyword|tag)_highlight_') 
-							|| textboxes[i].name.match('user_book') 
-							|| textboxes[i].name.match('snippet') 
-							|| textboxes[i].name.match('rep_ignore') 
-							|| textboxes[i].name.match('users') 
-							|| textboxes[i].name.match('token') 
-							|| textboxes[i].name.match('post_template'))) {
-				// console.log('found a textbox to ignore: ' + textboxes[i]);
-			} else if (cfg[textboxes[i].id]) {
-				textboxes[i].value = cfg[textboxes[i].id];
-			}
-		}
-		for ( var j in cfg.user_highlight_data) {
-			document.getElementsByClassName('user_name')[document
-					.getElementsByClassName('user_name').length - 1].value = j;
-			document.getElementsByClassName('header_bg')[document
-					.getElementsByClassName('header_bg').length - 1].value = cfg.user_highlight_data[j].bg;
-			document.getElementsByClassName('header_color')[document
-					.getElementsByClassName('header_color').length - 1].value = cfg.user_highlight_data[j].color;
-			config.ui.addDiv.userHighlight();
-		}
-		for ( var j in cfg.bookmark_data) {
-			document.getElementsByClassName('bookmark_name')[document
-					.getElementsByClassName('bookmark_name').length - 1].value = j;
-			document.getElementsByClassName('bookmark_tag')[document
-					.getElementsByClassName('bookmark_tag').length - 1].value = cfg.bookmark_data[j];
-			config.ui.addDiv.bookmarkName();
-		}
-		for ( var j in cfg.snippet_data) {
-			document.getElementsByClassName('snippet_name')[document
-					.getElementsByClassName('snippet_name').length - 1].value = j;
-			document.getElementsByClassName('snippet')[document
-					.getElementsByClassName('snippet').length - 1].value = cfg.snippet_data[j];
-			config.ui.addDiv.snippetName();
-		}
-		for (var j = 0; cfg.keyword_highlight_data[j]; j++) {
-			document.getElementsByClassName('keyword')[document
-					.getElementsByClassName('keyword').length - 1].value = cfg.keyword_highlight_data[j].match;
-			document.getElementsByClassName('keyword_bg')[document
-					.getElementsByClassName('keyword_bg').length - 1].value = cfg.keyword_highlight_data[j].bg;
-			document.getElementsByClassName('keyword_color')[document
-					.getElementsByClassName('keyword_color').length - 1].value = cfg.keyword_highlight_data[j].color;
-			config.ui.addDiv.keywordHighlight();
-		}
-		for (var j = 0; cfg.tag_highlight_data[j]; j++) {
-			document.getElementsByClassName('tag')[document
-					.getElementsByClassName('tag').length - 1].value = cfg.tag_highlight_data[j].match;
-			document.getElementsByClassName('tag_bg')[document
-					.getElementsByClassName('tag_bg').length - 1].value = cfg.tag_highlight_data[j].bg;
-			document.getElementsByClassName('tag_color')[document
-					.getElementsByClassName('tag_color').length - 1].value = cfg.tag_highlight_data[j].color;
-			config.ui.addDiv.tagHighlight();
-		}
-		for ( var j in cfg.post_template_data) {
-			document.getElementsByClassName('template_text')[document
-					.getElementsByClassName('template_text').length - 1].value = cfg.post_template_data[j].text;
-			document.getElementsByClassName('template_title')[document
-					.getElementsByClassName('template_title').length - 1].value = j;
-			config.ui.addDiv.postTemplate();
-		}
-		document.getElementById('clear_notify').value = cfg.clear_notify;
-		document.addEventListener('keyup', function(evt) {
-			if (!evt.target.name)
-				return;
-			if (evt.target.name == "user_highlight_username") {
-				var datas = document.getElementById('user_highlight')
-						.getElementsByClassName('user_name');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					config.ui.addDiv.userHighlight();
-			}
-
-			if (evt.target.name == "user_book_name") {
-				var datas = document.getElementById('bookmarked_tags')
-						.getElementsByClassName('bookmark_name');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					config.ui.addDiv.bookmarkName();
-			}
-			
-			if (evt.target.name == "user_snippet") {
-				var datas = document.getElementById('snippets')
-						.getElementsByClassName('snippet_name');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					config.ui.addDiv.snippetName();
-			}
-
-			if (evt.target.name == "post_template_title") {
-				var datas = document.getElementById('post_template')
-						.getElementsByClassName('template_title');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					config.ui.addDiv.postTemplate();
-			}
-			if (evt.target.name == "keyword_highlight_keyword") {
-				var datas = document.getElementById('keyword_highlight')
-						.getElementsByClassName('keyword');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					config.ui.addDiv.keywordHighlight();
-			}
-			if (evt.target.name == "tag_highlight_keyword") {
-				var datas = document.getElementById('tag_highlight')
-						.getElementsByClassName('tag');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					config.ui.addDiv.tagHighlight();
-			}
-		});
-		// show version
-		var app = chrome.app.getDetails();
-		document.getElementById('version').innerText = app.version;
-		document.getElementById('downloadcfg').href = config.download();
-		// show size on disk of imagemap cache
-		chrome.storage.local.getBytesInUse("imagemap", function(bytes) {
-			var megabytes = bytes / 1048576;
-			// round to 2 decimal places
-			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100;
-		});
-		if (document.readyState == 'loading') {
-			document.addEventListener('DOMContentLoaded', function() {
-				config.ui.hideMenus();
-				config.ui.setColorPicker();
-				config.listeners.menuVisibility();
-				config.listeners.click();
-				config.listeners.change();
-				config.ui.populateCacheTable();
-				config.save();
-			});
-		} else {
-			config.ui.hideMenus();
-			config.ui.setColorPicker();
-			config.listeners.menuVisibility();
-			config.listeners.click();
-			config.listeners.change();
-			config.ui.populateCacheTable();
-			config.save();
-		}		
 	}
-}
+};
