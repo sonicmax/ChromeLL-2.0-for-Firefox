@@ -38,11 +38,31 @@ var allPages = {
 			return;
 		}
 	},
+	userscripts: function() {
+		// var location = window.location;
+		var head = document.getElementsByTagName('head')[0];
+		var config;
+		if (typeof (messageList) !== 'undefined') {
+			config = messageList.config;
+		}
+		else if (typeof (topicList) !== 'undefined') {
+			config = topicList.conig
+		}		
+
+		var data = config.userscript_data;
+		for (var script in data) {
+			var scriptElement = document.createElement('script');
+			var contents = data[script].contents;
+			scriptElement.type = 'text/javascript';
+			scriptElement.innerHTML = contents;
+			head.appendChild(scriptElement);
+		}
+	},
 	notify_pm : function() {
 		var userbar_pms = document.getElementById('userbar_pms');
 		if (!userbar_pms) {
-			return;
 		}
+			return;
 		var observer = new MutationObserver(function() {
 			// we can assume that all mutations on 
 			// userbar_pms element are relevant
@@ -168,8 +188,7 @@ var allPages = {
 			var user = document.createElement('div');
 			user.id = 'popup_user';
 			var ins;
-			for (var i = 0, len = links.length; i < len; i++) {
-				var link = links[i];
+			for (var i = 0, link; link = links[i]; i++) {
 				ins = document.createElement('span');
 				ins.className = 'popup_link';
 				ins.innerHTML = link;
@@ -180,10 +199,11 @@ var allPages = {
 			popup.insertBefore(info, null);
 			document.body.insertBefore(popup, null);
 			commonFunctions.hidePopup();
+			/*document.body.addEventListener('dblclick',
+					commonFunctions.handlePopup);*/
 			document.addEventListener('click', function(e) {
-				if (e.target.className != 'popup_link') {
+				if (e.target.className != 'popup_link')
 					commonFunctions.hidePopup.call(commonFunctions, e);
-				}
 			});			
 		});
 	}

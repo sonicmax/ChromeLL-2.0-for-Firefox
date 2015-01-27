@@ -105,6 +105,8 @@
    "post_before_preview_pm":false,
    "batch_uploader_pm":false,
    "drop_batch_uploader_pm":true,
+   "userscripts":false,
+   "userscript_data":{},
    "debug":false,
    "ignorator_backup":"",
    "user_id":"",

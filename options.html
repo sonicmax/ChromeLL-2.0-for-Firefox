@@ -602,8 +602,8 @@ span.desc {
   display: block;
   padding: 0.2em 0 0.6em 0;
 }
-.moreinfo { 
-	padding: 0.8em 1em; 
+.moreinfo {
+	padding: 0.8em 1em;
 	background: #FFFFAA;
 	solid #FFAD33;
 	border: 1px;
@@ -613,9 +613,39 @@ span.desc {
 .loading {
 	-webkit-animation:spin 2s linear infinite;
 }
-@-webkit-keyframes spin { 100% { 
+@-webkit-keyframes spin { 100% {
 	-webkit-transform:rotate(360deg); 
 	}
+}
+#script_input {
+	width:80%;
+	height:90%;
+	float:left;
+}
+#script_list {
+	background-color: silver;
+	line-height:30px;
+	height:90%;
+	width:20%;
+	float:left;
+}
+.script_menu_items:hover {
+	background-color: #509099; 
+}
+#menu_items {
+	background-color: white;
+}
+#script_menu {
+	border-top: 1px solid #8faad9;
+	color: black;
+	background-color: silver;
+}
+#script_menu:hover {
+	background-color: #509099; 
+}
+#script_menubar {
+	border-top: 1px solid #8faad9;
+	background-color: silver; 
 }
 </style>
 <link rel="stylesheet" href="src/css/config/button.css">
@@ -645,6 +675,7 @@ span.desc {
 				<li class="navbar-item options_navigation_link" id="profile_link">Profile/PM<small>s</small></li>
 				<li class="navbar-item options_navigation_link" id="imagemap_link">Imagemap</li>
 				<br />
+				<li class="navbar-item options_navigation_link" id="script_link">Userscripts</li>
 				<li class="navbar-item options_navigation_link" id="about_link">About</li>
 			</ul>
 		</div>
@@ -1787,8 +1818,8 @@ span.desc {
 						</section>
 						<section>
 							<h3>Contents:
-								<select id="cache_sort" style="float:left;">
-									<option disabled>Sort by...</option>
+								<select id="cache_sort" style="float: left;">
+									<option>Sort by...</option>
 									<option value="a_z">A-Z</option>
 									<option value="z_a">Z-A</option>
 									<option value="filetype">Filetype</option>
@@ -1799,14 +1830,36 @@ span.desc {
 							<table id="cache_contents" border=1 style="display:none;">
 								<tr>
 									<td><b>Filename:</b>
-									<input type="text" id="imagemap_filename_search" placeholder="Search imagemap..." style="float:right;">
+									<input type="text" id="imagemap_search" placeholder="Search imagemap..." style="float:right;">
 									</td>
 									<td><b>URL:</b>
 									</td>							
 								</tr>
-							</table>						
+							</table>				
 						</section>
-					</div>	
+					</div>
+					
+					<div class="page hidden" id="script_page">
+						<h1>Userscripts</h1>
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" id="userscripts" />
+								<span>Enable user scripts</span>
+							</label>
+						</div>						
+						<div>
+							<div id="script_menubar">
+								<span id="script_menu">&nbsp<u>F</u>ile</span>						
+							</div>
+						</div>
+						<br>
+						<div id="script_input">
+							<textarea id="script_ta" style="width: 90%; height: 300px; border: 1px solid grey;"></textarea>
+						</div>
+						<div id="script_list">
+							<a href="#" id="us1" class="active_script">Untitled script</a>
+						</div>
+					</div>
 					
 					<div class="page hidden" id="about_page">
 						<h1>Version: <span id="version"></span></h1>
