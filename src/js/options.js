@@ -36,24 +36,24 @@ $(document)
 							|| localStorage['ChromeLL-Config'] == undefined) {
 						console.log("Blank Config. Rebuilding");
 						
-						config.getDefault(function(defaultConfig) {
+						options.getDefault(function(defaultConfig) {
 							localStorage['ChromeLL-Config'] = defaultConfig;
 						});
 						
 						if (localStorage['chromeLL_userhighlight']
 								&& localStorage['chromeLL_userhighlight'] != '') {
-							config.restoreV1();
+							options.restoreV1();
 						}
 						else {
-							config.init();
+							options.init();
 						}				
 					}
 					else {
-						config.init();
+						options.init();
 					}
 				});
 
-var config = {
+var options = {
 	init: function() {
 		console.log('loading config');
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
@@ -83,21 +83,21 @@ var config = {
 					.getElementsByClassName('header_bg').length - 1].value = config.user_highlight_data[j].bg;
 			document.getElementsByClassName('header_color')[document
 					.getElementsByClassName('header_color').length - 1].value = config.user_highlight_data[j].color;
-			config.ui.addDiv.userHighlight();
+			options.ui.addDiv.userHighlight();
 		}
 		for ( var j in config.bookmark_data) {
 			document.getElementsByClassName('bookmark_name')[document
 					.getElementsByClassName('bookmark_name').length - 1].value = j;
 			document.getElementsByClassName('bookmark_tag')[document
 					.getElementsByClassName('bookmark_tag').length - 1].value = config.bookmark_data[j];
-			config.ui.addDiv.bookmarkName();
+			options.ui.addDiv.bookmarkName();
 		}
 		for ( var j in config.snippet_data) {
 			document.getElementsByClassName('snippet_name')[document
 					.getElementsByClassName('snippet_name').length - 1].value = j;
 			document.getElementsByClassName('snippet')[document
 					.getElementsByClassName('snippet').length - 1].value = config.snippet_data[j];
-			config.ui.addDiv.snippetName();
+			options.ui.addDiv.snippetName();
 		}
 		for (var j = 0; config.keyword_highlight_data[j]; j++) {
 			document.getElementsByClassName('keyword')[document
@@ -106,7 +106,7 @@ var config = {
 					.getElementsByClassName('keyword_bg').length - 1].value = config.keyword_highlight_data[j].bg;
 			document.getElementsByClassName('keyword_color')[document
 					.getElementsByClassName('keyword_color').length - 1].value = config.keyword_highlight_data[j].color;
-			config.ui.addDiv.keywordHighlight();
+			options.ui.addDiv.keywordHighlight();
 		}
 		for (var j = 0; config.tag_highlight_data[j]; j++) {
 			document.getElementsByClassName('tag')[document
@@ -115,14 +115,14 @@ var config = {
 					.getElementsByClassName('tag_bg').length - 1].value = config.tag_highlight_data[j].bg;
 			document.getElementsByClassName('tag_color')[document
 					.getElementsByClassName('tag_color').length - 1].value = config.tag_highlight_data[j].color;
-			config.ui.addDiv.tagHighlight();
+			options.ui.addDiv.tagHighlight();
 		}
 		for ( var j in config.post_template_data) {
 			document.getElementsByClassName('template_text')[document
 					.getElementsByClassName('template_text').length - 1].value = config.post_template_data[j].text;
 			document.getElementsByClassName('template_title')[document
 					.getElementsByClassName('template_title').length - 1].value = j;
-			config.ui.addDiv.postTemplate();
+			options.ui.addDiv.postTemplate();
 		}
 		document.getElementById('clear_notify').value = config.clear_notify;
 		document.addEventListener('keyup', function(evt) {
@@ -137,7 +137,7 @@ var config = {
 						empty = true;
 				}
 				if (!empty)
-					config.ui.addDiv.userHighlight();
+					options.ui.addDiv.userHighlight();
 			}
 
 			if (evt.target.name == "user_book_name") {
@@ -149,7 +149,7 @@ var config = {
 						empty = true;
 				}
 				if (!empty)
-					config.ui.addDiv.bookmarkName();
+					options.ui.addDiv.bookmarkName();
 			}
 			
 			if (evt.target.name == "user_snippet") {
@@ -161,7 +161,7 @@ var config = {
 						empty = true;
 				}
 				if (!empty)
-					config.ui.addDiv.snippetName();
+					options.ui.addDiv.snippetName();
 			}
 
 			if (evt.target.name == "post_template_title") {
@@ -173,7 +173,7 @@ var config = {
 						empty = true;
 				}
 				if (!empty)
-					config.ui.addDiv.postTemplate();
+					options.ui.addDiv.postTemplate();
 			}
 			if (evt.target.name == "keyword_highlight_keyword") {
 				var datas = document.getElementById('keyword_highlight')
@@ -184,7 +184,7 @@ var config = {
 						empty = true;
 				}
 				if (!empty)
-					config.ui.addDiv.keywordHighlight();
+					options.ui.addDiv.keywordHighlight();
 			}
 			if (evt.target.name == "tag_highlight_keyword") {
 				var datas = document.getElementById('tag_highlight')
@@ -195,13 +195,13 @@ var config = {
 						empty = true;
 				}
 				if (!empty)
-					config.ui.addDiv.tagHighlight();
+					options.ui.addDiv.tagHighlight();
 			}
 		});
 		// show version
 		var app = chrome.app.getDetails();
 		document.getElementById('version').innerText = app.version;
-		document.getElementById('downloadcfg').href = config.download();
+		document.getElementById('downloadcfg').href = options.download();
 		// show size on disk of imagemap cache
 		chrome.storage.local.getBytesInUse("imagemap", function(bytes) {
 			var megabytes = bytes / 1048576;
@@ -210,24 +210,24 @@ var config = {
 		});
 		if (document.readyState == 'loading') {
 			document.addEventListener('DOMContentLoaded', function() {
-				config.ui.hideMenus();
-				config.ui.setColorPicker();
-				config.listeners.menuVisibility();
-				config.listeners.click();
-				config.listeners.change();
-				config.listeners.hover();
-				config.ui.populateCacheTable();
-				config.save();
+				options.ui.hideMenus();
+				options.ui.setColorPicker();
+				options.listeners.menuVisibility();
+				options.listeners.click();
+				options.listeners.change();
+				options.listeners.hover();
+				options.ui.populateCacheTable();
+				options.save();
 			});
 		} else {
-			config.ui.hideMenus();
-			config.ui.setColorPicker();
-			config.listeners.menuVisibility();
-			config.listeners.click();
-			config.listeners.change();
-			config.listeners.hover();
-			config.ui.populateCacheTable();
-			config.save();
+			options.ui.hideMenus();
+			options.ui.setColorPicker();
+			options.listeners.menuVisibility();
+			options.listeners.click();
+			options.listeners.change();
+			options.listeners.hover();
+			options.ui.populateCacheTable();
+			options.save();
 		}		
 	},	
 	functions: {
@@ -283,7 +283,7 @@ var config = {
 			var timeLeft = currentTime - config.last_clean;
 			if (timeLeft > 86400000) {
 				document.getElementById('ignorateinfo').innerText = "running ignorator cleaner..."
-				config.functions.cleanIgnorator();
+				options.functions.cleanIgnorator();
 			} else {
 				var totalseconds = ((86400000 - timeLeft) / 1000);
 				var hours = Math.floor(totalseconds / 3600);
@@ -334,12 +334,12 @@ var config = {
 		ignoratorClick: function(evt) {
 			document.getElementById('ignorator_messagelist').checked = evt.target.checked;
 			document.getElementById('ignorator_topiclist').checked = evt.target.checked;
-			config.save();
+			options.save();
 		},
 		highlightClick: function(evt) {
 			document.getElementById('userhl_messagelist').checked = evt.target.checked;
 			document.getElementById('userhl_topiclist').checked = evt.target.checked;
-			config.save();
+			options.save();
 		},
 		downloadClick: function() {
 			document.getElementById('downloadcfg').click();
@@ -350,7 +350,7 @@ var config = {
 		showTextarea: function() {
 			document.getElementById('old_cfg_options').style.display = "none";
 			document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
-			config.show();
+			options.show();
 		},		
 		processConfig: function(textfile) {
 			var base64;
@@ -369,15 +369,15 @@ var config = {
 				localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
 			} catch (e) {
 				console.log('This doesnt look like a config', e);
-				base64 = config.functions.decodeBase64(document.getElementById('cfg_ta').value);
-				config.restoreV1(base64);
+				base64 = options.functions.decodeBase64(document.getElementById('cfg_ta').value);
+				options.restoreV1(base64);
 			}
 			location.reload();
 		},
 		resetConfig: function() {
 			var reset = confirm("Are you sure you want to reset your settings?");
 			if (reset === true) {
-				config.getDefault(function(defaultCfg) {
+				options.getDefault(function(defaultCfg) {
 					localStorage['ChromeLL-Config'] = defaultCfg;
 					location.reload();
 				});
@@ -456,14 +456,14 @@ var config = {
 		},
 		sortCache: function(sortType) {
 			if (sortType === 'default') {
-				config.ui.populateCacheTable(sortType);
+				options.ui.populateCacheTable(sortType);
 			}
 			else {
 				var filenames = [];
 				var results = [];
 				var duplicateCheck = {};
 				var filetypes = {};
-				config.cache.restore(function(cached) {
+				options.cache.restore(function(cached) {
 					var cache = cached.imagemap;
 					if (sortType === 'filetype') {
 						filetypes["none"] = [];
@@ -514,7 +514,7 @@ var config = {
 							}
 						}
 					}
-					config.ui.populateCacheTable(results);				
+					options.ui.populateCacheTable(results);				
 				});
 			}
 		},
@@ -523,7 +523,7 @@ var config = {
 			var results = [];
 			var duplicateCheck = {};
 			if (/\S/.test(query)) {
-				config.cache.restore(function(cached) {
+				options.cache.restore(function(cached) {
 					var cache = cached.imagemap;
 					for (var src in cache) {
 						var filename = cache[src].filename;
@@ -536,11 +536,11 @@ var config = {
 							}
 						}
 					}
-					config.ui.populateCacheTable(results);
+					options.ui.populateCacheTable(results);
 				});
 			}
 			else {
-				config.ui.populateCacheTable('default');
+				options.ui.populateCacheTable('default');
 			}
 		},
 		emptyCache: function() {
@@ -551,17 +551,17 @@ var config = {
 		},
 		newScript: function() {
 			console.log('newScript');
-			config.userscripts.closeMenu();
+			options.userscripts.closeMenu();
 			
 		},
 		loadScript: function() {
 			console.log('loadScript');
-			config.userscripts.closeMenu();
+			options.userscripts.closeMenu();
 			
 		},		
 		saveScript: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			config.userscripts.closeMenu();		
+			options.userscripts.closeMenu();		
 			var activeScript = document.getElementsByClassName('active_script')[0];
 			var contents = document.getElementById('script_ta').value;
 			var name = activeScript.innerHTML;
@@ -608,7 +608,7 @@ var config = {
 				var elementID = evt.target.id;
 				if (elementsToCheck[elementID]) {
 					var functionName = elementsToCheck[elementID];					
-					config.functions[functionName]();
+					options.functions[functionName]();
 					evt.preventDefault();
 				}
 			});
@@ -621,45 +621,45 @@ var config = {
 			var keyupTimer, cacheTimer, searchTimer;		
 
 			restoreButton.addEventListener('change', function(evt) {
-				config.restoreFromText(evt);
+				options.restoreFromText(evt);
 			});	
 			
 			cacheTable.addEventListener('keyup', function(evt) {
 				var newFilename = evt.target.value;
 				var src = evt.target.id;
 				if (src && newFilename) {					
-					config.cache.data[src] = newFilename;
+					options.cache.data[src] = newFilename;
 				}
 				clearTimeout(cacheTimer);
-				cacheTimer = setTimeout(config.cache.save, 500);				
+				cacheTimer = setTimeout(options.cache.save, 500);				
 			});
 			
 			cacheMenu.addEventListener('change', function(evt) {
 				if (evt.target.value) {
-					config.functions.sortCache(evt.target.value);		
+					options.functions.sortCache(evt.target.value);		
 				}
 			});
 			
 			/*scriptArea.addEventListener('keydown', function(evt) {
 				if (evt.keyIdentifier == 'U+0009') {	
-					var caret = config.userscripts.findCaret(scriptArea);
-					config.userscripts.tabHandler(scriptArea.value, caret);
+					var caret = options.userscripts.findCaret(scriptArea);
+					options.userscripts.tabHandler(scriptArea.value, caret);
 					evt.preventDefault();
 				}
 			});*/
 			
 			// listen for changes to checkboxes/textareas/etc
-			document.addEventListener('change', config.save);
+			document.addEventListener('change', options.save);
 			
 			// use debouncing to prevent script from calling event handler after each keystroke
 			document.addEventListener('keyup', function(evt) {
 				if (evt.target.id == 'imagemap_search') {
 					clearTimeout(searchTimer);
-					searchTimer = setTimeout(config.functions.searchCache, 500);
+					searchTimer = setTimeout(options.functions.searchCache, 500);
 				}
 				else {
 					clearTimeout(keyupTimer);
-					keyupTimer = setTimeout(config.save, 500);
+					keyupTimer = setTimeout(options.save, 500);
 				}
 			});			
 		},
@@ -670,21 +670,21 @@ var config = {
 			for (var i = 0, len = hiddenOptions.length; i < len; i++) {
 				// add listener to each checkbox
 				element = document.getElementById(hiddenOptions[i]);
-				element.addEventListener('change', config.ui.hideMenus);
+				element.addEventListener('change', options.ui.hideMenus);
 			}
 		},
 		hover: function() {
 			var menuAnchor = document.getElementById('script_menu');
 			
 			menuAnchor.addEventListener('mouseenter', function() {				
-				clearTimeout(config.debouncer);
-				config.debouncer = setTimeout(config.userscripts.openMenu, 500);				
+				clearTimeout(options.debouncer);
+				options.debouncer = setTimeout(options.userscripts.openMenu, 500);				
 			});
 			
 			menuAnchor.addEventListener('mouseleave', function() {
-				clearTimeout(config.debouncer);
+				clearTimeout(options.debouncer);
 				if (document.getElementById('script_menu')) {
-					config.userscripts.closeMenu();					
+					options.userscripts.closeMenu();					
 				}
 			});
 		}
@@ -707,12 +707,12 @@ var config = {
 			$('.color').ColorPicker({
 				onChange : function(hsb, hex, rgb, el) {
 					el.value = hex;
-					config.save();
+					options.save();
 				},
 				onSubmit : function(hsb, hex, rgb, el) {
 					$(el).val(hex);
 					$(el).ColorPickerHide();
-					config.save();
+					options.save();
 				},
 				livePreview : true,
 				color : "",
@@ -733,7 +733,7 @@ var config = {
 					var child = nodes[i];
 					table.removeChild(child);
 				}
-				config.cache.restore(function(cached) {
+				options.cache.restore(function(cached) {
 					var cache = cached.imagemap;
 					for (var i = 0, len = sortedCache.length; i < len; i++) {
 						var srcFromArray = sortedCache[i];
@@ -765,7 +765,7 @@ var config = {
 			}
 			else {
 				// display table of imagemap cache contents
-				config.cache.restore(function(cached) {
+				options.cache.restore(function(cached) {
 					var cachedImagemap = cached.imagemap;
 					if (!cachedImagemap) {
 						var empty = document.createElement('tr');
@@ -820,7 +820,7 @@ var config = {
 				ins.className = "user_highlight_data";
 				ins.style.display = "block";
 				document.getElementById('user_highlight').insertBefore(ins, null);
-				config.ui.setColorPicker();
+				options.ui.setColorPicker();
 			},
 			bookmarkName: function() {
 				var ins = document.getElementById('bookmarked_tags').getElementsByClassName(
@@ -843,7 +843,7 @@ var config = {
 				ins.className = "keyword_highlight_data";
 				ins.style.display = "block";
 				document.getElementById('keyword_highlight').insertBefore(ins, null);
-				config.ui.setColorPicker();
+				options.ui.setColorPicker();
 			},
 			tagHighlight: function() {
 				var ins = document.getElementById('tag_highlight').getElementsByClassName(
@@ -851,7 +851,7 @@ var config = {
 				ins.className = "tag_highlight_data";
 				ins.style.display = "block";
 				document.getElementById('tag_highlight').insertBefore(ins, null);
-				config.ui.setColorPicker();	
+				options.ui.setColorPicker();	
 			},
 			postTemplate: function() {
 				var ins = document.getElementById('post_template').getElementsByClassName(
@@ -864,8 +864,8 @@ var config = {
 	},
 	cache: {
 		save: function() {
-			var cacheData = config.cache.data;
-			config.cache.restore(function(cached) {
+			var cacheData = options.cache.data;
+			options.cache.restore(function(cached) {
 				var cache = cached.imagemap;
 				// replace old filename value with value from cacheChanges
 				for (var i in cacheData) {
@@ -1091,7 +1091,7 @@ var config = {
 			var reader = new FileReader();
 			reader.onload = function(evt) {
 				var textFile = evt.target.result;
-				config.functions.processConfig(textFile);
+				options.functions.processConfig(textFile);
 			}
 			reader.readAsText(file);
 		}
@@ -1132,7 +1132,7 @@ var config = {
 		document.getElementById('cfg_ta').value = localStorage['ChromeLL-Config'];
 	},
 	download: function(textfile) {
-		config.save();
+		options.save();
 		var config = localStorage['ChromeLL-Config'];
 		var data = new Blob([config], {type: 'text/plain'})
 		var textfile = window.URL.createObjectURL(data);
