@@ -217,6 +217,7 @@ var options = {
 				options.listeners.change();
 				options.listeners.hover();
 				options.ui.populateCacheTable();
+				options.ui.displayUserscripts();
 				options.save();
 			});
 		} else {
@@ -227,6 +228,7 @@ var options = {
 			options.listeners.change();
 			options.listeners.hover();
 			options.ui.populateCacheTable();
+			options.ui.displayUserscripts();
 			options.save();
 		}		
 	},	
@@ -550,9 +552,38 @@ var options = {
 			});
 		},
 		newScript: function() {
-			console.log('newScript');
 			options.userscripts.closeMenu();
+			var textarea = document.getElementById('script_ta');
+			var activeScript = document.getElementsByClassName('active_script')[0];
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var scriptData = config.userscript_data;
+			var oldID = activeScript.id.match(/[0-9]+/)[0];			
+			var highest = 1;
+			for (var i in scriptData) {
+				var current = parseInt(i.match(/[0-9]+/)[0], 10);
+				if (current > highest) {
+					highest = current;
+				}
+			}
+			var newNumber = highest + 1;
+			var newID = 'us' + newNumber;
 			
+			config.userscript_data[newID] = {};
+			config.userscript_data[newID].name = 'Untitled script ' + newNumber;
+			config.userscript_data[newID].contents = '';			
+			
+			var scriptList = document.getElementById('script_list');
+			var anchor = document.createElement('a');
+			var linebreak = document.createElement('br');
+			anchor.href = '#';
+			anchor.id = newID;
+			anchor.className = 'active_script';
+			anchor.innerHTML = 'Untitled script ' + newNumber;
+			scriptList.appendChild(linebreak);
+			scriptList.appendChild(anchor);
+			activeScript.className = '';
+			textarea.value = '';
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
 		},
 		loadScript: function() {
 			console.log('loadScript');
@@ -604,12 +635,19 @@ var options = {
 				'script_save':  'saveScript'
 			};
 			
-			document.addEventListener('click', function(evt) {			
+			document.addEventListener('click', function(evt) {
 				var elementID = evt.target.id;
 				if (elementsToCheck[elementID]) {
-					var functionName = elementsToCheck[elementID];					
+					var functionName = elementsToCheck[elementID];
 					options.functions[functionName]();
 					evt.preventDefault();
+				}
+				if (evt.target.parentNode.id == 'script_list') {
+					var last = document.getElementsByClassName('active_script')[0];
+					var next = evt.target;
+					next.className = last.className;
+					last.className = '';
+					options.ui.switchScript(evt.target.id);
 				}
 			});
 		},
@@ -811,6 +849,38 @@ var options = {
 						table.style.display = "block";				
 					}
 				});
+			}
+		},
+		displayUserscripts: function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var scriptData = config.userscript_data;
+			var textarea = document.getElementById('script_ta');
+			var activeScript = document.getElementsByClassName('active_script')[0];
+			var scriptList = document.getElementById('script_list');		
+			if (config.userscript_data['us1']) {
+				activeScript.innerHTML = config.userscript_data['us1'].name;
+				textarea.value = config.userscript_data['us1'].contents;							
+			}					
+			for (var i in scriptData) {
+				var script = scriptData[i];
+				if (!document.getElementById(i)) {
+					var anchor = document.createElement('a');
+					var linebreak = document.createElement('br');
+					anchor.href = '#';
+					anchor.id = i;
+					// anchor.className = 'active_script';
+					anchor.innerHTML = script.name;
+					scriptList.appendChild(linebreak);
+					scriptList.appendChild(anchor);
+				}
+			}
+		},		
+		switchScript: function(scriptID) {			
+			var textarea = document.getElementById('script_ta');
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var script = config.userscript_data[scriptID];
+			if (script) {				
+				textarea.value = script.contents;				
 			}
 		},
 		addDiv: {
@@ -1081,7 +1151,6 @@ var options = {
 			allBg.init_listener(config);	
 	},
 	restoreFromText: function(evt) {
-		// check that file is .txt before passing to loadcfg function
 		var file = evt.target.files[0];
 		if (!file.type.match('text.*')) {
 			alert("Not a text file...");
