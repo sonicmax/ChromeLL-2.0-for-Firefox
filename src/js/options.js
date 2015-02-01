@@ -688,6 +688,20 @@ var options = {
 		deleteFromConfig: function(ID) {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var type = ID.replace(/[0-9]/g, '');
+			// TODO - refactor this function
+			var lastKeyInObject;
+			var active = document.getElementsByClassName('active_' + type).length;
+			var inactive = document.getElementsByClassName('inactive_' + type).length;
+			if (active + inactive == 1) {
+				console.log('last one');
+				lastKeyInObject = true;
+			}
+			else {
+				console.log('more than one');
+				lastKeyInObject = false;
+			}
+			
+			
 			if (lastKeyInObject) {
 				return;
 			}
@@ -721,17 +735,6 @@ var options = {
 					if (i !== 'script' + newIndex) {
 						delete data[i];
 					}
-				}
-			}
-		
-			function lastKeyInObject() {
-				var active = document.getElementsByClassName('active_' + type).length;
-				var inactive = document.getElementsByClassName('inactive_' + type).length;
-				if (active + inactive == 1) {
-					return true;
-				}
-				else {
-					return false;
 				}
 			}
 		}
