@@ -210,7 +210,7 @@ var options = {
 		});
 		if (document.readyState == 'loading') {
 			document.addEventListener('DOMContentLoaded', function() {
-				options.ui.hideMenus();
+				options.ui.hideUnusedMenus();
 				options.ui.setColorPicker();
 				options.listeners.menuVisibility();
 				options.listeners.click();
@@ -218,10 +218,11 @@ var options = {
 				options.listeners.hover();
 				options.ui.populateCacheTable();
 				options.ui.displayUserscripts();
+				options.ui.displayLBContent();
 				options.save();
 			});
 		} else {
-			options.ui.hideMenus();
+			options.ui.hideUnusedMenus();
 			options.ui.setColorPicker();
 			options.listeners.menuVisibility();
 			options.listeners.click();
@@ -229,6 +230,7 @@ var options = {
 			options.listeners.hover();
 			options.ui.populateCacheTable();
 			options.ui.displayUserscripts();
+			options.ui.displayLBContent();
 			options.save();
 		}		
 	},	
@@ -471,11 +473,10 @@ var options = {
 						filetypes["none"] = [];
 						filetypes[".gif"] = [];
 						filetypes[".jpg"] = [];
-						filetypes[".jpeg"] = [];
 						filetypes[".png"] = [];
 						for (var src in cache) {
 							var filename = cache[src].filename;
-							var extension = filename.match(/\.(gif|jpg|jpeg|png)$/i);
+							var extension = filename.match(/\.(gif|jpg|png)$/i);
 							if (extension) {
 								filetypes[extension[0]].push(filename);
 							} else {		
@@ -508,9 +509,10 @@ var options = {
 							var cacheFilename = cache[src].filename;
 							if (cacheFilename == sortedFilename) {
 								if (!duplicateCheck[src]) {
-									// check that src hasn't been pushed to array before - this ensures that
-									// duplicate filenames arent assigned the same src value
+									// check that src hasn't been pushed to results array before - this ensures that
+									// duplicate filenames aren't assigned the same src value
 									results.push(src);
+									
 									duplicateCheck[src] = {"filename": sortedFilename, "index": i};
 								}
 							}
@@ -529,8 +531,6 @@ var options = {
 					var cache = cached.imagemap;
 					for (var src in cache) {
 						var filename = cache[src].filename;
-						// check that src hasn't been pushed to array before - this ensures that
-						// duplicate filenames arent assigned the same src value
 						if (!duplicateCheck[src]) {
 							if (filename.indexOf(query) > -1) {
 								results.push(src);
@@ -552,7 +552,7 @@ var options = {
 			});
 		},
 		newScript: function() {
-			options.userscripts.closeMenu();
+			options.ui.closeMenu();
 			var textarea = document.getElementById('script_ta');
 			var activeScript = document.getElementsByClassName('active_script')[0];
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
@@ -578,21 +578,24 @@ var options = {
 			anchor.href = '#';
 			anchor.id = newID;
 			anchor.className = 'active_script';
-			anchor.innerHTML = 'Untitled script ' + newNumber;
-			scriptList.appendChild(linebreak);
+			anchor.innerHTML = 'Untitled ' + newNumber;
+			var close = document.createElement('a');
+			close.style.cssFloat = "right";
+			close.style.fontSize = "18px";
+			close.href = '#';
+			close.style.textDecoration = "none";
+			close.id = "delete_custom";
+			close.innerHTML = '&#10006;';
+			anchor.appendChild(close);
 			scriptList.appendChild(anchor);
+			scriptList.appendChild(linebreak);
 			activeScript.className = '';
 			textarea.value = '';
 			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
-		},
-		loadScript: function() {
-			console.log('loadScript');
-			options.userscripts.closeMenu();
-			
-		},		
+		},	
 		saveScript: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			options.userscripts.closeMenu();		
+			options.ui.closeMenu();		
 			var activeScript = document.getElementsByClassName('active_script')[0];
 			var contents = document.getElementById('script_ta').value;
 			var name = activeScript.innerHTML;
@@ -614,6 +617,97 @@ var options = {
 				config.userscript_data[id].last_saved = Date.now();
 				localStorage['ChromeLL-Config'] = JSON.stringify(config);
 			}
+		},
+		newLike: function() {
+			options.ui.closeMenu();
+			var textarea = document.getElementById('like_ta');
+			var activeLike = document.getElementsByClassName('active_like')[0];
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var likeData = config.custom_like_data;
+			var oldID = activeLike.id.match(/[0-9]+/)[0];			
+			var highest = 1;
+			for (var i in likeData) {
+				var current = parseInt(i.match(/[0-9]+/)[0], 10);
+				if (current > highest) {
+					highest = current;
+				}
+			}
+			var newNumber = highest + 1;
+			var newID = 'us' + newNumber;
+			
+			config.custom_like_data[newID] = {};
+			config.custom_like_data[newID].name = 'Untitled ' + newNumber;
+			config.custom_like_data[newID].contents = '';			
+			
+			var likeList = document.getElementById('like_list');
+			var anchor = document.createElement('a');
+			var linebreak = document.createElement('br');
+			anchor.href = '#';
+			anchor.id = newID;
+			anchor.className = 'active_like';
+			anchor.innerHTML = 'Untitled ' + newNumber;
+			var close = document.createElement('a');
+			close.style.cssFloat = "right";
+			close.style.fontSize = "18px";
+			close.href = '#';
+			close.style.textDecoration = "none";
+			close.id = "delete_custom";
+			close.innerHTML = '&#10006;';
+			anchor.appendChild(close);
+			likeList.appendChild(anchor);
+			likeList.appendChild(linebreak);
+			activeLike.className = '';
+			textarea.value = '';
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
+		},	
+		saveLike: function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			options.ui.closeMenu();		
+			var activeLike = document.getElementsByClassName('active_like')[0];
+			var contents = document.getElementById('like_ta').value;
+			var name = activeLike.innerHTML;
+			var id = activeLike.id;
+			
+			if (config.custom_like_data[id]) {
+				config.custom_like_data[id].name = name;
+				config.custom_like_data[id].contents = contents;
+				config.custom_like_data[id].last_saved = Date.now();
+				localStorage['ChromeLL-Config'] = JSON.stringify(config);
+			}
+			else {
+				// first time saving - choose filename, choose injection context, etc
+				var newName = prompt("Rename custom message?", "Custom message");
+				activeLike.innerHTML = newName;
+				config.custom_like_data[id] = {};
+				config.custom_like_data[id].name = newName;
+				config.custom_like_data[id].contents = contents;
+				config.custom_like_data[id].last_saved = Date.now();
+				localStorage['ChromeLL-Config'] = JSON.stringify(config);
+			}
+		},
+		deleteFromConfig: function(ID) {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);	
+			console.log(ID);
+			var type = ID.slice(0, 2);
+			console.log(type);
+			if (type == 'lb') {
+				// like button
+				console.log(config.custom_like_data[ID]);
+				delete config.custom_like_data[ID];
+				localStorage['ChromeLL-Config'] = JSON.stringify(config);
+				console.log(config.custom_like_data);
+			}
+			else if (type == 'us') {
+				// user script
+				console.log(config.userscript_data[ID]);
+				delete config.userscript_data[ID];
+				localStorage['ChromeLL-Config'] = JSON.stringify(config);
+				console.log(config.userscript_data);
+			}
+			var nodeToRemove = document.getElementById(ID);
+			var closeButton = nodeToRemove.childNodes[0];
+			nodeToRemove.remove();
+			closeButton.remove();			
 		}
 	},
 	listeners : {
@@ -631,8 +725,9 @@ var options = {
 				'old_cfg_options': 'showTextarea',
 				'cache_empty': 'emptyCache',
 				'script_new': 'newScript',
-				'script_open': 'loadScript',
-				'script_save':  'saveScript'
+				'script_save':  'saveScript',
+				'like_new': 'newLike',
+				'like_save':  'saveLike',
 			};
 			
 			document.addEventListener('click', function(evt) {
@@ -642,12 +737,27 @@ var options = {
 					options.functions[functionName]();
 					evt.preventDefault();
 				}
-				if (evt.target.parentNode.id == 'script_list') {
-					var last = document.getElementsByClassName('active_script')[0];
+				
+				if (evt.target.parentNode.id.match(/_list/) && evt.target.className != 'delete') {
+					var parent = evt.target.parentNode.id;
 					var next = evt.target;
-					next.className = last.className;
+					var type;
+					if (parent == 'like_list') {	
+						type = 'like';
+					}
+					else if (parent == 'script_list') {						
+						type = 'script';
+					}
+					var last = document.getElementsByClassName('active_' + type)[0];
+					next.className = 'active_' + type;
 					last.className = '';
-					options.ui.switchScript(evt.target.id);
+					options.ui.switchActive(evt.target.id);
+					evt.preventDefault();
+				}		
+				
+				else if (evt.target.id == 'delete_custom') {
+					options.functions.deleteFromConfig(evt.target.parentNode.id);
+					evt.preventDefault();
 				}
 			});
 		},
@@ -712,35 +822,52 @@ var options = {
 			}
 		},
 		hover: function() {
-			var menuAnchor = document.getElementById('script_menu');
+			var elements = [];
+			elements.push(document.getElementById('script_menu'));
+			elements.push(document.getElementById('like_menu'));
 			
-			menuAnchor.addEventListener('mouseenter', function() {				
-				clearTimeout(options.debouncer);
-				options.debouncer = setTimeout(options.userscripts.openMenu, 500);				
-			});
-			
-			menuAnchor.addEventListener('mouseleave', function() {
-				clearTimeout(options.debouncer);
-				if (document.getElementById('script_menu')) {
-					options.userscripts.closeMenu();					
-				}
-			});
+			for (var i = 0, len = elements.length; i < len; i++) {
+				var element = elements[i];
+				
+				element.addEventListener('mouseenter', function(evt) {		
+					clearTimeout(options.debouncer);
+					if (evt.target.id == 'script_menu') {
+						options.debouncer = setTimeout(options.userscriptsMenu.open, 500);
+					}
+					else if (evt.target.id == 'like_menu') {
+						options.debouncer = setTimeout(options.customLikeMenu.open, 500);
+					}
+				});
+				
+				element.addEventListener('mouseleave', function() {
+					clearTimeout(options.debouncer);
+					options.ui.closeMenu();
+				});
+			}
 		}
 	},
 	ui: {
-		hideMenus: function() {
+		hideUnusedMenus: function() {
 			var hiddenOptions = {'history_menubar' : 'history_options', 
 					'context_menu' : 'context_options', 
 					'dramalinks' : 'dramalinks_options', 
 					'user_info_popup' : 'doubleclick_options'};
-			var box, menu;
 			for (var key in hiddenOptions) {
-				box = document.getElementById(key);
-				menu = document.getElementById(hiddenOptions[key]);		
+				var box = document.getElementById(key);
+				var menu = document.getElementById(hiddenOptions[key]);		
 				// only display hidden menus if checkbox is ticked
 				box.checked ? menu.style.display = 'initial' : menu.style.display = 'none';
 			}
 		},
+		closeMenu: function() {		
+			var menu = document.getElementById('menu_items');
+			if (menu) {
+				menu.remove();
+			}
+			else {
+				console.log('no menu found');
+			}
+		},		
 		setColorPicker: function() {
 			$('.color').ColorPicker({
 				onChange : function(hsb, hex, rgb, el) {
@@ -851,36 +978,80 @@ var options = {
 				});
 			}
 		},
+		displayLBContent: function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var likeData = config.custom_like_data;
+			var textarea = document.getElementById('like_ta');
+			var likeList = document.getElementById('like_list');
+			for (var i in likeData) {
+				var like = likeData[i];
+				var anchor = document.createElement('a');
+				var linebreak = document.createElement('br');			
+				anchor.href = '#';
+				anchor.id = i;
+				anchor.innerHTML = like.name;				
+				var close = document.createElement('a');
+				close.style.cssFloat = "right";
+				close.style.fontSize = "18px";
+				close.href = '#';
+				close.style.textDecoration = "none";
+				close.id = "delete_custom";
+				close.innerHTML = '&#10006;';		
+				likeList.appendChild(anchor);
+				anchor.appendChild(close);
+				likeList.appendChild(linebreak);
+			}
+			// TODO - active script should be most recently saved script
+			document.getElementById('lb1').className = 'active_like';
+			textarea.value = config.custom_like_data['lb1'].contents;	
+		},
 		displayUserscripts: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var scriptData = config.userscript_data;
 			var textarea = document.getElementById('script_ta');
 			var activeScript = document.getElementsByClassName('active_script')[0];
-			var scriptList = document.getElementById('script_list');		
-			if (config.userscript_data['us1']) {
-				activeScript.innerHTML = config.userscript_data['us1'].name;
-				textarea.value = config.userscript_data['us1'].contents;							
-			}					
+			var scriptList = document.getElementById('script_list');
 			for (var i in scriptData) {
 				var script = scriptData[i];
-				if (!document.getElementById(i)) {
-					var anchor = document.createElement('a');
-					var linebreak = document.createElement('br');
-					anchor.href = '#';
-					anchor.id = i;
-					// anchor.className = 'active_script';
-					anchor.innerHTML = script.name;
-					scriptList.appendChild(linebreak);
-					scriptList.appendChild(anchor);
-				}
+				var anchor = document.createElement('a');
+				var linebreak = document.createElement('br');				
+				anchor.href = '#';
+				anchor.id = i;
+				anchor.innerHTML = script.name;				
+				var close = document.createElement('a');
+				close.style.cssFloat = "right";
+				close.style.fontSize = "18px";
+				close.href = '#';
+				close.style.textDecoration = "none";
+				close.id = "delete_custom";
+				close.innerHTML = '&#10006;';		
+				scriptList.appendChild(anchor);
+				anchor.appendChild(close);
+				scriptList.appendChild(linebreak);
 			}
-		},		
-		switchScript: function(scriptID) {			
-			var textarea = document.getElementById('script_ta');
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var script = config.userscript_data[scriptID];
-			if (script) {				
-				textarea.value = script.contents;				
+			// TODO - active script should be most recently saved script
+			document.getElementById('us1').className = 'active_script';
+			textarea.value = config.userscript_data['us1'].contents;			
+		},
+		switchActive: function(ID) {
+			console.log(ID);
+			var config = JSON.parse(localStorage['ChromeLL-Config']);			
+			var type = ID.slice(0, 2);
+			var textarea, script;
+			if (type == 'us') {
+				textarea = document.getElementById('script_ta');
+				script = config.userscript_data[ID];				
+			} 
+			else if (type == 'lb') {
+				textarea = document.getElementById('like_ta');
+				script = config.custom_like_data[ID];
+			}
+			
+			if (script) {
+				textarea.value = script.contents;
+			}
+			else {
+				return;
 			}
 		},
 		addDiv: {
@@ -960,11 +1131,11 @@ var options = {
 		},
 		data: {}
 	},
-	userscripts: {
-		openMenu: function() {
+	userscriptsMenu: {
+		open: function() {
 			var button = document.getElementById('script_menu');
 			var menuElement = document.createElement('span');				
-			var items = ['New', 'Open', 'Save'];
+			var items = ['New', 'Save'];
 			menuElement.id = 'menu_items';	
 			menuElement.style.position = 'absolute';
 			menuElement.style.overflow = 'auto';
@@ -992,15 +1163,6 @@ var options = {
 				menuElement.appendChild(lineBreak);
 			}
 		},
-		closeMenu: function() {		
-			var menu = document.getElementById('menu_items');
-			if (menu) {
-				menu.remove();
-			}
-			else {
-				console.log('no menu found');
-			}
-		},
 		findCaret: function(ta) {
 			var caret = 0;
 			if (ta.selectionStart || ta.selectionStart == '0') {
@@ -1017,8 +1179,41 @@ var options = {
 			scriptInput.setSelectionRange(newCaret, newCaret);
 		}
 	},
+	customLikeMenu: {
+		open: function() {
+			var button = document.getElementById('like_menu');
+			var menuElement = document.createElement('span');				
+			var items = ['New', 'Save'];
+			menuElement.id = 'menu_items';	
+			menuElement.style.position = 'absolute';
+			menuElement.style.overflow = 'auto';
+			menuElement.style.padding = '3px 3px';
+			menuElement.style.borderStyle = 'solid';
+			menuElement.style.borderWidth = '2px';
+			menuElement.style.borderRadius = '3px';
+			for (var i = 0, len = items.length; i < len; i++) {
+				var item = items[i];
+				populateMenu.call(this, item, i, menuElement);
+			}
+			button.appendChild(menuElement);
+		
+			function populateMenu(item, index, menuElement) {
+				var menuSpan = document.createElement('span');
+				var menuItem = document.createElement('anchor');
+				var lineBreak = document.createElement('br');
+				menuSpan.className = 'unhigh_span';
+				menuItem.innerHTML = '&nbsp' + item + '&nbsp';
+				menuItem.href = '#';
+				menuItem.className = 'like_menu_items';
+				menuItem.id = 'like_' + item.toLowerCase();
+				menuSpan.appendChild(menuItem);
+				menuElement.appendChild(menuSpan);
+				menuElement.appendChild(lineBreak);
+			}
+		}
+	},
 	getDefault: function(callback) {
-		var defaultURL = chrome.extension.getURL('/src/json/defaultoptions.json');
+		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
 		var temp, defaultConfig;
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", defaultURL, true);

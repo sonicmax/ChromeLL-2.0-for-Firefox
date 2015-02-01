@@ -651,6 +651,37 @@ span.desc {
 	background-color: #509099; 
 	color: white;
 }
+#like_input {
+	width:80%;
+	height:90%;
+	float:left;
+}
+#like_list {
+	background-color: silver;
+	line-height:30px;
+	height:90%;
+	width:20%;
+	float:left;
+}
+.like_menu_items:hover {
+	background-color: #509099; 
+}
+#like_menu {
+	border-top: 1px solid #8faad9;
+	color: black;
+	background-color: silver;
+}
+#like_menu:hover {
+	background-color: #509099; 
+}
+#like_menubar {
+	border-top: 1px solid #8faad9;
+	background-color: silver; 
+}
+.active_like {
+	background-color: #509099; 
+	color: white;
+}
 </style>
 <link rel="stylesheet" href="src/css/config/button.css">
 <link rel="stylesheet" href="src/css/config/checkbox.css">
@@ -676,6 +707,7 @@ span.desc {
 				<li class="navbar-item options_navigation_link" id="snippets_link">Snippets</li>
 				<li class="navbar-item options_navigation_link" id="topiclist_link">Topic List</li>
 				<li class="navbar-item options_navigation_link" id="messagelist_link">Message List</li>
+				<li class="navbar-item options_navigation_link" id="like_link">Like Button</li>
 				<li class="navbar-item options_navigation_link" id="profile_link">Profile/PM<small>s</small></li>
 				<li class="navbar-item options_navigation_link" id="imagemap_link">Imagemap</li>
 				<br />
@@ -1668,6 +1700,27 @@ span.desc {
 						</section>		
 					</div>
 					
+					<div class="page hidden" id="like_page">
+						<h1>Like Button</h1>
+						<div class="checkbox">
+							<label>
+								<input type="checkbox" id="custom_like_button" />
+								<span>Enable custom like buttons?</span>
+							</label>
+						</div>						
+						<div>
+							<div id="like_menubar">
+								<span id="like_menu">&nbsp<u>F</u>ile</span>						
+							</div>
+						</div>
+						<br>
+						<div id="like_input">
+							<textarea id="like_ta" style="width: 90%; height: 300px; border: 1px solid grey;"></textarea>
+						</div>
+						<div id="like_list">
+						</div>
+					</div>						
+					
 					<div class="page hidden" id="profile_page">
 						<h1>Profile</h1>
 						<section>
@@ -1861,7 +1914,6 @@ span.desc {
 							<textarea id="script_ta" style="width: 90%; height: 300px; border: 1px solid grey;"></textarea>
 						</div>
 						<div id="script_list">
-							<a href="#" id="us1" class="active_script">Untitled script</a>
 						</div>
 					</div>
 					
