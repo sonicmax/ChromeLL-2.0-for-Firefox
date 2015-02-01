@@ -215,7 +215,7 @@ var options = {
 				options.listeners.menuVisibility();
 				options.listeners.click();
 				options.listeners.change();
-				options.listeners.hover();
+				options.listeners.menuButton();
 				options.ui.populateCacheTable();
 				options.ui.displayUserscripts();
 				options.ui.displayLBContent();
@@ -227,7 +227,7 @@ var options = {
 			options.listeners.menuVisibility();
 			options.listeners.click();
 			options.listeners.change();
-			options.listeners.hover();
+			options.listeners.menuButton();
 			options.ui.populateCacheTable();
 			options.ui.displayUserscripts();
 			options.ui.displayLBContent();
@@ -566,7 +566,7 @@ var options = {
 				}
 			}
 			var newNumber = highest + 1;
-			var newID = 'us' + newNumber;
+			var newID = 'script' + newNumber;
 			
 			config.userscript_data[newID] = {};
 			config.userscript_data[newID].name = 'Untitled script ' + newNumber;
@@ -633,7 +633,7 @@ var options = {
 				}
 			}
 			var newNumber = highest + 1;
-			var newID = 'us' + newNumber;
+			var newID = 'like' + newNumber;
 			
 			config.custom_like_data[newID] = {};
 			config.custom_like_data[newID].name = 'Untitled ' + newNumber;
@@ -686,28 +686,54 @@ var options = {
 			}
 		},
 		deleteFromConfig: function(ID) {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);	
-			console.log(ID);
-			var type = ID.slice(0, 2);
-			console.log(type);
-			if (type == 'lb') {
-				// like button
-				console.log(config.custom_like_data[ID]);
-				delete config.custom_like_data[ID];
-				localStorage['ChromeLL-Config'] = JSON.stringify(config);
-				console.log(config.custom_like_data);
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var type = ID.replace(/[0-9]/g, '');
+			if (lastKeyInObject) {
+				return;
 			}
-			else if (type == 'us') {
-				// user script
-				console.log(config.userscript_data[ID]);
-				delete config.userscript_data[ID];
+			else {
+				if (type == 'like') {
+					delete config.custom_like_data[ID];
+					cleanup(config.custom_like_data);
+				}
+				else if (type == 'script') {		
+					delete config.userscript_data[ID];
+					cleanup(config.userscript_data);
+				}
+				
+				var nodeToRemove = document.getElementById(ID);
+				if (nodeToRemove.className == 'active_' + type) {
+					var nextActive = document.getElementsByClassName('inactive_' + type)[0];
+					nextActive.className = 'active_' + type;
+					nodeToRemove.className = '';
+				}
+				var closeButton = nodeToRemove.childNodes[0];
+				nodeToRemove.remove();
+				closeButton.remove();
+				
 				localStorage['ChromeLL-Config'] = JSON.stringify(config);
-				console.log(config.userscript_data);
 			}
-			var nodeToRemove = document.getElementById(ID);
-			var closeButton = nodeToRemove.childNodes[0];
-			nodeToRemove.remove();
-			closeButton.remove();			
+			
+			function cleanup(data) {
+				var newIndex = 1;
+				for (var i in data) {
+					data['script' + newIndex] = data[i];
+					if (i !== 'script' + newIndex) {
+						delete data[i];
+					}
+				}
+			}
+		
+			function lastKeyInObject() {
+				var active = document.getElementsByClassName('active_' + type).length;
+				var inactive = document.getElementsByClassName('inactive_' + type).length;
+				if (active + inactive == 1) {
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
 		}
 	},
 	listeners : {
@@ -740,20 +766,16 @@ var options = {
 				
 				if (evt.target.parentNode.id.match(/_list/) && evt.target.className != 'delete') {
 					var parent = evt.target.parentNode.id;
+					var type = evt.target.id.replace(/[0-9]/g, '');
 					var next = evt.target;
-					var type;
-					if (parent == 'like_list') {	
-						type = 'like';
-					}
-					else if (parent == 'script_list') {						
-						type = 'script';
-					}
 					var last = document.getElementsByClassName('active_' + type)[0];
+					if (last) {
+						last.className = '';
+					}
 					next.className = 'active_' + type;
-					last.className = '';
 					options.ui.switchActive(evt.target.id);
 					evt.preventDefault();
-				}		
+				}
 				
 				else if (evt.target.id == 'delete_custom') {
 					options.functions.deleteFromConfig(evt.target.parentNode.id);
@@ -821,7 +843,7 @@ var options = {
 				element.addEventListener('change', options.ui.hideMenus);
 			}
 		},
-		hover: function() {
+		menuButton: function() {
 			var elements = [];
 			elements.push(document.getElementById('script_menu'));
 			elements.push(document.getElementById('like_menu'));
@@ -829,18 +851,16 @@ var options = {
 			for (var i = 0, len = elements.length; i < len; i++) {
 				var element = elements[i];
 				
-				element.addEventListener('mouseenter', function(evt) {		
-					clearTimeout(options.debouncer);
+				element.addEventListener('click', function(evt) {
 					if (evt.target.id == 'script_menu') {
-						options.debouncer = setTimeout(options.userscriptsMenu.open, 500);
+						options.userscriptsMenu.open();
 					}
 					else if (evt.target.id == 'like_menu') {
-						options.debouncer = setTimeout(options.customLikeMenu.open, 500);
+						options.customLikeMenu.open();
 					}
 				});
 				
 				element.addEventListener('mouseleave', function() {
-					clearTimeout(options.debouncer);
 					options.ui.closeMenu();
 				});
 			}
@@ -863,10 +883,7 @@ var options = {
 			var menu = document.getElementById('menu_items');
 			if (menu) {
 				menu.remove();
-			}
-			else {
-				console.log('no menu found');
-			}
+			}			
 		},		
 		setColorPicker: function() {
 			$('.color').ColorPicker({
@@ -983,27 +1000,37 @@ var options = {
 			var likeData = config.custom_like_data;
 			var textarea = document.getElementById('like_ta');
 			var likeList = document.getElementById('like_list');
+			var mostRecent = {
+					'time': 0,
+					'id': ''
+			};
 			for (var i in likeData) {
 				var like = likeData[i];
+				console.log(like);
+				if (like.last_saved > mostRecent.time) {
+					mostRecent.time = like.last_saved;
+					mostRecent.id = i;
+				}
 				var anchor = document.createElement('a');
-				var linebreak = document.createElement('br');			
-				anchor.href = '#';
-				anchor.id = i;
-				anchor.innerHTML = like.name;				
 				var close = document.createElement('a');
+				var linebreak = document.createElement('br');		
+				anchor.href = '#';
+				anchor.className = 'inactive_like';
+				anchor.id = i;
+				anchor.innerHTML = like.name;
 				close.style.cssFloat = "right";
 				close.style.fontSize = "18px";
 				close.href = '#';
 				close.style.textDecoration = "none";
 				close.id = "delete_custom";
-				close.innerHTML = '&#10006;';		
+				close.innerHTML = '&#10006;';
 				likeList.appendChild(anchor);
 				anchor.appendChild(close);
 				likeList.appendChild(linebreak);
 			}
-			// TODO - active script should be most recently saved script
-			document.getElementById('lb1').className = 'active_like';
-			textarea.value = config.custom_like_data['lb1'].contents;	
+			console.log(mostRecent);
+			document.getElementById(mostRecent.id).className = 'active_like';
+			textarea.value = config.custom_like_data[mostRecent.id].contents;	
 		},
 		displayUserscripts: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
@@ -1011,14 +1038,24 @@ var options = {
 			var textarea = document.getElementById('script_ta');
 			var activeScript = document.getElementsByClassName('active_script')[0];
 			var scriptList = document.getElementById('script_list');
+			var mostRecent = {
+					'time': 0,
+					'id': ''
+			};
 			for (var i in scriptData) {
 				var script = scriptData[i];
+				console.log(script);
+				if (script.last_saved > mostRecent.time) {
+					mostRecent.time = script.last_saved;
+					mostRecent.id = i;
+				}
 				var anchor = document.createElement('a');
-				var linebreak = document.createElement('br');				
+				var close = document.createElement('a');
+				var linebreak = document.createElement('br');	
 				anchor.href = '#';
 				anchor.id = i;
+				anchor.className = 'inactive_script';
 				anchor.innerHTML = script.name;				
-				var close = document.createElement('a');
 				close.style.cssFloat = "right";
 				close.style.fontSize = "18px";
 				close.href = '#';
@@ -1029,21 +1066,21 @@ var options = {
 				anchor.appendChild(close);
 				scriptList.appendChild(linebreak);
 			}
+			console.log(mostRecent);
 			// TODO - active script should be most recently saved script
-			document.getElementById('us1').className = 'active_script';
-			textarea.value = config.userscript_data['us1'].contents;			
+			document.getElementById(mostRecent.id).className = 'active_script';
+			textarea.value = config.userscript_data[mostRecent.id].contents;			
 		},
 		switchActive: function(ID) {
-			console.log(ID);
-			var config = JSON.parse(localStorage['ChromeLL-Config']);			
-			var type = ID.slice(0, 2);
-			var textarea, script;
-			if (type == 'us') {
-				textarea = document.getElementById('script_ta');
-				script = config.userscript_data[ID];				
-			} 
-			else if (type == 'lb') {
-				textarea = document.getElementById('like_ta');
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var type = ID.replace(/[0-9]/g, '');
+			var textarea = document.getElementById(type + '_ta');
+			var script;
+			
+			if (type == 'script') {
+				script = config.userscript_data[ID];
+			}
+			else if (type == 'like') {
 				script = config.custom_like_data[ID];
 			}
 			
