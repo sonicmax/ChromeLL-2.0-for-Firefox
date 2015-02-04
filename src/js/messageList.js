@@ -963,7 +963,7 @@ var messageList = {
 				evt.preventDefault();
 			}
 			else if (evt.target.className == 'like_button_custom') {
-				var templateNumber = evt.target.href.match(/[0-9]+/)[0];
+				var templateNumber = evt.target.id;
 				for (var i = 0, len = evt.path.length; i < len; i++) {
 					var pathNode = evt.path[i];
 					if (pathNode.className == 'like_button') {
@@ -2667,7 +2667,8 @@ var messageList = {
 				var poster = container.getElementsByTagName('a')[0].innerHTML + "'s";
 			}		
 			if (templateNumber) {
-				var ins = messageList.config.custom_likes[templateNumber];
+				console.log(templateNumber);
+				var ins = messageList.config.custom_like_data[templateNumber].contents;
 				ins = ins.replace(/[username]/g, username);
 				ins = ins.replace(/[poster]/g, poster);
 			}
@@ -2699,9 +2700,16 @@ var messageList = {
 		},
 		showOptions: function() {
 			if (!document.getElementById('hold_menu')) {
-				var menuElement = document.createElement('span');				
-				var items = ['Placeholder 1', 'Placeholder 2', 'Placeholder 3'];
-				menuElement.id = 'hold_menu';				
+				var scriptData = messageList.config.userscript_data;
+				var scriptNames = [];
+				var scriptIDs = [];
+				for (var ID in scriptData) {
+					scriptNames.push(scriptData[ID].name);					
+					scriptIDs.push(ID);
+				}
+				var menuElement = document.createElement('span');
+				menuElement.id = 'hold_menu';	
+				menuElement.setAttribute
 				menuElement.style.position = 'absolute';
 				menuElement.style.overflow = 'auto';
 				menuElement.style.padding = '3px 3px';
@@ -2709,25 +2717,26 @@ var messageList = {
 				menuElement.style.borderWidth = '2px';
 				menuElement.style.borderRadius = '3px';
 				menuElement.style.backgroundColor = $(document.body).css('background-color');
-				for (var i = 0, len = items.length; i < len; i++) {
-					var item = items[i];
-					populateMenu.call(this, item, i, menuElement);
+				for (var i = 0, len = scriptNames.length; i < len; i++) {
+					var name = scriptNames[i];
+					var id = scriptIDs[i];
+					populateMenu.call(this, name, id, menuElement);
 				}
 				messageList.cachedEvent.target.appendChild(menuElement);
 			}
 			
-			function populateMenu(item, index, menuElement) {
+			function populateMenu(item, id, menuElement) {
 				var menuSpan = document.createElement('span');
 				var menuItem = document.createElement('anchor');
 				var lineBreak = document.createElement('br');
 				menuSpan.className = 'unhigh_span';
+				menuSpan.id = id;
 				menuItem.innerHTML = '&nbsp' + item + '&nbsp';
-				menuItem.href = '#like_custom_' + index;
+				menuItem.href = '#like_custom_' + id;
 				menuItem.className = 'like_button_custom';
 				menuSpan.appendChild(menuItem);
 				menuElement.appendChild(menuSpan);
 				menuElement.appendChild(lineBreak);
-				menuItem.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
 			}
 		},
 		hideOptions: function() {
