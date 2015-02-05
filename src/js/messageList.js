@@ -2055,7 +2055,7 @@ var messageList = {
 				var anchors = infobar.getElementsByTagName('a');					
 				this.lastPage = anchors[anchors.length - 1].innerHTML;
 				this.createPopup.call(this, imageGrid);
-				this.getDataForCache(imageGrid);
+				this.iterateOverImages(imageGrid);
 			},
 			scrape: function(imagemap) {
 				var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
@@ -2151,12 +2151,11 @@ var messageList = {
 					});
 				}
 			},			
-			getDataForCache: function(imageGrid) {
+			iterateOverImages: function(imageGrid) {
 				var imgs = imageGrid.getElementsByTagName('img');
 				for (var i = 0, len = imgs.length; i < len; i++) {
 					var img = imgs[i];
-					var src = img.src;
-					
+					var src = img.src;			
 					if (img.parentNode.className === 'img-loaded') {
 						var href = img.parentNode.parentNode.href;
 					}
@@ -2183,7 +2182,7 @@ var messageList = {
 							'dataURI': dataURI, 
 							'src': src, 
 							'href': href, 
-							'i': i
+							'index': i
 					};
 					that.prepareData.call(that, imageData, imgs);
 					canvas = null;
@@ -2191,12 +2190,12 @@ var messageList = {
 				img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
 			},			
 			prepareData: function(imageData, imgs) {
-				// thumbnails are always jpgs - fullsize image could have 
-				// a different file format (found in href)
 				var dataURI = imageData.dataURI;
 				var href = imageData.href;
 				var src = imageData.src;
-				var i = imageData.i;
+				var i = imageData.index;
+				// thumbnails are always jpgs - fullsize image could have 
+				// a different file format (found in href)			
 				var extension = href.match(/\.(gif|jpg|png)$/i)[0];
 				var fullsize = src.replace('.jpg', extension);
 				fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
@@ -2207,23 +2206,24 @@ var messageList = {
 					console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
 					return;
 				}
-				else {
+				else {					
 					this.cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
 					if (i === imgs.length - 1) {
-						// convertToBase64 has finished encoding - update cache with new images
+						// convertToBase64 has finished encoding images - update cache
 						this.restore(this.updateCache);
 					}
 				}
 			},
-			updateCache: function(old) {				
+			updateCache: function(old) {
+				var dataToCache = messageList.image.map.cacheData;
 				if (!old.imagemap) {
 					// first time caching
-					var cache = this.cacheData;
+					var cache = dataToCache;
 				}
 				else {
 					// add current page to existing data
-					for (var i in this.cache) {
-						old.imagemap[i] = this.cacheData[i];							
+					for (var i in dataToCache) {
+						old.imagemap[i] = dataToCache[i];							
 					}
 					var cache = old.imagemap;
 				}
@@ -2233,9 +2233,8 @@ var messageList = {
 			},
 			restore: function(callback) {
 				chrome.storage.local.get("imagemap", function(cache) {
-					if (!cache) {
-						var emptyCache = {};
-						callback(emptyCache);
+					if (cache === {}) {
+						callback(false);
 					}
 					else if (cache) {
 						callback(cache);
@@ -2257,7 +2256,7 @@ var messageList = {
 						this.getImagemap(function(imagemap) {
 							var newGrid = that.scrape(imagemap);
 							imageGrid.appendChild(newGrid);
-							that.getDataForCache(newGrid);
+							that.iterateOverImages(newGrid);
 						});
 					}
 				}
@@ -2748,7 +2747,7 @@ var messageList = {
 				console.log('no menu found');
 			}
 		}
-	},	
+	},
 	autoscrollCheck: function(mutation) {
 		// checks whether user has scrolled to bottom of page
 		var position = mutation.getBoundingClientRect();
