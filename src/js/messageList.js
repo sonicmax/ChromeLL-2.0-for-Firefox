@@ -902,10 +902,11 @@ var messageList = {
 		},
 		load: function() {
 			this.parseObserver.disconnect();
-			this.passToFunctions('misc');					
+			this.passToFunctions('misc');
+			this.quote.addButtons();
 			this.addListeners();
 			this.appendScripts();
-			this.addCSSRules();
+			this.addCSSRules();	
 			this.livelinks.observe(document.getElementById('u0_1'), {
 					subtree: true,
 					childList: true
@@ -922,16 +923,15 @@ var messageList = {
 			}
 		},
 		newPost: function(container) {
-			var index = document.getElementsByClassName('message-container').length - 1;
+			var index = document.getElementsByClassName('message-container').length;
 			var functions = this.functions.messagecontainer;
-			var config = this.config;
 			var live = true;
 			var pm = '';
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";
 			}
 			for (var i in functions) {
-				if (config[i + pm]) {
+				if (this.config[i + pm]) {
 						functions[i](container, index, live);
 				}
 			}
