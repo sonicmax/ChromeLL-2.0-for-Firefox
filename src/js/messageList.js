@@ -323,24 +323,6 @@ var messageList = {
 					}
 				}
 			},
-			click_expand_thumbnail: function(container) {
-				// rewritten by xdrvonscottx
-				// find all the placeholders before the images are loaded
-				var msg = container.getElementsByClassName('message')[0];
-				if (!msg) {
-					// use message-container instead
-					msg = container;
-				}
-				var pholds = msg.getElementsByClassName('img-placeholder');
-				var phold;
-				for (var i = 0, len = pholds.length; i < len; i++) {
-					phold = pholds[i];
-					messageList.image.observer.observe(phold, {
-						attributes: true,
-						childList: true
-					});
-				}
-			},	
 			autoscroll_livelinks: function(mutation, index, live) {
 				if (live && document.hidden 
 						&& messageList.autoscrollCheck(mutation) ) {
@@ -734,6 +716,22 @@ var messageList = {
 				document.addEventListener('scroll', messageList.clearUnreadPosts);
 				document.addEventListener('mousemove', messageList.clearUnreadPosts);
 			},
+			click_expand_thumbnail: function() {
+				var messages = document.getElementsByClassName('message');
+				for (var i = 0, len = messages.length; i < len; i++) {
+					var message = messages[i];
+					// rewritten by xdrvonscottx
+					// find all the placeholders before the images are loaded
+					var pholds = message.getElementsByClassName('img-placeholder');
+					for (var j = 0; j < pholds.length; j++) {
+						var phold = pholds[j];
+						messageList.image.observer.observe(phold, {
+							attributes: true,
+							childList: true
+						});
+					}
+				}
+			},				
 			loadquotes: function() {
 				function getElementsByClass(searchClass, node, tag) {
 					var classElements = new Array();
@@ -2011,7 +2009,7 @@ var messageList = {
 				console
 						.log("I don't know what's going on with this image - weird number of siblings");
 		},
-		resize: function(el) {
+		resize: function(el) {		
 			var width = el.width;
 			if (width > messageList.config.img_max_width) {
 				// console.log('resizing:', el);
@@ -2243,8 +2241,8 @@ var messageList = {
 			},
 			scrollHandler: function(imageGrid) {
 				var that = this;
-				// check whether user is at end of page
-				// (minus 5 pixels from clientHeight to account for large zoom levels)
+				// check whether user is at end of current page
+				// (minus 5 pixels from clientHeight to account for large zoom levels - just in case!)
 				if (imageGrid.scrollTop >= imageGrid.scrollHeight - imageGrid.clientHeight - 5) {			
 					if (this.currentPage === this.lastPage) {
 						// no more pages to load
@@ -2463,17 +2461,11 @@ var messageList = {
 				}
 			}
 		},
-		observer: new MutationObserver(function(mutations) {
-			var mutation;
-			for (var i = 0, len = mutations.length; i < len; i++) {
-				mutation = mutations[i];
+		observer: new MutationObserver(function(mutations) {		
+			for (var i = 0; i < mutations.length; i++) {
+				var mutation = mutations[i];
 				if (messageList.config.resize_imgs) {
-					var addedNodes = mutation.addedNodes;
-					var addedNode;
-					for (var j = 0, nodesLength = addedNodes.length; j < nodesLength; j++) {
-						addedNode = addedNodes[j];
-						messageList.image.resize(addedNode);
-					}
+					messageList.image.resize(mutation.target.childNodes[0]);
 				}
 				if (mutation.type === 'attributes') {
 					// once they're loaded, thumbnails have /i/t/ in their
