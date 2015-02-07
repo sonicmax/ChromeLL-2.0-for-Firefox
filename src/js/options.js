@@ -469,7 +469,7 @@ var options = {
 				var filetypes = {};
 				options.cache.restore(function(cached) {
 					var cache = cached.imagemap;
-					if (sortType === 'filetype') {
+					if (sortType === 'filetype') {						
 						filetypes["none"] = [];
 						filetypes[".gif"] = [];
 						filetypes[".jpg"] = [];
@@ -493,11 +493,12 @@ var options = {
 						}
 					}
 					else {
+						// sort by filename
 						for (var src in cache) {
 							var filename = cache[src].filename;
 							filenames.push(filename);
 						}
-						filenames.sort()		
+						filenames.sort();
 						if (sortType === 'z_a') {
 							filenames.reverse();
 						}
@@ -511,8 +512,7 @@ var options = {
 								if (!duplicateCheck[src]) {
 									// check that src hasn't been pushed to results array before - this ensures that
 									// duplicate filenames aren't assigned the same src value
-									results.push(src);
-									
+									results.push(src);						
 									duplicateCheck[src] = {"filename": sortedFilename, "index": i};
 								}
 							}
@@ -664,8 +664,8 @@ var options = {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			options.ui.closeMenu();		
 			var activeLike = document.getElementsByClassName('active_like')[0];
-			var contents = document.getElementById('like_ta').value;
-			var name = activeLike.innerHTML;
+			var contents = document.getElementById('like_ta').value;			
+			var name = activeLike.firstChild.innerText;
 			var id = activeLike.id;
 			
 			if (config.custom_like_data[id]) {
@@ -676,7 +676,7 @@ var options = {
 			}
 			else {
 				// first time saving - choose filename, choose injection context, etc
-				var newName = prompt("Rename custom message?", "Custom message");
+				var newName = prompt("Rename?", name);
 				activeLike.innerHTML = newName;
 				config.custom_like_data[id] = {};
 				config.custom_like_data[id].name = newName;
@@ -693,16 +693,7 @@ var options = {
 			var active = document.getElementsByClassName('active_' + type).length;
 			var inactive = document.getElementsByClassName('inactive_' + type).length;
 			if (active + inactive == 1) {
-				console.log('last one');
-				lastKeyInObject = true;
-			}
-			else {
-				console.log('more than one');
-				lastKeyInObject = false;
-			}
-			
-			
-			if (lastKeyInObject) {
+				// last key in object - don't delete, just reset to default (TODO)
 				return;
 			}
 			else {
@@ -936,7 +927,7 @@ var options = {
 						}
 						var data = image.data;
 						tableRow.id = i;
-						// filename table row contains input field
+						// filename table row contains input field						
 						filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
 								+ '" value="' + filename +'" style="width:400px;">';
 						urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
@@ -976,8 +967,8 @@ var options = {
 							var urlData = document.createElement('td');								
 							var filename = image.filename;
 							var fullsize = image.fullsize;
-							if (fullsize.length > 100) {
-								var url = fullsize.substring(0, 99) + '...';
+							if (fullsize.length > 80) {
+								var url = fullsize.substring(0, 80) + '...';
 							}
 							else {
 								var url = fullsize;
@@ -1009,7 +1000,6 @@ var options = {
 			};
 			for (var i in likeData) {
 				var like = likeData[i];
-				console.log(like);
 				if (like.last_saved > mostRecent.time) {
 					mostRecent.time = like.last_saved;
 					mostRecent.id = i;
@@ -1020,7 +1010,7 @@ var options = {
 				anchor.href = '#';
 				anchor.className = 'inactive_like';
 				anchor.id = i;
-				anchor.innerHTML = like.name;
+				anchor.innerText = like.name;
 				close.style.cssFloat = "right";
 				close.style.fontSize = "18px";
 				close.href = '#';
@@ -1031,7 +1021,6 @@ var options = {
 				anchor.appendChild(close);
 				likeList.appendChild(linebreak);
 			}
-			console.log(mostRecent);
 			document.getElementById(mostRecent.id).className = 'active_like';
 			textarea.value = config.custom_like_data[mostRecent.id].contents;	
 		},
@@ -1159,13 +1148,11 @@ var options = {
 		},
 		restore: function(callback) {
 			chrome.storage.local.get("imagemap", function(cache) {
-				if (chrome.runtime.lastError) {
-					// this shouldn't happen...
-					console.log(chrome.runtime.lastError);
-					return;
-				}
-				else if (cache) {
+				if (cache) {
 					callback(cache);
+				}
+				else {
+					// TODO - handle empty imagemap cache
 				}
 			});	
 		},

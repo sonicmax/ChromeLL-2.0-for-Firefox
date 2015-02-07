@@ -2658,10 +2658,9 @@ var messageList = {
 				var poster = container.getElementsByTagName('a')[0].innerHTML + "'s";
 			}		
 			if (templateNumber) {
-				console.log(templateNumber);
 				var ins = messageList.config.custom_like_data[templateNumber].contents;
-				ins = ins.replace(/[username]/g, username);
-				ins = ins.replace(/[poster]/g, poster);
+				ins = ins.replace('[user]', username);
+				ins = ins.replace('[poster]', poster);
 			}
 			else {
 				var img = '<img src="http://i3.endoftheinter.net/i/n/698e5d838cd094148836a3a07168aca0/jameis thumbs up.png" />';	
@@ -2677,27 +2676,21 @@ var messageList = {
 				}
 				newtxt += ins + '\n---' + oldtxt[oldtxt.length - 1];
 			}
-			else {			
+			else {		
 				newtxt = qrtext;
 				newtxt += ins;
 			}
 			var msgID = message.getAttribute('msgid');
 			var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});
 			quickreply.value = quotedMessage + '\n' + newtxt;
-			if (true) {
-				// click nub element to open quickpost area after appending text
+			if (document.getElementsByClassName('regular quickpost-expanded').length == 0) {
+				// quickpost area is hidden - click nub element to open
 				nub.click();
 			}
 		},
 		showOptions: function() {
 			if (!document.getElementById('hold_menu')) {
-				var scriptData = messageList.config.userscript_data;
-				var scriptNames = [];
-				var scriptIDs = [];
-				for (var ID in scriptData) {
-					scriptNames.push(scriptData[ID].name);					
-					scriptIDs.push(ID);
-				}
+				var scriptData = messageList.config.custom_like_data;
 				var menuElement = document.createElement('span');
 				menuElement.id = 'hold_menu';	
 				menuElement.setAttribute
@@ -2708,9 +2701,8 @@ var messageList = {
 				menuElement.style.borderWidth = '2px';
 				menuElement.style.borderRadius = '3px';
 				menuElement.style.backgroundColor = $(document.body).css('background-color');
-				for (var i = 0, len = scriptNames.length; i < len; i++) {
-					var name = scriptNames[i];
-					var id = scriptIDs[i];
+				for (var id in scriptData) {
+					var name = scriptData[id].name;					
 					populateMenu.call(this, name, id, menuElement);
 				}
 				messageList.cachedEvent.target.appendChild(menuElement);
