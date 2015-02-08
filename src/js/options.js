@@ -335,14 +335,16 @@ var options = {
 				return;
 			}
 		},
-		ignoratorClick: function(evt) {
-			document.getElementById('ignorator_messagelist').checked = evt.target.checked;
-			document.getElementById('ignorator_topiclist').checked = evt.target.checked;
+		ignoratorClick: function() {
+			var ignorator = document.getElementById('ignorator');
+			document.getElementById('ignorator_messagelist').checked = ignorator.checked;
+			document.getElementById('ignorator_topiclist').checked = ignorator.checked;
 			options.save();
 		},
-		highlightClick: function(evt) {
-			document.getElementById('userhl_messagelist').checked = evt.target.checked;
-			document.getElementById('userhl_topiclist').checked = evt.target.checked;
+		highlightClick: function() {
+			var highlight = document.getElementById('enable_user_highlight');
+			document.getElementById('userhl_messagelist').checked = highlight.checked;
+			document.getElementById('userhl_topiclist').checked = highlight.checked;
 			options.save();
 		},
 		downloadClick: function() {
@@ -755,7 +757,9 @@ var options = {
 				if (elementsToCheck[elementID]) {
 					var functionName = elementsToCheck[elementID];
 					options.functions[functionName]();
-					evt.preventDefault();
+					if (evt.target.tagName !== 'INPUT') {
+						evt.preventDefault();
+					}
 				}
 				
 				if (evt.target.parentNode.id.match(/_list/) && evt.target.className != 'delete') {
