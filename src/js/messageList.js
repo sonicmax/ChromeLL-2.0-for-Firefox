@@ -2262,7 +2262,9 @@ var messageList = {
 			clickHandler: function(evt) {
 				// get img code & copy to clipboard via background page
 				var that = this;
-				var clipboard = {};				
+				var clipboard = {};
+				// TODO - check that user has clicked on image before attempting
+				// to use getAttribute or access properties
 				if (evt.target.getAttribute('searchresult')) {
 					var src = evt.target.getAttribute('oldsrc'); 
 				}
@@ -2282,14 +2284,7 @@ var messageList = {
 				}
 				// replaces thumbnail location with location of fullsize image
 				clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
-				chrome.runtime.sendMessage(clipboard, function(response) {
-					if (document.getElementById('search_results')) {
-						that.search.closePopup.bind(that);
-					}
-					else {
-						that.closePopup.bind(that);
-					}
-				});
+				chrome.runtime.sendMessage(clipboard, messageList.image.map.closePopup);
 			},
 			closePopup: function() {
 				var div = document.getElementById('map_div');
@@ -2297,7 +2292,10 @@ var messageList = {
 					div = document.getElementById('search_results');				
 				}
 				var bodyClass = document.getElementsByClassName('body')[0];
-				document.body.removeChild(div);
+				// TODO - fix this properly
+				if (div) {
+					document.body.removeChild(div);
+				}
 				bodyClass.style.opacity = 1;
 				document.body.style.overflow = 'initial';
 				bodyClass.removeEventListener('mousewheel', preventScroll);
@@ -2311,9 +2309,9 @@ var messageList = {
 						this.lookup(query, function(results, query) {
 							if (!document.getElementById('search_results')) {
 								that.createPopup(query);
-							} else {
-								that.updatePopup(results, query);
+								// TODO - display progress spinner
 							}
+							that.prepareResults(results, query);
 						});
 					}
 					else {
@@ -2322,7 +2320,7 @@ var messageList = {
 						}
 					}
 				},
-				lookup: function(query, callback) {
+				lookup: function(query, callback) {				
 					var results = [];
 					messageList.image.map.restore(function(cached) {
 						var cache = cached.imagemap;
@@ -2339,7 +2337,7 @@ var messageList = {
 					var that = this;
 					var resultsToShow = results;
 					if (results.length === 0) {
-						this.display(false, query);
+						this.formatResults(false, query);
 					}
 					else {
 						messageList.image.map.restore(function(cached) {
@@ -2349,13 +2347,13 @@ var messageList = {
 								var result = results[i];
 								data[result] = cache[result];
 							}
-							that.display(data, query);
+							that.formatResults(data, query);
 						});
 					}
 				},
-				display: function(data, query) {
+				formatResults: function(data, query) {	
 					if (!data) {
-						this.updatePopup(data, query);
+						this.updatePopup(false, query);
 					}
 					else {
 						var grid = document.createElement('div');	
@@ -2421,10 +2419,10 @@ var messageList = {
 					var querySpan = document.getElementById('query');
 					var width = window.innerWidth;
 					var height = window.innerHeight;					
-					if (querySpan.innerHTML != query) {							
+					if (querySpan.innerHTML != query) {						
 							querySpan.innerHTML = query;
 					}
-					if (!results) {					
+					if (!results) {
 						var textDiv = document.createElement('div');
 						var text = document.createTextNode('No matches found.');
 						textDiv.id = 'no_results_grid'
