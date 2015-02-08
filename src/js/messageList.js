@@ -2309,8 +2309,14 @@ var messageList = {
 						this.lookup(query, function(results, query) {
 							if (!document.getElementById('search_results')) {
 								that.createPopup(query);
-								// TODO - display progress spinner
 							}
+							else {
+								var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');								
+								oldGrid.remove();
+								// display loading_image element while waiting for results div to update
+								document.getElementById('loading_image').style.display = 'block';
+								
+							}							
 							that.prepareResults(results, query);
 						});
 					}
@@ -2377,6 +2383,15 @@ var messageList = {
 				},
 				createPopup: function(query) {
 					var header = document.createElement('div');
+					var image = document.createElement('img');
+					var imageURL = chrome.extension.getURL('/src/images/loading.png');
+					image.id = 'loading_image';
+					image.style.display = 'block';
+					image.style.marginLeft = 'auto';
+					image.style.marginRight = 'auto';
+					image.style.marginTop = 'auto';
+					image.style.marginBottom = 'auto';
+					image.src = imageURL;					
 					header.innerHTML = 'Displaying results for query "<span id="query">' + query + '</span>" :';					
 					var div = document.createElement('div');
 					var width = window.innerWidth;
@@ -2403,7 +2418,8 @@ var messageList = {
 					header.style.fontSize = '16px';
 					header.id = 'results_header';
 					div.appendChild(header);
-					document.body.appendChild(div);
+					div.appendChild(image);
+					document.body.appendChild(div);					
 					document.body.style.overflow = 'hidden';
 					bodyClass.addEventListener('mousewheel', preventScroll);
 					bodyClass.addEventListener('click', this.closePopup);
@@ -2413,6 +2429,7 @@ var messageList = {
 					});
 				},
 				updatePopup: function(results, query) {
+					document.getElementById('loading_image').style.display = 'none';
 					var popup = document.getElementById('search_results');
 					var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');
 					var header = document.getElementById('results_header');	
@@ -3033,6 +3050,8 @@ var messageList = {
 	addCSSRules: function() {
 		var sheet = document.styleSheets[0];		
 		sheet.insertRule(".like_button_custom:hover { background-color: yellow; }", 1);
+		sheet.insertRule("#loading_image { -webkit-animation:spin 2s linear infinite; }", 1);
+		sheet.insertRule("@-webkit-keyframes spin { 100% { -webkit-transform:rotate(360deg); } }", 1);
 	},
 	// 'global' vars
 	config: [],
