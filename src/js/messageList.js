@@ -84,11 +84,18 @@ var messageList = {
 									messageList.ignorated.data.users[messageList.ignores[f]].trs
 											.push(currentIndex);
 								}
+								if (!messageList.config.hide_ignorator_badge) {
+									messageList.globalPort.postMessage({
+										action: 'ignorator_update',
+										ignorator: messageList.ignorated,
+										scope: "messageList"
+									});
+								}
 							}
-						}		
+						}
 					}
 				}
-			},	
+			},
 			user_notes: function(msg) {
 				if (!messageList.config.usernote_notes) {
 					messageList.config.usernote_notes = {};
@@ -911,11 +918,6 @@ var messageList = {
 					subtree: true,
 					childList: true
 			});
-			this.globalPort.postMessage({
-				action: 'ignorator_update',
-				ignorator: this.ignorated,
-				scope: "messageList"
-			});	
 			if (this.config.new_page_notify) {
 				this.newPage.observe(document.getElementById('nextpage'), {
 						attributes: true
@@ -937,12 +939,14 @@ var messageList = {
 			}
 			this.addListeners(true);
 			this.links.check(container);
-			// send updated ignorator data to background script
-			this.globalPort.postMessage({
-				action: 'ignorator_update',
-				ignorator: this.ignorated,
-				scope: "messageList"
-			});
+			if (!this.config.hide_ignorator_badge) {
+				// send updated ignorator data to background script
+				this.globalPort.postMessage({
+					action: 'ignorator_update',
+					ignorator: this.ignorated,
+					scope: "messageList"
+				});
+			}
 		},
 		mouseclick: function(evt) {
 			if (this.config.post_templates) {
@@ -1042,12 +1046,12 @@ var messageList = {
 			}
 		},
 		search: function() {
-			// perform search after 500ms of no keyboard activity
+			// perform search after 250ms of no keyboard activity to improve performance
 			clearTimeout(this.imagemapDebouncer);
 			this.imagemapDebouncer = setTimeout(function() {
 				messageList.image.map.search.init
 					.call(messageList.image.map.search);
-			}, 500);
+			}, 250);
 		}
 	},
 	gfycat: {

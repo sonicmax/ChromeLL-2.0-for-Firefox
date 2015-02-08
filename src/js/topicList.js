@@ -53,6 +53,13 @@ var topicList = {
 							topicList.ignorated.data.users[ignores[f]].total++;
 							topicList.ignorated.data.users[ignores[f]].trs.push(i);
 						}
+						if (!topicList.config.hide_ignorator_badge) {
+							topicList.globalPort.postMessage({
+								action: 'ignorator_update',
+								ignorator: topicList.ignorated,
+								scope: "topicList"
+							});
+						}						
 					}
 				}
 			}
@@ -367,7 +374,7 @@ var topicList = {
 			}
 		}
 		var element = document.getElementsByTagName('h1')[0];
-		dramalinks.init(element);
+		dramalinks.appendTo(element);
 		if (this.config['page_jump_buttons' + this.pm]) {
 			this.addListeners();
 		}		
@@ -428,12 +435,6 @@ var topicList = {
 			if (this.config['page_jump_buttons' + this.pm]) {
 				this.addListeners();
 			}
-			// send ignorator data to background script
-			this.globalPort.postMessage({
-				action: 'ignorator_update',
-				ignorator: this.ignorated,
-				scope: "topicList"
-			});			
 		},
 		pageJump: function(evt) {
 			var a, history, inbox;
@@ -503,7 +504,7 @@ var topicList = {
 						&& mutation.addedNodes[0].tagName.match('H1')
 						&& topicList.config.dramalinks
 						&& !topicList.pm) {
-					dramalinks.init(mutation.addedNodes[0]);	
+					dramalinks.appendTo(mutation.addedNodes[0]);	
 				}
 				else if (mutation.target.id == 'bookmarks' 
 						&& mutation.addedNodes[0].innerHTML == '[+]') {
