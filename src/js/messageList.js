@@ -3052,8 +3052,9 @@ var messageList = {
 		}	
 	},
 	addCSSRules: function() {
-		var sheet = document.styleSheets[0];		
-		sheet.insertRule(".like_button_custom:hover { background-color: yellow; }", 1);
+		var sheet = document.styleSheets[0];
+		sheet.insertRule(".like_button_custom { opacity: 0.5; }", 1);
+		sheet.insertRule(".like_button_custom:hover { opacity: 1.0; }", 1);
 		sheet.insertRule("#loading_image { -webkit-animation:spin 2s linear infinite; }", 1);
 		sheet.insertRule("@-webkit-keyframes spin { 100% { -webkit-transform:rotate(360deg); } }", 1);
 	},
