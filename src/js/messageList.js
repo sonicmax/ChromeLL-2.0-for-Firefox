@@ -2261,31 +2261,31 @@ var messageList = {
 				}
 			},
 			clickHandler: function(evt) {
-				// get img code & copy to clipboard via background page
-				var that = this;
-				var clipboard = {};
-				// TODO - check that user has clicked on image before attempting
-				// to use getAttribute or access properties
-				if (evt.target.getAttribute('searchresult')) {
-					var src = evt.target.getAttribute('oldsrc'); 
-				}
-				else {
-					if (evt.target.getAttribute('oldsrc')) {
+				if (evt.target.tagName === 'IMG') {
+					// get img code & copy to clipboard via background page
+					var clipboard = {};	
+					if (evt.target.getAttribute('searchresult')) {
 						var src = evt.target.getAttribute('oldsrc'); 
 					}
 					else {
-						var src = evt.target.src;
+						if (evt.target.getAttribute('oldsrc')) {
+							var src = evt.target.getAttribute('oldsrc'); 
+						}
+						else {
+							var src = evt.target.src;
+						}
+						var href = evt.target.parentNode.href;					
+						var regex = /\.(gif|jpg|png)$/i;
+						var extension = href.match(regex);
+						var extensionToReplace = src.match(regex);
+						// replace thumbnail file extension with file extension of fullsize image
+						src = src.replace(extensionToReplace[0], extension[0]);
 					}
-					var href = evt.target.parentNode.href;					
-					var regex = /\.(gif|jpg|png)$/i;
-					var extension = href.match(regex);
-					var extensionToReplace = src.match(regex);
-					// replace thumbnail file extension with file extension of fullsize image
-					src = src.replace(extensionToReplace[0], extension[0]);
+					// replaces thumbnail location with location of fullsize image
+					clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
+					chrome.runtime.sendMessage(clipboard);
 				}
-				// replaces thumbnail location with location of fullsize image
-				clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
-				chrome.runtime.sendMessage(clipboard, messageList.image.map.closePopup);
+				messageList.image.map.closePopup();
 			},
 			closePopup: function() {
 				var div = document.getElementById('map_div');
@@ -2424,9 +2424,11 @@ var messageList = {
 					document.body.style.overflow = 'hidden';
 					bodyClass.addEventListener('mousewheel', preventScroll);
 					bodyClass.addEventListener('click', this.closePopup);
-					div.addEventListener('click', function(ev) {
-						messageList.image.map.clickHandler(ev);
-						ev.preventDefault();
+					document.addEventListener('click', function(ev) {
+						if (ev.target.id !== 'image_search') {
+							messageList.image.map.clickHandler(ev);
+							ev.preventDefault();
+						}
 					});
 				},
 				updatePopup: function(results, query) {
