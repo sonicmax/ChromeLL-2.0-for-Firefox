@@ -1766,9 +1766,15 @@ var messageList = {
 			var output = '';
 			for (var i = 0, len = nodes.length; i < len; i++) {
 				// iterate over childNodes and add required data to output string				
-				node = nodes[i];
-				if (node.nodeType === 3) {					
-					output += node.nodeValue;
+				var node = nodes[i];
+				if (node.nodeType === 3) {
+					if (node.nodeValue.replace(/^\s+|\s+$/g, "") != '---') {	
+						output += node.nodeValue;
+					}
+					else {
+						// stop processing post once we reach the sig belt
+						break;
+					}
 				}
 				else if (node.tagName) {
 					if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
@@ -1818,24 +1824,15 @@ var messageList = {
 					}
 				}
 			}
-			
-			// remove sig from output
-			if (output.indexOf('---') > -1) {
-				output = '<quote msgid="' + msgID + '">' 
-						+ output.substring(0, (output.lastIndexOf('---'))) + '</quote>';
-			} 
-			else {
-				output = '<quote msgid="' + msgID + '">' + output + '</quote>';
-			}
+			output = '<quote msgid="' + msgID + '">' + output + '</quote>';
 			
 			if (evt.likeButton) {
 				return output;			
 			}	
 			else {
 				var json = {
-					"quote": ""
-				};
-				json.quote = output;				
+						"quote": output
+				};			
 				chrome.runtime.sendMessage(json);				
 				messageList.quote.notify(this);
 			}
