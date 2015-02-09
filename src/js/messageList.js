@@ -2679,8 +2679,8 @@ var messageList = {
 				ins = ins.replace('[poster]', poster);
 			}
 			else {
-				var img = '<img src="http://i3.endoftheinter.net/i/n/698e5d838cd094148836a3a07168aca0/jameis thumbs up.png" />';	
-				var ins = img + ' ' + username + ' likes ' + poster + ' post';
+				var img = '<img src="http://i4.endoftheinter.net/i/n/f818de60196ad15c888b7f2140a77744/like.png" />';
+				var ins = img + ' ' + username + ' likes ' + poster + "'s post"; 
 			}
 			var qrtext = quickreply.value;
 			var oldtxt = '', newtxt = '';			
