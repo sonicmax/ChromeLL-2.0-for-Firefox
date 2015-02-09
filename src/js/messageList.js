@@ -2261,7 +2261,10 @@ var messageList = {
 				}
 			},
 			clickHandler: function(evt) {
-				if (evt.target.tagName === 'IMG') {
+				if (evt.target.id == 'image_search') {
+					return;
+				}
+				else if (evt.target.tagName === 'IMG') {
 					// get img code & copy to clipboard via background page
 					var clipboard = {};	
 					if (evt.target.getAttribute('searchresult')) {
@@ -2286,6 +2289,8 @@ var messageList = {
 					chrome.runtime.sendMessage(clipboard);
 				}
 				messageList.image.map.closePopup();
+				document.removeEventListener('click', messageList.image.map.clickHandler);
+				evt.preventDefault();
 			},
 			closePopup: function() {
 				var div = document.getElementById('map_div');
@@ -2424,12 +2429,7 @@ var messageList = {
 					document.body.style.overflow = 'hidden';
 					bodyClass.addEventListener('mousewheel', preventScroll);
 					bodyClass.addEventListener('click', this.closePopup);
-					document.addEventListener('click', function(ev) {
-						if (ev.target.id !== 'image_search') {
-							messageList.image.map.clickHandler(ev);
-							ev.preventDefault();
-						}
-					});
+					document.addEventListener('click', messageList.image.map.clickHandler);
 				},
 				updatePopup: function(results, query) {
 					document.getElementById('loading_image').style.display = 'none';
