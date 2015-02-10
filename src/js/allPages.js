@@ -379,7 +379,7 @@ var commonFunctions = {
 		document.getElementById('user-popup-div').style.display = 'none';
 		document.removeEventListener('mousemove', this.mousemoveHandler);
 	},
-	mousemoveHandler: function(evt, coords) {		
+	mousemoveHandler: function(evt) {		
 		if (evt.target.className == 'message'
 				|| evt.target.className == 'message-container'
 				|| evt.target.className == 'message-top'
