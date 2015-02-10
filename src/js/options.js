@@ -217,7 +217,8 @@ var options = {
 				options.listeners.change();
 				options.listeners.menuButton();
 				options.ui.populateCacheTable();
-				options.ui.displayUserscripts();
+				// disabled for 2.30 release
+				// options.ui.displayUserscripts();
 				options.ui.displayLBContent();
 				options.save();
 			});
@@ -229,7 +230,8 @@ var options = {
 			options.listeners.change();
 			options.listeners.menuButton();
 			options.ui.populateCacheTable();
-			options.ui.displayUserscripts();
+			// disabled for 2.30 release			
+			// options.ui.displayUserscripts();
 			options.ui.displayLBContent();
 			options.save();
 		}		
@@ -831,19 +833,18 @@ var options = {
 				}
 			});			
 		},
-		menuVisibility: function() {
-			// array contains div ids of hidden menus
+		menuVisibility: function() {			
 			var hiddenOptions = ['history_menubar', 'context_menu', 'dramalinks', 'user_info_popup'];
-			var element;
 			for (var i = 0, len = hiddenOptions.length; i < len; i++) {
 				// add listener to each checkbox
-				element = document.getElementById(hiddenOptions[i]);
+				var element = document.getElementById(hiddenOptions[i]);
 				element.addEventListener('change', options.ui.hideMenus);
 			}
 		},
 		menuButton: function() {
 			var elements = [];
-			elements.push(document.getElementById('script_menu'));
+			// disabled for 2.30 release			
+			// elements.push(document.getElementById('script_menu'));
 			elements.push(document.getElementById('like_menu'));
 			
 			for (var i = 0, len = elements.length; i < len; i++) {
