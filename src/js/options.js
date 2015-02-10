@@ -555,7 +555,7 @@ var options = {
 				location.reload();
 			});
 		},
-		newScript: function() {
+		/*newScript: function() {
 			options.ui.closeMenu();
 			var textarea = document.getElementById('script_ta');
 			var activeScript = document.getElementsByClassName('active_script')[0];
@@ -621,7 +621,7 @@ var options = {
 				config.userscript_data[id].last_saved = Date.now();
 				localStorage['ChromeLL-Config'] = JSON.stringify(config);
 			}
-		},
+		},*/
 		newLike: function() {
 			options.ui.closeMenu();
 			var textarea = document.getElementById('like_ta');
@@ -671,23 +671,16 @@ var options = {
 			var contents = document.getElementById('like_ta').value;			
 			var name = activeLike.firstChild.innerText;
 			var id = activeLike.id;
-			
-			if (config.custom_like_data[id]) {
-				config.custom_like_data[id].name = name;
-				config.custom_like_data[id].contents = contents;
-				config.custom_like_data[id].last_saved = Date.now();
-				localStorage['ChromeLL-Config'] = JSON.stringify(config);
+			var newName = prompt("Rename?", name);
+			if (!newName) {
+				newName = name;
 			}
-			else {
-				// first time saving - choose filename, choose injection context, etc
-				var newName = prompt("Rename?", name);
-				activeLike.innerHTML = newName;
-				config.custom_like_data[id] = {};
-				config.custom_like_data[id].name = newName;
-				config.custom_like_data[id].contents = contents;
-				config.custom_like_data[id].last_saved = Date.now();
-				localStorage['ChromeLL-Config'] = JSON.stringify(config);
-			}
+			activeLike.firstChild.nodeValue = newName;
+			config.custom_like_data[id] = {};
+			config.custom_like_data[id].name = newName;
+			config.custom_like_data[id].contents = contents;
+			config.custom_like_data[id].last_saved = Date.now();
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);
 		},
 		deleteFromConfig: function(ID) {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
@@ -696,38 +689,32 @@ var options = {
 			var lastKeyInObject;
 			var active = document.getElementsByClassName('active_' + type).length;
 			var inactive = document.getElementsByClassName('inactive_' + type).length;
-			if (active + inactive == 1) {
-				// last key in object - don't delete, just reset to default (TODO)
-				return;
+			if (type == 'like') {
+				delete config.custom_like_data[ID];
+				cleanup(config.custom_like_data);
 			}
-			else {
-				if (type == 'like') {
-					delete config.custom_like_data[ID];
-					cleanup(config.custom_like_data);
-				}
-				else if (type == 'script') {		
-					delete config.userscript_data[ID];
-					cleanup(config.userscript_data);
-				}
-				
-				var nodeToRemove = document.getElementById(ID);
-				if (nodeToRemove.className == 'active_' + type) {
-					var nextActive = document.getElementsByClassName('inactive_' + type)[0];
-					nextActive.className = 'active_' + type;
-					nodeToRemove.className = '';
-				}
-				var closeButton = nodeToRemove.childNodes[0];
-				nodeToRemove.remove();
-				closeButton.remove();
-				
-				localStorage['ChromeLL-Config'] = JSON.stringify(config);
+			else if (type == 'script') {
+				delete config.userscript_data[ID];
+				cleanup(config.userscript_data);
 			}
+			var nodeToRemove = document.getElementById(ID);
+			if (nodeToRemove.className == 'active_' + type) {
+				var nextActive = document.getElementsByClassName('inactive_' + type)[0];
+				nextActive.className = 'active_' + type;
+				nodeToRemove.className = '';
+			}
+			var closeButton = nodeToRemove.childNodes[0];
+			nodeToRemove.remove();
+			closeButton.remove();
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);
 			
 			function cleanup(data) {
+				// rebuild object so that IDs are always in consecutive numeric order
+				// (type1, type2, type3, etc)
 				var newIndex = 1;
 				for (var i in data) {
-					data['script' + newIndex] = data[i];
-					if (i !== 'script' + newIndex) {
+					data[type + newIndex] = data[i];
+					if (i !== type + newIndex) {
 						delete data[i];
 					}
 				}
@@ -833,7 +820,7 @@ var options = {
 				}
 			});			
 		},
-		menuVisibility: function() {			
+		menuVisibility: function() {
 			var hiddenOptions = ['history_menubar', 'context_menu', 'dramalinks', 'user_info_popup'];
 			for (var i = 0, len = hiddenOptions.length; i < len; i++) {
 				// add listener to each checkbox
@@ -878,7 +865,7 @@ var options = {
 				box.checked ? menu.style.display = 'initial' : menu.style.display = 'none';
 			}
 		},
-		closeMenu: function() {		
+		closeMenu: function() {
 			var menu = document.getElementById('menu_items');
 			if (menu) {
 				menu.remove();
@@ -1029,7 +1016,7 @@ var options = {
 			document.getElementById(mostRecent.id).className = 'active_like';
 			textarea.value = config.custom_like_data[mostRecent.id].contents;	
 		},
-		displayUserscripts: function() {
+		/*displayUserscripts: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var scriptData = config.userscript_data;
 			var textarea = document.getElementById('script_ta');
@@ -1063,26 +1050,23 @@ var options = {
 				anchor.appendChild(close);
 				scriptList.appendChild(linebreak);
 			}
-			console.log(mostRecent);
-			// TODO - active script should be most recently saved script
 			document.getElementById(mostRecent.id).className = 'active_script';
 			textarea.value = config.userscript_data[mostRecent.id].contents;			
-		},
+		},*/
 		switchActive: function(ID) {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var type = ID.replace(/[0-9]/g, '');
 			var textarea = document.getElementById(type + '_ta');
-			var script;
-			
+			var data;
 			if (type == 'script') {
-				script = config.userscript_data[ID];
+				data = config.userscript_data[ID].contents;
 			}
 			else if (type == 'like') {
-				script = config.custom_like_data[ID];
+				data = config.custom_like_data[ID].contents;
 			}
 			
 			if (script) {
-				textarea.value = script.contents;
+				textarea.value = data;
 			}
 			else {
 				return;
@@ -1163,7 +1147,7 @@ var options = {
 		},
 		data: {}
 	},
-	userscriptsMenu: {
+	/*userscriptsMenu: {
 		open: function() {
 			var button = document.getElementById('script_menu');
 			var menuElement = document.createElement('span');				
@@ -1202,7 +1186,7 @@ var options = {
 			}
 			return caret;
 		},
-		tabHandler: function(contents, caretPosition) {			
+		tabHandler: function(contents, caretPosition) {
 			var scriptInput = document.getElementById('script_ta');
 			var text = contents.substring(0, caret);
 			contents = contents.replace(text, text + '\t');						
@@ -1210,7 +1194,7 @@ var options = {
 			scriptInput.value = contents;		
 			scriptInput.setSelectionRange(newCaret, newCaret);
 		}
-	},
+	},*/
 	customLikeMenu: {
 		open: function() {
 			var button = document.getElementById('like_menu');
