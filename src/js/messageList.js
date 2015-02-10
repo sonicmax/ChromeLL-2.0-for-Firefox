@@ -3076,7 +3076,7 @@ var messageList = {
 			users: {}
 		}
 	},
-	pm: '',
+	pm: ''
 };
 
 chrome.runtime.sendMessage({

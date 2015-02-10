@@ -46,21 +46,13 @@ var allPages = {
 			dialog.appendChild(redirect);
 			dialog.appendChild(close);
 			document.body.appendChild(dialog);
-			dialog.showModal();
+			dialog.showModal();			
 			return;
 		}
 	},
-	userscripts: function() {
+	/*userscripts: function() {
 		// var location = window.location;
 		var head = document.getElementsByTagName('head')[0];
-		var config;
-		if (typeof (messageList) !== 'undefined') {
-			config = messageList.config;
-		}
-		else if (typeof (topicList) !== 'undefined') {
-			config = topicList.conig
-		}		
-
 		var data = config.userscript_data;
 		for (var script in data) {
 			var scriptElement = document.createElement('script');
@@ -69,12 +61,12 @@ var allPages = {
 			scriptElement.innerHTML = contents;
 			head.appendChild(scriptElement);
 		}
-	},
+	},*/
 	notify_pm : function() {
 		var userbar_pms = document.getElementById('userbar_pms');
-		if (!userbar_pms) {
-		}
+		if (!userbar_pms) {		
 			return;
+		}
 		var observer = new MutationObserver(function() {
 			// we can assume that all mutations on 
 			// userbar_pms element are relevant
