@@ -1,7 +1,7 @@
 var dramalinks = {
 	html: '',
 	config: [],
-	append : function(element) {
+	appendTo : function(element) {
 		var ticker = document.createElement("center");
 		ticker.id = "dramalinks_ticker";
 		element.parentNode.insertBefore(ticker, element.nextSibling);
@@ -53,7 +53,7 @@ var dramalinks = {
 			return;
 		}
 		else {
-			dramalinks.append(element);
+			dramalinks.appendTo(element);
 		}
 	}
 };
