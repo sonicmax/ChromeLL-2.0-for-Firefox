@@ -223,9 +223,10 @@ var background = {
 		this.board = null;
 		this.board = [];
 		var id;
+		// imageTransloader is located in transloader.js
 		chrome.contextMenus.create({
 			"title": "Transload image",
-			"onclick": this.contextMenu.imageTransloader,
+			"onclick": imageTransloader,
 			"contexts": ["image"]
 		});
 		chrome.contextMenus.create({
