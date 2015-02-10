@@ -838,7 +838,7 @@ var options = {
 			for (var i = 0, len = hiddenOptions.length; i < len; i++) {
 				// add listener to each checkbox
 				var element = document.getElementById(hiddenOptions[i]);
-				element.addEventListener('change', options.ui.hideMenus);
+				element.addEventListener('change', options.ui.hideUnusedMenus);
 			}
 		},
 		menuButton: function() {
