@@ -972,7 +972,7 @@ var messageList = {
 					var pathNode = evt.path[i];
 					if (pathNode.className == 'like_button') {
 						this.likeButton.process(pathNode, templateNumber);			
-						return;
+						break;
 					}
 				}
 				evt.preventDefault();	
@@ -1779,52 +1779,56 @@ var messageList = {
 						// stop processing post once we reach the sig belt
 						break;
 					}
-				}
-				else if (node.tagName) {
+				}		
+				if (node.tagName) {
 					if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
 						var tagName = node.tagName.toLowerCase(); 
 						output += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
 					}
-					if (node.tagName === 'A') {
+					else if (node.tagName == 'A') {
 						output += node.href;
 					}
-				}
-				else if (node.className == 'pr') {
-					output += '<pre>' + node.innerHTML.replace(/<br>/g, '') + '</pre>';								
 				}	
-				else if (node.className == 'imgs') {
-					imgNodes = node.getElementsByTagName('A');
-					for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
-						imgNode = imgNodes[l];
-						output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
-					}
-				}				
-				else if (node.className == 'spoiler_closed') {
-					spoiler.caption = node.getElementsByClassName('caption')[0]
-							.innerText.replace(/<|\/>/g, '');
-					spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-					output += messageList.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
-				}	
-				else if (node.className == 'quoted-message') {
-					var quoteOutput = '';
-					quote.msgid = node.attributes.msgid.value;
-					quote.nested = node.getElementsByClassName('quoted-message');
-					if (quote.nested.length > 0) {
-						// iterate backwards - oldest quote should be first
-						for (var m = quote.nested.length; m--;) {
-							var nestedQuote = quote.nested[m];					
-							var quoteArray = messageList.quote.returnQuotes(nestedQuote.childNodes, 
-									nestedQuote.attributes.msgid.value);
-							quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
+				if (node.className) {
+					if (node.className == 'pr') {
+						output += '<pre>' + node.innerHTML.replace(/<br>/g, '') + '</pre>';								
+					}	
+					else if (node.className == 'imgs') {
+						imgNodes = node.getElementsByTagName('A');
+						for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
+							var imgNode = imgNodes[l];
+							output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
 						}
-						quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);
-						quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
-						output += quoteOutput;
-					}
-					else {
-						var quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);					
-						quoteOutput = quoteArray[0] + quoteArray[1];
-						output += quoteOutput;
+					}				
+					else if (node.className == 'spoiler_closed') {
+						spoiler.caption = node.getElementsByClassName('caption')[0]
+								.innerText.replace(/<|\/>/g, '');
+						spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
+						output += messageList.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
+					}	
+					else if (node.className == 'quoted-message') {
+						var quoteOutput = '';
+						quote.msgid = node.attributes.msgid.value;
+						quote.nested = node.getElementsByClassName('quoted-message');
+						if (quote.nested.length > 0) {
+							// iterate backwards - oldest quote should be first
+							for (var m = quote.nested.length; m--;) {
+								var nestedQuote = quote.nested[m];
+								console.log(nestedQuote);
+								var quoteArray = messageList.quote.returnQuotes(nestedQuote.childNodes, 
+										nestedQuote.attributes.msgid.value);
+								console.log(quoteArray);
+								quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
+							}
+							quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);
+							quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
+							output += quoteOutput;
+						}
+						else {
+							var quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);					
+							quoteOutput = quoteArray[0] + quoteArray[1];
+							output += quoteOutput;
+						}
 					}
 				}
 			}
@@ -1834,15 +1838,13 @@ var messageList = {
 				return output;			
 			}	
 			else {
-				var json = {
+				chrome.runtime.sendMessage({
 						"quote": output
-				};			
-				chrome.runtime.sendMessage(json);				
+				});				
 				messageList.quote.notify(evt.target);
 			}
 		},
 		returnQuotes: function(nodes, msgid) {
-			var node;
 			var output = [];
 			if (!msgid) {
 				output[0] = '<quote>';
@@ -1852,38 +1854,38 @@ var messageList = {
 			output[1] = '';
 			for (var i = 0, len = nodes.length; i < len; i++) {
 				// iterate over childNodes of quoted message and add relevant parts to output string
-				node = nodes[i];
+				var node = nodes[i];
 				if (node.nodeType === 3) {
 					output[1] += node.nodeValue;
 				}
-				else if (node.tagName) {	
+				if (node.tagName) {
 					if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
-						tagName = node.tagName.toLowerCase(); 
+						tagName = node.tagName.toLowerCase();
 						output[1] += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
 					}
 					else if (node.tagName === 'A') {
-						output += node.href;
+						output[1] += node.href;
 					}
 				}
-				else if (node.className == 'pr') {
-					output[1] += '<pre>' + node.innerHTML + '</pre>';								
+				if (node.className == 'pr') {
+					output[1] += '<pre>' + node.innerHTML + '</pre>';		
 				}
-				else if (node.className == 'imgs') {
-					imgNodes = node.getElementsByTagName('A');
+				if (node.className == 'imgs') {
+					var imgNodes = node.getElementsByTagName('A');
 					for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
-						imgNode = imgNodes[l];
+						var imgNode = imgNodes[l];
 						output[1] += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
 					}
 				}
-				else if (node.className == 'spoiler_closed') {
+				if (node.className == 'spoiler_closed') {
 					var spoiler = {};
 					spoiler.caption = node.getElementsByClassName('caption')[0]
 							.innerText.replace(/<|\/>/g, '');
 					spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
 					output[1] += messageList.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
-				}			
+				}
 			}
-			output[1] += '</quote>'
+			output[1] += '</quote>';
 			return output;
 		},
 		returnSpoiler: function(caption, nodes) {
@@ -1895,7 +1897,7 @@ var messageList = {
 				if (childNode.nodeType === 3) {
 					output += childNode.nodeValue;
 				}
-				else if (childNode.tagName) {
+				if (childNode.tagName) {
 					if (childNode.tagName == 'B' || childNode.tagName == 'I' || childNode.tagName == 'U') {
 						tagName = childNode.tagName.toLowerCase(); 
 						output += '<' + tagName + '>' + childNode.innerText + '</' + tagName + '>';
@@ -1904,7 +1906,7 @@ var messageList = {
 						output += childNode.innerText;
 					}
 				}
-				else if (childNode.className == 'imgs') {
+				if (childNode.className == 'imgs') {
 					imgNodes = childNode.getElementsByTagName('A');
 					for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
 						imgNode = imgNodes[l];
