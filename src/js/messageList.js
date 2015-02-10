@@ -1026,15 +1026,12 @@ var messageList = {
 			if (evt.target.className == 'like_button') {
 				this.cachedEvent = evt;
 				this.menuDebouncer = setTimeout(
-						this.likeButton.showOptions.bind(this.likeButton), 250);
+						this.likeButton.showOptions.call(this.likeButton), 250);
 				evt.preventDefault();	
 			}
-			else if (evt.target.className == 'username_anchor') {			
+			else if (evt.target.className == 'username_anchor') {
 				commonFunctions.cachedEvent = evt;
-				this.popupDebouncer = setTimeout(function() {
-						commonFunctions.handlePopup
-								.call(commonFunctions, commonFunctions.cachedEvent);							
-				}, 1000);
+				this.popupDebouncer = setTimeout(commonFunctions.handlePopup, 750);
 			}
 		},
 		mouseleave: function(evt) {

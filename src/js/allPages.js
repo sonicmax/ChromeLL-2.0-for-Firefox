@@ -1,9 +1,21 @@
 var config = {};
 var allPages = {
 	error_check : function() {
+		// valentine's day easter egg- REMOVE ME!!
+		var date = new Date();
+		var dd = date.getDate();
+		var mm = date.getMonth() + 1;
+		if (mm == 2 && dd == 14) {
+			if (config.user_id == 13547 || config.user_id == 5599) {
+				var URL = chrome.extension.getURL('/src/images/roses.jpg');
+				document.body.style.backgroundImage = 'url(' + URL + ')';			
+			}
+		}
+		// NOTE - 502 errors also break message history, so there's no reason
+		// to check for them. the only reason to check for errors is in cases
+		// where the message history redirect would be useful (ie unhandled exceptions)
 		var bgImage = document.body.style.backgroundImage;
 		if (bgImage.indexOf('errorlinks.png') > -1) {
-			// error detected - display dialog box
 			var dialog = document.createElement('dialog');
 			var redirect = document.createElement('button');
 			var close = document.createElement('button');
@@ -82,7 +94,7 @@ var allPages = {
 				// compare pm_number to last known value for pm_number
 				if (pm_number > config.pms) {
 					// you have mail
-					if (pm_number == 1) {
+					if (pm_number === 1) {
 						notify_title = 'New PM';
 						notify_msg = 'You have 1 unread private message.';
 					}
@@ -210,6 +222,7 @@ var allPages = {
 };
 
 var commonFunctions = {
+	cachedEvent: '',
 	asyncUpload : function(tgt, i) {
 		console.log(tgt, i);
 		if (!i)
@@ -259,11 +272,15 @@ var commonFunctions = {
 		xh.withCredentials = "true";
 		xh.send(formData);
 	},
-	handlePopup : function(evt) {
+	handlePopup : function() {
 		try {
+			// use cachedEvent because this is called from setTimeout, not an event listener
+			var evt = commonFunctions.cachedEvent;
 			var coords = {};
-			coords.x = evt.x;
-			coords.y = evt.y;
+			var scrollTop = document.body.scrollTop;
+			var scrollLeft = document.body.scrollLeft;
+			coords.x = evt.x + scrollLeft;
+			coords.y = evt.y + scrollTop;
 			var user;
 			if (evt.target.parentNode.parentNode.parentNode.parentNode.className === "message-container") {		
 				user = evt.target.parentNode.parentNode.parentNode.parentNode
@@ -344,12 +361,12 @@ var commonFunctions = {
 					+ '<span class="popup_uid"><p><div id="rep"><br>loading...</div></p>' 
 					+ '<div id="online"></div><div id="punish"></div><div id="clip"></div></span>';
 			var popupDiv = document.getElementById('user-popup-div');
-			popupDiv.style.top = (evt.y + 10) + "px";
-			popupDiv.style.left = (evt.x - 30) + "px";
+			popupDiv.style.top = (coords.y + 10) + "px";
+			popupDiv.style.left = (coords.x - 30) + "px";
 			popupDiv.style.display = 'block';			
 			setTimeout(function() {
 				document.addEventListener('mousemove', commonFunctions.mousemoveHandler);
-			}, 1500);
+			}, 500);
 			if (document.selection)
 				document.selection.empty();
 			else if (window.getSelection)
@@ -362,7 +379,7 @@ var commonFunctions = {
 		document.getElementById('user-popup-div').style.display = 'none';
 		document.removeEventListener('mousemove', this.mousemoveHandler);
 	},
-	mousemoveHandler: function(evt, coords) {
+	mousemoveHandler: function(evt, coords) {		
 		if (evt.target.className == 'message'
 				|| evt.target.className == 'message-container'
 				|| evt.target.className == 'message-top'
