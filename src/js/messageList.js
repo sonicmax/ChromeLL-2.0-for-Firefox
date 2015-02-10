@@ -949,6 +949,7 @@ var messageList = {
 			}
 		},
 		mouseclick: function(evt) {
+			// TODO - reorganise this using switch statements
 			if (this.config.post_templates) {
 				this.postTemplateAction(evt.target);
 			}
@@ -987,6 +988,10 @@ var messageList = {
 					&& evt.target.tagName == 'DIV') {
 				evt.preventDefault();
 			}
+			else if (evt.target.className == 'archivequote') {
+				this.quote.handler(evt);
+				evt.preventDefault();
+			}
 			else if (evt.target.className == 'bash' && evt.target.getAttribute('ignore') !== 'true') {
 				evt.target.className = 'bash_this';			
 				evt.target.style.fontWeight = 'bold';
@@ -1023,13 +1028,13 @@ var messageList = {
 			}
 		},
 		mouseenter: function(evt) {
-			if (evt.target.className == 'like_button') {
+			if (evt.target.className == 'like_button' && this.config.custom_like_button) {
 				this.cachedEvent = evt;
 				this.menuDebouncer = setTimeout(
 						this.likeButton.showOptions.call(this.likeButton), 250);
 				evt.preventDefault();	
 			}
-			else if (evt.target.className == 'username_anchor') {
+			else if (evt.target.className == 'username_anchor' && this.config.user_info_popup) {
 				commonFunctions.cachedEvent = evt;
 				this.popupDebouncer = setTimeout(commonFunctions.handlePopup, 750);
 			}
@@ -1751,11 +1756,12 @@ var messageList = {
 	},
 	quote: {
 		handler: function(evt) {
+			var msgID;
 			if (evt.likeButton) {
-				var msgID = evt.id;
+				msgID = evt.id;
 			}
 			else {
-				var msgID = this.id;
+				msgID = evt.target.id;
 			}
 			var nodes = document.querySelector('[msgid="' + msgID + '"]').childNodes;
 			var spoiler = {};
@@ -1831,7 +1837,7 @@ var messageList = {
 						"quote": output
 				};			
 				chrome.runtime.sendMessage(json);				
-				messageList.quote.notify(this);
+				messageList.quote.notify(evt.target);
 			}
 		},
 		returnQuotes: function(nodes, msgid) {
@@ -1958,7 +1964,6 @@ var messageList = {
 					tops[i].appendChild(quote);
 				}
 			}
-			$("div.message-top").on("click", "a.archivequote", messageList.quote.handler);
 		}
 	},
 	image: {
