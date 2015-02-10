@@ -3,12 +3,17 @@ var messageList = {
 		this.config = config.data;
 		this.config.tcs = config.tcs;		
 		this.prepareIgnoratorArray();
+		
 		// set up globalPort so we can interact with background page
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handleEvent.ignoratorUpdate);
 		
+		if (window.location.href.match('inboxthread.php')) {
+			this.pm = "_pm";
+		}
+		
 		// check whether we need to display dramalinks ticker
-		if (this.config.dramalinks && !window.location.href.match('inboxthread.php')) {						
+		if (this.config.dramalinks && !this.pm) {
 			chrome.runtime.sendMessage({
 					need : "dramalinks"
 			}, function(response) {
@@ -16,13 +21,9 @@ var messageList = {
 				dramalinks.config = messageList.config;
 			});
 		}
-		else {
-			// (user is in PM inbox)
-			this.pm = "_pm";		
-		}
 				
-		if (document.readyState == 'loading') {
-			// pass elements to functions as they are parsed by browser			
+		if (document.readyState == 'loading') {			
+			// pass elements to functions as they are parsed by browser
 			this.parseObserver.observe(document, {
 					childList: true,
 					subtree: true
