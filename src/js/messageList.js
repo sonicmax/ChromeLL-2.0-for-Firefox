@@ -2716,7 +2716,6 @@ var messageList = {
 				var scriptData = messageList.config.custom_like_data;
 				var menuElement = document.createElement('span');
 				menuElement.id = 'hold_menu';	
-				menuElement.setAttribute
 				menuElement.style.position = 'absolute';
 				menuElement.style.overflow = 'auto';
 				menuElement.style.padding = '3px 3px';

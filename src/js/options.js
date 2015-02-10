@@ -738,7 +738,7 @@ var options = {
 				'script_new': 'newScript',
 				'script_save':  'saveScript',
 				'like_new': 'newLike',
-				'like_save':  'saveLike',
+				'like_save':  'saveLike'
 			};
 			
 			document.addEventListener('click', function(evt) {
