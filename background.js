@@ -344,11 +344,11 @@ var background = {
 			}
 		}
 	},
-	getDrama: function() {
-		if (background.cfg.debug) {
+	getDrama: function(callback) {
+		if (background.config.debug) {
 			console.log('fetching dramalinks from wiki...');
 		}
-		// use base64 string (eww...) instead of external URL to avoid insecure content warnings for HTTPS users
+		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
 		var png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
 				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
 				+ 'DVmAAAAAElFTkSuQmCC';
@@ -427,25 +427,12 @@ var background = {
 				}	
 				background.drama.txt = dramas;
 				background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));
-				
-				// TODO - decide whether to keep the 'update in all tabs' behaviour
-				// or whether to scrap this entirely
-				
-				/*chrome.tabs.query({url: '*://*.endoftheinter.net/*'}, function(tabs) {
-					var tab;
-					for (var i = 0, len = tabs.length; i < len; i++) {
-						tab = tabs[i];
-						chrome.tabs.sendMessage(tab.id, {
-							action: "update_drama"
-						}, function(response) {
-							// empty callback
-						});
-					}
-				});*/
+				if (callback) {
+					callback(background.drama);
+				}
 			}
 			if (xhr.readyState == 4 && xhr.status == 404) {
-				// 404 error usally occurs if user has logged into ETI using multiple IP addresses
-				// (as wiki uses IP address as part of authentication)
+				// 404 error occurs if user has logged into ETI using multiple IP addresses
 				background.drama.txt = '<a id="retry" href="##retry">Error loading Dramalinks. Click to retry...</a>';
 			}
 		}
@@ -537,6 +524,11 @@ var background = {
 							background.getDrama();
 						}
 						break;
+					case "retrydramalinks":
+						this.getDrama(function (dramalinks) {
+							sendResponse({"data": dramalinks.txt});
+						});
+						break;						
 					case "insertcss":
 						if (background.cfg.debug) {
 							console.log('inserting css ', request.file);
