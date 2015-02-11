@@ -1,9 +1,7 @@
 var styles = document.getElementsByTagName('style');
 if (styles) {
-	var style;
-	// iterate backwards as we are removing nodes
-	for (var i = styles.length; i--;) {
-		style = styles[i];
+	for (var i = 0, len = style.length; i < len; i++) {
+		var style = styles[i];
 		if (style.innerHTML == '@import "/skins/monobook/KHTMLFixes.css";') {
 			// remove this element as it breaks the search bar
 			style.remove();
