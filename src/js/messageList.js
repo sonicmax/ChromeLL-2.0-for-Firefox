@@ -938,7 +938,7 @@ var messageList = {
 						functions[i](container, index, live);
 				}
 			}
-			this.addListeners(true);
+			this.addListeners(container);
 			this.links.check(container);
 			if (!this.config.hide_ignorator_badge) {
 				// send updated ignorator data to background script
@@ -2879,14 +2879,22 @@ var messageList = {
 		ta.scrollTop = st;
 		ta.focus();
 	},
-	addListeners: function() {
-		document.body.addEventListener('click', this.handleEvent.mouseclick.bind(this));		
-		var searchBox = document.getElementById('image_search');			
-		if (searchBox) {
-			searchBox.addEventListener('keyup', this.handleEvent.search.bind(this));
-		}		
-		if (this.config.user_info_popup) {	
-			var tops = document.getElementsByClassName('message-top');
+	addListeners: function(newPost) {
+		if (!newPost) {			
+			document.body.addEventListener('click', this.handleEvent.mouseclick.bind(this));
+			
+			var searchBox = document.getElementById('image_search');			
+			if (searchBox) {
+				searchBox.addEventListener('keyup', this.handleEvent.search.bind(this));
+			}
+		}
+		if (this.config.user_info_popup) {
+			var tops;
+			if (newPost) {
+				tops = newPost.getElementsByClassName('message-top');
+			} else {
+				tops = document.getElementsByClassName('message-top');
+			}
 			for (var i = 0, len = tops.length; i < len; i++) {
 				var top = tops[i];
 				var usernameAnchor = top.getElementsByTagName('a')[0];
