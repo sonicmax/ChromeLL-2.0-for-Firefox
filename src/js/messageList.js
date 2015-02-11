@@ -201,7 +201,7 @@ var messageList = {
 									anchor.style.color = '#'
 											+ messageList.config.user_highlight_data[user].color;
 								}
-								/*if (live && messageList.config.notify_userhl_post 
+								if (live && messageList.config.notify_userhl_post 
 										&& k == 0
 										&& msg.getElementsByClassName('message-top')[0]
 												.getElementsByTagName('a')[0].innerHTML != document
@@ -219,7 +219,7 @@ var messageList = {
 									}, function(data) {
 										console.log(data);
 									});
-								}*/
+								}
 							}
 						}
 					} catch (e) {
