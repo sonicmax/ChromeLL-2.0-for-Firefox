@@ -724,8 +724,13 @@ var messageList = {
 				document.addEventListener('scroll', messageList.clearUnreadPosts);
 				document.addEventListener('mousemove', messageList.clearUnreadPosts);
 			},
-			click_expand_thumbnail: function() {
-				var messages = document.getElementsByClassName('message');
+			click_expand_thumbnail: function(newPost) {
+				var messages;
+				if (newPost) {
+					messages = newPost.getElementsByClassName('message');
+				} else {
+					messages = document.getElementsByClassName('message');
+				}
 				for (var i = 0, len = messages.length; i < len; i++) {
 					var message = messages[i];
 					// rewritten by xdrvonscottx
@@ -940,6 +945,9 @@ var messageList = {
 			}
 			this.addListeners(container);
 			this.links.check(container);
+			if (this.config.click_expand_thumbnail) {
+				this.functions.misc.click_expand_thumbnail(container);
+			}
 			if (!this.config.hide_ignorator_badge) {
 				// send updated ignorator data to background script
 				this.globalPort.postMessage({
