@@ -137,14 +137,11 @@ var messageList = {
 				var page;
 				if (!window.location.href.match(/page=/)) {
 					page = 1;
-				} 
+				}
 				else {
 					page = window.location.href.match(/page=(\d+)/)[1];
 				}
 				var id = (index + (50 * (page - 1)));
-				if (live) {
-					id = id + 1;
-				}
 				if (id < 1000)
 					id = "0" + id;
 				if (id < 100)
@@ -2962,9 +2959,8 @@ var messageList = {
 	}),
 	callFunctions: function(pm) {
 		// ugly function to be called if DOMContentLoaded fires too quickly for 
-		// parseObserver to run (eg if user presses back button in browser)
+		// parseObserver to run (eg if user presses back button in browser)				
 		var msgs = document.getElementsByClassName('message-container');
-		var msg, len;
 		var pageFunctions = this.functions.infobar;
 		var postFunctions = this.functions.messagecontainer;
 		var quickpostFunctions = this.functions.quickpostbody;
@@ -2978,6 +2974,7 @@ var messageList = {
 		// add archive quote buttons before highlights/post numbers are added
 		this.quote.addButtons();
 		// iterate over first 5 message-containers (or fewer)
+		var len;
 		if (msgs.length < 4) {
 			len = msgs.length;
 		}
@@ -2985,12 +2982,12 @@ var messageList = {
 			len = 4;
 		}
 		for (var j = 0; j < len; j++) {
-			msg = msgs[j];
+			var msg = msgs[j];
 			// iterate over functions in messageList
 			for (var k in postFunctions) {
 				if (config[k + pm]) {
 					// pass msg and index value to function
-					postFunctions[k](msg, j);
+					postFunctions[k](msg, j + 1);
 				}
 			}
 		}
@@ -3004,7 +3001,7 @@ var messageList = {
 			for (var j = len; msg = msgs[j]; j++) {
 				for (var k in postFunctions) {
 					if (config[k + pm]) {
-						postFunctions[k](msg, j);
+						postFunctions[k](msg, j + 1);
 					}
 				}
 			}
