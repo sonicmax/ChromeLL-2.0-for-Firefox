@@ -1270,9 +1270,6 @@ var messageList = {
 			});
 		},
 		workSafe: function(gfycatLink, nsfw, callback) {
-			console.log('workSafe');
-			console.log(gfycatLink);
-			console.log(gfycatLink.parentNode);
 			// check whether link is nws using gfycat api & post content
 			var userbar = document.getElementsByTagName('h2')[0];
 			var postHTML = gfycatLink.parentNode.innerHTML;
@@ -1822,10 +1819,8 @@ var messageList = {
 							// iterate backwards - oldest quote should be first
 							for (var m = quote.nested.length; m--;) {
 								var nestedQuote = quote.nested[m];
-								console.log(nestedQuote);
 								var quoteArray = messageList.quote.returnQuotes(nestedQuote.childNodes, 
 										nestedQuote.attributes.msgid.value);
-								console.log(quoteArray);
 								quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
 							}
 							quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);
@@ -1843,9 +1838,11 @@ var messageList = {
 			output = '<quote msgid="' + msgID + '">' + output + '</quote>';
 			
 			if (evt.likeButton) {
+				// return output to likeButton.handler
 				return output;			
 			}	
 			else {
+				// send quote to background page to be copied to clipboard
 				chrome.runtime.sendMessage({
 						"quote": output
 				});				
