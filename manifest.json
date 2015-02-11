@@ -37,7 +37,7 @@
 		"run_at" : "document_start"
   },
   {
-    "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php", "*://*.endoftheinter.net/search.php*"],
+    "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://*.endoftheinter.net/search.php*"],
     "js": ["src/js/topicList.js"],
 		"run_at" : "document_start"
   },
