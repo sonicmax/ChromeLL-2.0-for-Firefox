@@ -132,7 +132,7 @@ var messageList = {
 					anchor.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));					
 				}
 			},	
-			number_posts: function(msg, index) {
+			number_posts: function(msg, index, live) {
 				var top = msg.getElementsByClassName('message-top')[0];
 				var page;
 				if (!window.location.href.match(/page=/)) {
@@ -142,6 +142,9 @@ var messageList = {
 					page = window.location.href.match(/page=(\d+)/)[1];
 				}
 				var id = (index + (50 * (page - 1)));
+				if (live) {
+					id = id + 1;
+				}
 				if (id < 1000)
 					id = "0" + id;
 				if (id < 100)
