@@ -726,7 +726,7 @@ var messageList = {
 			},
 			click_expand_thumbnail: function(newPost) {
 				var messages;
-				if (newPost) {
+				if (newPost && typeof newPost != 'string') {
 					messages = newPost.getElementsByClassName('message');
 				} else {
 					messages = document.getElementsByClassName('message');
