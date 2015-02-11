@@ -2958,6 +2958,8 @@ var messageList = {
 		}	
 	}),
 	callFunctions: function(pm) {
+		// ugly function to be called if DOMContentLoaded fires too quickly for 
+		// parseObserver to run (eg if user presses back button in browser)
 		var msgs = document.getElementsByClassName('message-container');
 		var msg, len;
 		var pageFunctions = this.functions.infobar;
@@ -2996,13 +2998,13 @@ var messageList = {
 		// page will appear to have been fully loaded by this point
 		if (len == 4) {
 			// iterate over rest of messages
-			for (j = len; msg = msgs[j]; j++) {
+			for (var j = len; msg = msgs[j]; j++) {
 				for (var k in postFunctions) {
 					if (config[k + pm]) {
 						postFunctions[k](msg, j);
 					}
 				}
-			}		
+			}
 		}
 		// send ignorator data to background script
 		this.globalPort.postMessage({
@@ -3015,22 +3017,31 @@ var messageList = {
 				quickpostFunctions[i]();
 			}
 		}
+		this.addCSSRules();
 		// call functions that dont modify DOM
 		for (var i in miscFunctions) {
 			if (config[i + pm]) {
 				miscFunctions[i]();
 			}
 		}
-		// call functions that dont exist in posts/page/misc objects
 		this.links.check();
 		this.addListeners();
-		this.appendScripts();
+		this.appendScripts();				
+		this.livelinks.observe(document.getElementById('u0_1'), {
+				subtree: true,
+				childList: true
+		});
+		if (this.config.new_page_notify) {
+			this.newPage.observe(document.getElementById('nextpage'), {
+					attributes: true
+			});
+		}
 	},
 	passToFunctions: function(element) {
 		var config = this.config;
 		var pm = this.pm;
 		var elementName;
-		if (element.className) {		
+		if (element.className) {
 			elementName = element.className.replace('-', '');
 			if (elementName == 'messagecontainer') {
 				this.containersTotal++;
