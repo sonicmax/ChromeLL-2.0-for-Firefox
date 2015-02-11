@@ -367,7 +367,7 @@ var messageList = {
 					}
 					var posts = 1;
 					var ud = '';
-					if (document.getElementsByClassName('message-container')[50]) {
+					if (document.getElementsByClassName('message-container')[49]) {
 						ud = ud + "+";
 					}
 					if (document.title.match(/\(\d+\)/)) {
