@@ -272,14 +272,17 @@ var topicList = {
 					if (topicList.config.debug) {
 						console.log('highlighting topic by ' + user);
 					}
+					tr.setAttribute('highlighted', true);					
 					var tds = tr.getElementsByTagName('td');
 					for (var j = 0, tdsLen = tds.length; j < tdsLen; j++) {
 						var td = tds[j];
+						td.setAttribute('highlighted', true);						
 						var tdAnchors = td.getElementsByTagName('a');
 						td.style.background = '#'	+ highlightData[user].bg;
 						td.style.color = '#' + highlightData[user].color;
 						for (var k = 0, anchorLen = tdAnchors.length; k < anchorLen; k++) {
 							var anchor = tdAnchors[k];
+							anchor.setAttribute('highlighted', true);							
 							anchor.style.color = '#' + highlightData[user].color;
 						}				
 					}

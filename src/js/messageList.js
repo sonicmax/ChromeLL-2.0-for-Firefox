@@ -191,6 +191,7 @@ var messageList = {
 								if (messageList.config.debug) {
 									console.log('highlighting post by ' + user);
 								}
+								top.setAttribute('highlighted', true);								
 								top.style.background = '#'
 										+ messageList.config.user_highlight_data[user].bg;
 								top.style.color = '#'

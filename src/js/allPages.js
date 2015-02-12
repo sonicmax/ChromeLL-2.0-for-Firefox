@@ -7,8 +7,41 @@ var allPages = {
 		var mm = date.getMonth() + 1;
 		if (mm == 2 && dd == 14) {
 			if (config.user_id == 13547 || config.user_id == 5599) {
-				var URL = chrome.extension.getURL('/src/images/roses.jpg');
-				document.body.style.backgroundImage = 'url(' + URL + ')';			
+				var URL = chrome.extension.getURL('/src/images/heart_tiles.png');
+				document.body.style.backgroundImage = 'url(' + URL + ')';
+				var sheet = document.styleSheets[0];
+				sheet.insertRule('div { border-radius: 6px; }', 1);
+				var cssSelectors = ['.message-top', '.infobar', '.userbar', 'tr', 'td', 'th'];
+				for (var i = 0, len = cssSelectors.length; i < len; i++) {
+					var selector = cssSelectors[i];
+					sheet.insertRule(selector + ' a:link { color: #661733 !important; }', 1);
+					sheet.insertRule(selector + ' a:visited { color: #330433 !important; }', 1);
+					sheet.insertRule(selector + ' a:hover { color: #BA239C !important; }', 1);
+				}
+				sheet.insertRule('.quoted-message { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('.message-top { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('.quickpost-body { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('.quickpost-canvas { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('.userbar { background: linear-gradient(to bottom, rgba(255,179,218,1) 0%,rgba(255,129,194,1) 55%) !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('.infobar { background: linear-gradient(to bottom, rgba(255,217,237,1) 0%,rgba(255,191,224,1) 55%) !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('.userpic { background: linear-gradient(to bottom, rgba(203,96,179,1) 0%,rgba(193,70,161,1) 50%,rgba(168,0,119,1) 100%,rgba(219,54,164,1) 100%) !important; color: #0D030B !important; color: white !important; }', 1);
+				sheet.insertRule('th { border-radius: 6px; background: linear-gradient(to bottom, rgba(255,217,237,1) 0%,rgba(255,191,224,1) 55%) !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('tr { border-radius: 6px; background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('td { border-radius: 6px; background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; color: #0D030B !important; }', 1);
+				sheet.insertRule('small { color: black !important; }', 1);
+				sheet.insertRule('.highlighted { background: linear-gradient(to bottom, rgba(255,165,212,1) 13%,rgba(254,108,183,1) 55%,rgba(255,165,212,1) 87%,rgba(255,165,212,1) 100%) !important; }', 1);
+				sheet.insertRule('.menubar a:link { color: #6E155D !important; }', 1);
+				sheet.insertRule('.menubar a:visited { color: #1C0618 !important; }', 1);
+				sheet.insertRule('.menubar a:hover { color: #BA239C !important; }', 1);
+				sheet.insertRule('.menubar { background: linear-gradient(to right, rgba(255,255,255,0) 0%,rgba(255,255,255,0.23) 6%,rgba(255,255,255,0.85) 22%,rgba(255,255,255,1) 40%,rgba(255,255,255,1) 50%,rgba(255,255,255,1) 60%,rgba(255,255,255,0.93) 75%,rgba(255,255,255,0) 100%) !important; }', 1);
+				sheet.insertRule('.menubar span { background-color: white !important; }', 1);
+				sheet.insertRule('h1 { color: #1C0618 !important; }', 1);
+				sheet.insertRule('h2 { color: #1C0618 !important; }', 1);
+				sheet.insertRule('h2 a:link { color: #6E155D !important; }', 1);
+				sheet.insertRule('h2 a:visited { color: #1C0618 !important; }', 1);
+				sheet.insertRule('h2 a:hover { color: #BA239C !important; }', 1);
+				sheet.insertRule('span { color: #1C0618 !important; }', 1);
+				sheet.insertRule('.quickpost-nub { background-color: white !important; }', 1);
 			}
 		}
 		// NOTE - 502 errors also break message history, so there's no reason
