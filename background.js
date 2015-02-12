@@ -1,6 +1,7 @@
 var background = {
-	cfg: {},
+	config: {},
 	board: [],
+	boards: [],
 	drama: {},
 	tabPorts: {},
 	ignoratorInfo: {},
@@ -8,38 +9,37 @@ var background = {
 	imagemapCache: {},
 	// currentTab: '',
 	noIgnores: true,
-	init: function() {
-		var that = this;
-		this.getDefaultConfig(function(defaultConfig) {
-			// populate local storage with default config values on fresh install,
-			// or check for new values & upgrade existing config
-			that.upgradeConfig(defaultConfig);	
-			if (that.cfg.history_menubar_classic) {
-				if (that.cfg.sort_history) {
-					boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php?b';
-				} else {
-					boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php';
-				}
+	init: function(defaultConfig) {
+		this.updateConfig(defaultConfig);
+		if (this.config.history_menubar_classic) {
+			this.boards['Misc.'] = {"ChromeLL Options":"%extension%options.html"};
+			if (this.config.sort_history) {				
+				this.boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php?b';
+			} else {
+				this.boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php';
 			}
-			if (that.cfg.saved_tags) {
-				boards['Tags'] = that.cfg.saved_tags;
-			}
-			if (that.cfg.context_menu) {
-				that.buildContextMenu();
-			}
-			for (var i in allBg.activeListeners) {
-				// sets listeners for force_https, batch_uploader, etc
-				allBg.activeListeners[i] = that.cfg[i];
-				console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
-			}	
-			allBg.init_listener(that.cfg);	
-			that.addListeners();
-			that.checkVersion();
-			that.omniboxSearch();
-			that.clipboardHandler();	
-			that.getUserID();
-			that.getDrama();
-		});
+		}
+		if (this.config.saved_tags) {
+			this.boards['Tags'] = this.config.saved_tags;
+		}
+		if (this.config.context_menu) {
+			this.buildContextMenu();
+		}
+		for (var i in allBg.activeListeners) {
+			// sets listeners for force_https, batch_uploader, etc
+			allBg.activeListeners[i] = this.config[i];
+			console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
+		}	
+		allBg.init_listener(this.config);	
+		this.addListeners();
+		this.checkVersion();
+		this.omniboxSearch();
+		this.clipboardHandler();	
+		this.getUserID();
+		this.getDrama();
+		/*if (this.config.sync_cfg) {
+			this.checkSync();
+		}*/
 	},
 	getDefaultConfig: function(callback) {
 		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
@@ -220,9 +220,6 @@ var background = {
 		);	
 	},
 	buildContextMenu: function() {
-		this.board = null;
-		this.board = [];
-		var id;
 		// imageTransloader is located in transloader.js
 		chrome.contextMenus.create({
 			"title": "Transload image",
@@ -234,7 +231,7 @@ var background = {
 			"onclick": this.contextMenu.searchLUE,
 			"contexts": ["selection"]
 		});
-		if (this.cfg.eti_bash) {
+		if (this.config.eti_bash) {
 			chrome.contextMenus.create({
 				"title": "Submit to ETI Bash",
 				"onclick": this.contextMenu.bashHighlight,
@@ -242,14 +239,14 @@ var background = {
 				"contexts": ["selection"]
 			});
 		}
-		if (!this.cfg.simple_context_menu) {
+		if (!this.config.simple_context_menu) {
 			chrome.contextMenus.create({
 				"title": "View image map",
 				"onclick": this.contextMenu.imageMap,
 				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
 				"contexts": ["image"]
 			});
-			if (this.cfg.copy_in_context) {
+			if (this.config.copy_in_context) {
 				chrome.contextMenus.create({
 					"title": "Copy img code",
 					"onclick": this.contextMenu.imageCopy,
@@ -257,20 +254,20 @@ var background = {
 					"contexts": ["image"]
 				});
 			}
-			for (var i in boards) {
-				if (boards[i] != boards[0]) {
+			for (var i in this.boards) {
+				if (this.boards[i] != this.boards[0]) {
 					chrome.contextMenus.create({
 						"type": "separator",
 						"contexts": ["page", "image"]
 					});
 				}
-				for (var j in boards[i]) {
-					id = chrome.contextMenus.create({
+				for (var j in this.boards[i]) {
+					var id = chrome.contextMenus.create({
 						"title": j,
 						"onclick": this.contextMenu.handleContext,
 						"contexts": ["page", "image"]
-					});
-					this.board[id] = boards[i][j];
+					});					
+					this.board[id] = this.boards[i][j];
 				}
 			}
 		}
@@ -331,17 +328,21 @@ var background = {
 			});
 		},
 		handleContext: function(info) {
-			console.log(info, board[info.menuItemId]);
-			if (!board[info.menuItemId].match('%extension%')) {
-				chrome.tabs.create({
-					"url": "http://boards.endoftheinter.net/topics/" + board[info.menuItemId]
-				});
-			} else {
-				var url = board[info.menuItemId].replace("%extension%", chrome.extension.getURL("/"));
-				chrome.tabs.create({
-					"url": url
-				});
+			var url = background.board[info.menuItemId];
+			if (!url.match('%extension%')) {
+				if (url.match('history.php') {					
+					// no changes necessary
+				}
+				else {
+					url = "http://boards.endoftheinter.net/" + url;	
+				}
 			}
+			else {
+			  url = url.replace("%extension%", chrome.extension.getURL("/"));
+			}
+			chrome.tabs.create({
+				"url": url
+			});			
 		}
 	},
 	getDrama: function() {
