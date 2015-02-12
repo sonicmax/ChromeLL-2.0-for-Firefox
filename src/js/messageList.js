@@ -453,6 +453,8 @@ var messageList = {
 		},
 		quickpostbody: {
 			filter_me: function() {
+				// even though element is appended to infobar, we need quickpost-body
+				// so we can check for human number in anonymous topics
 				var quickpostElement = document.getElementsByClassName('quickpost-body')[0];				
 				var infobar = document.getElementsByClassName('infobar')[0];
 				var tops = document.getElementsByClassName('message-top');
@@ -910,6 +912,10 @@ var messageList = {
 		},
 		load: function() {
 			this.parseObserver.disconnect();
+			if (window.location.hostname == 'archives.endoftheinter.net') {
+				// quickpost-body element doesnt exist in archived topics - call filter_me method manually
+				this.functions.quickpostbody.filter_me();
+			}
 			this.passToFunctions('misc');
 			this.quote.addButtons();
 			this.addListeners();
