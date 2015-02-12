@@ -476,9 +476,7 @@ var topicList = {
 		}
 	},
 	passToFunctions: function(tr) {
-		//var t1 = performance.now();
 		var functions = this.functions;
-		var functionArray = this.functionArray;
 		var config = this.config;
 		var index = this.index;
 		var pm = this.pm;
@@ -488,9 +486,6 @@ var topicList = {
 			}
 		}
 		this.index++;
-		/*var t2 = performance.now();
-		t0 += (t2 - t1);
-		console.log('Current total: ' + (t1 - t0));*/
 	},
 	initObserver: new MutationObserver(function(mutations) {
 		for (var i = 0, len = mutations.length; i < len; i++) {
@@ -503,7 +498,7 @@ var topicList = {
 				else if (mutation.addedNodes[0].tagName
 						&& mutation.addedNodes[0].tagName.match('H1')
 						&& topicList.config.dramalinks
-						&& !topicList.pm) {
+						&& window.location.href.match('topic')) {
 					dramalinks.appendTo(mutation.addedNodes[0]);	
 				}
 				else if (mutation.target.id == 'bookmarks' 
@@ -516,8 +511,14 @@ var topicList = {
 	init: function(config) {
 		this.config = config.data;	
 		this.prepareArrays();
+		this.globalPort = chrome.runtime.connect();
+		this.globalPort.onMessage.addListener(this.handle.message);
 		
-		if (!window.location.href.match(/[inbox|main].php/)			) {
+		if (window.location.href.match('inbox.php')) {
+			this.pm = "_pm";
+		}
+		
+		if (window.location.href.match('topic')) {
 			if (this.config.dramalinks) {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
@@ -527,12 +528,6 @@ var topicList = {
 				});
 			}
 		}
-		else {
-			this.pm = "_pm";		
-		}
-		// connect to background page
-		this.globalPort = chrome.runtime.connect();
-		this.globalPort.onMessage.addListener(this.handle.message);
 
 		if (document.readyState == 'loading') {
 			// apply DOM modifications as elements are parsed by browser
