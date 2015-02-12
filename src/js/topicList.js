@@ -383,12 +383,14 @@ var topicList = {
 		} catch (e) {
 			console.log("Error finding tags");
 		}
-		// send ignorator data to background script
-		topicList.globalPort.postMessage({
-			action: 'ignorator_update',
-			ignorator: topicList.ignorated,
-			scope: "topicList"
-		});		
+		if (!this.config.hide_ignorator_badge) {
+			// send ignorator data to background script
+			topicList.globalPort.postMessage({
+				action: 'ignorator_update',
+				ignorator: topicList.ignorated,
+				scope: "topicList"
+			});
+		}
 	},
 	addListeners: function() {
 		document.addEventListener('click', function(evt) {

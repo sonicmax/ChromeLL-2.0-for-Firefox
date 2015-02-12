@@ -3020,27 +3020,29 @@ var messageList = {
 				}
 			}
 		}
-		// send ignorator data to background script
-		this.globalPort.postMessage({
-			action: 'ignorator_update',
-			ignorator: this.ignorated,
-			scope: "messageList"
-		});
 		for (var i in quickpostFunctions) {
 			if (config[i + pm]) {
 				quickpostFunctions[i]();
 			}
 		}
-		this.addCSSRules();
+		this.addCSSRules();			
 		// call functions that dont modify DOM
 		for (var i in miscFunctions) {
 			if (config[i + pm]) {
 				miscFunctions[i]();
 			}
 		}
+		// call functions that dont exist in posts/page/misc objects
 		this.links.check();
 		this.addListeners();
-		this.appendScripts();				
+		this.appendScripts();
+		if (!this.config.hide_ignorator_badge) {
+			this.globalPort.postMessage({
+				action: 'ignorator_update',
+				ignorator: this.ignorated,
+				scope: "messageList"
+			});
+		}		
 		this.livelinks.observe(document.getElementById('u0_1'), {
 				subtree: true,
 				childList: true
