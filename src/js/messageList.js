@@ -213,9 +213,6 @@ var messageList = {
 										message: document.title
 												.replace(/End of the Internet - /i, ''),
 										title: "Post by " + user
-												+ msg
-														.getElementsByClassName('message-top')[0]
-														.getElementsByTagName('a')[0].innerHTML
 									}, function(data) {
 										console.log(data);
 									});
@@ -255,13 +252,11 @@ var messageList = {
 								need: "notify",
 								message: document.title.replace(
 										/End of the Internet - /i, ''),
-								title: "Post by "
-										+ msg.getElementsByClassName('message-top')[0]
-												.getElementsByTagName('a')[0].innerHTML
+								title: "Post by " + user
 							}, function(data) {
 								console.log(data);
 							});
-						}				
+						}		
 					}
 				}
 			},
