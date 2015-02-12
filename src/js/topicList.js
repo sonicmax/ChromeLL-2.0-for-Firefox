@@ -213,6 +213,7 @@ var topicList = {
 						if (match) {
 							var node = tr.getElementsByTagName('td')[0];
 							var nodeAnchors = node.getElementsByTagName('a');
+							node.setAttribute('highlighted', true);
 							node.style.background = '#' + keys[j].bg;
 							node.style.color = '#' + keys[j].color;
 							for (var m = 0, anchorLen = nodeAnchors.length; m < anchorLen; m++) {
@@ -243,16 +244,17 @@ var topicList = {
 								.match(highlightTag)) {
 							var node = tr.getElementsByTagName('td')[0];
 							var nodeAnchors = node.getElementsByTagName('a');
+							node.setAttribute('highlighted', true);
 							node.style.background = '#' + highlightTags[k].bg;
 							node.style.color = '#' + highlightTags[k].color;							
 							for (var n = 0, anchorLen = nodeAnchors.length; n < anchorLen; n++) {
 								nodeAnchor = nodeAnchors[n];
 								nodeAnchor.style.color = '#' + highlightTags[k].color;
 							}
-						}
-						if (topicList.config.debug) {
-							console.log('highlight topic ' + tr
-									+ ' tag ' + highlightTags[k].match[l]);
+							if (topicList.config.debug) {
+								console.log('highlight topic ' + tr
+										+ ' tag ' + highlightTags[k].match[l]);
+							}					
 						}
 					}
 				}
