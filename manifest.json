@@ -1,6 +1,6 @@
 {
   "name": "ChromeLL",
-  "version": "2.30",
+  "version": "2.31",
   "manifest_version": 2,
   "description": "Enhancements for the forums at the End of the Internet",
   "options_page": "options.html",
@@ -37,7 +37,7 @@
 		"run_at" : "document_start"
   },
   {
-    "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://*.endoftheinter.net/search.php*"],
+    "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php*", "*://*.endoftheinter.net/search.php*"],
     "js": ["src/js/topicList.js"],
 		"run_at" : "document_start"
   },
