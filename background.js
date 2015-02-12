@@ -1,7 +1,7 @@
 var background = {
 	config: {},
 	board: [],
-	boards: [],
+	boards: {},
 	drama: {},
 	tabPorts: {},
 	ignoratorInfo: {},
@@ -54,57 +54,52 @@ var background = {
 		}
 		xhr.send();	
 	},
-	upgradeConfig: function(defaultConfig) {
+	updateConfig: function(defaultConfig) {
 		if (localStorage['ChromeLL-Config'] == undefined) {
 			localStorage['ChromeLL-Config'] = defaultConfig;
-			background.cfg = defaultConfig;
+			background.config = defaultConfig;
 		}
 		if (localStorage['ChromeLL-TCs'] == undefined) {
 			localStorage['ChromeLL-TCs'] = "{}";
 		}
 		var configJS = JSON.parse(defaultConfig);
-		background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
+		background.config = JSON.parse(localStorage['ChromeLL-Config']);
 		for (var i in configJS) {
 			// if this variable does not exist, set it to the default
-			if (background.cfg[i] === undefined) {
-				background.cfg[i] = configJS[i];
-				if (background.cfg.debug) {
-					console.log("upgrade diff!", i, background.cfg[i]);
+			if (background.config[i] === undefined) {
+				background.config[i] = configJS[i];
+				if (background.config.debug) {
+					console.log("upgrade diff!", i, background.config[i]);
 				}
 			}
 		}
 		// beta versions stored TC cache in the global config. Delete if found
-		if (background.cfg.tcs) {
-			delete background.cfg.tcs;
+		if (background.config.tcs) {
+			delete background.config.tcs;
 		}
 		// save the config, just in case it was updated
-		localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
+		localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
 	},
 	checkVersion: function() {
 		var app = chrome.app.getDetails();
 		// notify user if chromeLL has been updated
 		if (localStorage['ChromeLL-Version'] != app.version 
 				&& localStorage['ChromeLL-Version'] != undefined 
-				&& this.cfg.sys_notifications) {
-			console.log('ChromeLL updated! Old v: ' + localStorage['ChromeLL-Version'] 
-					+ " New v: " + app.version);
-			chrome.notifications.create(
-				'popup', {
+				&& this.config.sys_notifications) {
+			chrome.notifications.create('popup', {
 					type: "basic",
 					title: "ChromeLL has been updated",
 					message: "Old v: " + localStorage['ChromeLL-Version'] 
-							+ " New v: " + app.version,
+							+ ", New v: " + app.version,
 					buttons: [{
 						title: "Click for more info",
 					}],
 					iconUrl: "src/images/lueshi_48.png"
-				},
-				function(id) {
+				}, function(id) {
 					chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
-						if (notifId === id) {
-							if (btnIdx === 0) {
-								window.open("http://boards.endoftheinter.net/showmessages.php?topic=8887077");
-							}
+						if (notifId === id && btnIdx === 0) {
+							// link user to topic containing patch notes & other info
+							window.open("http://boards.endoftheinter.net/showmessages.php?topic=8887077");	
 						}
 					});
 					setTimeout(function() {
@@ -120,61 +115,43 @@ var background = {
 		}
 	},
 	checkSync: function() {
-		setTimeout(chkSync, 90 * 1000);
-		this.cfg = JSON.parse(localStorage['ChromeLL-Config']);
-		if (!cfg.sync_cfg) {
-			return;
-		}
-		// "split" these config keys from the default config save, 2048 byte limit per item
-		// split object moved to allBg.js so it can be accessed from the options page
-		chrome.storage.local.get('cfg', function(data) {
-			if (data.cfg && data.cfg.last_saved > cfg.last_saved) {
-				if (background.cfg.debug) {
-					console.log('copy sync to local - local: ', background.cfg.last_saved, 'sync: ', data.cfg.last_saved);
+		chrome.storage.sync.get('config', function(syncData) {
+			if (syncData.config && syncData.config.last_saved > background.config.last_saved) {
+				// synced config file is more recent than version on computer
+				for (var keyName in syncData.config) {					
+					background.config[keyName] = syncData.config[keyName];					
 				}
-				for (var j in data.cfg) {
-					background.cfg[j] = data.cfg[j];
-				}
-				localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
+				localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
 				var bSplit = [];
 				for (var k in split) {
-					if (background.cfg[split[k]]) {
+					if (background.config[split[k]]) {
 						bSplit.push(k);
 					}
 				}
-				chrome.storage.local.get(bSplit, function(r) {
-					for (var l in r) {
-						if (background.cfg.debug) {
-							console.log('setting local', l, r[l]);
-						}
-						background.cfg[l] = r[l];
+				chrome.storage.sync.get(bSplit, function(syncConfig) {
+					for (var l in syncConfig) {
+						background.config[l] = syncConfig[l];
 					}
-					localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
+					localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
 				});
-			} else if (!data.cfg || data.cfg.last_saved < background.cfg.last_saved) {
-				if (background.cfg.debug) {
-					console.log('copy local to sync - local: ', background.cfg.last_saved, 'sync: ');
-				}
-				var xCfg = JSON.parse(localStorage['ChromeLL-Config']);
-				var toSet = {}
+			}
+			
+			else if (!syncData.config || syncData.config.last_saved < background.config.last_saved) {
+				var localConfig = JSON.parse(localStorage['ChromeLL-Config']);
+				var toSet = {};
 				for (var i in split) {
-					if (background.cfg[split[i]]) {
-						toSet[i] = xCfg[i];
+					if (background.config[split[i]]) {
+						toSet[i] = localConfig[i];
 					}
-					delete xCfg[i];
+					delete localConfig[i];
 				}
-				toSet.cfg = xCfg;
-				if (background.cfg.debug) {
-					console.log('setting sync objects', toSet);
-				}
-				chrome.storage.local.set(toSet);
+				toSet.config = localConfig;
 				for (var i in toSet) {
 					var f = function(v) {
-						chrome.storage.local.getBytesInUse(v, function(use) {
-							console.log('%s using %d bytes', v, use);
-							if (use > 2048) {
-								var sp = Math.ceil(use / 2048);
-								console.log('%s is too big, splitting into %d parts', v, sp);
+						chrome.storage.sync.getBytesInUse(v, function(use) {
+							// chrome.storage api allows 8,192 bytes per item
+							if (use > 8192) {
+								var sp = Math.ceil(use / 8192);
 								var c = 0;
 								for (var j in toSet[v]) {
 									if (!toSet[v + (c % sp)]) {
@@ -184,36 +161,31 @@ var background = {
 									c++;
 								}
 								delete toSet[v];
-								console.log(toSet);
 							}
 						});
 					}
 					f(i);
 				}
-			} else {
-				if (background.cfg.debug) {
-					console.log('skipping sync actions - local: ', background.cfg.last_saved, 'sync: ', data.cfg.last_saved);
-				}
+				chrome.storage.sync.set(toSet);				
 			}
 		});
 	},
 	clipboardHandler: function() {
 		var backgroundPage = chrome.extension.getBackgroundPage();
 		var textArea = backgroundPage.document.createElement("textarea");
-		var quote, clipboard;
 		textArea.id = "clipboard";
 		backgroundPage.document.body.appendChild(textArea);
 		chrome.runtime.onMessage.addListener(
 			// allows text content to be copied to clipboard from content scripts
 			function(request, sender, sendResponse) {
 				if (request.quote) {
-					quote = request.quote;
-					clipboard = document.getElementById('clipboard');
+					var quote = request.quote;
+					var clipboard = document.getElementById('clipboard');
 					clipboard.value = quote;
 					clipboard.select();
 					document.execCommand("copy");
 					sendResponse({
-						clipboard: "copied to clipboard"
+						clipboard: "Copied to clipboard."
 					});
 				}
 			}
@@ -278,7 +250,7 @@ var background = {
 			var tokens = str.split('/').slice(-2);
 			var imageURL = tokens.join('/');
 			var imageMap = "http://images.endoftheinter.net/imap/" + imageURL;
-			if (background.cfg.imagemap_new_tab) {
+			if (background.config.imagemap_new_tab) {
 				chrome.tabs.create({
 						url: imageMap
 				});
@@ -328,9 +300,9 @@ var background = {
 			});
 		},
 		handleContext: function(info) {
-			var url = background.board[info.menuItemId];
+			var url = background.board[info.menuItemId];			
 			if (!url.match('%extension%')) {
-				if (url.match('history.php') {					
+				if (url.match('history.php')) {		
 					// no changes necessary
 				}
 				else {
@@ -340,16 +312,17 @@ var background = {
 			else {
 			  url = url.replace("%extension%", chrome.extension.getURL("/"));
 			}
+			
 			chrome.tabs.create({
 				"url": url
 			});			
 		}
 	},
-	getDrama: function() {
-		if (background.cfg.debug) {
+	getDrama: function(callback) {
+		if (background.config.debug) {
 			console.log('fetching dramalinks from wiki...');
 		}
-		// use base64 string (eww...) instead of external URL to avoid insecure content warnings for HTTPS users
+		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
 		var png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
 				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
 				+ 'DVmAAAAAElFTkSuQmCC';
@@ -428,180 +401,200 @@ var background = {
 				}	
 				background.drama.txt = dramas;
 				background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));
-				
-				// TODO - decide whether to keep the 'update in all tabs' behaviour
-				// or whether to scrap this entirely
-				
-				/*chrome.tabs.query({url: '*://*.endoftheinter.net/*'}, function(tabs) {
-					var tab;
-					for (var i = 0, len = tabs.length; i < len; i++) {
-						tab = tabs[i];
-						chrome.tabs.sendMessage(tab.id, {
-							action: "update_drama"
-						}, function(response) {
-							// empty callback
-						});
-					}
-				});*/
+				if (callback) {
+					callback(background.drama);
+				}
 			}
 			if (xhr.readyState == 4 && xhr.status == 404) {
-				// 404 error usally occurs if user has logged into ETI using multiple IP addresses
-				// (as wiki uses IP address as part of authentication)
-				background.drama.txt = '<a id="retry" href="##retry">Error loading Dramalinks. Click to retry...</a>';
+				// 404 error occurs if user has logged into ETI using multiple IP addresses
+				background.drama.txt = '<a id="retry" href="#">Error loading Dramalinks. Click to retry...</a>';
 			}
 		}
 	},
 	addListeners: function() {
 		chrome.tabs.onActivated.addListener(function(tab) {
 			if (!background.tabPorts[tab.tabId]) {
-				// tab is not being tracked by ChromeLL
 				return;
-			}			
-			// background.currentTab = tab.tabId;
-			// update badge with number of ignorated users
-			background.tabPorts[tab.tabId].postMessage({
-				action: 'ignorator_update'
-			});
+			}
+			else {
+				background.tabPorts[tab.tabId].postMessage({
+					action: 'ignorator_update'
+				});
+			}
 		});
+		
 		chrome.tabs.onRemoved.addListener(function(tab) {
-			if (background.tabPorts[tab]) {
-				// remove closed tab from background objects
+			if (background.tabPorts[tab]) {				
 				delete background.tabPorts[tab];
 				delete background.ignoratorInfo[tab];
 				delete background.scopeInfo[tab];
 			}
 		});
+		
 		chrome.runtime.onConnect.addListener(function(port) {
-			// add to tabPorts object and check status of ignorator
 			background.tabPorts[port.sender.tab.id] = {};
 			background.tabPorts[port.sender.tab.id] = port;
 			background.tabPorts[port.sender.tab.id].onMessage.addListener(function(msg) {
-				background.handleIgnoratorMsg(port.sender.tab.id, msg);
+				background.handle.ignoratorUpdate.call(background, port.sender.tab.id, msg);
 			});
 		});
-		chrome.runtime.onMessage.addListener(
-			function(request, sender, sendResponse) {
-				switch(request.need) {
-					case "config":
-						// page script needs extension config.
-						background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
-						if (request.sub) {
-							sendResponse({"data": background.cfg[request.sub]});
-						} else if (request.tcs) {
-							var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
-							sendResponse({"data": background.cfg, "tcs": tcs});
-						} else {
-							sendResponse({"data": background.cfg});
-						}
-						break;
-					case "save":
-						// page script needs config save.
-						if (request.name === "tcs") {
-							localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
-						} else {
-							background.cfg[request.name] = request.data;
-							background.cfg.last_saved = new Date().getTime();
-							localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
-						}
-						if (background.cfg.debug) {
-							console.log('saving ', request.name, request.data);
-						}
-						break;
-					case "notify":
-						chrome.notifications.create('popup', {
-							type: "basic",
-							title: request.title,
-							message: request.message,
-							iconUrl: "src/images/lueshi_48.png"
-						},
-						function (id) {
-							if (!background.cfg.clear_notify) {
-								this.cfg.clear_notify = "5";
-							}
-							if (background.cfg.clear_notify === "0") {
-								return;
-							}
-							setTimeout(function() {
-								background.clearNotification(id);
-							}, parseInt(background.cfg.clear_notify, 10) * 1000);
-						});
-						break;	
-					case "dramalinks":
-						var time = parseInt(new Date().getTime());
-						if (background.drama.time && (time < background.drama.time)){
-							if (background.cfg.debug) {
-								console.log('returning cached dramalinks. cache exp: ' + background.drama.time + ' current: ' + time);
-							}
-							sendResponse({"data": background.drama.txt});
-						} else {
-							sendResponse({"data": background.drama.txt});
-							background.getDrama();
-						}
-						break;
-					case "insertcss":
-						if (background.cfg.debug) {
-							console.log('inserting css ', request.file);
-						}
-						chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
-						sendResponse({
-							// no response needed
-						});
-						break;
-					case "opentab":
-						if (background.cfg.debug) {
-							console.log('opening tab ', request.url);
-						}
-						chrome.tabs.create({url: request.url});
-						break;
-					case "noIgnores":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								sendResponse({"noignores": background.noIgnores});										
-						});
-						return true;								
-					case "getIgnored":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								sendResponse({
-										"ignorator": background.ignoratorInfo[tabs[0].id], 
-										"scope": background.scopeInfo[tabs[0].id]}
-								);
-						});		
-						return true;									
-					case "showIgnorated":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								background.tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
-						});		
-						if (background.cfg.debug) {
-							console.log('showing hidden data', request);
-						}
-						return true;
-					case "options":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								// check whether bg script can send messages to current tab
-								if (background.tabPorts[tabs[0].id] && !background.cfg.options_window) {
-									// open options in same tab
-									chrome.tabs.sendMessage(tabs[0].id, {
-										action: "showOptions"
-									}, function(response) {
-										// empty callback
-									});
-								}
-								else {
-									// open options in new tab
-									chrome.tabs.create({
-											url: chrome.extension.getURL('options.html')
-									});							
-								}
-						});	
-						break;
-					default:
-						if (background.cfg.debug) {
-							console.log("Error in request listener - undefined parameter?", request);
-						}
-						break;
-				}
-			}
-		);
+		
+		chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+			background.handle.message.apply(background, arguments);
+		});
 	},
+	handle: {
+		message: function(request, sender, sendResponse) {
+			switch(request.need) {
+				case "config":
+					// page script needs extension config.
+					this.config = JSON.parse(localStorage['ChromeLL-Config']);
+					if (request.sub) {
+						sendResponse({"data": this.config[request.sub]});
+					} else if (request.tcs) {
+						var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
+						sendResponse({"data": this.config, "tcs": tcs});
+					} else {
+						sendResponse({"data": this.config});
+					}
+					break;
+				case "save":
+					// page script needs config save.
+					if (request.name === "tcs") {
+						localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
+					} else {
+						this.config[request.name] = request.data;
+						this.config.last_saved = new Date().getTime();
+						localStorage['ChromeLL-Config'] = JSON.stringify(this.config);
+						if (this.config.sync_cfg) {
+							this.checkSync();
+						}
+					}
+					if (this.config.debug) {
+						console.log('saving ', request.name, request.data);
+					}
+					break;
+				case "notify":
+					chrome.notifications.create('popup', {
+						type: "basic",
+						title: request.title,
+						message: request.message,
+						iconUrl: "src/images/lueshi_48.png"
+					}, function (id) {
+						if (!background.config.clear_notify) {
+							background.config.clear_notify = "5";
+						}
+						if (background.config.clear_notify === "0") {
+							return;
+						}
+						setTimeout(function() {
+							background.clearNotification(id);
+						}, parseInt(background.config.clear_notify, 10) * 1000);
+					});
+					break;	
+				case "dramalinks":
+					var time = parseInt(new Date().getTime());
+					if (this.drama.time && (time < this.drama.time)){
+						if (this.config.debug) {
+							console.log('returning cached dramalinks. cache exp: ' + this.drama.time + ' current: ' + time);
+						}
+						sendResponse({"data": this.drama.txt});
+					} else {
+						sendResponse({"data": this.drama.txt});
+						this.getDrama();
+					}
+					break;
+				case "retrydramalinks":
+					this.getDrama(function(dramalinks) {
+						sendResponse({"data": dramalinks.txt});
+					});
+					break;
+				case "insertcss":
+					if (this.config.debug) {
+						console.log('inserting css ', request.file);
+					}
+					chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
+					sendResponse({
+						// no response needed
+					});
+					break;
+				case "opentab":
+					if (this.config.debug) {
+						console.log('opening tab ', request.url);
+					}
+					chrome.tabs.create({url: request.url});
+					break;
+				case "noIgnores":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							sendResponse({"noignores": this.noIgnores});										
+					});
+					return true;								
+				case "getIgnored":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							sendResponse({
+									"ignorator": this.ignoratorInfo[tabs[0].id], 
+									"scope": this.scopeInfo[tabs[0].id]}
+							);
+					});
+					return true;									
+				case "showIgnorated":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							this.tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
+					});		
+					if (this.config.debug) {
+						console.log('showing hidden data', request);
+					}
+					return true;
+				case "options":
+					var that = this;
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							// check whether bg script can send messages to current tab
+							if (that.tabPorts[tabs[0].id] && !that.config.options_window) {
+								// open options in same tab
+								chrome.tabs.sendMessage(tabs[0].id, {
+									action: "showOptions"
+								});
+							}
+							else {
+								// open options in new tab
+								chrome.tabs.create({
+										url: chrome.extension.getURL('options.html')
+								});							
+							}
+					});	
+					break;
+				default:
+					if (this.config.debug) {
+						console.log("Error in request listener - undefined parameter?", request);
+					}
+					break;
+			}
+		},
+		ignoratorUpdate: function(tab, msg) {
+			switch (msg.action) {
+				case "ignorator_update":
+					this.ignoratorInfo[tab] = msg.ignorator;
+					this.scopeInfo[tab] = msg.scope;
+					if (msg.ignorator.total_ignored > 0) {
+						chrome.browserAction.setBadgeBackgroundColor({
+							tabId: tab,
+							color: "#ff0000"
+						});
+						chrome.browserAction.setBadgeText({
+							tabId: tab,
+							text: "" + msg.ignorator.total_ignored
+						});							
+						this.noIgnores = false;
+					} else if (msg.ignorator.total_ignored == 0) {
+						this.noIgnores = true;
+					}
+					break;
+				default:
+					console.log('no', msg);
+					break;
+			}
+		}
+	},	
 	getUserID: function() {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
 		var xhr = new XMLHttpRequest();
@@ -614,41 +607,42 @@ var background = {
 						.innerText.indexOf("Das Ende des Internets") > -1) {
 					// user is logged out
 					return;
-				} else {
-					var user = html.getElementsByClassName('userbar')[0]
+				} 
+				else {
+					var userID = html.getElementsByClassName('userbar')[0]
 						.getElementsByTagName('a')[0].href
 						.match(/\?user=([0-9]+)/)[1];
-					config.user_id = user;
+					config.user_id = userID;
 					localStorage['ChromeLL-Config'] = JSON.stringify(config);
-					background.scrapeUserProfile(user);
+					background.scrapeUserProfile(userID);
 				}
 			}
 		}
 		xhr.send();
 	},
-	scrapeUserProfile: function(user) {
+	scrapeUserProfile: function(userID) {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
-		var url = "http://endoftheinter.net/profile.php?user=" + user;
+		var url = "http://endoftheinter.net/profile.php?user=" + userID;
 		var xhr = new XMLHttpRequest();
 		console.log("User Profile = " + url);
 		xhr.open("GET", url, true);
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
-				var tds, td, adminTags, modTags, isAdmin, isMod, tag;
+				var adminTags, modTags, isAdmin, isMod;
 				var html = document.createElement('html');
 				html.innerHTML = xhr.responseText;
 				var adminArray = [];
 				var modArray = [];
 				var tagArray = [];
-				tds = html.getElementsByTagName("td");
+				var tds = html.getElementsByTagName("td");
 				for (var i = 0; i < tds.length; i++) {
-					td = tds[i];
+					var td = tds[i];
 					if (td.innerText.indexOf("Administrator of") > -1) {
-						adminTags = tds[i + 1].getElementsByTagName('a');
+						var adminTags = tds[i + 1].getElementsByTagName('a');
 						isAdmin = true;
 					}
 					if (td.innerText.indexOf("Moderator of") > -1) {
-						modTags = tds[i + 1].getElementsByTagName('a');
+						var modTags = tds[i + 1].getElementsByTagName('a');
 						isMod = true;
 					}
 				}
@@ -660,11 +654,10 @@ var background = {
 				}
 				tagArray = adminArray.concat(modArray);
 				for (var i = 0, len = tagArray.length; i < len; i++) {
-					tag = tagArray[i].innerText;
+					var tag = tagArray[i].innerText;
 					tagArray[i] = tag;
 				}
 				console.log(tagArray);
-				delete config.tag_admin;
 				config.tag_admin = tagArray;
 				localStorage['ChromeLL-Config'] = JSON.stringify(config);
 				console.log("scraped profile for tag information");
@@ -675,7 +668,8 @@ var background = {
 	clearNotification: function(ID) {
 		chrome.notifications.clear(ID,
 			function() {
-				// empty callback
+				// empty callback - method requires function to be passed as 2nd parameter,
+				// but we just want to clear the notification
 			}
 		);
 	},
@@ -716,31 +710,9 @@ var background = {
 				});
 			}
 		});
-	},
-	handleIgnoratorMsg: function(tab, msg) {
-		switch (msg.action) {
-			case "ignorator_update":
-				this.ignoratorInfo[tab] = msg.ignorator;
-				this.scopeInfo[tab] = msg.scope;
-				if (msg.ignorator.total_ignored > 0) {
-					chrome.browserAction.setBadgeBackgroundColor({
-						tabId: tab,
-						color: "#ff0000"
-					});
-					chrome.browserAction.setBadgeText({
-						tabId: tab,
-						text: "" + msg.ignorator.total_ignored
-					});							
-					this.noIgnores = false;
-				} else if (msg.ignorator.total_ignored == 0) {
-					this.noIgnores = true;
-				}
-				break;
-			default:
-				console.log('no', msg);
-				break;
-		}
 	}
 };
 
-background.init();
+background.getDefaultConfig(function(config) {
+	background.init.call(background, config);
+});
