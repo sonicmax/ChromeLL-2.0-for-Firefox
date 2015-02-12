@@ -306,7 +306,7 @@ var background = {
 					// no changes necessary
 				}
 				else {
-					url = "http://boards.endoftheinter.net/" + url;	
+					url = "http://boards.endoftheinter.net/topics/" + url;	
 				}
 			}
 			else {
