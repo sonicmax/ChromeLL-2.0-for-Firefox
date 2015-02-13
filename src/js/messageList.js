@@ -20,23 +20,31 @@ var messageList = {
 				dramalinks.html = response.data;					
 				dramalinks.config = messageList.config;
 			});
-		}
-				
-		if (document.readyState == 'loading') {			
-			// pass elements to functions as they are parsed by browser
+		}	
+		
+		// NOTE: this was causing problems for some users
+		
+		/*if (document.readyState == 'loading') {
+			// pass elements to functions as they are parsed by browser			
 			this.parseObserver.observe(document, {
 					childList: true,
 					subtree: true
 			});
 			// after DOMContentLoaded fires, listen for new posts
-			document.addEventListener('DOMContentLoaded', this.handleEvent.load.bind(this));
+			document.addEventListener('DOMContentLoaded', this.handleEvent.load.call(this));
+		}*/
+		
+		if (document.readyState == 'loading') {
+			// wait for DOMContentLoaded to fire before attempting to modify DOM
+			document.addEventListener('DOMContentLoaded', function() {
+				messageList.callFunctions.call(messageList, messageList.pm);
+			});
 		}
 		else {
-			// DOM already loaded - use getElementBy... methods to pass elements to functions
-			this.callFunctions(this.pm);
+			this.callFunctions.call(this, this.pm);
 		}
 	},
-	functions: {		
+	functions: {
 		messagecontainer: {
 			eti_bash: function(msg, index) {
 				var top = msg.getElementsByClassName('message-top')[0];
@@ -2947,7 +2955,7 @@ var messageList = {
 			}
 		}
 	}),
-	parseObserver: new MutationObserver(function(mutations) {
+	/*parseObserver: new MutationObserver(function(mutations) {
 		for (var i = 0, len = mutations.length; i < len; i++) {
 			var mutation = mutations[i];
 			if (mutation.addedNodes.length > 0) {
@@ -2971,10 +2979,8 @@ var messageList = {
 				}
 			}
 		}	
-	}),
-	callFunctions: function(pm) {
-		// ugly function to be called if DOMContentLoaded fires too quickly for 
-		// parseObserver to run (eg if user presses back button in browser)				
+	}),*/
+	callFunctions: function(pm) {			
 		var msgs = document.getElementsByClassName('message-container');
 		var pageFunctions = this.functions.infobar;
 		var postFunctions = this.functions.messagecontainer;
@@ -3013,13 +3019,21 @@ var messageList = {
 		// page will appear to have been fully loaded by this point
 		if (len == 4) {
 			// iterate over rest of messages
-			for (var j = len; msg = msgs[j]; j++) {
+			for (var j = 4, msgsLength = msgs.length; j < msgsLength; j++) {
+				var msg = msgs[j];
 				for (var k in postFunctions) {
 					if (config[k + pm]) {
 						postFunctions[k](msg, j + 1);
 					}
 				}
 			}
+		}
+		if (!this.config.hide_ignorator_badge) {
+			this.globalPort.postMessage({
+				action: 'ignorator_update',
+				ignorator: this.ignorated,
+				scope: "messageList"
+			});
 		}
 		for (var i in quickpostFunctions) {
 			if (config[i + pm]) {
@@ -3037,13 +3051,6 @@ var messageList = {
 		this.links.check();
 		this.addListeners();
 		this.appendScripts();
-		if (!this.config.hide_ignorator_badge) {
-			this.globalPort.postMessage({
-				action: 'ignorator_update',
-				ignorator: this.ignorated,
-				scope: "messageList"
-			});
-		}		
 		this.livelinks.observe(document.getElementById('u0_1'), {
 				subtree: true,
 				childList: true
@@ -3054,7 +3061,7 @@ var messageList = {
 			});
 		}
 	},
-	passToFunctions: function(element) {
+	/*passToFunctions: function(element) {
 		var config = this.config;
 		var pm = this.pm;
 		var elementName;
@@ -3068,13 +3075,13 @@ var messageList = {
 			elementName = element;
 		}
 		
-		var functions = this.functions[elementName];
-		for (var i in functions) {
+		var elementFunctions = this.functions[elementName];
+		for (var i in elementFunctions) {
 			if (config[i + pm]) {
-				functions[i](element, this.containersTotal);
+				elementFunctions[i](element, this.containersTotal);
 			}
-		}		
-	},
+		}
+	},*/
 	prepareIgnoratorArray: function() {
 		this.ignores = this.config.ignorator_list.split(',');
 		for (var r = 0, len = this.ignores.length; r < len; r++) {
