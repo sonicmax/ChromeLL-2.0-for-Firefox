@@ -112,6 +112,13 @@ var topicList = {
 							topicList.ignorated.data.keywords[keywords[f]].total++;
 							topicList.ignorated.data.keywords[keywords[f]].trs.push(i);
 						}
+						if (!topicList.config.hide_ignorator_badge) {
+							topicList.globalPort.postMessage({
+								action: 'ignorator_update',
+								ignorator: topicList.ignorated,
+								scope: "topicList"
+							});
+						}						
 					}
 				}
 			}
