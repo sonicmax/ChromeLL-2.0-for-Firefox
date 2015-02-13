@@ -512,7 +512,7 @@ var topicList = {
 				else if (mutation.addedNodes[0].tagName
 						&& mutation.addedNodes[0].tagName.match('H1')
 						&& topicList.config.dramalinks
-						&& window.location.href.match('topic')) {
+						&& !topicList.pm) {
 					dramalinks.appendTo(mutation.addedNodes[0]);	
 				}
 				else if (mutation.target.id == 'bookmarks' 
@@ -528,11 +528,7 @@ var topicList = {
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
 		
-		if (window.location.href.match('inbox.php')) {
-			this.pm = "_pm";
-		}
-		
-		if (window.location.href.match('topic')) {
+		if (!window.location.href.match(/[inbox|main].php/)			) {
 			if (this.config.dramalinks) {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
@@ -542,6 +538,9 @@ var topicList = {
 				});
 			}
 		}
+		else {
+			this.pm = "_pm";		
+		}
 
 		if (document.readyState == 'loading') {
 			// apply DOM modifications as elements are parsed by browser
@@ -549,13 +548,12 @@ var topicList = {
 					childList: true,
 					subtree: true
 			});
-			document.addEventListener('DOMContentLoaded', 
-					this.handle.loadEvent.call(topicList)
-			);
+			document.addEventListener('DOMContentLoaded', function() {
+				topicList.handle.loadEvent.call(topicList)
+			});
 		}
 		else {
-			// DOM was already loaded
-			// (user pressed back button to reach topic list)
+			// DOM was already loaded			
 			this.callFunctions(this.pm);
 		}
 	}
