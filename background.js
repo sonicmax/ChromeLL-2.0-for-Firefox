@@ -439,137 +439,130 @@ var background = {
 			});
 		});
 		
-		chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-			background.handle.message.apply(background, arguments);
-		});
+		chrome.runtime.onMessage.addListener(
+			function(request, sender, sendResponse) {
+				switch(request.need) {
+					case "config":
+						// page script needs extension config.
+						background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
+						if (request.sub) {
+							sendResponse({"data": background.cfg[request.sub]});
+						} else if (request.tcs) {
+							var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
+							sendResponse({"data": background.cfg, "tcs": tcs});
+						} else {
+							sendResponse({"data": background.cfg});
+						}
+						break;
+					case "save":
+						// page script needs config save.
+						if (request.name === "tcs") {
+							localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
+						} else {
+							background.cfg[request.name] = request.data;
+							background.cfg.last_saved = new Date().getTime();
+							localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
+						}
+						if (background.cfg.debug) {
+							console.log('saving ', request.name, request.data);
+						}
+						break;
+					case "notify":
+						chrome.notifications.create('popup', {
+							type: "basic",
+							title: request.title,
+							message: request.message,
+							iconUrl: "src/images/lueshi_48.png"
+						},
+						function (id) {
+							if (!background.cfg.clear_notify) {
+								this.cfg.clear_notify = "5";
+							}
+							if (background.cfg.clear_notify === "0") {
+								return;
+							}
+							setTimeout(function() {
+								background.clearNotification(id);
+							}, parseInt(background.cfg.clear_notify, 10) * 1000);
+						});
+						break;	
+					case "dramalinks":
+						var time = parseInt(new Date().getTime());
+						if (background.drama.time && (time < background.drama.time)){
+							if (background.cfg.debug) {
+								console.log('returning cached dramalinks. cache exp: ' + background.drama.time + ' current: ' + time);
+							}
+							sendResponse({"data": background.drama.txt});
+						} else {
+							sendResponse({"data": background.drama.txt});
+							background.getDrama();
+						}
+						break;
+					case "insertcss":
+						if (background.cfg.debug) {
+							console.log('inserting css ', request.file);
+						}
+						chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
+						sendResponse({
+							// no response needed
+						});
+						break;
+					case "opentab":
+						if (background.cfg.debug) {
+							console.log('opening tab ', request.url);
+						}
+						chrome.tabs.create({url: request.url});
+						break;
+					case "noIgnores":
+						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+								sendResponse({"noignores": background.noIgnores});										
+						});
+						return true;								
+					case "getIgnored":
+						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+								sendResponse({
+										"ignorator": background.ignoratorInfo[tabs[0].id], 
+										"scope": background.scopeInfo[tabs[0].id]}
+								);
+						});		
+						return true;									
+					case "showIgnorated":
+						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+								background.tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
+						});		
+						if (background.cfg.debug) {
+							console.log('showing hidden data', request);
+						}
+						return true;
+					case "options":
+						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+								// check whether bg script can send messages to current tab
+								if (background.tabPorts[tabs[0].id] && !background.cfg.options_window) {
+									// open options in same tab
+									chrome.tabs.sendMessage(tabs[0].id, {
+										action: "showOptions"
+									}, function(response) {
+										// empty callback
+									});
+								}
+								else {
+									// open options in new tab
+									chrome.tabs.create({
+											url: chrome.extension.getURL('options.html')
+									});							
+								}
+						});	
+						break;
+					default:
+						if (background.cfg.debug) {
+							console.log("Error in request listener - undefined parameter?", request);
+						}
+						break;
+				}
+			}
+		);
 	},
 	handle: {
-		message: function(request, sender, sendResponse) {
-			switch(request.need) {
-				case "config":
-					// page script needs extension config.
-					this.config = JSON.parse(localStorage['ChromeLL-Config']);
-					if (request.sub) {
-						sendResponse({"data": this.config[request.sub]});
-					} else if (request.tcs) {
-						var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
-						sendResponse({"data": this.config, "tcs": tcs});
-					} else {
-						sendResponse({"data": this.config});
-					}
-					break;
-				case "save":
-					// page script needs config save.
-					if (request.name === "tcs") {
-						localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
-					} else {
-						this.config[request.name] = request.data;
-						this.config.last_saved = new Date().getTime();
-						localStorage['ChromeLL-Config'] = JSON.stringify(this.config);
-						if (this.config.sync_cfg) {
-							this.checkSync();
-						}
-					}
-					if (this.config.debug) {
-						console.log('saving ', request.name, request.data);
-					}
-					break;
-				case "notify":
-					chrome.notifications.create('popup', {
-						type: "basic",
-						title: request.title,
-						message: request.message,
-						iconUrl: "src/images/lueshi_48.png"
-					}, function (id) {
-						if (!background.config.clear_notify) {
-							background.config.clear_notify = "5";
-						}
-						if (background.config.clear_notify === "0") {
-							return;
-						}
-						setTimeout(function() {
-							background.clearNotification(id);
-						}, parseInt(background.config.clear_notify, 10) * 1000);
-					});
-					break;	
-				case "dramalinks":
-					var time = parseInt(new Date().getTime());
-					if (this.drama.time && (time < this.drama.time)){
-						if (this.config.debug) {
-							console.log('returning cached dramalinks. cache exp: ' + this.drama.time + ' current: ' + time);
-						}
-						sendResponse({"data": this.drama.txt});
-					} else {
-						sendResponse({"data": this.drama.txt});
-						this.getDrama();
-					}
-					break;
-				case "retrydramalinks":
-					this.getDrama(function(dramalinks) {
-						sendResponse({"data": dramalinks.txt});
-					});
-					break;
-				case "insertcss":
-					if (this.config.debug) {
-						console.log('inserting css ', request.file);
-					}
-					chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
-					sendResponse({
-						// no response needed
-					});
-					break;
-				case "opentab":
-					if (this.config.debug) {
-						console.log('opening tab ', request.url);
-					}
-					chrome.tabs.create({url: request.url});
-					break;
-				case "noIgnores":
-					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-							sendResponse({"noignores": this.noIgnores});										
-					});
-					return true;								
-				case "getIgnored":
-					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-							sendResponse({
-									"ignorator": this.ignoratorInfo[tabs[0].id], 
-									"scope": this.scopeInfo[tabs[0].id]}
-							);
-					});
-					return true;									
-				case "showIgnorated":
-					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-							this.tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
-					});		
-					if (this.config.debug) {
-						console.log('showing hidden data', request);
-					}
-					return true;
-				case "options":
-					var that = this;
-					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-							// check whether bg script can send messages to current tab
-							if (that.tabPorts[tabs[0].id] && !that.config.options_window) {
-								// open options in same tab
-								chrome.tabs.sendMessage(tabs[0].id, {
-									action: "showOptions"
-								});
-							}
-							else {
-								// open options in new tab
-								chrome.tabs.create({
-										url: chrome.extension.getURL('options.html')
-								});							
-							}
-					});	
-					break;
-				default:
-					if (this.config.debug) {
-						console.log("Error in request listener - undefined parameter?", request);
-					}
-					break;
-			}
-		},
 		ignoratorUpdate: function(tab, msg) {
 			switch (msg.action) {
 				case "ignorator_update":
