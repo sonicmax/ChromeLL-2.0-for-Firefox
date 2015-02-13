@@ -18,7 +18,6 @@ var lovelinks = {
 	},
 	addCSSRules: function() {
 		var sheet = document.styleSheets[0];
-		sheet.insertRule('div { border-radius: 6px; }', 1);
 		var cssSelectors = ['.message-top', '.infobar', '.userbar', 'tr', 'td', 'th'];
 		for (var i = 0, len = cssSelectors.length; i < len; i++) {
 			var selector = cssSelectors[i];
@@ -26,14 +25,17 @@ var lovelinks = {
 			sheet.insertRule(selector + ' a:visited { color: #330433 !important; }', 1);
 			sheet.insertRule(selector + ' a:hover { color: #BA239C !important; }', 1);
 		}
+		sheet.insertRule('div { border-radius: 6px; }', 1);
 		sheet.insertRule('body { background-image: url("http://i4.endoftheinter.net/i/n/378c1d4b824ecaf13e99f1bbdbac35fd/heart_tiles.png")', 1);
 		sheet.insertRule('.quoted-message { background-color: #EDCAE6 !important; color: #0D030B !important; border-left: 0px !important; }', 1);
+		sheet.insertRule('.quoted-message div:not(.message-top):not(.imgs) { background-color: #D4ABCC !important; color: #0D030B !important; border-left: 0px !important; }', 1);
+		sheet.insertRule('.quoted-message div:not(.message-top):not(.imgs) div:not(.message-top):not(.imgs) { background-color: #B593AE !important; color: #0D030B !important; border-left: 0px !important; }', 1);			
 		sheet.insertRule('.message-top { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
 		sheet.insertRule('.quickpost-body { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
 		sheet.insertRule('.quickpost-canvas { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
 		sheet.insertRule('.quickpost-canvas a { color: purple !important; }', 1);
 		sheet.insertRule('.userbar { background: linear-gradient(to bottom, rgba(255,179,218,1) 0%,rgba(255,129,194,1) 55%) !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('.block_desc { background-color: #EDCAE6 !important; color: #0D030B !important; border-left: 0px !important; }', 1);
+		sheet.insertRule('.block_desc { background-color: #BFA6BA !important; color: #0D030B !important; border-left: 0px !important; }', 1);
 		sheet.insertRule('.block_desc a { color: black !important; }', 1);
 		sheet.insertRule('.infobar { background: linear-gradient(to bottom, rgba(255,217,237,1) 0%,rgba(255,191,224,1) 55%) !important; color: #0D030B !important; }', 1);
 		sheet.insertRule('.userpic { background: linear-gradient(135deg, rgba(252,199,240,1) 8%,rgba(229,139,205,1) 100%,rgba(168,0,119,1) 100%,rgba(219,54,164,1) 100%) !important; color: #0D030B !important; color: F74F4F !important; border-left: 0px !important; }', 1);
@@ -41,7 +43,7 @@ var lovelinks = {
 		sheet.insertRule('tr { border-radius: 6px; background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; color: #0D030B !important; }', 1);
 		sheet.insertRule('td { border-radius: 6px; background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; color: #0D030B !important; }', 1);
 		sheet.insertRule('small { color: black !important; }', 1);
-		sheet.insertRule('[highlighted] { background: linear-gradient(to bottom, rgba(255,165,212,1) 13%,rgba(254,108,183,1) 55%,rgba(255,165,212,1) 87%,rgba(255,165,212,1) 100%) !important; }', 1);
+		sheet.insertRule('[highlighted]:not(a) { background: linear-gradient(to bottom, rgba(255,165,212,1) 13%,rgba(254,108,183,1) 55%,rgba(255,165,212,1) 87%,rgba(255,165,212,1) 100%) !important; }', 1);
 		sheet.insertRule('.menubar a:link { color: #6E155D !important; }', 1);
 		sheet.insertRule('.menubar a:visited { color: #1C0618 !important; }', 1);
 		sheet.insertRule('.menubar a:hover { color: #BA239C !important; }', 1);
@@ -57,7 +59,10 @@ var lovelinks = {
 		sheet.insertRule('.tag-div { background-color: white !important; }', 1);
 		sheet.insertRule('.tag-div a { color: purple !important; }', 1);
 		sheet.insertRule('#cozpop { content: url(http://i2.endoftheinter.net/i/n/d8c28f3337f428fc7b119617ba8ce2fc/my%20fox.jpg); }', 1);
-		sheet.insertRule('img[style*="position: absolute; right: 10px; margin-top: -45px;"] { content: url(http://i4.endoftheinter.net/i/n/7757cbfaa8e20594a92bd86fcefa7896/heart__free_avatar_by_thedeathofsen-d3lb5q8.gif); }', 1);		
+		sheet.insertRule('img[style*="position: absolute; right: 10px; margin-top: -45px;"] { content: url(http://i4.endoftheinter.net/i/n/7757cbfaa8e20594a92bd86fcefa7896/heart__free_avatar_by_thedeathofsen-d3lb5q8.gif); }', 1);
+		sheet.insertRule('#hold_menu { background-color: white !important; color: purple !important; }', 1);
+		sheet.insertRule('#nextpage { background-color: #D1A3F0 !important; color: #4B2A82 !important; }', 1);
+		sheet.insertRule('.control span { background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; color: #0D030B !important; }', 1);
 		
 		var title = document.getElementsByTagName('h1')[0] || document.getElementsByTagName('h2')[0];
 		var rnd = Math.floor(Math.random() * 10) + 1;
@@ -76,10 +81,10 @@ var lovelinks = {
 						donger = '(✿ ♥‿♥) ';
 						break;								
 				case 5:
-						donger = '(❛ ◡ ❛)❤ ';
+						donger = '(´❤‿❤`)*ﾟ✲*☆❤ ';
 						break;			
 				case 6:
-						donger = '(ღ˘❤˘ღ) ';
+						donger = '(ღ˘³˘ღ) ';
 						break;
 				case 7:
 						donger = 'ʕ　❤ᴥ❤ʔ ';
