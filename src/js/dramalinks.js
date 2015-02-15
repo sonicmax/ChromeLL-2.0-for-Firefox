@@ -25,7 +25,7 @@ var dramalinks = {
 		}
 		if (this.config.hide_dramalinks) {
 			ticker.style.display = "none";
-			element.addEventListener('doubleclick', this.switchDrama);
+			ticker.addEventListener('doubleclick', this.switchDrama);
 		}
 		var retry = document.getElementById('retry');
 		if (retry) {
