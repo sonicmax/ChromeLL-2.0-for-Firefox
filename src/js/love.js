@@ -1,10 +1,7 @@
 var lovelinks = {
 	init: function(config) {
-		var date = new Date();
-		var dd = date.getDate();
-		var mm = date.getMonth() + 1;
-		if (mm == 2 && dd == 14) {
-			if (config.user_id == 13547 || config.user_id == 5599) {
+		if (config.user_id == 13547 || config.user_id == 5599) {
+			if (config.fun_css) {
 				if (document.readyState == 'loading') {
 					document.addEventListener('DOMContentLoaded', function() {
 						lovelinks.addCSSRules();

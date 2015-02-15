@@ -208,6 +208,10 @@ var options = {
 			// round to 2 decimal places
 			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100;
 		});
+		var cssBox = document.getElementById('fun_css_div');
+		if (config.user_id == 13547 || config.user_id == 5599) {
+			cssBox.style.display = 'block';			
+		}		
 		if (document.readyState == 'loading') {
 			document.addEventListener('DOMContentLoaded', function() {
 				options.ui.hideUnusedMenus();
