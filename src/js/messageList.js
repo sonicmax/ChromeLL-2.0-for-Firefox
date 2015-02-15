@@ -2030,14 +2030,18 @@ var messageList = {
 				console
 						.log("I don't know what's going on with this image - weird number of siblings");
 		},
-		resize: function(el) {		
+		resize: function(el) {	
 			var width = el.width;
+			var screenWidth = window.screen.width;
+			var documentWidth = document.documentElement.clientWidth;
+			// crude method to detect zoom level - we don't need to be completely accurate
+			var zoomLevel = screenWidth / documentWidth;
 			if (width > messageList.config.img_max_width) {
-				// console.log('resizing:', el);
-				el.height = (el.height / (el.width / messageList.config.img_max_width));
+				// take zoom level into account when resizing images
+				el.height = (el.height / (el.width / messageList.config.img_max_width) / zoomLevel);
 				el.parentNode.style.height = el.height + 'px';
-				el.width = messageList.config.img_max_width;
-				el.parentNode.style.width = messageList.config.img_max_width + 'px';
+				el.width = messageList.config.img_max_width / zoomLevel;
+				el.parentNode.style.width = el.width + 'px';
 			}
 		},
 		map: {
