@@ -2031,16 +2031,12 @@ var messageList = {
 						.log("I don't know what's going on with this image - weird number of siblings");
 		},
 		resize: function(el) {	
-			var width = el.width;
-			var screenWidth = window.screen.width;
-			var documentWidth = document.documentElement.clientWidth;
-			// crude method to detect zoom level - we don't need to be completely accurate
-			var zoomLevel = screenWidth / documentWidth;
-			if (width > messageList.config.img_max_width) {
+			var width = el.width;			
+			if ((width * messageList.zoomLevel) > messageList.config.img_max_width) {
 				// take zoom level into account when resizing images
-				el.height = (el.height / (el.width / messageList.config.img_max_width) / zoomLevel);
+				el.height = (el.height / (el.width / messageList.config.img_max_width) / messageList.zoomLevel);
 				el.parentNode.style.height = el.height + 'px';
-				el.width = messageList.config.img_max_width / zoomLevel;
+				el.width = messageList.config.img_max_width / messageList.zoomLevel;
 				el.parentNode.style.width = el.width + 'px';
 			}
 		},
@@ -2984,20 +2980,29 @@ var messageList = {
 			}
 		}	
 	}),*/
-	callFunctions: function(pm) {			
+	callFunctions: function(pm) {
 		var msgs = document.getElementsByClassName('message-container');
 		var pageFunctions = this.functions.infobar;
 		var postFunctions = this.functions.messagecontainer;
 		var quickpostFunctions = this.functions.quickpostbody;
 		var miscFunctions = this.functions.misc;
 		var config = this.config;
+		
+		// crude method to detect zoom level for image resizing - we don't need to be completely accurate
+		var screenWidth = window.screen.width;
+		var documentWidth = document.documentElement.clientWidth;
+		this.zoomLevel = screenWidth / documentWidth;	
+		
+		// call functions which modify infobar element
 		for (var k in pageFunctions) {
 			if (config[k + pm]) {
 					pageFunctions[k]();
 			}
 		}
+		
 		// add archive quote buttons before highlights/post numbers are added
 		this.quote.addButtons();
+		
 		// iterate over first 5 message-containers (or fewer)
 		var len;
 		if (msgs.length < 4) {
@@ -3108,6 +3113,7 @@ var messageList = {
 	containersTotal: 0,
 	imagemapDebouncer: '',
 	menuDebouncer: '',
+	zoomLevel: 1,
 	ignorated: {
 		total_ignored: 0,
 		data: {
