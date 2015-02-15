@@ -2552,44 +2552,55 @@ var messageList = {
 	},
 	links: {
 		check: function(msg) {
-			if (msg) {
-				var links = msg.getElementsByClassName("l");
-			}
-			else {
-				var links = document.getElementsByClassName("l");
-			}
-			var link;
-			// iterate backwards to prevent errors
-			// when modifying class of elements
+			var target = msg || document;
+			var links = target.getElementsByClassName("l");
+			var checkedLinks = {};
 			var i = links.length;
 			var ytRegex = /youtube|youtu.be/;
 			var videoCodeRegex = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+			// iterate backwards to prevent errors when modifying class of elements
 			while (i--) {
-				link = links[i];
+				var link = links[i];
 				if (messageList.config.embed_on_hover) {
-					if (link.href.match(ytRegex)
-							&& link.href.match(videoCodeRegex)) {
+					if (link.href.match(ytRegex) && link.href.match(videoCodeRegex)) {
 						link.className = "youtube";
 						// give each video link a unique id for embed/hide functions
 						link.id = link.href + "&" + Math.random().toString(16).slice(2);			
-						// attach event listener
+						// attach event listener						
 						$(link).hoverIntent(
 							function() {
-								var _this = this;
 								var color = $("table.message-body tr td.message").css("background-color");
-								if (_this.className == "youtube") {
-									$(_this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
+								if (this.className == "youtube") {
+									// TODO - create this element without html strings
+									$(this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
 											+ "background: " + color 
-											+ ";'><a id='" + _this.id 
+											+ ";'><a id='" + this.id 
 											+ "' class='embed' href=#embed'>&nbsp<b>[Embed]</b></a></span>"));
 								}
-							}, function() {
-								var _this = this;
-								if (_this.className == "youtube") {
-									$(_this).find("span").remove();
+							}, function() {								
+								if (this.className == "youtube") {
+									$(this).find("span").remove();
 								}
 							}
 						);
+					}
+					else if (messageList.config.full_link_names) {	
+						if (link.href.indexOf('://lue.link/') > -1) {
+							var baseUrl = 'https://jsonp.nodejitsu.com/?url=http://urlex.org/json/';
+							var shortUrl = link.href;
+							if (!checkedLinks[shortUrl]) {
+								checkedLinks[shortUrl] = true;
+								$.getJSON(baseUrl + shortUrl, function(response) {
+									for (var url in response) {			
+										var linksToKyvenate = $('a[href="' + url + '"]');
+										for (var k = 0, len = linksToKyvenate.length; k < len; k++) {
+											var kyvenLink = linksToKyvenate[k];
+											kyvenLink.innerHTML = response[url];																
+										}
+									}
+								});
+							}
+						}
 					}
 				}
 				if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
