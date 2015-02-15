@@ -3025,11 +3025,11 @@ var messageList = {
 		if (config.dramalinks && !config.hide_dramalinks_topiclist) {
 			dramalinks.appendTo(element);
 		}
+		
 		// page will appear to have been fully loaded by this point
 		if (len == 4) {
 			// iterate over rest of messages
-			for (var j = 4, msgsLength = msgs.length; j < msgsLength; j++) {
-				var msg = msgs[j];
+			for (var j = 4; msg = msgs[j]; j++) {
 				for (var k in postFunctions) {
 					if (config[k + pm]) {
 						postFunctions[k](msg, j + 1);
@@ -3037,6 +3037,8 @@ var messageList = {
 				}
 			}
 		}
+		
+		// pass updated ignorator data to background page
 		if (!this.config.hide_ignorator_badge) {
 			this.globalPort.postMessage({
 				action: 'ignorator_update',
@@ -3044,26 +3046,33 @@ var messageList = {
 				scope: "messageList"
 			});
 		}
+		
+		// call functions which modify quickpost area
 		for (var i in quickpostFunctions) {
 			if (config[i + pm]) {
 				quickpostFunctions[i]();
 			}
 		}
+		
 		this.addCSSRules();			
+		
 		// call functions that dont modify DOM
 		for (var i in miscFunctions) {
 			if (config[i + pm]) {
 				miscFunctions[i]();
 			}
 		}
+		
 		// call functions that dont exist in posts/page/misc objects
 		this.links.check();
 		this.addListeners();
 		this.appendScripts();
+		
+		// add livelinks listeners 
 		this.livelinks.observe(document.getElementById('u0_1'), {
 				subtree: true,
 				childList: true
-		});
+		});		
 		if (this.config.new_page_notify) {
 			this.newPage.observe(document.getElementById('nextpage'), {
 					attributes: true
