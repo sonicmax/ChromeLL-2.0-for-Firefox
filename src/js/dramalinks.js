@@ -1,40 +1,45 @@
 var dramalinks = {
 	html: '',
+	tagName: '',
 	config: [],
-	appendTo : function(element) {
+	appendTo: function(element) {
+		this.tagName = element.tagName;
 		var ticker = document.createElement("center");
 		ticker.id = "dramalinks_ticker";
 		element.parentNode.insertBefore(ticker, element.nextSibling);
-		if (!dramalinks.html) {					
+		
+		if (!dramalinks.html) {			
 			Object.observe(dramalinks, function() {
-				dramalinks.updateTicker.call(dramalinks, null)
+				dramalinks.update.call(dramalinks);
 			});
 		}
 		else {
-			this.updateTicker();
-		}		
+			this.update();
+		}
 	},
-	updateTicker: function(data) {
+	update: function(data) {
 		var ticker = document.getElementById('dramalinks_ticker');
+		var element = document.getElementsByTagName(this.tagName)[0];
 		if (data) {
 			ticker.innerHTML = data;
-			dramalinks.html = data;
 		}
 		else {
 			ticker.innerHTML = dramalinks.html;		
 		}
 		if (this.config.hide_dramalinks) {
 			ticker.style.display = "none";
-			ticker.addEventListener('doubleclick', this.switchDrama);
-		}
+			element.ondblclick = this.switchDrama;
+		}		
 		var retry = document.getElementById('retry');
 		if (retry) {
-			retry.addEventListener('click', this.retry);
+			retry.addEventListener('click', dramalinks.retry);
 		}
 	},
 	switchDrama: function() {
 		var ticker = document.getElementById('dramalinks_ticker');
-		ticker.style.display == 'none' ? ticker.style.display = 'block' : ticker.style.display = 'none';
+		(ticker.style.display == 'none') 
+				? ticker.style.display = 'block' 
+				: ticker.style.display = 'none';
 		if (document.selection) {
 			document.selection.empty();
 		}
@@ -44,16 +49,7 @@ var dramalinks = {
 	},
 	retry: function() {
 		chrome.runtime.sendMessage({
-			need: "dramalinks"
-		}, this.updateTicker(response.data));
-	},
-	init: function(element) {
-		if (this.config.hide_dramalinks_topiclist 
-				&& !window.location.href.match(/topics|history/i)) {
-			return;
-		}
-		else {
-			dramalinks.appendTo(element);
-		}
+			need: "retrydramalinks"
+		}, this.update(response.data));
 	}
 };
