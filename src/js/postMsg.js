@@ -31,6 +31,22 @@ var postMsg = {
 		post.parentNode.removeChild(post);
 		preview.parentNode.insertBefore(post, preview);
 	},
+	quick_imagemap: function() {
+		var inputElements = document.getElementsByTagName('input');
+		var lastButton = inputElements[inputElements.length - 1];
+		var button = document.createElement('button');
+		var divider = document.createTextNode(' ');
+		var search = document.createElement('input');
+		console.log(lastButton);
+		button.textContent = "Browse Imagemap";					
+		button.id = "quick_image";
+		search.placeholder = "Search Imagemap...";
+		search.id = "image_search";
+		lastButton.parentNode.appendChild(divider);
+		lastButton.parentNode.appendChild(button);
+		lastButton.parentNode.appendChild(divider);
+		lastButton.parentNode.appendChild(search);
+	},
 	create_topic_buttons : function() {
 		if (document.body.innerHTML.indexOf('Create New Topic') == -1 
 		|| document.getElementById('b')) {
@@ -323,6 +339,28 @@ var postMsgHelper = {
 		ta.scrollTop = st;
 		ta.focus();
 	},
+	imagemapDebouncer: '',
+	imagemapHelper: function() {
+		var sheet = document.styleSheets[0];
+		sheet.insertRule("#loading_image { -webkit-animation:spin 2s linear infinite; }", 1);
+		sheet.insertRule("@-webkit-keyframes spin { 100% { -webkit-transform:rotate(360deg); } }", 1);	
+		
+		var button = document.getElementById('quick_image');
+		button.addEventListener('click', function(evt) {
+				// imagemap object located in imagemap.js
+				imagemap.init();
+				evt.preventDefault();
+		});
+		
+		var input = document.getElementById('image_search');
+		input.addEventListener('keyup', function() {
+			clearTimeout(postMsgHelper.imagemapDebouncer);
+			this.imagemapDebouncer = setTimeout(function() {
+				// imagemap object located in imagemap.js
+				imagemap.search.init.call(imagemap.search);
+			}, 250);	
+		});	
+	},
 	init : function() {
 		chrome.runtime.sendMessage({
 			need : "config"
@@ -343,7 +381,11 @@ var postMsgHelper = {
 			if (config.create_topic_buttons) {
 				postMsgHelper.create_topic_observer();
 			}
+			if (config.quick_imagemap) {
+				postMsgHelper.imagemapHelper();				
+			}
 		});
 	}
 }
-window.onload = postMsgHelper.init();
+
+postMsgHelper.init();
