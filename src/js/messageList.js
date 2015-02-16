@@ -2561,50 +2561,48 @@ var messageList = {
 			// iterate backwards to prevent errors when modifying class of elements
 			while (i--) {
 				var link = links[i];
-				if (messageList.config.embed_on_hover) {
-					if (link.href.match(ytRegex) && link.href.match(videoCodeRegex)) {
-						link.className = "youtube";
-						// give each video link a unique id for embed/hide functions
-						link.id = link.href + "&" + Math.random().toString(16).slice(2);			
-						// attach event listener						
-						$(link).hoverIntent(
-							function() {
-								var color = $("table.message-body tr td.message").css("background-color");
-								if (this.className == "youtube") {
-									// TODO - create this element without html strings
-									$(this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
-											+ "background: " + color 
-											+ ";'><a id='" + this.id 
-											+ "' class='embed' href=#embed'>&nbsp<b>[Embed]</b></a></span>"));
-								}
-							}, function() {								
-								if (this.className == "youtube") {
-									$(this).find("span").remove();
-								}
+				if (link.href.match(ytRegex) && link.href.match(videoCodeRegex)
+						&& messageList.config.embed_on_hover) {	
+					link.className = "youtube";
+					// give each video link a unique id for embed/hide functions
+					link.id = link.href + "&" + Math.random().toString(16).slice(2);			
+					// attach event listener						
+					$(link).hoverIntent(
+						function() {
+							var color = $("table.message-body tr td.message").css("background-color");
+							if (this.className == "youtube") {
+								// TODO - create this element without html strings
+								$(this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
+										+ "background: " + color 
+										+ ";'><a id='" + this.id 
+										+ "' class='embed' href=#embed'>&nbsp<b>[Embed]</b></a></span>"));
 							}
-						);
-					}
-					else if (messageList.config.full_link_names) {	
-						if (link.href.indexOf('://lue.link/') > -1) {
-							var baseUrl = 'https://jsonp.nodejitsu.com/?url=http://urlex.org/json/';
-							var shortUrl = link.href;
-							if (!checkedLinks[shortUrl]) {
-								checkedLinks[shortUrl] = true;
-								$.getJSON(baseUrl + shortUrl, function(response) {
-									for (var url in response) {			
-										var linksToKyvenate = $('a[href="' + url + '"]');
-										for (var k = 0, len = linksToKyvenate.length; k < len; k++) {
-											var kyvenLink = linksToKyvenate[k];
-											kyvenLink.innerHTML = response[url];																
-										}
-									}
-								});
+						}, function() {							
+							if (this.className == "youtube") {
+								$(this).find("span").remove();
 							}
 						}
+					);
+				}
+				else if (link.href.indexOf('://lue.link/') > -1
+						&& messageList.config.full_link_names) {
+					// make sure that we only make 1 request for each unique url on page
+					if (!checkedLinks[link.href]) {
+						var url = 'https://jsonp.nodejitsu.com/?url=http://urlex.org/json/' + link.href;
+						checkedLinks[link.href] = true;
+						$.getJSON(url, function(response) {
+							for (var url in response) {		
+								var linksToKyvenate = $('a[href="' + url + '"]');
+								for (var k = 0, len = linksToKyvenate.length; k < len; k++) {
+									var kyvenLink = linksToKyvenate[k];
+									kyvenLink.innerHTML = response[url];																
+								}
+							}	
+						});
 					}
 				}
-				if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
-					if (link.title.indexOf("gfycat.com/") > -1) {
+				else if (link.title.indexOf("gfycat.com/") > -1) {			
+					if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
 						link.className = "gfycat";
 						if (messageList.config.embed_gfycat_thumbs 
 								|| link.parentNode.className == "quoted-message") {
@@ -2613,13 +2611,14 @@ var messageList = {
 					}
 				}
 			}
-			// call gfycatLoader after loop has finished
+			
 			if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
-				messageList.gfycat.loader();
+				// call gfycat.loader to embed links which are visible in viewport
+				messageList.gfycat.loader();				
 				window.addEventListener('scroll', messageList.gfycat.loader);
 				document.addEventListener('visibilitychange', messageList.gfycat.pause);
 			}
-		},	
+		},
 		fix: function(anchor, type) {
 			if (type === "wiki") {
 				window.open(anchor.href.replace("boards", "wiki"));
