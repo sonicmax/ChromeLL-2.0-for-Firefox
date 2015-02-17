@@ -303,32 +303,38 @@ var messageList = {
 			label_self_anon: function(msg) {
 				var tags = document.getElementsByTagName('h2')[0].innerHTML;
 				if (tags.indexOf('/topics/Anonymous') > -1) {
+					// skip archived topics as they don't have the quickpost-body element
 					if (!window.location.href.match('archives')) {
 						var tops = msg.getElementsByClassName('message-top');
 						if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {				
 							var self = document.getElementsByClassName('quickpost-body')[0]
 									.getElementsByTagName('a')[0].innerHTML;
-							if (self.indexOf('Human') == -1) {
+							if (self.indexOf('Human #') == -1) {
+								// user hasn't posted in topic yet
 								return;
 							}
-							var top, humanToCheck, span;
-							for (var i = 0, len = tops.length; i < len; i++) {
-								top = tops[i];
-								humanToCheck = top.getElementsByTagName('a')[0];
-								if (humanToCheck.innerHTML.indexOf('Filter') > -1) {
-									// handle livelinks post
-									humanToCheck = top.getElementsByTagName('b')[0].nextSibling;
-									if (!humanToCheck.innerHTML 
-											&& humanToCheck.nodeValue.indexOf(self) > -1) {
-										span = document.createElement('span');
-										span.innerHTML = '<b>(Me)</b> | ';
-										top.insertBefore(span, humanToCheck.nextSibling);		
+							else {
+								for (var i = 0, len = tops.length; i < len; i++) {
+									var top = tops[i];
+									var element = top.getElementsByTagName('a')[0];
+									
+									if (element.innerHTML.indexOf('Filter') > -1) {
+										element = top.getElementsByTagName('b')[0].nextSibling;	
+										// trim nodeValue so that we can check for equality with self variable
+										var humanToCheck = element.nodeValue.substring(1, element.nodeValue.length);
+										humanToCheck = humanToCheck.replace(' | ', '');
+										if (humanToCheck == self) {											
+											var span = document.createElement('span');
+											span.innerHTML = '<b>(Me)</b> | ';
+											top.insertBefore(span, element.nextSibling);		
+										}
 									}
-								}
-								else if (humanToCheck.innerHTML == self) {
-										span = document.createElement('span');
-										span.innerHTML = ' | <b>(Me)</b>';
-										top.insertBefore(span, humanToCheck.nextSibling);
+									
+									else if (element.innerHTML == self) {
+											var span = document.createElement('span');
+											span.innerHTML = ' | <b>(Me)</b>';
+											top.insertBefore(span, element.nextSibling);
+									}
 								}
 							}
 						}
