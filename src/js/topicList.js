@@ -52,14 +52,7 @@ var topicList = {
 						} else {
 							topicList.ignorated.data.users[ignores[f]].total++;
 							topicList.ignorated.data.users[ignores[f]].trs.push(i);
-						}
-						if (!topicList.config.hide_ignorator_badge) {
-							topicList.globalPort.postMessage({
-								action: 'ignorator_update',
-								ignorator: topicList.ignorated,
-								scope: "topicList"
-							});
-						}						
+						}				
 					}
 				}
 			}
@@ -111,14 +104,7 @@ var topicList = {
 						} else {
 							topicList.ignorated.data.keywords[keywords[f]].total++;
 							topicList.ignorated.data.keywords[keywords[f]].trs.push(i);
-						}
-						if (!topicList.config.hide_ignorator_badge) {
-							topicList.globalPort.postMessage({
-								action: 'ignorator_update',
-								ignorator: topicList.ignorated,
-								scope: "topicList"
-							});
-						}						
+						}				
 					}
 				}
 			}
@@ -369,37 +355,42 @@ var topicList = {
 			data: ctags
 		});
 	},
-	callFunctions: function(pm) {	
+	callFunctions: function(pm) {
 		var trs = document.getElementsByClassName('grid')[0]
 				.getElementsByTagName('tr');
-		var tr;
-		var functions = topicList.functions;
-		var config = topicList.config;
+		var functions = this.functions;
+		var config = this.config;
 		// iterate over trs and pass tr nodes to topicList functions
 		// (ignoring trs[0] as it's not a topic)
-		for (j = 1, len = trs.length; j < len; j++) {
-		 tr = trs[j];
+		for (var j = 1, len = trs.length; j < len; j++) {
+		 var tr = trs[j];
 			for (var i in functions) {
 				if (config[i + pm]) {
 					functions[i](tr, j);
 				}
 			}
 		}
-		var element = document.getElementsByTagName('h1')[0];
-		dramalinks.appendTo(element);
+		
+		if (this.config.dramalinks) {			
+			var element = document.getElementsByTagName('h1')[0];
+			dramalinks.appendTo(element);
+		}
+		
 		if (this.config['page_jump_buttons' + this.pm]) {
 			this.addListeners();
 		}		
+		
 		try {
 			topicList.checkTags();
 		} catch (e) {
 			console.log("Error finding tags");
 		}
+		
 		if (!this.config.hide_ignorator_badge) {
 			// send ignorator data to background script
-			topicList.globalPort.postMessage({
+			this.globalPort.postMessage({
 				action: 'ignorator_update',
-				ignorator: topicList.ignorated,
+				ignorator: this.ignorated,
 				scope: "topicList"
 			});
 		}
@@ -489,46 +480,13 @@ var topicList = {
 			}
 		}
 	},
-	passToFunctions: function(tr) {
-		var functions = this.functions;
-		var config = this.config;
-		var index = this.index;
-		var pm = this.pm;
-		for (var functionName in functions) {
-			if (config[functionName + pm]) {
-				functions[functionName](tr, index);
-			}
-		}
-		this.index++;
-	},
-	initObserver: new MutationObserver(function(mutations) {
-		for (var i = 0, len = mutations.length; i < len; i++) {
-			var mutation = mutations[i];
-			if (mutation.addedNodes.length > 0) {
-				if (mutation.addedNodes[0].tagName == 'TR'
-						&& mutation.previousSibling) {
-					topicList.passToFunctions(mutation.addedNodes[0]);
-				}
-				else if (mutation.addedNodes[0].tagName
-						&& mutation.addedNodes[0].tagName.match('H1')
-						&& topicList.config.dramalinks
-						&& !topicList.pm) {
-					dramalinks.appendTo(mutation.addedNodes[0]);	
-				}
-				else if (mutation.target.id == 'bookmarks' 
-						&& mutation.addedNodes[0].innerHTML == '[+]') {
-					topicList.checkTags();
-				}
-			}
-		}
-	}),
 	init: function(config) {
 		this.config = config.data;	
 		this.prepareArrays();
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
 		
-		if (!window.location.href.match(/[inbox|main].php/)			) {
+		if (!window.location.href.match(/[inbox|main].php/)) {
 			if (this.config.dramalinks) {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
@@ -541,15 +499,10 @@ var topicList = {
 		else {
 			this.pm = "_pm";		
 		}
-
+		
 		if (document.readyState == 'loading') {
-			// apply DOM modifications as elements are parsed by browser
-			this.initObserver.observe(document.documentElement, {
-					childList: true,
-					subtree: true
-			});
 			document.addEventListener('DOMContentLoaded', function() {
-				topicList.handle.loadEvent.call(topicList)
+				topicList.callFunctions(topicList.pm);
 			});
 		}
 		else {
