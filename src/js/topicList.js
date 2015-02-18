@@ -356,22 +356,30 @@ var topicList = {
 		});
 	},
 	callFunctions: function(pm) {
-		var trs = document.getElementsByClassName('grid')[0]
-				.getElementsByTagName('tr');
+		var grids = document.getElementsByClassName('grid');
 		var functions = this.functions;
 		var config = this.config;
-		// iterate over trs and pass tr nodes to topicList functions
-		// (ignoring trs[0] as it's not a topic)
-		for (var j = 1, len = trs.length; j < len; j++) {
-		 var tr = trs[j];
-			for (var i in functions) {
-				if (config[i + pm]) {
-					functions[i](tr, j);
+								
+		for (var i = 0, gridLen = grids.length; i < gridLen; i++) {
+			var trs = grids[i].getElementsByTagName('tr');
+			// iterate over trs and pass tr nodes to topicList functions
+			// (ignoring trs[0] as it's not a topic)
+			for (var j = 1, trsLen = trs.length; j < trsLen; j++) {
+				var tr = trs[j];
+				if (tr.innerText && tr.innerText == 'See More') {
+					// ignore these elements (found on main.php)					
+				}
+				else {
+					for (var k in functions) {
+						if (config[k + pm]) {
+							functions[k](tr, j);
+						}
+					}
 				}
 			}
 		}
 		
-		if (this.config.dramalinks) {			
+		if (this.config.dramalinks && window.location.href.indexOf('main.php') == -1) {	
 			var element = document.getElementsByTagName('h1')[0];
 			dramalinks.appendTo(element);
 		}
