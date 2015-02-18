@@ -301,8 +301,8 @@ var messageList = {
 				}
 			},		
 			label_self_anon: function(msg) {
-				var tags = document.getElementsByTagName('h2')[0].innerHTML;
-				if (tags.indexOf('/topics/Anonymous') > -1) {
+				var tagList = document.getElementsByTagName('h2')[0];
+				if (tagList.innerHTML.indexOf('/topics/Anonymous') > -1) {
 					// skip archived topics as they don't have the quickpost-body element
 					if (!window.location.href.match('archives')) {
 						var tops = msg.getElementsByClassName('message-top');
@@ -984,7 +984,7 @@ var messageList = {
 			}
 			else if (evt.target.id == 'quick_image') {
 				// imagemap object located in imagemap.js
-				imagemap.init(evt.target.id);
+				imagemap.init();
 				evt.preventDefault();
 			}
 			else if (evt.target.className == 'like_button') {
@@ -2241,28 +2241,42 @@ var messageList = {
 	},
 	likeButton: {
 		process: function(node, templateNumber) {
+			var anonymous;
 			var container = node.parentNode.parentNode;
 			var message = node.parentNode.parentNode.getElementsByClassName('message')[0];
 			var nub = document.getElementsByClassName('quickpost-nub')[0];
 			var quickreply = document.getElementsByTagName('textarea')[0];
+			
+			// get username/quoted username 
 			if (document.getElementsByTagName('h2')[0].innerHTML.match('Anonymous')) {
+				anonymous = true;
 				var username = "Human";
 				var poster = "this";
 			}
 			else {
 				var username = document.getElementsByClassName('userbar')[0]
 						.getElementsByTagName('a')[0].innerHTML.replace(/ \((-?\d+)\)$/, "");
-				var poster = container.getElementsByTagName('a')[0].innerHTML + "'s";
-			}		
+				var poster = container.getElementsByTagName('a')[0].innerHTML;
+			}
+			
+			// generate like message
 			if (templateNumber) {
+				// use selected custom message
 				var ins = messageList.config.custom_like_data[templateNumber].contents;
 				ins = ins.replace('[user]', username);
 				ins = ins.replace('[poster]', poster);
 			}
 			else {
+				// use default message
 				var img = '<img src="http://i4.endoftheinter.net/i/n/f818de60196ad15c888b7f2140a77744/like.png" />';
-				var ins = img + ' ' + username + ' likes ' + poster + "'s post"; 
+				if (anonymous) {
+					var ins = img + ' Human likes this post';
+				}
+				else {
+					var ins = img + ' ' + username + ' likes ' + poster + "'s post"; 
+				}
 			}
+						
 			var qrtext = quickreply.value;
 			var oldtxt = '', newtxt = '';			
 			if (qrtext.match('---')) {
