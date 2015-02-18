@@ -23,36 +23,39 @@ var topicList = {
 			if (!ignores) {
 				return;
 			}
-			var td = tr.getElementsByTagName('td')[1];
-			for (var f = 0, len = ignores.length; f < len; f++) {
-				if (!td || td.innerHTML.indexOf('<td>Human</td>') > -1) {
-					console.log(tr);
-					return;
-				}
-				else {
-					var username = td.getElementsByTagName('a')[0];
-					if (td.getElementsByTagName('a')[0]
-							&& td.getElementsByTagName('a')[0].innerHTML
-									.toLowerCase() == ignores[f]) {
-						if (topicList.config.debug) {
-							console
-									.log('found topic to remove: \"'
-											+ tr.getElementsByTagName('td')[0]
-													.getElementsByTagName('a')[0].innerHTML
-													.toLowerCase()
-											+ "\" author: " + ignores[f]
-											+ " topic: " + i);
+			else {
+				var td = tr.getElementsByTagName('td')[1];
+				for (var f = 0, len = ignores.length; f < len; f++) {
+					if (!td || td.innerHTML.indexOf('<td>Human</td>') > -1) {					
+						// ignore anonymous topics
+						return;
+					}
+					else {						
+						var username = td.getElementsByTagName('a')[0];					
+						if (td.getElementsByTagName('a')[0]
+								&& td.getElementsByTagName('a')[0].innerHTML
+										.toLowerCase() == ignores[f]) {
+							if (topicList.config.debug) {
+								console
+										.log('found topic to remove: \"'
+												+ tr.getElementsByTagName('td')[0]
+														.getElementsByTagName('a')[0].innerHTML
+														.toLowerCase()
+												+ "\" author: " + ignores[f]
+												+ " topic: " + i);
+							}
+							tr.setAttribute('ignored', true);
+							tr.style.display = 'none';
+							topicList.ignorated.total_ignored++;
+							if (!topicList.ignorated.data.users[ignores[f]]) {
+								topicList.ignorated.data.users[ignores[f]] = {};
+								topicList.ignorated.data.users[ignores[f]].total = 1;
+								topicList.ignorated.data.users[ignores[f]].trs = [i];
+							} else {
+								topicList.ignorated.data.users[ignores[f]].total++;
+								topicList.ignorated.data.users[ignores[f]].trs.push(i);
+							}				
 						}
-						tr.style.display = 'none';
-						topicList.ignorated.total_ignored++;
-						if (!topicList.ignorated.data.users[ignores[f]]) {
-							topicList.ignorated.data.users[ignores[f]] = {};
-							topicList.ignorated.data.users[ignores[f]].total = 1;
-							topicList.ignorated.data.users[ignores[f]].trs = [i];
-						} else {
-							topicList.ignorated.data.users[ignores[f]].total++;
-							topicList.ignorated.data.users[ignores[f]].trs.push(i);
-						}				
 					}
 				}
 			}
@@ -355,54 +358,6 @@ var topicList = {
 			data: ctags
 		});
 	},
-	callFunctions: function(pm) {
-		var grids = document.getElementsByClassName('grid');
-		var functions = this.functions;
-		var config = this.config;
-								
-		for (var i = 0, gridLen = grids.length; i < gridLen; i++) {
-			var trs = grids[i].getElementsByTagName('tr');
-			// iterate over trs and pass tr nodes to topicList functions
-			// (ignoring trs[0] as it's not a topic)
-			for (var j = 1, trsLen = trs.length; j < trsLen; j++) {
-				var tr = trs[j];
-				if (tr.innerText && tr.innerText == 'See More') {
-					// ignore these elements (found on main.php)					
-				}
-				else {
-					for (var k in functions) {
-						if (config[k + pm]) {
-							functions[k](tr, j);
-						}
-					}
-				}
-			}
-		}
-		
-		if (this.config.dramalinks && window.location.href.indexOf('main.php') == -1) {	
-			var element = document.getElementsByTagName('h1')[0];
-			dramalinks.appendTo(element);
-		}
-		
-		if (this.config['page_jump_buttons' + this.pm]) {
-			this.addListeners();
-		}		
-		
-		try {
-			topicList.checkTags();
-		} catch (e) {
-			console.log("Error finding tags");
-		}
-		
-		if (!this.config.hide_ignorator_badge) {
-			// send ignorator data to background script
-			this.globalPort.postMessage({
-				action: 'ignorator_update',
-				ignorator: this.ignorated,
-				scope: "topicList"
-			});
-		}
-	},
 	addListeners: function() {
 		document.addEventListener('click', function(evt) {
 			if (evt.target.id.match(/(jump)([Last|Window])/)) {
@@ -427,13 +382,10 @@ var topicList = {
 			if (msg.action !== 'ignorator_update') {
 				switch (msg.action) {
 					case "showIgnorated":
-						if (this.config.debug) {
-							console.log("showing hidden trs", msg.ids);
-						}
-						var tr = document.getElementsByTagName('tr');
-						for (var i; i = msg.ids.pop();) {
-							tr[i].style.display = '';
-							tr[i].style.opacity = '.7';
+						var ignoredTopics = document.querySelectorAll('[ignored]');
+						for (var i = 0, len = ignoredTopics.length; i < len; i++) {
+							ignoredTopics[i].style.display = '';
+							ignoredTopics[i].style.opacity = '.7';	
 						}
 						break;
 					default:
@@ -442,11 +394,6 @@ var topicList = {
 						}
 						break;
 				}
-			}
-		},
-		loadEvent: function() {			
-			if (this.config['page_jump_buttons' + this.pm]) {
-				this.addListeners();
 			}
 		},
 		pageJump: function(evt) {
@@ -488,13 +435,61 @@ var topicList = {
 			}
 		}
 	},
+	callFunctions: function(pm) {
+		var grids = document.getElementsByClassName('grid');
+		var functions = this.functions;
+		var config = this.config;
+								
+		for (var i = 0, gridLen = grids.length; i < gridLen; i++) {
+			var trs = grids[i].getElementsByTagName('tr');
+			// iterate over trs and pass tr nodes to topicList functions
+			// (ignoring trs[0] as it's not a topic)
+			for (var j = 1, trsLen = trs.length; j < trsLen; j++) {
+				var tr = trs[j];
+				if (tr.innerText && tr.innerText == 'See More') {
+					// ignore these elements (found only on main.php)					
+				}
+				else {
+					for (var k in functions) {
+						if (config[k + pm]) {
+							functions[k](tr, j);
+						}
+					}
+				}
+			}
+		}
+		
+		if (this.config.dramalinks && !window.location.href.match(/[inbox|main].php/)) {
+			var element = document.getElementsByTagName('h1')[0];
+			dramalinks.appendTo(element);
+		}
+		
+		if (this.config['page_jump_buttons' + this.pm]) {
+			this.addListeners();
+		}		
+		
+		try {
+			topicList.checkTags();
+		} catch (e) {
+			console.log("Error finding tags");
+		}
+		
+		if (!this.config.hide_ignorator_badge) {
+			// send ignorator data to background script
+			this.globalPort.postMessage({
+				action: 'ignorator_update',
+				ignorator: this.ignorated,
+				scope: "topicList"
+			});
+		}
+	},	
 	init: function(config) {
 		this.config = config.data;	
 		this.prepareArrays();
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
 		
-		if (!window.location.href.match(/[inbox|main].php/)) {
+		if (window.location.href.match(/topics/)) {
 			if (this.config.dramalinks) {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
@@ -504,8 +499,8 @@ var topicList = {
 				});
 			}
 		}
-		else {
-			this.pm = "_pm";		
+		else if (window.location.href.match(/inbox.php/)) {
+			this.pm = "_pm";
 		}
 		
 		if (document.readyState == 'loading') {
