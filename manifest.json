@@ -1,6 +1,6 @@
 {
   "name": "ChromeLL",
-  "version": "2.31",
+  "version": "2.36",
   "manifest_version": 2,
   "description": "Enhancements for the forums at the End of the Internet",
   "options_page": "options.html",
@@ -38,7 +38,7 @@
   },	
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://*.endoftheinter.net/imagemap.php*", "*://endoftheinter.net/inboxthread.php*"],
-    "js": ["lib/jquery.js", "src/js/messageList.js"],
+    "js": ["lib/jquery.js", "src/js/messageList.js", "src/js/imagemap.js", "src/js/bash.js"],
 		"run_at" : "document_start"
   },
   {
@@ -48,7 +48,7 @@
   },
   {
     "matches": ["*://*.endoftheinter.net/postmsg.php*"],
-    "js": ["src/js/postMsg.js"],
+    "js": ["src/js/postMsg.js", "src/js/imagemap.js"],
 		"run_at": "document_end"
   },
   {

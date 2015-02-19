@@ -10,7 +10,7 @@ BUILD_SRC=$(BUILD_DIR)/src
 BUILD_JS=$(BUILD_SRC)/js
 SRC_JS=src/js
 
-all: copy_files allBg.js allPages.js boardList.js messageList.js options.js popup.js postMsg.js profile.js search.js topicList.js topicPostTemplate.js transloader.js dramalinks.js bash.js wiki.js
+all: copy_files allBg.js allPages.js boardList.js messageList.js options.js popup.js postMsg.js profile.js search.js topicList.js topicPostTemplate.js transloader.js dramalinks.js bash.js wiki.js love.js imagemap.js
 	
 copy_files:
 	-mkdir build
@@ -72,6 +72,12 @@ bash.js:
 
 wiki.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/wiki.js $(SRC_JS)/wiki.js
+	
+love.js:
+	$(CC) $(CFLAGS) $(BUILD_JS)/love.js $(SRC_JS)/love.js	
+
+imagemap.js:
+	$(CC) $(CFLAGS) $(BUILD_JS)/imagemap.js $(SRC_JS)/imagemap.js		
 	
 # clear the build directory
 clean:
