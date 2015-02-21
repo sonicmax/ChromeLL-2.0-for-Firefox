@@ -1,12 +1,5 @@
-// Code from Milan
-
-function imageTransloader(info) {
-	// setup clipboard shiv
-	var background = chrome.extension.getBackgroundPage();
-	var ta = background.document.createElement("textarea");
-	ta.id = "clipboard";
-	background.document.body.appendChild(ta);
-	// get filename
+function imageTransloader(info, rename) {
+	// Code from Milan	
 	var filename = info.srcUrl.substring(info.srcUrl.lastIndexOf('/') + 1);
 	// facebook id fix
 	var pattern = /fbcdn\-sphotos/;
@@ -16,6 +9,28 @@ function imageTransloader(info) {
 	// make sure it's not empty
 	if (filename === "") {
 		filename = "something.jpg";
+	}
+	if (rename) {
+		var extension = filename.match(/\.(gif|jpg|png)$/i)[0];	
+		var newFilename = prompt("Enter new filename:", filename.replace(extension, ''));
+		if (!newFilename === null || !/\S/.test(newFilename)) {
+			// user pressed cancel or entered blank filename
+			return;
+		}
+		else if (newFilename.match(/\.(gif|jpg|png)$/i)) {
+			var newExtension = newFilename.match(/\.(gif|jpg|png)$/i)[0];
+			if (newExtension != extension) {
+				// make sure that new filename has correct extension
+				newFilename = newFilename.replace(newExtension, extension);
+				filename = newFilename;
+			}
+			else if (newExtension == extension) {
+				filename = newFilename;
+			}
+		}
+		else {
+			filename = newFilename + extension;
+		}
 	}
 	// fetch the image
 	var fileGet = new XMLHttpRequest();
@@ -29,17 +44,19 @@ function imageTransloader(info) {
 				var mimetype = fileGet.getResponseHeader("Content-Type");
 				// build blob
 				var dataview = new DataView(fileGet.response);
-				var blob = new Blob([ dataview ]);
+				var blob = new Blob([dataview]);
 				// check if gif && > 2MB
 				if (filesize > (1024 * 1024 * 2) && mimetype === "image/gif") {
 					// notify user, updated for chrome.notifications api
 					chrome.notifications.create('fail', {
-							type : "basic",
-							title : "Image transloading failed",
-							message : "This gif is too big (>2MB)",
-							iconUrl : "src/images/lueshi_48_i.png"
+						type: "basic",
+						title: "Image transloading failed",
+						message: "This gif is too big (>2MB)",
+						iconUrl: "src/images/lueshi_48_i.png"
 					}, function(id) {
-						setTimeout(function() { clearNotification(id); }, 3000);
+						setTimeout(function() {
+							clearNotification(id);
+						}, 3000);
 					});
 				} else {
 					// construct FormData object
@@ -49,41 +66,42 @@ function imageTransloader(info) {
 					var xhr = new XMLHttpRequest();
 					xhr.open("POST", "http://u.endoftheinter.net/u.php", true);
 					xhr.onreadystatechange = function(xEvent) {
-						if (xhr.readyState === 4) {
-							if (xhr.status === 200) {
-								// parse response
-								var html = document.createElement('html');
-								html.innerHTML = xhr.responseText;
-								try {
-									var value = html
+							if (xhr.readyState === 4) {
+								if (xhr.status === 200) {
+									// parse response
+									var html = document.createElement('html');
+									html.innerHTML = xhr.responseText;
+									try {
+										var value = html
 											.getElementsByClassName('img')[0]
 											.getElementsByTagName('input')[0].value;
-								} catch (e) {
-									console.log("Error in response",
-											html.innerHTML);
-									return;
-								}
-								// send img code to clipboard
-								var clipboard = document
+									} catch (e) {
+										console.log("Error in response", html.innerHTML);
+										return;
+									}
+									// send img code to clipboard
+									var clipboard = document
 										.getElementById('clipboard');
-								clipboard.value = value;
-								clipboard.select();
-								document.execCommand("copy");
-								// notify user
-								chrome.notifications.create('succeed', {
+									clipboard.value = value;
+									clipboard.select();
+									document.execCommand("copy");
+									// notify user
+									chrome.notifications.create('succeed', {
 										type: "basic",
 										title: "Image transloaded",
 										message: "The img code is now in your clipboard",
 										iconUrl: "src/images/lueshi_48.png"
-								}, function(id) {
-									setTimeout(function() { clearNotification(id); }, 3000);
-								});
-							} else {
-								console.log("Error ", xhr.statusText);
+									}, function(id) {
+										setTimeout(function() {
+											clearNotification(id);
+										}, 3000);
+									});
+								} else {
+									console.log("Error ", xhr.statusText);
+								}
 							}
 						}
-					}
-					// send FormData object to ETI
+						// send FormData object to ETI
 					xhr.send(formData);
 				}
 			} else {
@@ -95,9 +113,9 @@ function imageTransloader(info) {
 }
 
 function clearNotification(id) {
-		chrome.notifications.clear(id,
-				function() {
-					// empty callback
-				}
-		);
+	chrome.notifications.clear(id,
+		function() {
+			// empty callback
+		}
+	);
 }

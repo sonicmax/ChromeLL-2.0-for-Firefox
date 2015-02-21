@@ -199,6 +199,13 @@ var background = {
 			"contexts": ["image"]
 		});
 		chrome.contextMenus.create({
+			"title": "Rename and transload image",
+			"onclick": function(info) {
+				imageTransloader(info, true);
+			},
+			"contexts": ["image"]
+		});		
+		chrome.contextMenus.create({
 			"title": "Search LUE",
 			"onclick": this.contextMenu.searchLUE,
 			"contexts": ["selection"]
