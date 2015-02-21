@@ -204,12 +204,14 @@ var background = {
 				imageTransloader(info, true);
 			},
 			"contexts": ["image"]
-		});		
-		chrome.contextMenus.create({
-			"title": "Search LUE",
-			"onclick": this.contextMenu.searchLUE,
-			"contexts": ["selection"]
 		});
+		if (this.config.enable_image_rename) {
+			chrome.contextMenus.create({
+				"title": "Search LUE",
+				"onclick": this.contextMenu.searchLUE,
+				"contexts": ["selection"]
+			});
+		}
 		if (this.config.eti_bash) {
 			chrome.contextMenus.create({
 				"title": "Submit to ETI Bash",
