@@ -13,7 +13,7 @@ function imageTransloader(info, rename) {
 	if (rename) {
 		var extension = filename.match(/\.(gif|jpg|png)$/i)[0];	
 		var newFilename = prompt("Enter new filename:", filename.replace(extension, ''));
-		if (!newFilename === null || !/\S/.test(newFilename)) {
+		if (newFilename === null || !/\S/.test(newFilename)) {
 			// user pressed cancel or entered blank filename
 			return;
 		}
