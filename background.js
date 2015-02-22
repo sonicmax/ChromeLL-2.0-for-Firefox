@@ -192,26 +192,28 @@ var background = {
 		);	
 	},
 	buildContextMenu: function() {
-		// imageTransloader is located in transloader.js
+		// imageTransloader function is located in transloader.js
 		chrome.contextMenus.create({
 			"title": "Transload image",
-			"onclick": imageTransloader,
-			"contexts": ["image"]
-		});
-		chrome.contextMenus.create({
-			"title": "Rename and transload image",
 			"onclick": function(info) {
-				imageTransloader(info, true);
+				imageTransloader(info);
 			},
 			"contexts": ["image"]
 		});
 		if (this.config.enable_image_rename) {
 			chrome.contextMenus.create({
-				"title": "Search LUE",
-				"onclick": this.contextMenu.searchLUE,
-				"contexts": ["selection"]
+				"title": "Rename and transload image",
+				"onclick": function(info) {
+					imageTransloader(info, true);
+				},
+				"contexts": ["image"]
 			});
 		}
+		chrome.contextMenus.create({
+			"title": "Search LUE",
+			"onclick": this.contextMenu.searchLUE,
+			"contexts": ["selection"]
+		});
 		if (this.config.eti_bash) {
 			chrome.contextMenus.create({
 				"title": "Submit to ETI Bash",
@@ -220,6 +222,14 @@ var background = {
 				"contexts": ["selection"]
 			});
 		}
+		if (this.config.copy_in_context) {
+			chrome.contextMenus.create({
+				"title": "Copy img code",
+				"onclick": this.contextMenu.imageCopy,
+				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
+				"contexts": ["image"]
+			});
+		}		
 		if (!this.config.simple_context_menu) {
 			chrome.contextMenus.create({
 				"title": "View image map",
@@ -227,14 +237,6 @@ var background = {
 				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
 				"contexts": ["image"]
 			});
-			if (this.config.copy_in_context) {
-				chrome.contextMenus.create({
-					"title": "Copy img code",
-					"onclick": this.contextMenu.imageCopy,
-					"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
-					"contexts": ["image"]
-				});
-			}
 			for (var i in this.boards) {
 				if (this.boards[i] != this.boards[0]) {
 					chrome.contextMenus.create({
