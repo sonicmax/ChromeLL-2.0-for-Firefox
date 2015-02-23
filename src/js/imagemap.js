@@ -98,8 +98,7 @@ var imagemap = {
 			imageGrid.style.maxWidth = (width * 0.95) - 21 + 'px';
 		}
 		else {
-			// subtract 6px from each end of scroll bar to prevent it from overlapping
-			// rounded corners of don't overlap rounded corners
+			// subtract 6px from each end of scroll bar to prevent it from overlapping rounded corners
 			imageGrid.style.maxWidth = (width * 0.95) - 6 + 'px';
 			imageGrid.style.maxHeight = ((height * 0.95) / 2)  - 6 + 'px';
 		}
@@ -277,13 +276,14 @@ var imagemap = {
 			div = document.getElementById('search_results');				
 		}
 		var bodyClass = document.getElementsByClassName('body')[0];
-		// TODO - fix this properly
 		if (div) {
 			document.body.removeChild(div);
 		}
 		bodyClass.style.opacity = 1;
 		document.body.style.overflow = 'initial';
 		bodyClass.removeEventListener('mousewheel', preventScroll);
+		// reset page count
+		this.currentPage = 1;
 	},
 	search: {
 		init: function() {
@@ -306,6 +306,7 @@ var imagemap = {
 				});
 			}
 			else {
+				// detected empty search box after keyup event - close imagemap popup (if it exists)
 				if (document.getElementById('search_results')) {
 					imagemap.closePopup();
 				}
