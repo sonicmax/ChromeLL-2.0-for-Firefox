@@ -353,6 +353,8 @@ var messageList = {
 					// trigger after 10ms delay to prevent undesired 
 					// behaviour in post_title_notification
 					setTimeout(function() {
+						// setting this to true stops clearUnreadPosts 
+						// from clearing new posts while autoscroll is running
 						messageList.scrolling = true;
 						$.scrollTo((mutation), 800);
 					}, 10);
@@ -1070,6 +1072,13 @@ var messageList = {
 			clearTimeout(this.popupDebouncer);
 			if (document.getElementById('hold_menu')) {
 				this.likeButton.hideOptions();
+				evt.preventDefault();
+			}
+		},
+		keydown: function(evt) {
+			if (evt.keyCode === 13 && document.activeElement.id === 'image_search') {
+				// prevent bug where pressing enter while focused on image_search element 
+				// would trigger Post/Preview Message button
 				evt.preventDefault();
 			}
 		},
@@ -2468,14 +2477,17 @@ var messageList = {
 		ta.focus();
 	},
 	addListeners: function(newPost) {
-		if (!newPost) {			
+		// make sure that these listeners are only added once
+		if (!newPost) {
 			document.body.addEventListener('click', this.handleEvent.mouseclick.bind(this));
 			
 			var searchBox = document.getElementById('image_search');			
 			if (searchBox) {
-				searchBox.addEventListener('keyup', this.handleEvent.search.bind(this));
+				searchBox.addEventListener('keyup', this.handleEvent.search.bind(this));		
+				document.addEventListener('keydown', this.handleEvent.keydown.bind(this));
 			}
 		}
+		// these listeners should be added to every new post
 		if (this.config.user_info_popup) {
 			var tops;
 			if (newPost) {
@@ -2484,12 +2496,13 @@ var messageList = {
 				tops = document.getElementsByClassName('message-top');
 			}
 			for (var i = 0, len = tops.length; i < len; i++) {
-				var top = tops[i];
-				var usernameAnchor = top.getElementsByTagName('a')[0];
-				usernameAnchor.className = 'username_anchor';
-				if (usernameAnchor.href.indexOf('http://endoftheinter.net/profile.php?user=') > -1) {
-					usernameAnchor.addEventListener('mouseenter', this.handleEvent.mouseenter.bind(this));
-					usernameAnchor.addEventListener('mouseleave', this.handleEvent.mouseleave.bind(this));
+				var top = tops[i];				
+				var anchor = top.getElementsByTagName('a')[0];
+				// ignore users in anon topics
+				if (anchor.href.indexOf('http://endoftheinter.net/profile.php?user=') > -1) {
+					anchor.className = 'username_anchor';
+					anchor.addEventListener('mouseenter', this.handleEvent.mouseenter.bind(this));
+					anchor.addEventListener('mouseleave', this.handleEvent.mouseleave.bind(this));
 				}
 			}
 		}
