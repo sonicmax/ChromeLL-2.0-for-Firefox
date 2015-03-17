@@ -3,36 +3,32 @@ var imagemap = {
 	currentPage: 1,
 	lastPage: '?',			
 	init: function() {
-		this.get(this.process);
+		this.getImagemap(this.processResponse);
 	},
-	get: function(callback) {
-		var that = this;
+	getImagemap: function(callback) {
 		var page;
 		(this.currentPage === 1)
 				? page = ''
 				: page = '?page=' + this.currentPage;
-		var url = "http://images.endoftheinter.net/imagemap.php" + page;
-		if (window.location.protocol == 'https:') {
-			url = url.replace('http', 'https');
-		}
+		var url = window.location.protocol + '//images.endoftheinter.net/imagemap.php' + page;
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", url, true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
+		xhr.onload = function() {
+			if (xhr.status == 200) {
 				var html = document.createElement('html');
-				html.innerHTML = xhr.responseText;						
-				callback.call(that, html);
+				html.innerHTML = this.responseText;						
+				callback.call(imagemap, html);
 			}
 		}
 		xhr.send();
 	},			
-	process: function(imagemap) {
+	processResponse: function(imagemap) {
 		var imageGrid = this.scrape(imagemap);
 		var infobar = imagemap.getElementsByClassName('infobar')[1];
 		var anchors = infobar.getElementsByTagName('a');					
 		this.lastPage = anchors[anchors.length - 1].innerHTML;
 		this.createPopup.call(this, imageGrid);
-		this.iterateOverImages(imageGrid);
+		this.sendToEncoder(imageGrid);
 	},
 	scrape: function(imagemap) {
 		var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
@@ -57,7 +53,7 @@ var imagemap = {
 		}
 		for (var i = 0, len = gridBlocks.length; i < len; i++) {
 			var gridBlock = gridBlocks[i];
-			gridBlock.title = "Click here to copy image code to clipboard";
+			gridBlock.title = "Click to copy image code to clipboard";
 		}
 		return imageGrid;
 	},			
@@ -68,6 +64,7 @@ var imagemap = {
 		var height = window.innerHeight;
 		var bodyClass = document.getElementsByClassName('body')[0];
 		var anchorHeight;	
+		// TODO - move these to messageList.addCSSRules method
 		div.id = "map_div";
 		div.style.position = "fixed";				
 		div.style.width = (width * 0.95) + 'px';
@@ -98,7 +95,7 @@ var imagemap = {
 			imageGrid.style.maxWidth = (width * 0.95) - 21 + 'px';
 		}
 		else {
-			// subtract 6px from each end of scroll bar to prevent it from overlapping rounded corners
+			// subtract 6px to prevent scrollbar from overlapping rounded corners
 			imageGrid.style.maxWidth = (width * 0.95) - 6 + 'px';
 			imageGrid.style.maxHeight = ((height * 0.95) / 2)  - 6 + 'px';
 		}
@@ -122,28 +119,26 @@ var imagemap = {
 			evt.preventDefault();
 		});
 		if (!searchResults) {
-			imageGrid.addEventListener('scroll', function() {
-				that.scrollHandler.call(that, imageGrid);
-			});
+			imageGrid.addEventListener('scroll', this.debouncer.bind(this));
 		}
-	},			
-	iterateOverImages: function(imageGrid) {
+	},
+	sendToEncoder: function(imageGrid) {
 		var imgs = imageGrid.getElementsByTagName('img');
 		for (var i = 0, len = imgs.length; i < len; i++) {
 			var img = imgs[i];
-			var src = img.src;			
+			var src = img.src;
 			if (img.parentNode.className === 'img-loaded') {
 				var href = img.parentNode.parentNode.href;
 			}
 			else {
 				var href = img.parentNode.href;
 			}
-			this.convertToBase64(src, href, i, imgs);
+			this.encodeToBase64(src, href, i, imgs);
 		}
 	},						
-	convertToBase64: function(src, href, i, imgs) {
+	encodeToBase64: function(src, href, i, imgs) {
 		var that = this;
-		var canvas = document.createElement('CANVAS');
+		var canvas = document.createElement('canvas');
 		var context = canvas.getContext('2d');
 		var img = new Image;
 		img.crossOrigin = "Anonymous";
@@ -153,25 +148,23 @@ var imagemap = {
 			canvas.width = img.width;
 			context.drawImage(img, 0, 0);
 			dataURI = canvas.toDataURL();
-			var imageData = 
-			{
+			var imageData = {
 					'dataURI': dataURI, 
 					'src': src, 
 					'href': href, 
 					'index': i
 			};
-			that.prepareData.call(that, imageData, imgs);
+			that.prepareCacheData.call(that, imageData, imgs);
 			canvas = null;
 		};
-		img.src = 'http://cors-for-chromell.herokuapp.com/' + src;
-	},			
-	prepareData: function(imageData, imgs) {
+		img.src = window.location.protocol + '//cors-for-chromell.herokuapp.com/' + src;
+	},
+	prepareCacheData: function(imageData, imgs) {
 		var dataURI = imageData.dataURI;
 		var href = imageData.href;
 		var src = imageData.src;
 		var i = imageData.index;
-		// thumbnails are always jpgs - fullsize image could have 
-		// a different file format (found in href)			
+		// thumbnails are always jpgs - fullsize image could have a different file format (found in href)			
 		var extension = href.match(/\.(gif|jpg|png)$/i)[0];
 		var fullsize = src.replace('.jpg', extension);
 		fullsize = fullsize.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n');
@@ -182,10 +175,10 @@ var imagemap = {
 			console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
 			return;
 		}
-		else {					
+		else {		
 			this.cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
 			if (i === imgs.length - 1) {
-				// convertToBase64 has finished encoding images - update cache
+				// Finished encoding images - update cache
 				this.restore(this.updateCache);
 			}
 		}
@@ -217,8 +210,14 @@ var imagemap = {
 			}
 		});
 	},
+	debouncer: function() {
+		clearTimeout(this.debounceTimer);
+		this.debounceTimer = setTimeout(this.scrollHandler.bind(this), 250);
+	},
+	debounceTimer: '',
 	scrollHandler: function(imageGrid) {
 		var that = this;
+		var imageGrid = document.getElementsByClassName('image_grid')[0]
 		// check whether user is at end of current page
 		// (minus 5 pixels from clientHeight to account for large zoom levels)
 		if (imageGrid.scrollTop >= imageGrid.scrollHeight - imageGrid.clientHeight - 5) {			
@@ -229,10 +228,10 @@ var imagemap = {
 			else {
 				// load next page and append to current grid
 				this.currentPage++;
-				this.get(function(imagemap) {
+				this.getImagemap(function(imagemap) {
 					var newGrid = that.scrape(imagemap);
 					imageGrid.appendChild(newGrid);
-					that.iterateOverImages(newGrid);
+					that.sendToEncoder(newGrid);
 				});
 			}
 		}
@@ -282,8 +281,7 @@ var imagemap = {
 		bodyClass.style.opacity = 1;
 		document.body.style.overflow = 'initial';
 		bodyClass.removeEventListener('mousewheel', preventScroll);
-		// reset page count
-		this.currentPage = 1;
+		imagemap.currentPage = 1;
 	},
 	search: {
 		init: function() {
@@ -409,7 +407,7 @@ var imagemap = {
 			document.body.style.overflow = 'hidden';
 			bodyClass.addEventListener('mousewheel', preventScroll);
 			bodyClass.addEventListener('click', this.closePopup);
-			document.addEventListener('click', imagemap.clickHandler);
+			document.addEventListener('click', this.clickHandler);
 		},
 		updatePopup: function(results, query) {
 			document.getElementById('loading_image').style.display = 'none';
@@ -419,8 +417,8 @@ var imagemap = {
 			var querySpan = document.getElementById('query');
 			var width = window.innerWidth;
 			var height = window.innerHeight;					
-			if (querySpan.innerHTML != query) {						
-					querySpan.innerHTML = query;
+			if (querySpan.innerHTML != query) {				
+				querySpan.innerHTML = query;
 			}
 			if (!results) {
 				var textDiv = document.createElement('div');
@@ -458,4 +456,4 @@ var imagemap = {
 			}
 		}
 	}
-}
+};
