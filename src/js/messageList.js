@@ -645,7 +645,7 @@ var messageList = {
 									document.getElementsByClassName('quickpost-body')[0]
 											.getElementsByTagName('b')[0].innerHTML += " (Uploading: 1/"
 											+ evt.dataTransfer.files.length + ")";
-									commonFunctions.asyncUpload(evt.dataTransfer.files);
+									allPages.asyncUpload(evt.dataTransfer.files);
 								});
 			},
 			snippet_listener: function() {
@@ -961,11 +961,19 @@ var messageList = {
 						functions[i](container, index, live);
 				}
 			}
+			
 			this.addListeners(container);
 			this.links.check(container);
+			
 			if (this.config.click_expand_thumbnail) {
 				this.functions.misc.click_expand_thumbnail(container);
 			}
+			
+			var usernameElement = container.getElementsByClassName('message-top').getElementsByTagName('a')[0];			
+			if (usernameElement.innerHTML != 'Filter') {
+				usernameElement.className = 'username_anchor';
+			}
+					
 			if (!this.config.hide_ignorator_badge) {
 				// send updated ignorator data to background script
 				this.globalPort.postMessage({
@@ -1060,11 +1068,11 @@ var messageList = {
 				this.cachedEvent = evt;
 				this.menuDebouncer = setTimeout(
 						this.likeButton.showOptions.call(this.likeButton), 250);
-				evt.preventDefault();	
+				// evt.preventDefault();
 			}
 			else if (evt.target.className == 'username_anchor' && this.config.user_info_popup) {
-				commonFunctions.cachedEvent = evt;
-				this.popupDebouncer = setTimeout(commonFunctions.handlePopup, 750);
+				allPages.cachedEvent = evt;
+				this.popupDebouncer = setTimeout(allPages.popup.handler.bind(allPages.popup), 750);
 			}
 		},
 		mouseleave: function(evt) {
@@ -2370,7 +2378,7 @@ var messageList = {
 		document.getElementsByClassName('quickpost-body')[0]
 				.getElementsByTagName('b')[0].innerHTML += " (Uploading: 1/"
 				+ chosen.files.length + ")";
-		commonFunctions.asyncUpload(chosen.files, 0);
+		allPages.asyncUpload(chosen.files, 0);
 	},
 	postTemplateAction: function(evt) {
 		if (evt.className === "expand_post_template") {
@@ -2699,6 +2707,12 @@ var messageList = {
 		sheet.insertRule(".like_button_custom:hover { opacity: 1.0; }", 1);
 		sheet.insertRule("#loading_image { -webkit-animation:spin 2s linear infinite; }", 1);
 		sheet.insertRule("@-webkit-keyframes spin { 100% { -webkit-transform:rotate(360deg); } }", 1);
+		sheet.insertRule("#map_div img:hover { opacity: 0.7; }", 1);
+		// TODO: Generate colours of user info popup based on user's existing display settings
+		sheet.insertRule("#rep { color: rgb(39, 16, 70); font-size: 12px; }", 1);;
+		sheet.insertRule("#user-popup-div a { color: rgb(0, 0, 0); }", 1);		
+		sheet.insertRule("#user-popup-div a:hover { color: rgb(140, 72, 159); }", 1);
+		sheet.insertRule(".popup_link { -webkit-user-select: none; }", 1);
 	},
 	// 'global' vars
 	config: [],
