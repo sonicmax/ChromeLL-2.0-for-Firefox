@@ -112,7 +112,7 @@ var imagemap = {
 		}
 		document.body.appendChild(div);
 		document.body.style.overflow = 'hidden';
-		bodyClass.addEventListener('mousewheel', preventScroll);
+		bodyClass.addEventListener('mousewheel', this.preventScroll);
 		bodyClass.addEventListener('click', this.closePopup);
 		div.addEventListener('click', function(evt) {
 			that.clickHandler(evt);
@@ -280,8 +280,11 @@ var imagemap = {
 		}
 		bodyClass.style.opacity = 1;
 		document.body.style.overflow = 'initial';
-		bodyClass.removeEventListener('mousewheel', preventScroll);
+		bodyClass.removeEventListener('mousewheel', imagemap.preventScroll);
 		imagemap.currentPage = 1;
+	},
+	preventScroll: function(evt) {
+		evt.preventDefault();
 	},
 	search: {
 		init: function() {
@@ -405,7 +408,7 @@ var imagemap = {
 			div.appendChild(image);
 			document.body.appendChild(div);					
 			document.body.style.overflow = 'hidden';
-			bodyClass.addEventListener('mousewheel', preventScroll);
+			bodyClass.addEventListener('mousewheel', imagemap.preventScroll);
 			bodyClass.addEventListener('click', this.closePopup);
 			document.addEventListener('click', this.clickHandler);
 		},
