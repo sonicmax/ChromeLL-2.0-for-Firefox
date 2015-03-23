@@ -1,9 +1,14 @@
 var imagemap = {
-	cacheData: {},
+	cache: {},
+	dataToCache: {},
 	currentPage: 1,
 	lastPage: '?',			
 	init: function() {
-		this.getImagemap(this.processResponse);
+		var that = this;
+		this.loadCache(function(cached) {
+			that.cache = cached.imagemap;
+			that.getImagemap.call(that, that.processResponse);
+		});
 	},
 	getImagemap: function(callback) {
 		var page;
@@ -32,19 +37,17 @@ var imagemap = {
 	},
 	scrape: function(imagemap) {
 		var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
-		this.loadCache(function(cached) {
-			var imgs = imageGrid.getElementsByTagName('img');
-			for (var i = 0, len = imgs.length; i < len; i++) {
-				var img = imgs[i];
-				var src = img.src;
-				if (cached.imagemap 
-						&& cached.imagemap[src]) {
-					// replace img src with cached base64 strings
-					img.setAttribute('oldsrc', img.src);
-					img.src = cached.imagemap[src].data;							
-				}
+		var imgs = imageGrid.getElementsByTagName('img');
+		
+		for (var i = 0, len = imgs.length; i < len; i++) {
+			var img = imgs[i];
+			var src = img.src;
+			if (this.cache[src]) {
+				// replace img src with cached base64 strings
+				img.setAttribute('oldsrc', img.src);
+				img.src = this.cache[src].data;							
 			}
-		});
+		}
 		var blockDescs = imageGrid.getElementsByClassName('block_desc');
 		var gridBlocks = imageGrid.getElementsByClassName('grid_block');
 		for (var i = 0, len = blockDescs.length; i < len; i++) {
@@ -113,9 +116,9 @@ var imagemap = {
 		document.body.appendChild(div);
 		document.body.style.overflow = 'hidden';
 		bodyClass.addEventListener('mousewheel', this.preventScroll);
-		bodyClass.addEventListener('click', this.closePopup);
+		bodyClass.addEventListener('click', this.closePopup.bind(this));
 		div.addEventListener('click', function(evt) {
-			that.clickHandler(evt);
+			that.clickHandler.call(that, evt);
 			evt.preventDefault();
 		});
 		if (!searchResults) {
@@ -129,6 +132,7 @@ var imagemap = {
 			var src = img.src;
 			// Images without oldsrc attribute need to be cached
 			if (!img.getAttribute('oldsrc')) {
+				
 				if (img.parentNode.className === 'img-loaded') {
 					var href = img.parentNode.parentNode.href;
 				}
@@ -159,7 +163,7 @@ var imagemap = {
 					'index': i
 			};
 			that.prepareCacheData.call(that, imageData);
-			canvas = null;
+			// canvas = null;
 		};
 		img.src = window.location.protocol + '//cors-for-chromell.herokuapp.com/' + src;
 	},
@@ -180,36 +184,38 @@ var imagemap = {
 			return;
 		}
 		else {		
-			this.cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
-			// Finished encoding images - update cache
-			this.loadCache(this.updateCache);
+			this.dataToCache[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
+			// Finished encoding image - update cache
+			this.updateCache();
 		}
 	},
-	updateCache: function(cached) {
-		var dataToCache = imagemap.cacheData;
-		if (!cached.imagemap) {
+	updateCache: function() {
+		if (Object.keys(this.cache).length === 0) {
 			// first time caching
-			var cache = dataToCache;
+			this.cache = this.dataToCache;
 		}
 		else {
 			// add current page to existing data
-			for (var i in dataToCache) {
-				cached.imagemap[i] = dataToCache[i];							
+			for (var i in this.dataToCache) {
+				this.cache[i] = this.dataToCache[i];							
 			}
-			var cache = cached.imagemap;
 		}
-		chrome.storage.local.set({"imagemap": cache}, function() {
-			imagemap.cacheData = {};
-		});
 	},
 	loadCache: function(callback) {
 		chrome.storage.local.get("imagemap", function(cache) {
-			if (cache === {}) {
-				callback(false);
+			if (Object.keys(cache).length === 0) {
+				// Return empty imagemap object
+				callback( {"imagemap": {} });
 			}
 			else if (cache) {
 				callback(cache);
 			}
+		});
+	},
+	saveCache: function() {
+		chrome.storage.local.set({"imagemap": this.cache}, function() {
+			imagemap.cache = {};
+			imagemap.dataToCache = {};
 		});
 	},
 	debouncer: function() {
@@ -267,8 +273,8 @@ var imagemap = {
 			chrome.runtime.sendMessage(clipboard);
 		}
 		// always close popup after click, even if user didn't click on an image
-		imagemap.closePopup();
-		document.removeEventListener('click', imagemap.clickHandler);
+		this.closePopup.call(this);
+		document.removeEventListener('click', this.clickHandler);
 		evt.preventDefault();
 	},
 	closePopup: function() {
@@ -282,8 +288,9 @@ var imagemap = {
 		}
 		bodyClass.style.opacity = 1;
 		document.body.style.overflow = 'initial';
-		bodyClass.removeEventListener('mousewheel', imagemap.preventScroll);
-		imagemap.currentPage = 1;
+		bodyClass.removeEventListener('mousewheel', this.preventScroll);
+		this.currentPage = 1;
+		this.saveCache.call(this);
 	},
 	preventScroll: function(evt) {
 		evt.preventDefault();
