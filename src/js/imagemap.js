@@ -123,25 +123,22 @@ var imagemap = {
 		}
 	},
 	sendToEncoder: function(imageGrid) {
-		var that = this;
-		this.loadCache(function(cached) {
-			var imgs = imageGrid.getElementsByTagName('img');
-			for (var i = 0, len = imgs.length; i < len; i++) {
-				var img = imgs[i];
-				var src = img.src;
-				// Images without oldsrc attribute need to be cached
-				if (!img.getAttribute('oldsrc')) {
-					if (img.parentNode.className === 'img-loaded') {
-						var href = img.parentNode.parentNode.href;
-					}
-					else {
-						var href = img.parentNode.href;
-					}
-					
-					that.encodeToBase64(src, href);
+		var imgs = imageGrid.getElementsByTagName('img');
+		for (var i = 0, len = imgs.length; i < len; i++) {
+			var img = imgs[i];
+			var src = img.src;
+			// Images without oldsrc attribute need to be cached
+			if (!img.getAttribute('oldsrc')) {
+				if (img.parentNode.className === 'img-loaded') {
+					var href = img.parentNode.parentNode.href;
 				}
+				else {
+					var href = img.parentNode.href;
+				}
+				
+				this.encodeToBase64(src, href);
 			}
-		});
+		}
 	},						
 	encodeToBase64: function(src, href) {
 		var that = this;
