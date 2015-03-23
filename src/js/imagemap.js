@@ -14,7 +14,7 @@ var imagemap = {
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", url, true);
 		xhr.onload = function() {
-			if (xhr.status == 200) {
+			if (this.status == 200) {
 				var html = document.createElement('html');
 				html.innerHTML = this.responseText;						
 				callback.call(imagemap, html);
@@ -32,7 +32,7 @@ var imagemap = {
 	},
 	scrape: function(imagemap) {
 		var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
-		this.restore(function(cached) {
+		this.loadCache(function(cached) {
 			var imgs = imageGrid.getElementsByTagName('img');
 			for (var i = 0, len = imgs.length; i < len; i++) {
 				var img = imgs[i];
@@ -123,20 +123,27 @@ var imagemap = {
 		}
 	},
 	sendToEncoder: function(imageGrid) {
-		var imgs = imageGrid.getElementsByTagName('img');
-		for (var i = 0, len = imgs.length; i < len; i++) {
-			var img = imgs[i];
-			var src = img.src;
-			if (img.parentNode.className === 'img-loaded') {
-				var href = img.parentNode.parentNode.href;
+		var that = this;
+		this.loadCache(function(cached) {
+			var imgs = imageGrid.getElementsByTagName('img');
+			for (var i = 0, len = imgs.length; i < len; i++) {
+				var img = imgs[i];
+				var src = img.src;
+				// Images without oldsrc attribute need to be cached
+				if (!img.getAttribute('oldsrc')) {
+					if (img.parentNode.className === 'img-loaded') {
+						var href = img.parentNode.parentNode.href;
+					}
+					else {
+						var href = img.parentNode.href;
+					}
+					
+					that.encodeToBase64(src, href);
+				}
 			}
-			else {
-				var href = img.parentNode.href;
-			}
-			this.encodeToBase64(src, href, i, imgs);
-		}
+		});
 	},						
-	encodeToBase64: function(src, href, i, imgs) {
+	encodeToBase64: function(src, href) {
 		var that = this;
 		var canvas = document.createElement('canvas');
 		var context = canvas.getContext('2d');
@@ -154,12 +161,12 @@ var imagemap = {
 					'href': href, 
 					'index': i
 			};
-			that.prepareCacheData.call(that, imageData, imgs);
+			that.prepareCacheData.call(that, imageData);
 			canvas = null;
 		};
 		img.src = window.location.protocol + '//cors-for-chromell.herokuapp.com/' + src;
 	},
-	prepareCacheData: function(imageData, imgs) {
+	prepareCacheData: function(imageData) {
 		var dataURI = imageData.dataURI;
 		var href = imageData.href;
 		var src = imageData.src;
@@ -177,30 +184,28 @@ var imagemap = {
 		}
 		else {		
 			this.cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
-			if (i === imgs.length - 1) {
-				// Finished encoding images - update cache
-				this.restore(this.updateCache);
-			}
+			// Finished encoding images - update cache
+			this.loadCache(this.updateCache);
 		}
 	},
-	updateCache: function(old) {
+	updateCache: function(cached) {
 		var dataToCache = imagemap.cacheData;
-		if (!old.imagemap) {
+		if (!cached.imagemap) {
 			// first time caching
 			var cache = dataToCache;
 		}
 		else {
 			// add current page to existing data
 			for (var i in dataToCache) {
-				old.imagemap[i] = dataToCache[i];							
+				cached.imagemap[i] = dataToCache[i];							
 			}
-			var cache = old.imagemap;
+			var cache = cached.imagemap;
 		}
 		chrome.storage.local.set({"imagemap": cache}, function() {
 			imagemap.cacheData = {};
 		});
 	},
-	restore: function(callback) {
+	loadCache: function(callback) {
 		chrome.storage.local.get("imagemap", function(cache) {
 			if (cache === {}) {
 				callback(false);
@@ -313,12 +318,11 @@ var imagemap = {
 				}
 			}
 		},
-		lookup: function(query, callback) {				
+		lookup: function(query, callback) {
 			var results = [];
-			imagemap.restore(function(cached) {
-				var cache = cached.imagemap;
-				for (var i in cache) {
-					var filename = cache[i].filename;
+			imagemap.loadCache(function(cached) {
+				for (var i in cached.imagemap) {
+					var filename = cached.imagemap[i].filename;
 					if (filename.indexOf(query) > -1) {
 						results.push(i);
 					}
@@ -333,12 +337,11 @@ var imagemap = {
 				this.formatResults(false, query);
 			}
 			else {
-				imagemap.restore(function(cached) {
-					var cache = cached.imagemap;
+				imagemap.loadCache(function(cached) {
 					var data = {};
 					for (var i = 0, len = results.length; i < len; i++) {
 						var result = results[i];
-						data[result] = cache[result];
+						data[result] = cached.imagemap[result];
 					}
 					that.formatResults(data, query);
 				});
