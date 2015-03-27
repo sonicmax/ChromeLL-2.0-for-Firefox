@@ -492,7 +492,7 @@ var allPages = {
 				}
 			}
 	},
-	optionMenu: {
+	optionsMenu: {
 		show: function() {
 			var url = chrome.extension.getURL('options.html');
 			var div = document.createElement('div');
