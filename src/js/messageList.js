@@ -265,7 +265,29 @@ var messageList = {
 							}, function(data) {
 								console.log(data);
 							});
-						}		
+						}				
+					}
+				}
+			},
+			userpics: function(msg) {		
+				var userAnchor = msg.getElementsByClassName('message-top')[0].getElementsByTagName('a')[0];
+				if (userAnchor.href.indexOf('endoftheinter.net/profile.php?user=') > -1) {
+					var messageElement = msg.getElementsByClassName('message')[0];
+					var username = userAnchor.innerHTML;
+					var userpic = {						
+						fullsize: 'http://pix.tiko.be/pic.php?u=' + username,
+						thumbnail: 'http://pix.tiko.be/pic.php?u=' + username + '&t'
+					};
+					var image = document.createElement('img');
+					image.className = 'userpic_addon';
+					image.src = userpic.thumbnail;
+					image.href = userpic.fullsize;
+					image.title = username;
+					messageElement.insertBefore(image, messageElement.firstChild);
+					image.onload = function() {
+						if (this.height === 1) {
+							this.remove();
+						}						
 					}
 				}
 			},
@@ -2713,6 +2735,7 @@ var messageList = {
 		sheet.insertRule("#user-popup-div a { color: rgb(0, 0, 0); }", 1);		
 		sheet.insertRule("#user-popup-div a:hover { color: rgb(140, 72, 159); }", 1);
 		sheet.insertRule(".popup_link { -webkit-user-select: none; }", 1);
+		sheet.insertRule('.userpic_addon { display: block; border: 1px outset; margin-left: 1em; cursor: pointer; float: right; }', 1);
 	},
 	// 'global' vars
 	config: [],
