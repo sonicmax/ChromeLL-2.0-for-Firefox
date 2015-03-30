@@ -212,48 +212,43 @@ var allPages = {
 		handler: function() {
 			// Use cached event as this method is called from setTimeout
 			var evt = allPages.cachedEvent;
-			var that = this;
-			var coords = {};
-
-			var scrollTop = document.body.scrollTop;
-			var scrollLeft = document.body.scrollLeft;
-
-			coords.x = evt.x + scrollLeft;
-			coords.y = evt.y + scrollTop;
-
-			var profileURL = evt.target.href;
-			this.currentUser = evt.target.innerHTML;
-			this.currentPost = evt.target.parentNode;
-			var userID = evt.target.href.match(/user=(\d+)/)[1];
+			var usernameAnchor = evt.target;
+			var x = usernameAnchor.offsetLeft - usernameAnchor.scrollLeft + usernameAnchor.clientLeft;
+			var y = usernameAnchor.offsetTop - usernameAnchor.scrollTop + usernameAnchor.clientTop;
+			var profileURL = usernameAnchor.href;
+			this.currentUser = usernameAnchor.innerHTML;
+			this.currentPost = usernameAnchor.parentNode;
+			var userID = profileURL.match(/user=(\d+)/)[1];
 			var gs = this.checkAccountAge(userID);
-
-			console.log(this.currentUser, this.currentPost, userID, profileURL);
-
+			
+			var that = this;
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", profileURL, true);
 			xhr.onload = function() {
 				if (this.status == 200) {
 					that.scrapeProfile(this.responseText);
 				}
-			};
+			};		
 			xhr.send();
-
+			
 			var popup = document.getElementById('popup_user');
 			// TODO: construct popup using createElement method
-			popup.innerHTML = '<div id="username">' + this.currentUser + " " + gs
-					+ ' <span class="popup_uid">' + userID + '</div>'
-					+ '<span class="popup_uid"><div id="namechange"> </div>'
-					+ '<span class="popup_uid"><p><div id="rep"><br>loading...</div></p>'
-					+ '<div id="online"></div><div id="punish"></div></span>';
+			popup.innerHTML = '<div id="username">' + this.currentUser + " " + gs 
+					+ ' <span id="popup_uid">' + userID + '</span></div>'					
+					+ '<div id="namechange"></div>'					
+					+ '<div id="rep"><span id="popup_loading">loading...</span></div>'
+					+ '<div id="online"></div>' 
+					+ '<div id="punish"></div>';
 			var popupContainer = document.getElementById('user-popup-div');
-			popupContainer.style.top = (coords.y + 10) + "px";
-			popupContainer.style.left = (coords.x - 30) + "px";
-			popupContainer.style.display = 'block';
-
+			// Modify coordinates so that arrow in popup points to anchor
+			popupContainer.style.left = (x - 20) + "px";
+			popupContainer.style.top = (y + 25) + "px";
+			popupContainer.style.display = 'block';	
+			
 			// Use mouse movement to guess user intent & close popup when appropriate
 			setTimeout(function() {
 				document.addEventListener('mousemove', allPages.popup.mousemoveHandler);
-			}, 500);
+			}, 750);
 		},
 		scrapeProfile: function(responseText) {
 			var html = document.createElement('html');
@@ -275,19 +270,21 @@ var allPages = {
 			this.update(html, status, aliases, rep);
 		},
 		update: function(html, status, aliases, rep) {
+			var placeholderElement = document.getElementById("popup_loading");			
 			var aliasesElement = document.getElementById("namechange");
 			var onlineElement = document.getElementById('online');
 			var statusElement = document.getElementById('punish');
 			var repElement = document.getElementById('rep');
-			repElement.innerHTML = '<br>' + rep;
+			placeholderElement.style.display = 'none';
+			repElement.innerHTML = rep;	
 			if (allPages.config.show_old_name) {
 				if (aliases) {
 					aliasesElement.innerHTML = "<br>Formerly known as: <b>" + aliases + '</b>';
 				}
-			}
+			}	
 			if (html.innerHTML.indexOf('online now') > -1) {
 					onlineElement.innerHTML = '(online now)';
-			}
+			}	
 			if (status) {
 				if (status.indexOf('Suspended') > -1) {
 						statusElement.innerHTML = '<b>Suspended until: </b>' + status.substring(17);
@@ -295,7 +292,7 @@ var allPages = {
 				if (status.indexOf('Banned') > -1) {
 						statusElement.innerHTML = '<b>Banned</b>';
 				}
-			}
+			}		
 		},
 		checkAccountAge: function(userID) {
 			// Returns appropriate "GS" value for account age. Otherwise, returns empty string
@@ -317,7 +314,7 @@ var allPages = {
 							return '';
 				}
 			}
-			else {
+			else {				
 				return '';
 			}
 		},
@@ -337,21 +334,21 @@ var allPages = {
 		clickHandler: function(evt) {
 				var user = this.currentUser.toLowerCase();
 				var messageListExists = false;
-
-				if (window.messageList) {
+				
+				if (window.messageList) {	
 					messageListExists = true;
 					var containers = document.getElementsByClassName('message-container');
 					var container;
 					var functions = messageList.functions.messagecontainer;
 				}
-				else if (window.topicList) {
+				else if (window.topicList) {	
 					var trs = document.getElementsByTagName('tr');
 					var tr;
 					var functions = topicList.functions;
 				}
-
+				
 				var target = this.currentPost;
-				var type = evt.target.innerHTML;
+				var type = evt.target.innerHTML;				
 				switch (type) {
 					case "IGNORATE?":
 						if (!allPages.config.ignorator_list || allPages.config.ignorator_list == '') {
@@ -435,7 +432,7 @@ var allPages = {
 								tr = trs[i];
 								functions.userhl_topiclist(tr);
 							}
-						}
+						}				
 						break;
 					case "UNHIGHLIGHT":
 						delete allPages.config.user_highlight_data[this.currentUser
@@ -453,7 +450,7 @@ var allPages = {
 								var top = message_tops[i];
 								if (top.getElementsByTagName('a')[0]) {
 									var userToCheck = top.getElementsByTagName('a')[0].innerHTML;
-									if (userToCheck === this.currentUser) {
+									if (userToCheck === this.currentUser) {		
 										top.style.background = '';
 										top.style.color = '';
 										var top_atags = top.getElementsByTagName('a');
@@ -490,7 +487,7 @@ var allPages = {
 						this.hide();
 						break;
 				}
-			}
+		}
 	},
 	optionsMenu: {
 		show: function() {
