@@ -214,8 +214,8 @@ var allPages = {
 			var evt = allPages.cachedEvent;
 			var usernameAnchor = evt.target;
 			var boundingRect = usernameAnchor.getBoundingClientRect();
-			var x = boundingRect.left - usernameAnchor.scrollLeft + usernameAnchor.clientLeft;
-			var y = boundingRect.top - usernameAnchor.scrollTop + usernameAnchor.clientTop;
+			var x = (boundingRect.left + (boundingRect.width / 2)) - document.body.scrollLeft + usernameAnchor.clientLeft;
+			var y = boundingRect.top + document.body.scrollTop + usernameAnchor.clientTop;
 			var profileURL = usernameAnchor.href;
 			this.currentUser = usernameAnchor.innerHTML;
 			this.currentPost = usernameAnchor.parentNode;
@@ -242,7 +242,7 @@ var allPages = {
 					+ '<div id="punish"></div>';
 			var popupContainer = document.getElementById('user-popup-div');
 			// Modify coordinates so that arrow in popup points to anchor
-			popupContainer.style.left = (x - 20) + "px";
+			popupContainer.style.left = (x - 35) + "px";
 			popupContainer.style.top = (y + 25) + "px";
 			popupContainer.style.display = 'block';	
 			
