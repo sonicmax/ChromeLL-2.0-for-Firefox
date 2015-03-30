@@ -213,8 +213,9 @@ var allPages = {
 			// Use cached event as this method is called from setTimeout
 			var evt = allPages.cachedEvent;
 			var usernameAnchor = evt.target;
-			var x = usernameAnchor.offsetLeft - usernameAnchor.scrollLeft + usernameAnchor.clientLeft;
-			var y = usernameAnchor.offsetTop - usernameAnchor.scrollTop + usernameAnchor.clientTop;
+			var boundingRect = usernameAnchor.getBoundingClientRect();
+			var x = boundingRect.left - usernameAnchor.scrollLeft + usernameAnchor.clientLeft;
+			var y = boundingRect.top - usernameAnchor.scrollTop + usernameAnchor.clientTop;
 			var profileURL = usernameAnchor.href;
 			this.currentUser = usernameAnchor.innerHTML;
 			this.currentPost = usernameAnchor.parentNode;
