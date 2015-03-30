@@ -245,11 +245,8 @@ var allPages = {
 			popupContainer.style.left = (x - 35) + "px";
 			popupContainer.style.top = (y + 25) + "px";
 			popupContainer.style.display = 'block';	
-			
-			// Use mouse movement to guess user intent & close popup when appropriate
-			setTimeout(function() {
-				document.addEventListener('mousemove', allPages.popup.mousemoveHandler);
-			}, 750);
+			// Add mousemove listener to detect when popup should be closed		
+			document.addEventListener('mousemove', this.mousemoveHandler.bind(this));			
 		},
 		scrapeProfile: function(responseText) {
 			var html = document.createElement('html');
@@ -324,12 +321,20 @@ var allPages = {
 			document.removeEventListener('mousemove', this.mousemoveHandler);
 		},
 		mousemoveHandler: function(evt) {
+			// Close popup if user moves mouse outside of popup (triggered after 250ms delay)
 			if (evt.target.className == 'message'
 					|| evt.target.className == 'message-container'
 					|| evt.target.className == 'message-top'
 					|| evt.target.className.match(/bar/)
 					|| evt.target.className == 'body') {
-				allPages.popup.hide();
+				if (!this.waiting) {
+					this.debouncer = setTimeout(this.hide, 250);
+					this.waiting = true;
+				}
+			}
+			else {
+				clearTimeout(this.debouncer);
+				this.waiting = false;
 			}
 		},
 		clickHandler: function(evt) {
