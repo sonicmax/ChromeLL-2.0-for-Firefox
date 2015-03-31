@@ -32,12 +32,7 @@
 		"run_at" : "document_start"
   },	
   {
-    "matches": ["*://*.endoftheinter.net/*"],
-    "js": ["lib/jquery.js", "src/js/allPages.js"],
-    "run_at": "document_start"
-  },	
-  {
-    "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://*.endoftheinter.net/imagemap.php*", "*://endoftheinter.net/inboxthread.php*"],
+    "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
     "js": ["lib/jquery.js", "src/js/messageList.js", "src/js/imagemap.js", "src/js/bash.js"],
 		"run_at" : "document_start"
   },
@@ -47,10 +42,20 @@
 		"run_at" : "document_start"
   },
   {
+    "matches": ["*://*.endoftheinter.net/*"],
+    "js": ["lib/jquery.js", "src/js/allPages.js"],
+    "run_at": "document_end"
+  },	
+  {
     "matches": ["*://*.endoftheinter.net/postmsg.php*"],
     "js": ["src/js/postMsg.js", "src/js/imagemap.js"],
 		"run_at": "document_end"
   },
+	{
+		"matches": ["*://*.endoftheinter.net/imagemap.php*"],
+		"js": ["src/js/backtotopic.js"],
+		"run_at": "document_end"
+	},
   {
     "matches": ["*://endoftheinter.net/profile.php*"],
     "js": ["lib/jquery.js", "src/js/profile.js"] 

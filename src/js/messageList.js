@@ -454,24 +454,20 @@ var messageList = {
 		},
 		infobar: {
 			imagemap_on_infobar: function() {
+				// Adds link to imagemap for current topic on infobar
 				var regex = window.location.search.match(/(topic=)([0-9]+)/);
 				if (regex) {
-					var topicNumber = regex[0];
-				}
-				else {
-					return;
-				}
-				var infobar = document.getElementsByClassName("infobar")[0];
-				var page = location.pathname;
-				var anchor = document.createElement('a');
-				var divider = document.createTextNode(" | ");
-				if (page == "/imagemap.php" && topicNumber) {
-					anchor.href = '/showmessages.php?' + topicNumber;
-					anchor.innerText = 'Back to Topic';
-					infobar.appendChild(divider);
-					infobar.appendChild(anchor);
-				} else if (page == "/showmessages.php") {
-					anchor.href = '/imagemap.php?' + topicNumber;
+					var topicNumber = regex[0];			
+					var infobar = document.getElementsByClassName("infobar")[0];
+					var pageRegex = window.location.search.match(/(page=)([0-9]+)/);
+					var currentPage = ''
+					if (pageRegex) {
+						// Keep track of current page in case user decides to navigate back
+						currentPage = '&oldpage=' + pageRegex[2];
+					}
+					var anchor = document.createElement('a');
+					var divider = document.createTextNode(" | ");
+					anchor.href = '/imagemap.php?' + topicNumber + currentPage;
 					anchor.innerText = 'Imagemap';
 					infobar.appendChild(divider);
 					infobar.appendChild(anchor);
