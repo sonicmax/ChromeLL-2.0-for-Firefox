@@ -104,6 +104,8 @@ var CHROMELL = (function() {
 			sheet.insertRule(".like_button_custom:hover { opacity: 1.0; }", 1);
 			sheet.insertRule("#loading_image { -webkit-animation:spin 2s linear infinite; }", 1);
 			sheet.insertRule("@-webkit-keyframes spin { 100% { -webkit-transform:rotate(360deg); } }", 1);
+			sheet.insertRule('#map_div img:hover { opacity: 0.7; }', 1);			
+			sheet.insertRule('.userpic_addon { display: block; border: 1px outset; margin-left: 1em; cursor: pointer; float: right; }', 1);				
 		};
 		
 		var autoscrollCheck = function(mutation) {
@@ -560,6 +562,30 @@ var CHROMELL = (function() {
 					});
 				}
 			}	
+		};	
+		
+		messagecontainer.userpics = function(msg) {
+			var userAnchor = msg.getElementsByClassName('message-top')[0].getElementsByTagName('a')[0];
+			if (userAnchor.href.indexOf('endoftheinter.net/profile.php?user=') > -1) {
+				var messageElement = msg.getElementsByClassName('message')[0];
+				var username = userAnchor.innerHTML;
+				var userpic = {					
+					fullsize: window.location.protocol + '//pix.tiko.be/pic.php?u=' + username,
+					thumbnail: window.location.protocol + '//pix.tiko.be/pic.php?u=' + username + '&t'
+				};
+				var image = document.createElement('img');
+				image.className = 'userpic_addon';
+				image.src = userpic.thumbnail;
+				image.href = userpic.fullsize;
+				image.title = username;
+				messageElement.insertBefore(image, messageElement.firstChild);
+				image.onload = function() {
+					// If user doesn't have a userpic uploaded, the site displays a 1x1 image (which can be removed)
+					if (this.height === 1) {	
+						this.remove();
+					}						
+				}
+			}
 		};	
 		
 		infobar.imagemap_on_infobar = function() {
