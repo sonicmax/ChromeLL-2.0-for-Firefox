@@ -616,15 +616,16 @@ var allPages = {
 				if (config[i]) {
 					this.commonFunctions[i]();
 				}
-			}
+			}		
 		} catch (err) {
 			console.log("error in " + i + ":", err);
 		}
+		addCSSRules();
 		chrome.runtime.onMessage.addListener(function(msg) {
 			if (msg.action == 'showOptions') {
 				allPages.optionsMenu.show();
 			}
-		});
+		});	
 	}
 };
 
@@ -633,3 +634,43 @@ chrome.runtime.sendMessage({
 }, function(response) {
 	allPages.init.call(allPages, response.data);
 });
+
+var getCustomColors = function() {		
+	// (first 'h1' element is either tag name (in topic list), or topic title (in message list)
+	var titleText = document.getElementsByTagName('h1')[0];
+	var anchor = document.getElementsByTagName('a')[0];
+	var userbar = document.getElementsByClassName('userbar')[0];
+	var infobar = document.getElementsByClassName('infobar')[0];
+	var message = document.getElementsByClassName('message')[0] || document.getElementsByTagName('td')[0];			
+
+	var customColors = {};
+	customColors.text = window.getComputedStyle(titleText).getPropertyValue('color');			
+	customColors.anchor = window.getComputedStyle(anchor).getPropertyValue('color');				
+	customColors.body = window.getComputedStyle(document.body).getPropertyValue('background-color');
+	customColors.message = window.getComputedStyle(message).getPropertyValue('background-color');
+	customColors.userbar = window.getComputedStyle(userbar).getPropertyValue('background-color');
+	customColors.infobar = window.getComputedStyle(infobar).getPropertyValue('background-color');
+	
+	return customColors;
+};
+
+var addCSSRules = function() {
+	var sheet = document.styleSheets[0];
+	var customColors = getCustomColors();
+	// TODO: Find a way to make this look neater (too many concatenated strings)
+	sheet.insertRule('#user-popup-div { color: ' + customColors.text 
+			+ '; background: ' + customColors.message 
+			+ '; border: 4px solid ' + customColors.body + '; }', 1);
+			
+	sheet.insertRule('.popup_link { color: ' + customColors.anchor + '; background: ' + customColors.userbar + '; }', 1);
+	sheet.insertRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading { color: ' + customColors.text + '; opacity: 0.9; }', 1);
+	
+	// #user-popup-div:before should be same colour as #user-popup-div background
+	sheet.insertRule('#user-popup-div:before { border-bottom-color: ' + customColors.body + '; }', 1);
+	// #user-popup-div:after should be same colour as #user-popup-div border
+	sheet.insertRule('#user-popup-div:after { border-bottom-color: ' +   customColors.infobar + '; }', 1);
+	
+	sheet.insertRule('#rep { color: ' + customColors.text + '; }', 1);
+	sheet.insertRule('#rep a { color: ' + customColors.text + '; opacity: 0.7; }', 1);
+	sheet.insertRule('#rep a:hover { opacity: 1; }', 1);
+};
