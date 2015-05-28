@@ -641,7 +641,7 @@ var getCustomColors = function() {
 	var anchor = document.getElementsByTagName('a')[0];
 	var userbar = document.getElementsByClassName('userbar')[0];
 	var infobar = document.getElementsByClassName('infobar')[0];
-	var message = document.getElementsByClassName('message')[0] || document.getElementsByTagName('td')[0];			
+	var message = document.getElementsByClassName('message')[0] || document.getElementsByTagName('th')[0];			
 
 	var customColors = {};
 	customColors.text = window.getComputedStyle(titleText).getPropertyValue('color');			
