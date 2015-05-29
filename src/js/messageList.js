@@ -1650,58 +1650,62 @@ var CHROMELL = (function() {
 		}();
 
 		utils.youtube = function() {
-			// Contains methods for YouTube video embedding.
+			// Contains methods for YouTube video embedding feature.
 			
-			// TODO: Refactor
+			var getVideoCode = function(href) {
+				var videoCode;				
+				var videoCodeRegex = anchor.id.match(/^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/)				
+				if (videoCodeRegex && videoCodeRegex[2].length == 11) {
+					videoCode = videoCodeRegex[2];
+				}
+				else {
+					videoCode = videoCodeRegex;
+				}	
+				var timeCodeRegex = href.match(/(\?|\&|#)(t=)/);
+				if (timeCodeRegex) {
+					var substring = href.substring(timeCodeRegex.index, href.length);
+					var timeCode = substring.match(/([0-9])+([h|m|s])?/g);
+					var seconds = getSeconds(timeCode);
+					videoCode += "?start=" + seconds + "'";						
+				}
+				return videoCode;
+			};
+			
+			var getSeconds = function(timeCode) {
+				var seconds = 0;
+				var temp;
+				for (var i = 0, len = timeCode.length; i < len; i++) {
+					var splitTime = timeCode[i];
+					if (!splitTime.match(/([h|m|s])/)) {
+						// timecode is probably in format "#t=xx" 
+						seconds += splitTime;
+					}
+					else if (splitTime.indexOf('h') > -1) {
+						temp = Number(splitTime.replace('h', ''), 10);
+						seconds += temp * 60 * 60;
+					}
+					else if (splitTime.indexOf('m') > -1) {
+						temp = parseInt(splitTime.replace('m', ''), 10);
+						seconds += temp * 60;
+					}
+					else if (splitTime.indexOf('s') > -1) {
+						seconds += parseInt(splitTime.replace('s', ''), 10);
+					}
+				}
+				return seconds;
+			};
+			
 			return {
 				embed: function(anchor) {
 					var toEmbed = document.getElementById(anchor.id);
 					if (toEmbed.className == "youtube") {
 						var color = $("table.message-body tr td.message").css("background-color");		
-						var videoCode;
-						var embedHTML;
-						var href = toEmbed.href;
-						var timeEquals = href.match(/(\?|\&|#)(t=)/);
-						if (timeEquals) {
-							var substring = href.substring(timeEquals.index, href.length);
-							var time = substring.match(/([0-9])+([h|m|s])?/g);
-						}
-						var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-						var match = anchor.id.match(regExp);
-						if (match && match[2].length == 11) {
-							videoCode = match[2];
-						} else {
-							videoCode = match;
-						}
-						if (time) {
-							// convert into seconds
-							var splitTime, temp;
-							var seconds = 0;
-							for (var i = 0, len = time.length; i < len; i++) {
-								splitTime = time[i];
-								if (!splitTime.match(/([h|m|s])/)) {
-									// timecode is probably in format "#t=xx" 
-									seconds += splitTime;
-								}
-								else if (splitTime.indexOf('h') > -1) {
-									temp = Number(splitTime.replace('h', ''), 10);
-									seconds += temp * 60 * 60;
-								}
-								else if (splitTime.indexOf('m') > -1) {
-									temp = parseInt(splitTime.replace('m', ''), 10);
-									seconds += temp * 60;
-								}
-								else if (splitTime.indexOf('s') > -1) {
-									seconds += parseInt(splitTime.replace('s', ''), 10);
-								}
-							}
-							videoCode += "?start=" + seconds + "'";
-						}				
-						embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
+						var code = getVideoCode(toEmbed.href);
+						var embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
 											+ "<a id='" + anchor.id + "' class='hide' href='#hide'>&nbsp<b>[Hide]</b></a></span>" 
 											+ "<br><div class='youtube'>" 
 											+ "<iframe id='" + "yt" + anchor.id + "' type='text/html' width='640' height='390'" 
-											+ "src='https://www.youtube.com/embed/" + videoCode 
+											+ "src='https://www.youtube.com/embed/" + code 
 											+ "'?autoplay='0' frameborder='0'/>" 
 											+ "</div>";
 						$(toEmbed).find("span:last").remove();
