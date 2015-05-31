@@ -1,83 +1,91 @@
-var allPages = (function(CHROMELL) {
+(function(CHROMELL) {
 	
 	CHROMELL.allPages = function () {
 		
-		var allPages = {};
+		var _cachedEvent = '';
 		
 		var init = function() {
-			allPages.cachedEvent = '';
 			chrome.runtime.onMessage.addListener(messageHandler);
 			
 			if (document.readyState === 'loading') {
-				document.addEventListener('DOMContentLoaded', callCommonMethods.bind(allPages));
+				document.addEventListener('DOMContentLoaded', DOM.init);
 			}
 			else {
-				callCommonMethods.call(allPages);
+				DOM.init();
 			}
-		};
-		
-		var callCommonMethods = function() {
-			addCSSRules();
-			try {
-				for (var i in this.commonMethods) {
-					if (CHROMELL.config[i]) {
-						this.commonMethods[i]();
-					}
-				}		
-			} catch (err) {
-				console.log("error in " + i + ":", err);
-			}		
-		};
+		};		
 		
 		var messageHandler = function(msg) {
 			if (msg.action == 'showOptions') {
-				allPages.optionsMenu.show();
+				utils.optionsMenu.show();
 			}
 		};
 		
-		var getCustomColors = function() {
-			// (first 'h1' element is either tag name (in topic list), or topic title (in message list)
-			var titleText = document.getElementsByTagName('h1')[0];
-			var anchor = document.getElementsByTagName('a')[0];
-			var userbar = document.getElementsByClassName('userbar')[0];
-			var infobar = document.getElementsByClassName('infobar')[0];
-			var message = document.getElementsByClassName('message')[0] || document.getElementsByTagName('th')[0];			
-
-			var customColors = {};
-			customColors.text = window.getComputedStyle(titleText).getPropertyValue('color');			
-			customColors.anchor = window.getComputedStyle(anchor).getPropertyValue('color');				
-			customColors.body = window.getComputedStyle(document.body).getPropertyValue('background-color');
-			customColors.message = window.getComputedStyle(message).getPropertyValue('background-color');
-			customColors.userbar = window.getComputedStyle(userbar).getPropertyValue('background-color');
-			customColors.infobar = window.getComputedStyle(infobar).getPropertyValue('background-color');
+		var DOM = function() {
 			
-			return customColors;
-		};
-
-		var addCSSRules = function() {
-			var sheet = document.styleSheets[0];
-			var customColors = getCustomColors();
-			// TODO: Find a way to make this look neater (too many concatenated strings)
-			sheet.insertRule('#user-popup-div { color: ' + customColors.text 
-					+ '; background: ' + customColors.message 
-					+ '; border: 4px solid ' + customColors.body + '; }', 1);
-					
-			sheet.insertRule('.popup_link { color: ' + customColors.anchor + '; background: ' + customColors.userbar + '; }', 1);
-			sheet.insertRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading { color: ' + customColors.text + '; opacity: 0.9; }', 1);
+			var init = function() {
+				addCSSRules();
+				try {
+					for (var i in methods) {
+						if (CHROMELL.config[i]) {
+							methods[i]();
+						}
+					}		
+				} catch (err) {
+					console.log("error in " + i + ":", err);
+				}
+			};			
 			
-			// #user-popup-div:before should be same colour as #user-popup-div background
-			sheet.insertRule('#user-popup-div:before { border-bottom-color: ' + customColors.body + '; }', 1);
-			// #user-popup-div:after should be same colour as #user-popup-div border
-			sheet.insertRule('#user-popup-div:after { border-bottom-color: ' +   customColors.infobar + '; }', 1);
-			
-			sheet.insertRule('#rep { color: ' + customColors.text + '; }', 1);
-			sheet.insertRule('#rep a { color: ' + customColors.text + '; opacity: 0.7; }', 1);
-			sheet.insertRule('#rep a:hover { opacity: 1; }', 1);
-		};
+			var fade = function(element, endState, duration) {
+				$( element ).animate({
+					opacity: endState
+				}, duration, function() {
+					// Do nothing
+				});
+			};			
 		
-		allPages.commonMethods = function() {
-			var methods = {};
+			var addCSSRules = function() {
+				var sheet = document.styleSheets[0];
+				var customColors = getCustomColors();
+				// TODO: Find a way to make this look neater (too many concatenated strings)
+				sheet.insertRule('#user-popup-div { color: ' + customColors.text 
+						+ '; background: ' + customColors.message 
+						+ '; border: 4px solid ' + customColors.body + '; }', 1);
+						
+				sheet.insertRule('.popup_link { color: ' + customColors.anchor + '; background: ' + customColors.userbar + '; }', 1);
+				sheet.insertRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading { color: ' + customColors.text + '; opacity: 0.9; }', 1);
+				
+				// #user-popup-div:before should be same colour as #user-popup-div background
+				sheet.insertRule('#user-popup-div:before { border-bottom-color: ' + customColors.body + '; }', 1);
+				// #user-popup-div:after should be same colour as #user-popup-div border
+				sheet.insertRule('#user-popup-div:after { border-bottom-color: ' +   customColors.infobar + '; }', 1);
+				
+				sheet.insertRule('#rep { color: ' + customColors.text + '; }', 1);
+				sheet.insertRule('#rep a { color: ' + customColors.text + '; opacity: 0.7; }', 1);
+				sheet.insertRule('#rep a:hover { opacity: 1; }', 1);
+			};		
 			
+			var getCustomColors = function() {
+				// (first 'h1' element is either tag name (in topic list), or topic title (in message list)
+				var titleText = document.getElementsByTagName('h1')[0];
+				var anchor = document.getElementsByTagName('a')[0];
+				var userbar = document.getElementsByClassName('userbar')[0];
+				var infobar = document.getElementsByClassName('infobar')[0];
+				var message = document.getElementsByClassName('message')[0] || document.getElementsByTagName('th')[0];			
+
+				var customColors = {};
+				customColors.text = window.getComputedStyle(titleText).getPropertyValue('color');			
+				customColors.anchor = window.getComputedStyle(anchor).getPropertyValue('color');				
+				customColors.body = window.getComputedStyle(document.body).getPropertyValue('background-color');
+				customColors.message = window.getComputedStyle(message).getPropertyValue('background-color');
+				customColors.userbar = window.getComputedStyle(userbar).getPropertyValue('background-color');
+				customColors.infobar = window.getComputedStyle(infobar).getPropertyValue('background-color');
+				
+				return customColors;
+			};
+		
+			var methods = {};
+		
 			methods.error_check = function() {
 				// Check for unhandled exceptions and display dialog with link to message history (useful
 				// when there's a problem with the topic list, but messages/topics can still be visited).
@@ -275,7 +283,7 @@ var allPages = (function(CHROMELL) {
 						var span = document.createElement('span');
 						span.className = 'popup_link';
 						span.innerHTML = links[i];
-						span.addEventListener('click', allPages.utils.popup.clickHandler.bind(allPages.popup));
+						span.addEventListener('click', utils.popup.clickHandler);
 						info.appendChild(span);
 					}
 					
@@ -286,24 +294,25 @@ var allPages = (function(CHROMELL) {
 					
 					document.addEventListener('click', function(evt) {
 						if (evt.target.className != 'popup_link') {
-							allPages.utils.popup.hide.call(allPages.utils.popup);
+							utils.popup.hide();
 						}
 					});			
 				});
 			};
 			
-			return methods;
+			return {
+				init: init,
+				fade: fade		
+			};
 			
 		}();
 		
-		allPages.utils = function() {
-			var utils = {};
+		var utils = function() {
 		
-			utils.popup = function() {
+			var popup = function() {
 				// Creates popup containing scraped info from user profile.
-				var popupScope = CHROMELL.messageList || CHROMELL.topicList;
-				
-				var debouncer, waiting;
+				var popupScope = CHROMELL.messageList || CHROMELL.topicList;			
+				var debouncer, waiting, currentUser, currentPost, currentID;
 				
 				var scrapeProfile = function(responseText) {
 					var html = document.createElement('html');
@@ -384,7 +393,7 @@ var allPages = (function(CHROMELL) {
 							&& evt.target.className !== 'popup_link'
 							&& evt.target.className !== 'rep_anchor') {
 						if (!waiting) {
-							debouncer = setTimeout(allPages.utils.popup.hide, 250);
+							debouncer = setTimeout(utils.popup.hide, 250);
 							waiting = true;
 						}
 					}
@@ -395,20 +404,19 @@ var allPages = (function(CHROMELL) {
 				};
 			
 				return {
-					handler: function() {
+					init: function() {
 						// Use cached event as this method is called from setTimeout
-						var evt = allPages.cachedEvent;
+						var evt = _cachedEvent;
 						var usernameAnchor = evt.target;
 						var boundingRect = usernameAnchor.getBoundingClientRect();
 						var x = (boundingRect.left + (boundingRect.width / 2)) - document.body.scrollLeft + usernameAnchor.clientLeft;
 						var y = boundingRect.top + document.body.scrollTop + usernameAnchor.clientTop;
 						var profileURL = usernameAnchor.href;
-						this.currentUser = usernameAnchor.innerHTML;
-						this.currentPost = usernameAnchor.parentNode;
-						var userID = profileURL.match(/user=(\d+)/)[1];
-						var gs = checkAccountAge(userID);
-						
-						var that = this;
+						currentUser = usernameAnchor.innerHTML;
+						currentPost = usernameAnchor.parentNode;
+						currentID = profileURL.match(/user=(\d+)/)[1];
+						var gs = checkAccountAge(currentID);
+
 						var xhr = new XMLHttpRequest();
 						xhr.open("GET", profileURL, true);
 						xhr.onload = function() {
@@ -420,8 +428,8 @@ var allPages = (function(CHROMELL) {
 						
 						var popup = document.getElementById('popup_user');
 						// TODO: construct popup using createElement method
-						popup.innerHTML = '<div id="username" class="user_info_popup">' + this.currentUser + " " + gs 
-								+ ' <span id="popup_uid" class="user_info_popup">' + userID + '</span></div>'					
+						popup.innerHTML = '<div id="username" class="user_info_popup">' + currentUser + " " + gs 
+								+ ' <span id="popup_uid" class="user_info_popup">' + currentID + '</span></div>'					
 								+ '<div id="namechange" class="user_info_popup"></div>'					
 								+ '<div id="rep" class="user_info_popup"><span id="popup_loading" class="user_info_popup">loading...</span></div>'
 								+ '<div id="online" class="user_info_popup"></div>' 
@@ -432,15 +440,15 @@ var allPages = (function(CHROMELL) {
 						popupContainer.style.top = (y + 25) + "px";
 						popupContainer.style.display = 'block';
 						// Add mousemove listener to detect when popup should be closed		
-						document.addEventListener('mousemove', mousemoveHandler.bind(allPages.popup));			
+						document.addEventListener('mousemove', mousemoveHandler);			
 					},
 					hide: function() {
 						document.getElementById('user-popup-div').style.display = 'none';						
-						popupScope.DOM.fade(document.getElementsByClassName('body')[0], 'opacity', 1, 250);
+						DOM.fade(document.getElementsByClassName('body')[0], 1, 250);
 						document.removeEventListener('mousemove', mousemoveHandler);
 					},
 					clickHandler: function(evt) {
-							var user = this.currentUser.toLowerCase();
+							var user = currentUser.toLowerCase();
 							var messageListExists = false;
 							
 							if (CHROMELL.messageList) {
@@ -451,14 +459,14 @@ var allPages = (function(CHROMELL) {
 								var trs = document.getElementsByTagName('tr');
 							}							
 							
-							var target = this.currentPost;
+							var target = currentPost;
 							var type = evt.target.innerHTML;				
 							switch (type) {
 								case "IGNORATE?":
 									if (!CHROMELL.config.ignorator_list || CHROMELL.config.ignorator_list == '') {
-										CHROMELL.config.ignorator_list = this.currentUser;
+										CHROMELL.config.ignorator_list = currentUser;
 									} else {
-										CHROMELL.config.ignorator_list += ", " + this.currentUser;
+										CHROMELL.config.ignorator_list += ", " + currentUser;
 									}
 									chrome.runtime.sendMessage({
 										need : "save",
@@ -479,7 +487,7 @@ var allPages = (function(CHROMELL) {
 										}
 									}
 									evt.target.innerHTML = "IGNORATE";
-									this.hidePopup();
+									this.hide();
 									break;
 								case "IGNORATE":
 									evt.target.innerHTML = "IGNORATE?";
@@ -487,23 +495,23 @@ var allPages = (function(CHROMELL) {
 								case "PM":
 									chrome.runtime.sendMessage({
 										need : "opentab",
-										url : "http://endoftheinter.net/postmsg.php?puser=" + this.currentID
+										url : "http://endoftheinter.net/postmsg.php?puser=" + currentID
 									});
-									this.hidePopup();
+									this.hide();
 									break;
 								case "GT":
 									chrome.runtime.sendMessage({
 										need : "opentab",
-										url : "http://endoftheinter.net/token.php?type=2&user=" + this.currentID
+										url : "http://endoftheinter.net/token.php?type=2&user=" + currentID
 									});
-									this.hidePopup();
+									this.hide();
 									break;
 								case "BT":
 									chrome.runtime.sendMessage({
 										need : "opentab",
-										url : "http://endoftheinter.net/token.php?type=1&user=" + this.currentID
+										url : "http://endoftheinter.net/token.php?type=1&user=" + currentID
 									});
-									this.hidePopup();
+									this.hide();
 									break;
 								case "HIGHLIGHT":
 									CHROMELL.config.user_highlight_data[user] = {};
@@ -519,7 +527,7 @@ var allPages = (function(CHROMELL) {
 									if (messageListExists) {
 										var top;
 										for (var i = 0, len = containers.length; i < len; i++) {
-											container = containers[i];
+											var container = containers[i];
 											popupScope.userhl_messagelist(container, i);
 											if (CHROMELL.config.foxlinks_quotes) {
 												 popupScope.foxlinks_quote(container);
@@ -527,7 +535,7 @@ var allPages = (function(CHROMELL) {
 										}
 									} else {
 										for (var i = 1, len = trs.length; i < len; i++) {
-											tr = trs[i];
+											var tr = trs[i];											
 											popupScope.userhl_topiclist(tr);
 										}
 									}				
@@ -557,10 +565,9 @@ var allPages = (function(CHROMELL) {
 											}
 										}
 									} else {
-										var tds, td, tags;
 										for (var i = 1, len = trs.length; i < len; i++) {
-											tr = trs[i];
-											tds = tr.getElementsByTagName('td');
+											var tr = trs[i];
+											var tds = tr.getElementsByTagName('td');
 											if (tds[1].getElementsByTagName('a')[0]) {
 												var userToCheck = tds[1].getElementsByTagName('a')[0].innerHTML;
 												if (userToCheck === this.currentUser) {
@@ -568,7 +575,7 @@ var allPages = (function(CHROMELL) {
 														td = tds[j];
 														td.style.background = '';
 														td.style.color = '';
-														tags = td.getElementsByTagName('a');
+														var tags = td.getElementsByTagName('a');
 														for (var k = 0, tags_len = tags.length; k < tags_len; k++) {
 															tags[k].style.color = '';
 														}
@@ -586,7 +593,7 @@ var allPages = (function(CHROMELL) {
 				
 			}();
 		
-			utils.optionsMenu = function() {
+			var optionsMenu = function() {
 				// Displays options menu on top of current page inside iframe.
 				
 				var preventScroll = function(event) {
@@ -595,6 +602,7 @@ var allPages = (function(CHROMELL) {
 				
 				return {
 					show: function() {
+						console.log(this);
 						var url = chrome.extension.getURL('options.html');
 						var div = document.createElement('div');
 						var iframe = document.createElement('iframe');
@@ -645,7 +653,7 @@ var allPages = (function(CHROMELL) {
 				};
 			}
 		
-			utils.asyncUpload = function(tgt, i) {
+			var asyncUpload = function(tgt, i) {
 				console.log(tgt, i);
 				if (!i) {
 					var i = 0;
@@ -671,7 +679,7 @@ var allPages = (function(CHROMELL) {
 								.getElementsByTagName('input')[0];
 						if (tmp_input.value) {
 							if (tmp_input.value.substring(0, 4) == '<img') {
-								allPages.quickReplyInsert(tmp_input.value);
+								quickReplyInsert(tmp_input.value);
 								if ((i + 1) == current[2]) {
 									update_ul.innerHTML = "Your Message";
 								} else {
@@ -682,7 +690,7 @@ var allPages = (function(CHROMELL) {
 						}
 						i++;
 						if (i < tgt.length) {
-							allPages.asyncUpload(tgt, i);
+							asyncUpload(tgt, i);
 						}
 					}
 				};
@@ -696,7 +704,7 @@ var allPages = (function(CHROMELL) {
 				xh.send(formData);
 			};
 		
-			utils.quickReplyInsert = function(text) {
+			var quickReplyInsert = function(text) {
 				var quickreply = document.getElementsByTagName('textarea')[0];
 				var qrtext = quickreply.value;
 				var oldtxt = qrtext.split('---');
@@ -708,13 +716,28 @@ var allPages = (function(CHROMELL) {
 				quickreply.value = newtxt;
 			};
 			
-			return utils;
+			return {
+				popup: popup,
+				optionsMenu: optionsMenu,
+				asyncUpload: asyncUpload,
+				quickReplyInsert: quickReplyInsert				
+			};
 			
 		}();
-
-		init();
 		
-		return allPages;
+		// Get config from background page and call init method
+		CHROMELL.getConfig(init);
+		
+		return {
+			DOM: DOM,
+			utils: utils,
+			cacheEvent: function(event) {
+					_cachedEvent = event;
+			},
+			cachedEvent: function() {					
+					return _cachedEvent;
+			}
+		};
 		
 	}();
 	

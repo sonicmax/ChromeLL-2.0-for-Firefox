@@ -1,51 +1,48 @@
-var messageList = (function(CHROMELL) {
+(function(CHROMELL) {
 	
 	CHROMELL.messageList = function() {
 		
-		var messageList = {};
+		var globalPort = chrome.runtime.connect();
+		var pm = '';
+		var ignores;
 		
-		var init = function(config) {
-			this.config = config.data;
-			this.config.tcs = config.tcs;
-			this.pm = '';
-			
+		var init = function() {
 			// Prepare array for ignorator feature
-			this.config.ignores = this.config.ignorator_list.split(',');
-			for (var r = 0, len = this.config.ignores.length; r < len; r++) {
-				var ignore = this.config.ignores[r].toLowerCase().trim();
-				this.config.ignores[r] = ignore;
+			ignores = CHROMELL.config.ignorator_list.split(',');
+			for (var r = 0, len = ignores.length; r < len; r++) {
+				var ignore = ignores[r].toLowerCase().trim();
+				ignores[r] = ignore;
 			}
 			
 			// set up globalPort so we can interact with background page
-			this.globalPort = chrome.runtime.connect();
-			this.globalPort.onMessage.addListener(this.eventHandlers.ignoratorUpdate);
+			globalPort.onMessage.addListener(eventHandlers.ignoratorUpdate);
 			
 			if (window.location.href.match('inboxthread.php')) {
-				this.pm = "_pm";
+				pm = "_pm";
 			}
 			
 			// check whether we need to display dramalinks ticker
-			if (this.config.dramalinks && !this.pm) {
+			if (CHROMELL.config.dramalinks && !pm) {
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
 				}, function(response) {
 					dramalinks.html = response.data;					
-					dramalinks.config = messageList.config;
+					dramalinks.config = CHROMELL.config;
 				});
 			}
 			
 			if (document.readyState == 'loading') {
 				// wait for DOMContentLoaded to fire before attempting to modify DOM
 				document.addEventListener('DOMContentLoaded', function() {
-					messageList.DOM.init.call(messageList);
+					DOM.init();
 				});
 			}
 			else {
-				this.DOM.init.call(this);
+				DOM.init();
 			}
 		};	
 		
-		messageList.DOM = function() {		
+		var DOM = function() {		
 			// TODO: Figure out better names for DOM method container objects
 			var messagecontainer = {};
 			var infobar = {};
@@ -53,9 +50,7 @@ var messageList = (function(CHROMELL) {
 			var misc = {};
 			
 			var scrolling = false;
-			var topsTotal = 0;		
-			var pm = '';		
-			var ignores;
+			var topsTotal = 0;
 			var ignorated = {
 				total_ignored: 0,
 				data: {
@@ -74,15 +69,15 @@ var messageList = (function(CHROMELL) {
 			};
 			
 			var addListeners = function(newPost) {
-				if (!newPost) {			
-					document.body.addEventListener('click', messageList.eventHandlers.mouseclick.bind(messageList));
+				if (!newPost) {
+					document.body.addEventListener('click', eventHandlers.mouseclick);
 					
 					var searchBox = document.getElementById('image_search');			
 					if (searchBox) {
-						searchBox.addEventListener('keyup', messageList.eventHandlers.search.bind(messageList));
+						searchBox.addEventListener('keyup', eventHandlers.search);
 					}
 				}
-				if (messageList.config.user_info_popup) {
+				if (CHROMELL.config.user_info_popup) {
 					var tops;
 					if (newPost) {
 						tops = newPost.getElementsByClassName('message-top');
@@ -94,8 +89,8 @@ var messageList = (function(CHROMELL) {
 						var usernameAnchor = top.getElementsByTagName('a')[0];
 						usernameAnchor.className = 'username_anchor';
 						if (usernameAnchor.href.indexOf('http://endoftheinter.net/profile.php?user=') > -1) {
-							usernameAnchor.addEventListener('mouseenter', messageList.eventHandlers.mouseenter.bind(messageList));
-							usernameAnchor.addEventListener('mouseleave', messageList.eventHandlers.mouseleave.bind(messageList));
+							usernameAnchor.addEventListener('mouseenter', eventHandlers.mouseenter);
+							usernameAnchor.addEventListener('mouseleave', eventHandlers.mouseleave);
 						}
 					}
 				}
@@ -144,7 +139,7 @@ var messageList = (function(CHROMELL) {
 							&& mutation.addedNodes[0].childNodes.length > 0) {
 						if (mutation.addedNodes[0].childNodes[0].className == 'message-container') {
 							// send new message container to livelinks method
-							livelinksHandler.call(messageList, mutation.addedNodes[0]);
+							livelinksHandler(mutation.addedNodes[0]);
 						}
 					}
 				}
@@ -154,18 +149,18 @@ var messageList = (function(CHROMELL) {
 				var index = document.getElementsByClassName('message-container').length;			
 				var isLivelinksPost = true;
 				for (var i in messagecontainer) {
-					if (this.config[i + pm]) {
+					if (CHROMELL.config[i + pm]) {
 							messagecontainer[i](container, index, isLivelinksPost);
 					}
 				}		
 				addListeners(container);
-				this.utils.anchors.check(container);
-				if (this.config.click_expand_thumbnail) {
+				utils.anchors.check(container);
+				if (CHROMELL.config.click_expand_thumbnail) {
 					misc.click_expand_thumbnail(container);
 				}
-				if (!this.config.hide_ignorator_badge) {
+				if (!CHROMELL.config.hide_ignorator_badge) {
 					// send updated ignorator data to background script
-					this.globalPort.postMessage({
+					globalPort.postMessage({
 						action: 'ignorator_update',
 						ignorator: ignorated,
 						scope: "messageList"
@@ -186,7 +181,7 @@ var messageList = (function(CHROMELL) {
 			};	
 			
 			messagecontainer.ignorator_messagelist = function(msg, index) {
-				if (!messageList.config.ignorator) {
+				if (!CHROMELL.config.ignorator) {
 					return;
 				}
 				var tops = msg.getElementsByClassName('message-top');						
@@ -207,7 +202,7 @@ var messageList = (function(CHROMELL) {
 									currentIndex = topsTotal - j;
 								}
 								top.parentNode.style.display = 'none';
-								if (messageList.config.debug) {
+								if (CHROMELL.config.debug) {
 									console.log('removed post by '
 											+ ignores[f]);
 								}
@@ -221,8 +216,8 @@ var messageList = (function(CHROMELL) {
 									ignorated.data.users[ignores[f]].trs
 											.push(currentIndex);
 								}
-								if (!messageList.config.hide_ignorator_badge) {
-									messageList.globalPort.postMessage({
+								if (!CHROMELL.config.hide_ignorator_badge) {
+									globalPort.postMessage({
 										action: 'ignorator_update',
 										ignorator: ignorated,
 										scope: "messageList"
@@ -235,8 +230,8 @@ var messageList = (function(CHROMELL) {
 			};
 			
 			messagecontainer.user_notes = function(msg) {
-				if (!messageList.config.usernote_notes) {
-					messageList.config.usernote_notes = {};
+				if (!CHROMELL.config.usernote_notes) {
+					CHROMELL.config.usernote_notes = {};
 				}	
 				var top = msg.getElementsByClassName('message-top')[0];
 				if (!top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
@@ -249,8 +244,8 @@ var messageList = (function(CHROMELL) {
 				top.appendChild(divider);
 				tempID = top.getElementsByTagName('a')[0].href
 						.match(/user=(\d+)$/i)[1];
-				notebook.innerHTML = (messageList.config.usernote_notes[tempID] != undefined 
-						&& messageList.config.usernote_notes[tempID] != '') 
+				notebook.innerHTML = (CHROMELL.config.usernote_notes[tempID] != undefined 
+						&& CHROMELL.config.usernote_notes[tempID] != '') 
 								? 'Notes*' : 'Notes';
 				notebook.href = "##note" + tempID;
 				top.appendChild(notebook);
@@ -266,8 +261,8 @@ var messageList = (function(CHROMELL) {
 						anchor.href = '##like';
 						top.appendChild(divider);
 						top.appendChild(anchor);
-						anchor.addEventListener('mouseenter', messageList.eventHandlers.mouseenter.bind(messageList));
-						anchor.addEventListener('mouseleave', messageList.eventHandlers.mouseleave.bind(messageList));					
+						anchor.addEventListener('mouseenter', eventHandlers.mouseenter);
+						anchor.addEventListener('mouseleave', eventHandlers.mouseleave);					
 					}
 			};
 			
@@ -298,8 +293,9 @@ var messageList = (function(CHROMELL) {
 				cDiv.style.display = 'none';
 				cDiv.id = 'cdiv';
 				document.body.appendChild(cDiv, null);
-				messageList.postEvent = document.createEvent('Event');
-				messageList.postEvent.initEvent('postTemplateInsert', true, true);
+				// NOTE: This probably won't work??
+				window.postEvent = document.createEvent('Event');
+				window.postEvent.initEvent('postTemplateInsert', true, true);
 				sep = document.createElement('span');
 				sep.innerHTML = " | ";
 				sep.className = "post_template_holder";
@@ -317,33 +313,33 @@ var messageList = (function(CHROMELL) {
 			};
 			
 			messagecontainer.userhl_messagelist = function(msg, index, live) {
-				if (!messageList.config.enable_user_highlight) {
+				if (!CHROMELL.config.enable_user_highlight) {
 					return;
 				}
 				var tops = msg.getElementsByClassName('message-top');
 				var first_top = msg.getElementsByClassName('message-top')[0];
-				if (!messageList.config.no_user_highlight_quotes) {
+				if (!CHROMELL.config.no_user_highlight_quotes) {
 					try {
 						for (var k = 0; k < tops.length; k++) {
 							var top = tops[k];			
 								var user = top.getElementsByTagName('a')[0].innerHTML
 										.toLowerCase();
-							if (messageList.config.user_highlight_data[user]) {
-								if (messageList.config.debug) {
+							if (CHROMELL.config.user_highlight_data[user]) {
+								if (CHROMELL.config.debug) {
 									console.log('highlighting post by ' + user);
 								}
 								top.setAttribute('highlighted', true);								
 								top.style.background = '#'
-										+ messageList.config.user_highlight_data[user].bg;
+										+ CHROMELL.config.user_highlight_data[user].bg;
 								top.style.color = '#'
-										+ messageList.config.user_highlight_data[user].color;
+										+ CHROMELL.config.user_highlight_data[user].color;
 								var anchors = top.getElementsByTagName('a');
 								for (var j = 0, len = anchors.length; j < len; j++) {
 									var anchor = anchors[j];
 									anchor.style.color = '#'
-											+ messageList.config.user_highlight_data[user].color;
+											+ CHROMELL.config.user_highlight_data[user].color;
 								}
-								if (live && messageList.config.notify_userhl_post 
+								if (live && CHROMELL.config.notify_userhl_post 
 										&& k == 0
 										&& msg.getElementsByClassName('message-top')[0]
 												.getElementsByTagName('a')[0].innerHTML != document
@@ -362,7 +358,7 @@ var messageList = (function(CHROMELL) {
 							}
 						}
 					} catch (e) {
-						if (messageList.config.debug) {
+						if (CHROMELL.config.debug) {
 							console.log(e);
 						}
 					}
@@ -370,21 +366,21 @@ var messageList = (function(CHROMELL) {
 				else {
 					user = first_top.getElementsByTagName('a')[0]
 							.innerHTML.toLowerCase();
-					if (messageList.config.user_highlight_data[user]) {
-						if (messageList.config.debug) {
+					if (CHROMELL.config.user_highlight_data[user]) {
+						if (CHROMELL.config.debug) {
 							console.log('highlighting post by ' + user);
 						}
 						first_top.style.background = '#'
-								+ messageList.config.user_highlight_data[user].bg;
+								+ CHROMELL.config.user_highlight_data[user].bg;
 						first_top.style.color = '#'
-								+ messageList.config.user_highlight_data[user].color;
+								+ CHROMELL.config.user_highlight_data[user].color;
 						anchors = first_top.getElementsByTagName('a');
 						for (var j = 0, len = anchors.length; j < len; j++) {
 							anchor = anchors[j];
 							anchor.style.color = '#'
-									+ messageList.config.user_highlight_data[user].color;
+									+ CHROMELL.config.user_highlight_data[user].color;
 						}
-						if (live && messageList.config.notify_userhl_post
+						if (live && CHROMELL.config.notify_userhl_post
 								&& msg.getElementsByClassName('message-top')[0]
 										.getElementsByTagName('a')[0].innerHTML != document
 										.getElementsByClassName('userbar')[0]
@@ -404,7 +400,7 @@ var messageList = (function(CHROMELL) {
 			};
 				
 			messagecontainer.foxlinks_quotes = function(msg) {
-				var color = "#" + messageList.config['foxlinks_quotes_color'];
+				var color = "#" + CHROMELL.config['foxlinks_quotes_color'];
 				var quotes = msg.getElementsByClassName('quoted-message');
 				if (!quotes.length) {
 					return;
@@ -503,7 +499,7 @@ var messageList = (function(CHROMELL) {
 			messagecontainer.post_title_notification = function(mutation, index, live) {
 				if (live) {
 					if (mutation.style.display === "none") {
-						if (messageList.config.debug) {
+						if (CHROMELL.config.debug) {
 							console.log('not updating for ignorated post');
 						}
 						return;
@@ -626,7 +622,7 @@ var messageList = (function(CHROMELL) {
 				anchor.innerText = 'Expand Spoilers';
 				infobar.appendChild(divider);
 				infobar.appendChild(anchor);
-				anchor.addEventListener('click', messageList.spoilers.find);		
+				anchor.addEventListener('click', utils.spoilers.find);		
 			};
 			
 			quickpostbody.filter_me = function() {
@@ -715,7 +711,7 @@ var messageList = (function(CHROMELL) {
 				ulBox.id = "batch_uploads";
 				ulButton.type = "button";
 				ulButton.value = "Batch Upload";
-				ulButton.addEventListener('click', messageList.startBatchUpload);
+				ulButton.addEventListener('click', helpers.startBatchUpload);
 				quickpost_body.insertBefore(ulBox, null);
 				quickpost_body.insertBefore(ulButton, ulBox);
 			};
@@ -736,48 +732,48 @@ var messageList = (function(CHROMELL) {
 					insM.name = 'Mod';
 					insM.type = 'button';
 					insM.id = 'mod';
-					insM.addEventListener("click", messageList.qpTagButton, false);
+					insM.addEventListener("click", helpers.qpTagButton, false);
 					var insA = document.createElement('input');
 					insA.value = 'Admin';
 					insA.name = 'Admin';
 					insA.type = 'button';
-					insA.addEventListener("click", messageList.qpTagButton, false);
+					insA.addEventListener("click", helpers.qpTagButton, false);
 					insA.id = 'adm';
 					var insQ = document.createElement('input');
 					insQ.value = 'Quote';
 					insQ.name = 'Quote';
 					insQ.type = 'button';
-					insQ.addEventListener("click", messageList.qpTagButton, false);
+					insQ.addEventListener("click", helpers.qpTagButton, false);
 					insQ.id = 'quote';
 					var insS = document.createElement('input');
 					insS.value = 'Spoiler';
 					insS.name = 'Spoiler';
 					insS.type = 'button';
-					insS.addEventListener("click", messageList.qpTagButton, false);
+					insS.addEventListener("click", helpers.qpTagButton, false);
 					insS.id = 'spoiler';
 					var insP = document.createElement('input');
 					insP.value = 'Preformated';
 					insP.name = 'Preformated';
 					insP.type = 'button';
-					insP.addEventListener("click", messageList.qpTagButton, false);
+					insP.addEventListener("click", helpers.qpTagButton, false);
 					insP.id = 'pre';
 					var insU = document.createElement('input');
 					insU.value = 'Underline';
 					insU.name = 'Underline';
 					insU.type = 'button';
-					insU.addEventListener("click", messageList.qpTagButton, false);
+					insU.addEventListener("click", helpers.qpTagButton, false);
 					insU.id = 'u';
 					var insI = document.createElement('input');
 					insI.value = 'Italic';
 					insI.name = 'Italic';
 					insI.type = 'button';
-					insI.addEventListener("click", messageList.qpTagButton, false);
+					insI.addEventListener("click", helpers.qpTagButton, false);
 					insI.id = 'i';
 					var insB = document.createElement('input');
 					insB.value = 'Bold';
 					insB.name = 'Bold';
 					insB.type = 'button';
-					insB.addEventListener("click", messageList.qpTagButton, false);
+					insB.addEventListener("click", helpers.qpTagButton, false);
 					insB.id = 'b';
 					m.insertBefore(insM, m.getElementsByTagName('textarea')[0]);
 					m.insertBefore(insQ, insM);
@@ -818,19 +814,19 @@ var messageList = (function(CHROMELL) {
 					var caret;
 					ta.addEventListener('keydown', 
 						function(event) {
-							if (messageList.config.snippet_alt_key) {
+							if (CHROMELL.config.snippet_alt_key) {
 								if (event.shiftKey == true
 										&& event.keyIdentifier == 'U+0009') {
 									event.preventDefault();
-									caret = messageList.snippets.findCaret(ta);
-									messageList.snippets.handler(ta.value, caret);				
+									caret = utils.snippets.findCaret(ta);
+									utils.snippets.handler(ta.value, caret);				
 								}
 							}
-							else if (!messageList.config.snippet_alt_key) {
+							else if (!CHROMELL.config.snippet_alt_key) {
 								if (event.keyIdentifier == 'U+0009') {
 									event.preventDefault();
-									caret = messageList.snippets.findCaret(ta);
-									messageList.snippets.handler(ta.value, caret);
+									caret = utils.snippets.findCaret(ta);
+									utils.snippets.handler(ta.value, caret);
 								}
 							}		
 						}
@@ -840,28 +836,28 @@ var messageList = (function(CHROMELL) {
 				
 			// TODO - find better way to categorise these functions	
 			misc.highlight_tc = function() {
-				var tcs = messageList.tcs.getMessages();
+				var tcs = utils.tcs.getMessages();
 				var tc;
 				if (!tcs) {
 					return;
 				}
 				for (var i = 0, len = tcs.length; i < len; i++) {
 					tc = tcs[i];
-					if (messageList.config.tc_highlight_color) {
+					if (CHROMELL.config.tc_highlight_color) {
 						tc.getElementsByTagName('a')[0].style.color = '#'
-								+ messageList.config.tc_highlight_color;
+								+ CHROMELL.config.tc_highlight_color;
 					}
 				}
 			};
 
 			misc.label_tc = function() {
-				var tcs = messageList.tcs.getMessages();
+				var tcs = utils.tcs.getMessages();
 				if (!tcs) {
 					return;
 				}
 				var color = false;
-				if (messageList.config.tc_label_color 
-						&& messageList.config.tc_label_color != '') {
+				if (CHROMELL.config.tc_label_color 
+						&& CHROMELL.config.tc_label_color != '') {
 					color = true;
 				}
 				for (var i = 0, len = tcs.length; i < len; i++) {
@@ -872,7 +868,7 @@ var messageList = (function(CHROMELL) {
 					var divider = document.createTextNode(' | ');
 					b.appendChild(text);
 					if (color) {
-						b.style.color = '#' + messageList.config.tc_label_color;
+						b.style.color = '#' + CHROMELL.config.tc_label_color;
 					}
 					span.appendChild(divider);
 					span.appendChild(b);			
@@ -901,9 +897,9 @@ var messageList = (function(CHROMELL) {
 			};
 			
 			misc.post_title_notification = function() {
-				document.addEventListener('visibilitychange', messageList.helpers.clearUnreadPosts);
-				document.addEventListener('scroll', messageList.helpers.clearUnreadPosts);
-				document.addEventListener('mousemove', messageList.helpers.clearUnreadPosts);
+				document.addEventListener('visibilitychange', helpers.clearUnreadPosts);
+				document.addEventListener('scroll', helpers.clearUnreadPosts);
+				document.addEventListener('mousemove', helpers.clearUnreadPosts);
 			};
 
 			misc.click_expand_thumbnail = function(newPost) {
@@ -921,7 +917,7 @@ var messageList = (function(CHROMELL) {
 					for (var j = 0; j < pholds.length; j++) {
 						var phold = pholds[j];
 						// Pass placeholder element to mutation observer so we can resize images as necessary
-						messageList.utils.image.observer.observe(phold, {
+						utils.image.observer.observe(phold, {
 							attributes: true,
 							childList: true
 						});
@@ -1071,25 +1067,22 @@ var messageList = (function(CHROMELL) {
 			
 			misc.load_next_page = function() {
 				document.getElementById('u0_3').addEventListener('dblclick',
-						messageList.loadNextPage);
+						helpers.loadNextPage);
 			};
 					
 			return {
-				init: function(pm) {
-					var config = this.config;
-					var pm = this.pm;
-					ignores = messageList.config.ignores;
+				init: function() {
 					var msgs = document.getElementsByClassName('message-container');
 					
 					// Call methods which modify the infobar element
 					for (var k in infobar) {
-						if (config[k + pm]) {
+						if (CHROMELL.config[k + pm]) {
 								infobar[k]();
 						}
 					}
 					
 					// add archive quote buttons before highlights/post numbers are added
-					this.utils.quote.addButtons();
+					utils.quote.addButtons();
 					
 					// iterate over first 5 message-containers (or fewer)
 					var len;
@@ -1127,10 +1120,10 @@ var messageList = (function(CHROMELL) {
 					}
 					
 					// pass updated ignorator data to background page
-					if (!this.config.hide_ignorator_badge) {
-						this.globalPort.postMessage({
+					if (!CHROMELL.config.hide_ignorator_badge) {
+						globalPort.postMessage({
 							action: 'ignorator_update',
-							ignorator: this.ignorated,
+							ignorator: ignorated,
 							scope: "messageList"
 						});
 					}
@@ -1152,16 +1145,16 @@ var messageList = (function(CHROMELL) {
 					}
 					
 					// call methods that dont exist in posts/page/misc objects
-					this.utils.anchors.check();
-					addListeners.call(this);
-					appendScripts.call(this);
+					utils.anchors.check();
+					addListeners();
+					appendScripts();
 					
 					livelinksObserver.observe(document.getElementById('u0_1'), {
 							subtree: true,
 							childList: true
 					});	
 					
-					if (this.config.new_page_notify) {
+					if (CHROMELL.config.new_page_notify) {
 						newPageObserver.observe(document.getElementById('nextpage'), {
 								attributes: true
 						});
@@ -1169,35 +1162,27 @@ var messageList = (function(CHROMELL) {
 				},
 				scrolling: function() {
 					return scrolling;				
-				},
-				fade: function(element, type, endState, duration) {
-					// << NEEDS TO BE RETURNED >>
-					$( element ).animate({
-						opacity: endState
-					}, duration, function() {
-						// Do nothing
-					});
 				}
 			};
 			
 		}();
 
-		messageList.eventHandlers = function() {
-			var handlers = {};
+		var eventHandlers = function() {
 			var imagemapDebouncer = '';
 			var menuDebouncer = '';
 			var popupDebouncer = '';
+			var _cachedEvent = '';
 			
-			handlers.ignoratorUpdate = function(msg) {
+			var ignoratorUpdate = function(msg) {
 				if (msg.action !== 'ignorator_update') {	
 					switch (msg.action) {
 						case "showIgnorated":				
-							if (messageList.config.debug) {
+							if (CHROMELL.config.debug) {
 								console.log("showing hidden msg", msg.ids);
 							}
 							var tops = document.getElementsByClassName('message-top');
 							for (var i = 0; i < msg.ids.length; i++) {
-								if (messageList.config.debug) {
+								if (CHROMELL.config.debug) {
 									console.log(tops[msg.ids[i]]);
 								}
 								tops[msg.ids[i]].parentNode.style.display = 'block';
@@ -1205,48 +1190,26 @@ var messageList = (function(CHROMELL) {
 							}
 							break;
 						default:
-							if (messageList.config.debug)
+							if (CHROMELL.config.debug)
 								console.log('invalid action', msg);
 							break;
 					}
 				}
 			};
 			
-			handlers.pageLoad = function() {
-				this.parseObserver.disconnect();
-				if (window.location.hostname == 'archives.endoftheinter.net') {
-					// quickpost-body element doesnt exist in archived topics - call filter_me method manually
-					this.functions.quickpostbody.filter_me();
-				}
-				this.passToFunctions('misc');
-				this.quote.addButtons();
-				this.addListeners();
-				this.appendScripts();
-				this.addCSSRules();	
-				this.livelinks.observe(document.getElementById('u0_1'), {
-						subtree: true,
-						childList: true
-				});
-				if (this.config.new_page_notify) {
-					this.newPage.observe(document.getElementById('nextpage'), {
-							attributes: true
-					});
-				}
-			};
-			
-			handlers.mouseclick = function(evt) {
+			var mouseclick = function(evt) {
 				// TODO - reorganise this using switch statements			
 				if (evt.target.className == 'expand_post_template') {
-					this.helpers.postTemplateExpand(evt.target);
+					helpers.postTemplateExpand(evt.target);
 				}
 				else if (evt.target.className == 'shrink_post_template') {
-					this.helpers.postTemplateShrink(evt.target);
+					helpers.postTemplateShrink(evt.target);
 				}
 				else if (evt.target.className == 'post_template_title') {
-					this.helpers.postTemplateExpand(evt.target);
+					helpers.postTemplateExpand(evt.target);
 				}
 				else if (evt.target.className == 'notebook') {
-					this.usernotes.open(evt.target);
+					utils.usernotes.open(evt.target);
 					evt.preventDefault();
 				}
 				else if (evt.target.id == 'quick_image') {
@@ -1255,7 +1218,7 @@ var messageList = (function(CHROMELL) {
 					evt.preventDefault();
 				}
 				else if (evt.target.className == 'like_button') {
-					this.likeButton.process(evt.target);
+					utils.likeButton.process(evt.target);
 					evt.preventDefault();
 				}
 				else if (evt.target.className == 'like_button_custom') {
@@ -1263,18 +1226,18 @@ var messageList = (function(CHROMELL) {
 					for (var i = 0, len = evt.path.length; i < len; i++) {
 						var pathNode = evt.path[i];
 						if (pathNode.className == 'like_button') {
-							this.likeButton.process(pathNode, templateNumber);			
+							utils.likeButton.process(pathNode, templateNumber);			
 							break;
 						}
 					}
 					evt.preventDefault();	
 				}
 				else if (evt.target.title.indexOf("/index.php") === 0) {
-					this.anchors.fixRedirect(evt.target, "wiki");
+					utils.anchors.fixRedirect(evt.target, "wiki");
 					evt.preventDefault();
 				}
 				else if (evt.target.title.indexOf("/imap/") === 0) {
-					this.anchors.fixRedirect(evt.target, "imagemap");					
+					utils.anchors.fixRedirect(evt.target, "imagemap");					
 					evt.preventDefault();
 				}
 				else if (evt.target.className.match(/youtube|gfycat/)
@@ -1282,71 +1245,71 @@ var messageList = (function(CHROMELL) {
 					evt.preventDefault();
 				}
 				else if (evt.target.className == 'archivequote') {
-					this.utils.quote.handler(evt);
+					utils.quote.handler(evt);
 					evt.preventDefault();
 				}
 				else if (evt.target.className == 'bash' && evt.target.getAttribute('ignore') !== 'true') {
 					evt.target.className = 'bash_this';			
 					evt.target.style.fontWeight = 'bold';
 					evt.target.innerHTML = '&#9745;';
-					this.bash.checkSelection(evt.target);
-					this.bash.showPopup();	
+					utils.bash.checkSelection(evt.target);
+					utils.bash.showPopup();	
 					evt.preventDefault();				
 				}
 				else if (evt.target.className == 'bash_this') {
 					evt.target.className = 'bash';
 					evt.target.style.fontWeight = 'initial';
 					evt.target.innerHTML = '&#9744;';
-					this.bash.checkSelection(evt.target);
+					utils.bash.checkSelection(evt.target);
 					evt.preventDefault();
 				}
 				
 				else if (evt.target.parentNode) {
 					if (evt.target.parentNode.className == 'embed') {
-						this.youtube.embed(evt.target.parentNode);
+						utils.youtube.embed(evt.target.parentNode);
 						evt.preventDefault();
 					}
 					else if (evt.target.parentNode.className == 'hide') {
-						this.youtube.hide(evt.target.parentNode);
+						utils.youtube.hide(evt.target.parentNode);
 						evt.preventDefault();
 					}
 					else if (evt.target.parentNode.id == 'submitbash') {
-						this.bash.handler();
+						utils.bash.handler();
 						evt.preventDefault();
 					}
 					else if (evt.target.parentNode.className == 'embed_nws_gfy') {
 						var gfycatID = evt.target.parentNode.id.replace('_embed', '');
-						this.gfycat.embed(document.getElementById(gfycatID));
+						utils.gfycat.embed(document.getElementById(gfycatID));
 						evt.preventDefault();
 					}
 				}
 			};
 			
-			handlers.mouseenter = function(evt) {
-				if (evt.target.className == 'like_button' && this.config.custom_like_button) {
-					this.cachedEvent = evt;
-					menuDebouncer = setTimeout(this.utils.likeButton.showOptions.bind(this.utils.likeButton), 250);
+			var mouseenter = function(evt) {
+				if (evt.target.className == 'like_button' && CHROMELL.config.custom_like_button) {
+					eventHandlers.cacheEvent(evt);
+					menuDebouncer = setTimeout(utils.likeButton.showOptions, 250);
 					evt.preventDefault();	
 				}
-				else if (evt.target.className == 'username_anchor' && this.config.user_info_popup) {
-					CHROMELL.allPages.cachedEvent = evt;
+				else if (evt.target.className == 'username_anchor' && CHROMELL.config.user_info_popup) {
+					CHROMELL.allPages.cacheEvent(evt);
 					popupDebouncer = setTimeout(function() {
-							CHROMELL.allPages.utils.popup.handler.call(CHROMELL.allPages.utils.popup);
-							messageList.DOM.fade(document.getElementsByClassName('body')[0], 'opacity', 0.6, 250);
+							CHROMELL.allPages.utils.popup.init();
+							CHROMELL.allPages.DOM.fade(document.getElementsByClassName('body')[0], 0.6, 100);
 					}, 750);
 				}
 			};
 			
-			handlers.mouseleave = function(evt) {
+			var mouseleave = function(evt) {
 				clearTimeout(menuDebouncer);
 				clearTimeout(popupDebouncer);
 				if (document.getElementById('hold_menu')) {
-					this.utils.likeButton.hideOptions();
+					utils.likeButton.hideOptions();
 					evt.preventDefault();
 				}
 			};
 			
-			handlers.search = function() {
+			var search = function() {
 				// perform search after 250ms of no keyboard activity to improve performance
 				clearTimeout(imagemapDebouncer);
 				imagemapDebouncer = setTimeout(function() {
@@ -1355,12 +1318,23 @@ var messageList = (function(CHROMELL) {
 				}, 250);
 			};
 			
-			return handlers;
+			return {
+				ignoratorUpdate: ignoratorUpdate,
+				mouseclick: mouseclick, 
+				mouseenter: mouseenter,
+				mouseleave: mouseleave,
+				search: search,
+				cacheEvent: function(event) {
+						_cachedEvent = event;
+				},
+				cachedEvent: function() {					
+						return _cachedEvent;
+				}				
+			};
 			
 		}();
 		
-		messageList.utils = function() {
-			var utils = {};	
+		var utils = function() {
 			
 			var checkAPI = function(api, url, callback) {	
 				var endpoints = {
@@ -1402,9 +1376,9 @@ var messageList = (function(CHROMELL) {
 							}(),
 							
 							width: function() {					
-								if (messageList.config['resize_' + api + 's'] 
-										&& response.data.width > messageList.config[api + '_max_width']) {
-									return messageList.config[api + '_max_width'];
+								if (CHROMELL.config['resize_' + api + 's'] 
+										&& response.data.width > CHROMELL.config[api + '_max_width']) {
+									return CHROMELL.config[api + '_max_width'];
 								}
 								else {
 									return response.data.width;	
@@ -1413,10 +1387,10 @@ var messageList = (function(CHROMELL) {
 							}(),
 							
 							height: function() {					
-								if (messageList.config['resize_' + api + 's'] 
-										&& response.data.width > messageList.config[api + '_max_width']) {
+								if (CHROMELL.config['resize_' + api + 's'] 
+										&& response.data.width > CHROMELL.config[api + '_max_width']) {
 									// scale video height to match gfy_max_width value
-									return (response.data.height / (response.data.width / messageList.config[api + '_max_width']));
+									return (response.data.height / (response.data.width / CHROMELL.config[api + '_max_width']));
 								}
 								else {
 									return response.data.height;
@@ -1440,7 +1414,7 @@ var messageList = (function(CHROMELL) {
 			var createPlaceholder = function(api, videoAnchor, needThumbnail) {
 				var url = videoAnchor.getAttribute('href');
 				var display;			
-				(messageList.config.show_gfycat_link) 
+				(CHROMELL.config.show_gfycat_link) 
 						? display = 'inline' 
 						: display = 'none';
 						
@@ -1450,7 +1424,7 @@ var messageList = (function(CHROMELL) {
 						videoAnchor.className = 'l';
 						return;
 					}
-					else if (messageList.config.hide_nws_gfycat) {
+					else if (CHROMELL.config.hide_nws_gfycat) {
 						if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
 							videoAnchor.className = "l";
 							return;
@@ -1459,7 +1433,7 @@ var messageList = (function(CHROMELL) {
 					else {
 						workSafeCheck(videoAnchor, data.nsfw, function(safe) {
 							if (!safe) {
-								if (messageList.config.hide_nws_gfycat) {
+								if (CHROMELL.config.hide_nws_gfycat) {
 									videoAnchor.className = "l";
 									return;
 								}
@@ -1546,10 +1520,8 @@ var messageList = (function(CHROMELL) {
 					});
 				});				
 			};
-			
-			
-			
-			utils.gfycat = function() {
+				
+			var gfycat = function() {
 				
 				var createPlaceholder = function(gfycatLink) {
 					var url = gfycatLink.getAttribute('href');
@@ -1559,21 +1531,21 @@ var messageList = (function(CHROMELL) {
 							gfycatLink.className = 'l';
 							return;
 						}
-						else if (messageList.config.hide_nws_gfycat) {
+						else if (CHROMELL.config.hide_nws_gfycat) {
 							if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
 								gfycatLink.className = "l";
 								return;
 							}
 						}
 						else {
-							messageList.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
+							utils.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
 								if (!safe) {
-									if (messageList.config.hide_nws_gfycat) {
+									if (CHROMELL.config.hide_nws_gfycat) {
 										gfycatLink.className = "l";
 										return;
 									}
 									else {
-										messageList.gfycat.embedOnHover(gfycatLink, data.url, data.width, data.height);
+										utils.gfycat.embedOnHover(gfycatLink, data.url, data.width, data.height);
 										return;
 									}
 								}
@@ -1595,7 +1567,7 @@ var messageList = (function(CHROMELL) {
 											return;
 										} else {
 											// pass placeholder video element to embed function
-											messageList.gfycat.embed(placeholder);
+											utils.gfycat.embed(placeholder);
 										}
 									}
 								}			
@@ -1606,7 +1578,7 @@ var messageList = (function(CHROMELL) {
 				
 				var createThumbnail = function(gfycatLink) {
 					var display;
-					(messageList.config.show_gfycat_link)
+					(CHROMELL.config.show_gfycat_link)
 							? display = 'inline'
 							: display = 'none';
 					var url = gfycatLink.getAttribute('href');
@@ -1619,22 +1591,22 @@ var messageList = (function(CHROMELL) {
 							gfycatLink.className = 'l';
 							return;
 						}
-						else if (messageList.config.hide_nws_gfycat) {
+						else if (CHROMELL.config.hide_nws_gfycat) {
 							if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {
 								//console.log('NWS topic', gfycatLink);
-								messageList.gfycat.embedOnHover(gfycatLink, data.url, data.width, data.height);						
+								utils.gfycat.embedOnHover(gfycatLink, data.url, data.width, data.height);						
 								return;
 							}
 						}
 						else {
-							messageList.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
+							utils.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
 								if (!safe) {
-									if (messageList.config.hide_nws_gfycat) {
+									if (CHROMELL.config.hide_nws_gfycat) {
 										gfycatLink.className = "l";
 										return;
 									}
 									else {
-										messageList.gfycat.addHoverLink(gfycatLink, data.url, data.width, data.height);
+										utils.gfycat.addHoverLink(gfycatLink, data.url, data.width, data.height);
 										return;
 									}
 								}
@@ -1729,7 +1701,7 @@ var messageList = (function(CHROMELL) {
 					if (placeholder.className === 'gfycat') {
 						// use placeholder element to embed gfycat video
 						var video = placeholder.getElementsByTagName('video')[0];
-						if (messageList.config.show_gfycat_link) {
+						if (CHROMELL.config.show_gfycat_link) {
 							placeholder.getElementsByTagName('span')[0].style.display = 'inline';
 						}
 						placeholder.setAttribute('name', 'embedded');
@@ -1766,7 +1738,7 @@ var messageList = (function(CHROMELL) {
 					}
 					else {
 						// Call loader method so that only visible gfycat videos are played
-						messageList.utils.gfycat.loader();
+						utils.gfycat.loader();
 					}
 				};
 			
@@ -1808,19 +1780,19 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 			
-			utils.imgur = function() {
+			var imgur = function() {
 				
 				var createPlaceholder = function(imgurElement, thumbnail) {
 					var url = imgurElement.getAttribute('href');
 					var display;
-					(messageList.config.show_gfycat_link) ? display = 'inline' : display = 'none';
+					(CHROMELL.config.show_gfycat_link) ? display = 'inline' : display = 'none';
 					checkAPI(url, 'imgur', function(data) {
 						if (data === "error") {
 							// revert class name to stop loader from detecting link
 							imgurElement.className = 'l';
 							return;
 						}
-						else if (messageList.config.hide_nws_gfycat) {
+						else if (CHROMELL.config.hide_nws_gfycat) {
 							if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
 								imgurElement.className = "l";
 								return;
@@ -1829,7 +1801,7 @@ var messageList = (function(CHROMELL) {
 						else {
 							workSafeCheck(imgurElement, data.nsfw, function(safe) {
 								if (!safe) {
-									if (messageList.config.hide_nws_gfycat) {
+									if (CHROMELL.config.hide_nws_gfycat) {
 										imgurElement.className = "l";
 										return;
 									}
@@ -1963,7 +1935,7 @@ var messageList = (function(CHROMELL) {
 					if (placeholder.className === 'imgur') {
 						// use placeholder element to embed gfycat video
 						var video = placeholder.getElementsByTagName('video')[0];
-						if (messageList.config.show_gfycat_link) {
+						if (CHROMELL.config.show_gfycat_link) {
 							placeholder.getElementsByTagName('span')[0].style.display = 'inline';
 						}
 						placeholder.setAttribute('name', 'embedded');
@@ -2000,7 +1972,7 @@ var messageList = (function(CHROMELL) {
 					}
 					else {
 						// Call loader method so that only visible gfycat videos are played
-						messageList.utils.gfycat.loader();
+						utils.gfycat.loader();
 					}
 				};			
 				
@@ -2043,7 +2015,7 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 			
-			utils.youtube = function() {
+			var youtube = function() {
 				// Contains methods for YouTube video embedding feature.
 				
 				var getVideoCode = function(href) {
@@ -2125,7 +2097,7 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 
-			utils.snippets = function() {
+			var snippets = function() {
 				// Contains methods for snippet feature.
 				
 				return {
@@ -2159,9 +2131,9 @@ var messageList = (function(CHROMELL) {
 							// first word in post
 							word = text;
 						}
-						for (var key in messageList.config.snippet_data) {
+						for (var key in CHROMELL.config.snippet_data) {
 							if (key === word) {
-								snippet = messageList.config.snippet_data[key];
+								snippet = CHROMELL.config.snippet_data[key];
 								index = text.lastIndexOf(word);
 								temp = text.substring(0, index);
 								ta = ta.replace(text, temp + snippet);
@@ -2177,7 +2149,7 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 			
-			utils.bash = function() {
+			var bash = function() {
 				// Contains methods for ETI Bash feature.
 				
 				var reset = function(bashes) {
@@ -2195,7 +2167,7 @@ var messageList = (function(CHROMELL) {
 						uncheck.removeAttribute('ignore');
 						uncheck.style.opacity = 1;
 					}
-					messageList.bash.closePopup();
+					utils.bash.closePopup();
 				};
 				
 				var closePopup = function() {
@@ -2327,13 +2299,13 @@ var messageList = (function(CHROMELL) {
 								for (var k = quotes.length; k--;) {
 									quote = quotes[k];
 									tops = quote.getElementsByClassName('message-top');
-									message = messageList.bash.getMessage(quote, quotes, tops, k);
+									message = utils.bash.getMessage(quote, quotes, tops, k);
 									if (!message) {
 										// do nothing
 									}
 									else {
 										// push username/post with content to array
-										username = messageList.bash.getUsername(quote.firstChild);
+										username = utils.bash.getUsername(quote.firstChild);
 										user_array.push(username);
 										message_array.push(message);
 									}
@@ -2342,12 +2314,12 @@ var messageList = (function(CHROMELL) {
 								top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
 								message_to_quote = top.nextSibling.lastChild.lastChild.firstChild;
 								// pass -1 to make sure that all quoted posts are removed
-								message = messageList.bash.getMessage(message_to_quote, quotes, tops, -1);
+								message = utils.bash.getMessage(message_to_quote, quotes, tops, -1);
 								if (!message) {
 									// do nothing
 								}
 								else {
-									username = messageList.bash.getUsername(top);
+									username = utils.bash.getUsername(top);
 									user_array.push(username);
 									message_array.push(message);	
 								}
@@ -2355,25 +2327,25 @@ var messageList = (function(CHROMELL) {
 							else if (quotes.length === 0) {
 								top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
 								// get username and post content belonging to first message-top
-								message = messageList
+								message = utils
 										.bash.getMessage(top.nextSibling.lastChild.lastChild.firstChild);
 								if (!message) {
-									messageList.bash.reset(bashes);
+									utils.bash.reset(bashes);
 									return;
 								}
-								username = messageList.bash.getUsername(top);
+								username = utils.bash.getUsername(top);
 								user_array.push(username);
 								message_array.push(message);
 							}
 							if (i === 0) {
 								first_top = bash.parentNode.parentNode.getElementsByClassName('message-top')[0];
-								url = messageList.bash.getURL(first_top, len);
+								url = utils.bash.getURL(first_top, len);
 							}
 						}
 						// pass values to submitBash function
-						messageList.bash.submit(url, user_array, message_array)
+						utils.bash.submit(url, user_array, message_array)
 						// reset bash elements and close popup
-						messageList.bash.reset(bashes);
+						utils.bash.reset(bashes);
 					},	
 					showPopup: function() {
 						var popup = document.getElementById('bash_popup');
@@ -2437,7 +2409,7 @@ var messageList = (function(CHROMELL) {
 								popup.getElementsByTagName('a')[0].innerHTML = '<b>[Submit quote to ETI Bash]</b>';
 							}
 							else if (len === 0) {
-								messageList.bash.reset(bashes);
+								utils.bash.reset(bashes);
 							}
 						}
 					}
@@ -2445,7 +2417,7 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 
-			utils.usernotes = function() {
+			var usernotes = function() {
 				// Contains methods for usernotes feature.
 				
 				return {
@@ -2455,11 +2427,11 @@ var messageList = (function(CHROMELL) {
 							var pg = document.getElementById('notepage');
 							userID = pg.parentNode.getElementsByTagName('a')[0].href
 									.match(/user=(\d+)$/i)[1];
-							messageList.config.usernote_notes[userID] = pg.value;
+							CHROMELL.config.usernote_notes[userID] = pg.value;
 							pg.parentNode.removeChild(pg);
-							messageList.usernotes.save();
+							utils.usernotes.save();
 						} else {
-							var note = messageList.config.usernote_notes[userID];
+							var note = CHROMELL.config.usernote_notes[userID];
 							page = document.createElement('textarea');
 							page.id = 'notepage';
 							page.value = (note == undefined) ? "": note;
@@ -2472,7 +2444,7 @@ var messageList = (function(CHROMELL) {
 						chrome.runtime.sendMessage({
 							need: "save",
 							name: "usernote_notes",
-							data: messageList.config.usernote_notes
+							data: CHROMELL.config.usernote_notes
 						}, function(rsp) {
 							console.log(rsp);
 						});
@@ -2481,7 +2453,7 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 			
-			utils.quote = function() {
+			var quote = function() {
 				// Contains methods which convert posts into LLML for archive quoting/like button
 				
 				var returnQuotes = function(nodes, msgid) {
@@ -2522,7 +2494,7 @@ var messageList = (function(CHROMELL) {
 							spoiler.caption = node.getElementsByClassName('caption')[0]
 									.innerText.replace(/<|\/>/g, '');
 							spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-							output[1] += messageList.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
+							output[1] += utils.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
 						}
 					}
 					output[1] += '</quote>';
@@ -2635,7 +2607,7 @@ var messageList = (function(CHROMELL) {
 									spoiler.caption = node.getElementsByClassName('caption')[0]
 											.innerText.replace(/<|\/>/g, '');
 									spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-									output += messageList.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
+									output += utils.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
 								}	
 								else if (node.className == 'quoted-message') {
 									var quoteOutput = '';
@@ -2645,16 +2617,16 @@ var messageList = (function(CHROMELL) {
 										// iterate backwards - oldest quote should be first
 										for (var m = quote.nested.length; m--;) {
 											var nestedQuote = quote.nested[m];
-											var quoteArray = messageList.quote.returnQuotes(nestedQuote.childNodes, 
+											var quoteArray = utils.quote.returnQuotes(nestedQuote.childNodes, 
 													nestedQuote.attributes.msgid.value);
 											quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
 										}
-										quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);
+										quoteArray = utils.quote.returnQuotes(node.childNodes, quote.msgid);
 										quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
 										output += quoteOutput;
 									}
 									else {
-										var quoteArray = messageList.quote.returnQuotes(node.childNodes, quote.msgid);					
+										var quoteArray = utils.quote.returnQuotes(node.childNodes, quote.msgid);					
 										quoteOutput = quoteArray[0] + quoteArray[1];
 										output += quoteOutput;
 									}
@@ -2672,7 +2644,7 @@ var messageList = (function(CHROMELL) {
 							chrome.runtime.sendMessage({
 									"quote": output
 							});				
-							messageList.quote.notifyUser(evt.target);
+							utils.quote.notifyUser(evt.target);
 						}
 					},		
 					addButtons: function() {
@@ -2704,7 +2676,7 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 			
-			utils.image = function() { 
+			var image = function() { 
 				// Contains methods for thumbnail expansion and image resizing
 				
 				// Crude method to detect zoom level - we don't need to be completely accurate.
@@ -2718,7 +2690,7 @@ var messageList = (function(CHROMELL) {
 						var num_children = evt.target.parentNode.parentNode.childNodes.length;
 						// first time expanding - only span
 						if (num_children == 1) {
-							if (messageList.config.debug)
+							if (CHROMELL.config.debug)
 								console.log("first time expanding - build span, load img");
 
 							// build new span
@@ -2743,7 +2715,7 @@ var messageList = (function(CHROMELL) {
 						}
 						// has been expanded before - just switch which node is hidden
 						else if (num_children == 2) {
-							if (messageList.config.debug)
+							if (CHROMELL.config.debug)
 								console.log("not first time expanding - toggle display status");
 
 							// toggle their display statuses
@@ -2755,24 +2727,24 @@ var messageList = (function(CHROMELL) {
 									children[i].style.display = "none";
 								}
 							}
-						} else if (messageList.config.debug)
+						} else if (CHROMELL.config.debug)
 							console
 									.log("I don't know what's going on with this image - weird number of siblings");
 					},
 					resize: function(el) {	
 						var width = el.width;					
-						if ((width * zoomLevel) > messageList.config.img_max_width) {						
-							el.height = (el.height / (el.width / messageList.config.img_max_width) / messageList.zoomLevel);
+						if ((width * zoomLevel) > CHROMELL.config.img_max_width) {						
+							el.height = (el.height / (el.width / CHROMELL.config.img_max_width) / zoomLevel);
 							el.parentNode.style.height = el.height + 'px';
-							el.width = messageList.config.img_max_width / zoomLevel;
+							el.width = CHROMELL.config.img_max_width / zoomLevel;
 							el.parentNode.style.width = el.width + 'px';
 						}
 					},
 					observer: new MutationObserver(function(mutations) {
 						for (var i = 0; i < mutations.length; i++) {
 							var mutation = mutations[i];
-							if (messageList.config.resize_imgs) {
-								messageList.utils.image.resize(mutation.target.childNodes[0]);
+							if (CHROMELL.config.resize_imgs) {
+								utils.image.resize(mutation.target.childNodes[0]);
 							}
 							if (mutation.type === 'attributes') {
 								// once they're loaded, thumbnails have /i/t/ in their
@@ -2787,7 +2759,7 @@ var messageList = (function(CHROMELL) {
 									 * actually matters
 									 */
 									mutation.target.parentNode.addEventListener('click',
-											messageList.utils.image.expandThumbnail);
+											utils.image.expandThumbnail);
 									mutation.target.parentNode.setAttribute('class',
 											'thumbnailed_image');
 									mutation.target.parentNode
@@ -2803,7 +2775,7 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 			
-			utils.spoilers = function() {
+			var spoilers = function() {
 				// Contains methods to open/close any spoiler-tagged content.
 				
 				return {
@@ -2812,7 +2784,7 @@ var messageList = (function(CHROMELL) {
 						var node;
 						for (var i = 0; spans[i]; i++) {
 							node = spans[i].getElementsByTagName('a')[0];
-							messageList.spoilers.toggle(node);
+							utils.spoilers.toggle(node);
 						}
 					},
 					toggle: function(obj) {
@@ -2828,7 +2800,7 @@ var messageList = (function(CHROMELL) {
 					
 			}();
 			
-			utils.anchors = function() {			
+			var anchors = function() {			
 				var checkedLinks = {};
 				
 				var handleYoutube = function(link) {
@@ -2856,7 +2828,7 @@ var messageList = (function(CHROMELL) {
 
 				var embed = function(link, type) {
 					link.className = type;
-						if (messageList.config['embed_' + type + '_thumbs']  
+						if (CHROMELL.config['embed_' + type + '_thumbs']  
 							|| link.parentNode.className == "quoted-message") {
 						link.setAttribute('name', type + '_thumb');
 					}
@@ -2892,25 +2864,25 @@ var messageList = (function(CHROMELL) {
 							var link = links[i];
 							
 							if (link.href.match(ytRegex) && link.href.match(videoCodeRegex)
-									&& messageList.config.embed_on_hover) {	
+									&& CHROMELL.config.embed_on_hover) {	
 								handleYoutube(link);
 							}
 							
 							else if (link.href.indexOf('://lue.link/') > -1
-									&& messageList.config.full_link_names) {
+									&& CHROMELL.config.full_link_names) {
 								unshorten(link);
 							}
 							
 							// TODO - Add Imgur embedding
 							else if (link.title.indexOf("gfycat.com/") > -1) {
-								if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
+								if (CHROMELL.config.embed_gfycat || CHROMELL.config.embed_gfycat_thumbs) {
 									embed(link, 'gfycat');
 									gfycats = true;
 								}
 							}
 							
 							else if (link.title.indexOf('imgur.com/') > -1 && link.title.match(/.webm|.gifv/)) {
-								if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
+								if (CHROMELL.config.embed_gfycat || CHROMELL.config.embed_gfycat_thumbs) {
 									embed(link, 'imgur');
 									imgurs = true;
 								}							
@@ -2918,15 +2890,15 @@ var messageList = (function(CHROMELL) {
 						}
 						
 						if (gfycats) {						
-							messageList.utils.gfycat.loader();				
-							window.addEventListener('scroll', messageList.utils.gfycat.loader);
-							document.addEventListener('visibilitychange', messageList.utils.gfycat.pause);
+							utils.gfycat.loader();				
+							window.addEventListener('scroll', utils.gfycat.loader);
+							document.addEventListener('visibilitychange', utils.gfycat.pause);
 						}
 						
 						if (imgurs) {					
-							messageList.utils.imgur.loader();				
-							window.addEventListener('scroll', messageList.utils.imgur.loader);
-							document.addEventListener('visibilitychange', messageList.utils.imgur.pause);
+							utils.imgur.loader();				
+							window.addEventListener('scroll', utils.imgur.loader);
+							document.addEventListener('visibilitychange', utils.imgur.pause);
 						}
 					},
 					fixRedirect: function(anchor, type) {
@@ -2942,33 +2914,33 @@ var messageList = (function(CHROMELL) {
 				
 			}();
 			
-			utils.tcs = function() {
+			var tcs = function() {
 				// Maintains a list of topic creators from last 40 visited topics
 				var saveToConfig = function() {
 					var max = 40;
 					var lowest = Infinity;
 					var lowestTc;
 					var numTcs = 0;
-					for ( var i in messageList.config.tcs) {
-						if (messageList.config.tcs[i].date < lowest) {
+					for ( var i in CHROMELL.config.tcs) {
+						if (CHROMELL.config.tcs[i].date < lowest) {
 							lowestTc = i;
-							lowest = messageList.config.tcs[i].date;
+							lowest = CHROMELL.config.tcs[i].date;
 						}
 						numTcs++;
 					}
 					if (numTcs > max)
-						delete messageList.config.tcs[lowestTc];
+						delete CHROMELL.config.tcs[lowestTc];
 					chrome.runtime.sendMessage({
 						need: "save",
 						name: "tcs",
-						data: messageList.config.tcs
+						data: CHROMELL.config.tcs
 					});
 				};		
 
 				return {
 					getMessages: function() {
-						if (!messageList.config.tcs)
-							messageList.config.tcs = {};
+						if (!CHROMELL.config.tcs)
+							CHROMELL.config.tcs = {};
 						var tcs = [];
 						var topic = window.location.href.match(/topic=(\d+)/)[1];
 						var heads = document.getElementsByClassName('message-top');
@@ -2983,16 +2955,16 @@ var messageList = (function(CHROMELL) {
 								&& !window.location.href.match(/u=(\d+)/))
 							tc = heads[0].getElementsByTagName('a')[0].innerHTML.toLowerCase();
 						else {
-							if (!messageList.config.tcs[topic]) {
+							if (!CHROMELL.config.tcs[topic]) {
 								console.log('Unknown TC!');
 								return;
 							}
-							tc = messageList.config.tcs[topic].tc;
+							tc = CHROMELL.config.tcs[topic].tc;
 						}
-						if (!messageList.config.tcs[topic]) {
-							messageList.config.tcs[topic] = {};
-							messageList.config.tcs[topic].tc = tc;
-							messageList.config.tcs[topic].date = new Date().getTime();
+						if (!CHROMELL.config.tcs[topic]) {
+							CHROMELL.config.tcs[topic] = {};
+							CHROMELL.config.tcs[topic].tc = tc;
+							CHROMELL.config.tcs[topic].date = new Date().getTime();
 						}
 						for (var i = 0; i < heads.length; i++) {
 							if (haTopic && heads[i].innerHTML.indexOf("\">Human") == -1) {
@@ -3010,7 +2982,7 @@ var messageList = (function(CHROMELL) {
 					
 			}();
 			
-			utils.likeButton = function() {
+			var likeButton = function() {
 				// Contains methods which display the like button menu and process click events
 				
 				return {
@@ -3036,7 +3008,7 @@ var messageList = (function(CHROMELL) {
 						// generate like message
 						if (templateNumber) {
 							// use selected custom message
-							var ins = messageList.config.custom_like_data[templateNumber].contents;
+							var ins = CHROMELL.config.custom_like_data[templateNumber].contents;
 							ins = ins.replace('[user]', username);
 							ins = ins.replace('[poster]', poster);
 						}
@@ -3066,7 +3038,7 @@ var messageList = (function(CHROMELL) {
 							newtxt += ins;
 						}
 						var msgID = message.getAttribute('msgid');
-						var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});
+						var quotedMessage = utils.quote.handler({'id': msgID, 'likeButton': true});
 						quickreply.value = quotedMessage + '\n' + newtxt;
 						if (document.getElementsByClassName('regular quickpost-expanded').length == 0) {
 							// quickpost area is hidden - click nub element to open
@@ -3075,7 +3047,7 @@ var messageList = (function(CHROMELL) {
 					},
 					showOptions: function() {
 						if (!document.getElementById('hold_menu')) {
-							var scriptData = messageList.config.custom_like_data;
+							var scriptData = CHROMELL.config.custom_like_data;
 							var menuElement = document.createElement('span');
 							menuElement.id = 'hold_menu';	
 							menuElement.style.position = 'absolute';
@@ -3089,7 +3061,8 @@ var messageList = (function(CHROMELL) {
 								var name = scriptData[id].name;					
 								populateMenu.call(this, name, id, menuElement);
 							}
-							messageList.cachedEvent.target.appendChild(menuElement);
+							var cachedEvent = eventHandlers.cachedEvent();
+							cachedEvent.target.appendChild(menuElement);
 						}
 						
 						function populateMenu(item, id, menuElement) {
@@ -3117,16 +3090,26 @@ var messageList = (function(CHROMELL) {
 					}
 				};
 				
-			}();
+			}();						
 			
-			// TODO: Instead of returning the whole utils object we could check config settings
-			// and only return enabled utils
-			
-			return utils;
+			return {
+				gfycat: gfycat,
+				imgur: imgur,
+				youtube: youtube,
+				snippets: snippets,
+				bash: bash,
+				usernotes: usernotes,
+				quote: quote,
+				image: image,
+				spoilers: spoilers,
+				anchors: anchors,
+				tcs: tcs,
+				likeButton: likeButton
+			};
 			
 		}();
 		
-		messageList.helpers = function() {
+		var helpers = function() {
 			// TODO: Some of these methods may be better located elsewhere
 			return {
 				startBatchUpload: function(evt) {
@@ -3149,7 +3132,7 @@ var messageList = (function(CHROMELL) {
 					ia.href = '##';
 					ins.innerHTML = '[';
 					ins.insertBefore(ia, null);
-					for ( var i in this.config.post_template_data) {
+					for ( var i in CHROMELL.config.post_template_data) {
 						var title = document.createElement('a');
 						title.href = '##' + i;
 						title.className = 'post_template_title';
@@ -3179,13 +3162,13 @@ var messageList = (function(CHROMELL) {
 					evt.id = 'post_action';
 					var cdiv = document.getElementById('cdiv');
 					var d = {};
-					d.text = this.config.post_template_data[evt.parentNode.className].text;
+					d.text = CHROMELL.config.post_template_data[evt.parentNode.className].text;
 					cdiv.innerText = JSON.stringify(d);
-					cdiv.dispatchEvent(this.postEvent);
+					cdiv.dispatchEvent(window.postEvent);
 				},
 				clearUnreadPosts: function(evt) {
 					if (!document.title.match(/\(\d+\+?\)/)
-							|| messageList.DOM.scrolling === true
+							|| DOM.scrolling === true
 							|| document.hidden) {
 						// do nothing
 						return;
@@ -3245,16 +3228,16 @@ var messageList = (function(CHROMELL) {
 			};
 			
 		}();
-
-		chrome.runtime.sendMessage({
-			need: "config",
-			tcs: true
-		}, function(config) {
-			init.call(messageList, config);
-		});	
-
-		// TODO: Figure out exactly what methods need to be returned (eg for imagemap feature), instead of returning whole object.
-		return messageList;
+		
+		// Get config from background page and call init method
+		CHROMELL.getConfig(init);
+		
+		return {
+			DOM: DOM,
+			eventHandlers: eventHandlers,
+			utils: utils,
+			helpers: helpers
+		};
 	
 	}();
 	
