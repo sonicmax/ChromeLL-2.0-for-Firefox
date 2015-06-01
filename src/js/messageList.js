@@ -1345,28 +1345,27 @@
 				};
 				var splitURL = url.split('/').slice(-1);	
 				var code = splitURL.join('/').replace(/.gifv|.webm/, '');
-				var url = window.location.protocol + endpoints[api] + code;
-				var xhr = new XMLHttpRequest();
-				xhr.open("GET", url, true);	
+				var url = window.location.protocol + endpoints[api] + code;	
+				
+				var auth;	
 				if (api === 'imgur') {
 					// Authorization header contains client ID (required for accessing Imgur API)
-					xhr.setRequestHeader("Authorization", "Client-ID 6356976da2dad83");
-					if (window.location.protocol !== 'https:') {
-						// Use background page to send request via https:
-						
-						return;
-					}
+					var auth = 'Client-ID 6356976da2dad83';
+					// All Imgur requests have to be made using HTTPS.
+					url = url.replace('http:', 'https:');
 				}
 				
-				xhr.onload = function() {
-					if (this.status == 200) {
-						handleResponse(api, code, JSON.parse(this.responseText), callback);									
-					}					
-				};
+				// Make API request from background page, so we can force HTTPS
+				chrome.runtime.sendMessage({
+					need: "xhr",
+					url: url,
+					auth: auth
+				}, function(data) {
+						handleResponse(api, code, data, callback);
+				});
 				
-				xhr.send();
 			};
-			
+		
 			var handleResponse = function(api, code, response, callback) {
 				var data = response.gfyItem || response.data;
 				if (!data) {

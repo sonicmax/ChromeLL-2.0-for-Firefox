@@ -450,9 +450,30 @@ var background = {
 			});
 		});
 		
+		// Create XHR object outside of function so it can be reused
+		var xhr = new XMLHttpRequest();
+		
 		chrome.runtime.onMessage.addListener(
-			function(request, sender, sendResponse) {
+			function(request, sender, sendResponse) {				
 				switch(request.need) {
+					case "xhr":
+						xhr.open("GET", request.url, true);		
+						
+						if (request.auth) {
+							xhr.setRequestHeader('Authorization', request.auth);
+						}
+						
+						xhr.onload = function() {
+							if (this.status === 200) {
+								var response = JSON.parse(this.responseText);
+								sendResponse(response);
+							}					
+						};
+						
+						xhr.send();
+						// return true to prevent bug with sendResponse (See: https://code.google.com/p/chromium/issues/detail?id=343007)
+						return true;
+						break;
 					case "config":
 						// page script needs extension config.
 						background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
