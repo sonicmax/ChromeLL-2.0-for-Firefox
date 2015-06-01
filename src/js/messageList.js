@@ -1360,7 +1360,8 @@
 					need: "xhr",
 					url: url,
 					auth: auth
-				}, function(data) {
+				}, function(response) {
+						var data = JSON.parse(response);
 						handleResponse(api, code, data, callback);
 				});
 				
@@ -1407,13 +1408,13 @@
 							return data.height;
 						}
 						
-					}(),							
+					}(),			
+					
 					title: data.title || data.redditIdText,
 					nsfw: data.nsfw
 
 				};					
-				console.log(response);
-				console.log(apiData);
+
 				callback(apiData);
 
 			};

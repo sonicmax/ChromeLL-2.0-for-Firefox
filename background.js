@@ -465,8 +465,7 @@ var background = {
 						
 						xhr.onload = function() {
 							if (this.status === 200) {
-								var response = JSON.parse(this.responseText);
-								sendResponse(response);
+								sendResponse(this.responseText);
 							}					
 						};
 						

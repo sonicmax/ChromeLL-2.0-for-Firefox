@@ -417,14 +417,12 @@
 						currentID = profileURL.match(/user=(\d+)/)[1];
 						var gs = checkAccountAge(currentID);
 
-						var xhr = new XMLHttpRequest();
-						xhr.open("GET", profileURL, true);
-						xhr.onload = function() {
-							if (this.status == 200) {
-								scrapeProfile(this.responseText);
-							}
-						};		
-						xhr.send();
+						chrome.runtime.sendMessage({
+							need: "xhr",
+							url: profileURL
+						}, function(response) {
+								scrapeProfile(response);
+						});						
 						
 						var popup = document.getElementById('popup_user');
 						// TODO: construct popup using createElement method
