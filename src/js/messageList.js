@@ -1279,7 +1279,7 @@
 					}
 					else if (evt.target.parentNode.className == 'embed_nws_gfy') {
 						var gfycatID = evt.target.parentNode.id.replace('_embed', '');
-						utils.gfycat.embed(document.getElementById(gfycatID));
+						utils.embed('gfy', document.getElementById(gfycatID));
 						evt.preventDefault();
 					}
 				}
@@ -1336,85 +1336,93 @@
 		
 		var utils = function() {
 			
-			var checkAPI = function(api, url, callback) {	
+			var needThumbnail = true;
+			
+			var checkAPI = function(api, url, callback) {
 				var endpoints = {
 					gfy: '//gfycat.com/cajax/get/',
 					imgur: '//api.imgur.com/3/image/'				
 				};
 				var splitURL = url.split('/').slice(-1);	
-				var codes = {
-					gfy: splitURL.join('/'),				
-					imgur: splitURL.join('/').replace(/.gifv|.webm/, '')
-				}
-				console.log(codes);
-				var url = window.location.protocol + endpoints[api] + codes[api];
+				var code = splitURL.join('/').replace(/.gifv|.webm/, '');
+				var url = window.location.protocol + endpoints[api] + code;
 				var xhr = new XMLHttpRequest();
 				xhr.open("GET", url, true);	
 				if (api === 'imgur') {
 					// Authorization header contains client ID (required for accessing Imgur API)
-					xhr.setRequestHeader("Authorization", "Client-ID 6356976da2dad83");			
-				}		
+					xhr.setRequestHeader("Authorization", "Client-ID 6356976da2dad83");
+					if (window.location.protocol !== 'https:') {
+						// Use background page to send request via https:
+						
+						return;
+					}
+				}
+				
 				xhr.onload = function() {
 					if (this.status == 200) {
-						var response = JSON.parse(this.responseText);
-						var data = response.gfyItem || response.data;
-						if (!data) {
-							callback('error');
-						}
-						// Documentation for the Gfycat API: http://gfycat.com/api
-						// Documentation for the Imgur image data model: https://api.imgur.com/models/image
-						var apiData = {
-							code: code,
-							url: function() {
-								if (window.location.protocol == 'https:') {
-									return response.data.webm.replace('http:', 'https:');
-								}
-								else {
-									return response.data.webm;
-								}
-								
-							}(),
-							
-							width: function() {					
-								if (CHROMELL.config['resize_' + api + 's'] 
-										&& response.data.width > CHROMELL.config[api + '_max_width']) {
-									return CHROMELL.config[api + '_max_width'];
-								}
-								else {
-									return response.data.width;	
-								}		
-								
-							}(),
-							
-							height: function() {					
-								if (CHROMELL.config['resize_' + api + 's'] 
-										&& response.data.width > CHROMELL.config[api + '_max_width']) {
-									// scale video height to match gfy_max_width value
-									return (response.data.height / (response.data.width / CHROMELL.config[api + '_max_width']));
-								}
-								else {
-									return response.data.height;
-								}
-								
-							}(),
-		
-							title: response.data.title,						
-							nsfw: response.data.nsfw
-
-						};					
-						
-						callback(apiData);
-
-					}				
+						handleResponse(api, code, JSON.parse(this.responseText), callback);									
+					}					
 				};
 				
 				xhr.send();
 			};
 			
+			var handleResponse = function(api, code, response, callback) {
+				var data = response.gfyItem || response.data;
+				if (!data) {
+					callback('error');
+				}
+				// Documentation for the Gfycat API: http://gfycat.com/api
+				// Documentation for the Imgur image data model: https://api.imgur.com/models/image						
+				var apiData = {
+					code: code,
+					url: function() {
+						var url = data.webm || data.webmUrl;
+						if (window.location.protocol == 'https:') {									
+							return url.replace('http:', 'https:');
+						}
+						else {
+							return url;
+						}
+						
+					}(),
+					
+					width: function() {					
+						if (CHROMELL.config['resize_' + api + 's'] 
+								&& data.width > CHROMELL.config[api + '_max_width']) {
+							return CHROMELL.config[api + '_max_width'];
+						}
+						else {
+							return data.width;	
+						}		
+						
+					}(),
+					
+					height: function() {					
+						if (CHROMELL.config['resize_' + api + 's'] 
+								&& data.width > CHROMELL.config[api + '_max_width']) {
+							// scale video height to match gfy_max_width value
+							return (data.height / (data.width / CHROMELL.config[api + '_max_width']));
+						}
+						else {
+							return data.height;
+						}
+						
+					}(),							
+					title: data.title || data.redditIdText,
+					nsfw: data.nsfw
+
+				};					
+				console.log(response);
+				console.log(apiData);
+				callback(apiData);
+
+			};
+			
 			var createPlaceholder = function(api, videoAnchor, needThumbnail) {
 				var url = videoAnchor.getAttribute('href');
 				var display;			
-				(CHROMELL.config.show_gfycat_link) 
+				(CHROMELL.config.show_gfycat_link)
 						? display = 'inline' 
 						: display = 'none';
 						
@@ -1424,56 +1432,46 @@
 						videoAnchor.className = 'l';
 						return;
 					}
-					else if (CHROMELL.config.hide_nws_gfycat) {
-						if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
-							videoAnchor.className = "l";
+					
+					// For now, use hide_nws_gfycat setting for both gfycat & imgur embedding.		
+					if (CHROMELL.config.hide_nws_gfycat) {
+						var isWorkSafe = workSafe(api, videoAnchor, data.nsfw);
+						if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/) || !isWorkSafe) {						
+							embedOnHover(api, videoAnchor, data.url, data.width, data.height);
 							return;
-						}
+						}		
 					}
+						
 					else {
-						workSafeCheck(videoAnchor, data.nsfw, function(safe) {
-							if (!safe) {
-								if (CHROMELL.config.hide_nws_gfycat) {
-									videoAnchor.className = "l";
+						var placeholder = document.createElement('div');								
+						placeholder.setAttribute('name', 'placeholder');
+						placeholder.className = api + '_placeholder';
+						placeholder.id = data.url;
+						placeholder.title = data.title;
+						if (needThumbnail) {				
+							createThumbnail(api, videoAnchor, placeholder, display, data);
+						}
+						else {
+							placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
+									+ '</video>'
+									+ '<span style="display:none"><br><br>' + url + '</span>';
+									
+							// TODO: Fix this bug properly								
+							// prevent "Cannot read property 'replaceChild' of null" error
+							
+							if (videoAnchor.parentNode) {
+								videoAnchor.parentNode.replaceChild(placeholder, videoAnchor);
+								// check if placeholder is visible (some placeholders will be off screen)
+								var position = placeholder.getBoundingClientRect();
+								if (position.top > window.innerHeight) {
 									return;
 								}
 								else {
-									embedOnHover(videoAnchor, data.url, data.width, data.height);
-									return;
+									// pass placeholder video element to embed function
+									embed(api, placeholder);
 								}
 							}
-							else {
-								var placeholder = document.createElement('div');								
-								placeholder.setAttribute('name', 'placeholder');
-								placeholder.className = api;
-								placeholder.id = data.url;
-								placeholder.title = data.title;
-								if (needThumbnail) {				
-									createThumbnail(api, videoAnchor, placeholder, display, data);
-								}
-								else {
-									placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
-											+ '</video>'
-											+ '<span style="display:none"><br><br>' + url + '</span>';
-											
-									// TODO: Fix this bug properly								
-									// prevent "Cannot read property 'replaceChild' of null" error
-									
-									if (videoAnchor.parentNode) {
-										videoAnchor.parentNode.replaceChild(placeholder, videoAnchor);
-										// check if placeholder is visible (some placeholders will be off screen)
-										var position = placeholder.getBoundingClientRect();
-										if (position.top > window.innerHeight) {
-											return;
-										}
-										else {
-											// pass placeholder video element to embed function
-											embed(placeholder);
-										}
-									}
-								}
-							}			
-						});
+						}
 					}
 				});
 			};
@@ -1521,230 +1519,101 @@
 				});				
 			};
 				
-			var gfycat = function() {
-				
-				var createPlaceholder = function(gfycatLink) {
-					var url = gfycatLink.getAttribute('href');
-					checkAPI(url, 'gfy', function(data) {
-						if (data === "error") {
-							// revert class name to stop gfycat loader from detecting link
-							gfycatLink.className = 'l';
-							return;
-						}
-						else if (CHROMELL.config.hide_nws_gfycat) {
-							if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
-								gfycatLink.className = "l";
-								return;
-							}
-						}
-						else {
-							utils.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
-								if (!safe) {
-									if (CHROMELL.config.hide_nws_gfycat) {
-										gfycatLink.className = "l";
-										return;
-									}
-									else {
-										utils.gfycat.embedOnHover(gfycatLink, data.url, data.width, data.height);
-										return;
-									}
-								}
-								else {
-									// create placeholder
-									var placeholder = document.createElement('div');
-									placeholder.className = 'gfycat';
-									placeholder.id = data.url;
-									placeholder.setAttribute('name', 'placeholder');
-									placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
-											+ '</video>'
-											+ '<span style="display:none"><br><br>' + url + '</span>';
-									// prevent "Cannot read property 'replaceChild' of null" error
-									if (gfycatLink.parentNode) {
-										gfycatLink.parentNode.replaceChild(placeholder, gfycatLink);
-										// check if placeholder is visible (some placeholders will be off screen)
-										var position = placeholder.getBoundingClientRect();
-										if (position.top > window.innerHeight) {
-											return;
-										} else {
-											// pass placeholder video element to embed function
-											utils.gfycat.embed(placeholder);
-										}
-									}
-								}			
-							});
-						}
-					});
-				};
-				
-				var createThumbnail = function(gfycatLink) {
-					var display;
-					(CHROMELL.config.show_gfycat_link)
-							? display = 'inline'
-							: display = 'none';
-					var url = gfycatLink.getAttribute('href');
-					var splitURL = url.split('/').slice(-1);
-					var code = splitURL.join('/');
-					var thumbnail = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
-					checkAPI(url, 'gfy', function(data) {
-						if (data === "error") {
-							// revert class name to stop loader from detecting link
-							gfycatLink.className = 'l';
-							return;
-						}
-						else if (CHROMELL.config.hide_nws_gfycat) {
-							if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {
-								//console.log('NWS topic', gfycatLink);
-								utils.gfycat.embedOnHover(gfycatLink, data.url, data.width, data.height);						
-								return;
-							}
-						}
-						else {
-							utils.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
-								if (!safe) {
-									if (CHROMELL.config.hide_nws_gfycat) {
-										gfycatLink.className = "l";
-										return;
-									}
-									else {
-										utils.gfycat.addHoverLink(gfycatLink, data.url, data.width, data.height);
-										return;
-									}
-								}
-								else {
-									// create placeholder element
-									var placeholder = document.createElement('div');
-									placeholder.className = 'gfycat';
-									placeholder.id = data.url;
-									placeholder.innerHTML = '<img src="' + thumbnail 
-											+ '" width="' + data.width + '" height="' + data.height + '">'
-											+ '</img>'
-											+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
-									if (gfycatLink.parentNode) {
-										gfycatLink.parentNode.replaceChild(placeholder, gfycatLink);
-										// add click listener to replace img with video
-										var img = placeholder.getElementsByTagName('img')[0];
-										img.title = "Click to play";
-										img.addEventListener('click', function(ev) {
-											ev.preventDefault();
-											placeholder.innerHTML = '<video width="' + data.width 
-													+ '" height="' + data.height 
-													+ '" loop >'
-													+ '</video>'
-													+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
-											var video = placeholder.getElementsByTagName('video')[0];
-											placeholder.setAttribute('name', 'embedded_thumb');
-											video.src = placeholder.id;
-											video.title = "Click to pause";
-											video.play();
-											video.addEventListener('click', function(ev) {
-												video.title = "Click to play/pause";
-												if (!video.paused) {
-													video.pause();
-												}
-												else {
-													video.play();
-												}
-											});
-										});
-									}	
-								}
-							});
-						}
-					});
-				};
-				
-				var workSafe = function(gfycatLink, nsfw, callback) {
-					// check whether link is nws using gfycat api & post content
-					var userbar = document.getElementsByTagName('h2')[0];
-					var postHTML = gfycatLink.parentNode.innerHTML;
+			var workSafe = function(api, element, nsfw) {
+				// check whether link is nws using gfycat api & post content
+				var userbar = document.getElementsByTagName('h2')[0];
+				if (element.parentNode) {
+					var postHTML = element.parentNode.innerHTML;
 					// only check topics without NWS/NLS tags
 					if (!userbar.innerHTML.match(/N[WL]S/)) {				
-						if (nsfw === '1' || postHTML.match(/(n[wl]s)/i)) {
-							gfycatLink.className = 'nws_gfycat';
-							callback(false);
-						}
-						else {
-							callback(true);
+						if (postHTML.match(/(n[wl]s)/i)) {
+							element.className = 'nws_' + api;
+							return false;
 						}
 					}
-					else {
-						callback(true);
-					}
-				};
+				}
 				
-				var embedOnHover = function(gfycatLink, url, width, height) {
-					// handle NWS videos
-					gfycatLink.className = 'nws_gfycat';
-					gfycatLink.id = url;
-					gfycatLink.setAttribute('w', width);
-					gfycatLink.setAttribute('h', height);		
-					$(gfycatLink).hoverIntent(
-						function() {
-							// var that = this;
-							var color = $("table.message-body tr td.message").css("background-color");
-							if (this.className == "nws_gfycat") {
-								$(this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
-										+ "background: " + color 
-										+ ";'><a id='" + url + '_embed'
-										+ "'class='embed_nws_gfy' href='##'>&nbsp<b>[Embed NWS Gfycat]</b></a></span>"));
-							}
-						}, function() {
-							// var that = this;
-							if (this.className == "nws_gfycat") {
-								$(this).find("span").remove();
-							}
-						}
-					);
-				};
+				else if (nsfw === '1') {
+					element.className = 'nws_' + api;
+					return false;
+				}
 				
-				var embed = function(placeholder) {
-					if (placeholder.className === 'gfycat') {
-						// use placeholder element to embed gfycat video
-						var video = placeholder.getElementsByTagName('video')[0];
-						if (CHROMELL.config.show_gfycat_link) {
-							placeholder.getElementsByTagName('span')[0].style.display = 'inline';
-						}
-						placeholder.setAttribute('name', 'embedded');
-						// placeholder id is webm url
-						video.src = placeholder.id;
-						video.play();
-					}
-					else if (placeholder.className === 'nws_gfycat') {
-						// create video element & embed gfycat
-						var video = document.createElement('video');
-						var width = placeholder.getAttribute('w');
-						var height = placeholder.getAttribute('h');				
-						video.setAttribute('width', width);
-						video.setAttribute('height', height);
-						video.setAttribute('name', 'embedded');
-						video.setAttribute('loop', true);
-						video.src = placeholder.id;				
-						placeholder.parentNode.replaceChild(video, placeholder);			
-						video.play();
-					}
-				};
+				else {
+					return true;
+				}
+			};				
 				
-				var pause = function() {
-					// pause all gfycat videos if document is hidden
-					if (document.hidden) {
-						var videos = document.getElementsByTagName('video');
-						var video;
-						for (var i = 0, len = videos.length; i < len; i++) {
-							video = videos[i];
-							if (video.src && !video.paused) {
-								video.pause();
-							}
+			var embedOnHover = function(api, element, url, width, height) {
+				// handle NWS videos
+				element.className = 'nws_' + api;
+				element.id = url;
+				element.setAttribute('w', width);
+				element.setAttribute('h', height);		
+				$(element).hoverIntent(
+					function() {
+						var color = $("table.message-body tr td.message").css("background-color");
+						if (this.className.match(/nws_/)) {
+							$(this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
+									+ "background: " + color 
+									+ ";'><a id='" + url + '_embed'
+									+ "'class='embed_nws_" + api + "' href='##'>&nbsp<b>[Embed NWS Video]</b></a></span>"));
+						}
+					}, function() {
+						if (this.className.match(/nws_/)) {
+							$(this).find("span").remove();
 						}
 					}
-					else {
-						// Call loader method so that only visible gfycat videos are played
-						utils.gfycat.loader();
-					}
-				};
+				);
+			};				
 			
+			var pauseVideos = function() {
+				if (document.hidden) {
+					var videos = document.getElementsByTagName('video');
+					var video;
+					for (var i = 0, len = videos.length; i < len; i++) {
+						video = videos[i];
+						if (video.src && !video.paused) {
+							video.pause();
+						}
+					}
+				}
+				else {
+					// Call loader methods so that only visible videos are played
+					utils.gfycat.loader();
+					utils.imgur.loader();
+				}
+			};
+		
+			var embed = function(api, placeholder) {
+				if (placeholder.className.match(/_placeholder/)) {
+					var video = placeholder.getElementsByTagName('video')[0];
+					if (CHROMELL.config.show_gfycat_link) {
+						placeholder.getElementsByTagName('span')[0].style.display = 'inline';
+					}
+					placeholder.setAttribute('name', 'embedded');
+					// placeholder id is webm url
+					video.src = placeholder.id;
+					video.play();
+				}
+				else if (placeholder.className.match(/nws_/)) {
+					var video = document.createElement('video');
+					var width = placeholder.getAttribute('w');
+					var height = placeholder.getAttribute('h');				
+					video.setAttribute('width', width);
+					video.setAttribute('height', height);
+					video.setAttribute('name', 'embedded');
+					video.setAttribute('loop', true);
+					video.src = placeholder.id;				
+					placeholder.parentNode.replaceChild(video, placeholder);			
+					video.play();
+				}
+			};			
+
+			var gfycat = function() {
+
 				return {
 					loader: function() {
-						var gfycats = document.getElementsByClassName('gfycat');
+						var gfycats = document.getElementsByClassName('gfy');
 						var height = window.innerHeight;
 						for (var i = 0, len = gfycats.length; i < len; i++) {
 							var gfycat = gfycats[i];			
@@ -1762,13 +1631,13 @@
 							}
 							else if (gfycat.tagName == 'A') {
 								if (gfycat.getAttribute('name') == 'gfycat_thumb') {					
-									createThumbnail(gfycat);			
+									createPlaceholder('gfy', gfycat, needThumbnail);			
 								} else {
-									createPlaceholder(gfycat);
+									createPlaceholder('gfy', gfycat);
 								}
 							}
 							else if (gfycat.getAttribute('name') == 'placeholder') {
-								embed(gfycat);
+								embed('gfy', gfycat);
 							}
 							else if (gfycat.getAttribute('name') == 'embedded'
 									&& gfycat.getElementsByTagName('video')[0].paused) {
@@ -1781,200 +1650,6 @@
 			}();
 			
 			var imgur = function() {
-				
-				var createPlaceholder = function(imgurElement, thumbnail) {
-					var url = imgurElement.getAttribute('href');
-					var display;
-					(CHROMELL.config.show_gfycat_link) ? display = 'inline' : display = 'none';
-					checkAPI(url, 'imgur', function(data) {
-						if (data === "error") {
-							// revert class name to stop loader from detecting link
-							imgurElement.className = 'l';
-							return;
-						}
-						else if (CHROMELL.config.hide_nws_gfycat) {
-							if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
-								imgurElement.className = "l";
-								return;
-							}
-						}
-						else {
-							workSafeCheck(imgurElement, data.nsfw, function(safe) {
-								if (!safe) {
-									if (CHROMELL.config.hide_nws_gfycat) {
-										imgurElement.className = "l";
-										return;
-									}
-									else {
-										embedOnHover(imgurElement, data.url, data.width, data.height);
-										return;
-									}
-								}
-								else {
-									var placeholder = document.createElement('div');								
-									placeholder.setAttribute('name', 'placeholder');
-									placeholder.className = 'imgur';
-									placeholder.id = data.url;
-									placeholder.title = data.title;
-									if (thumbnail) {								
-										createThumbnail(imgurElement, placeholder, display, data);
-									}
-									else {
-										placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
-												+ '</video>'
-												+ '<span style="display:none"><br><br>' + url + '</span>';
-										// prevent "Cannot read property 'replaceChild' of null" error
-										if (imgurElement.parentNode) {
-											imgurElement.parentNode.replaceChild(placeholder, imgurElement);
-											// check if placeholder is visible (some placeholders will be off screen)
-											var position = placeholder.getBoundingClientRect();
-											if (position.top > window.innerHeight) {
-												return;
-											}
-											else {
-												// pass placeholder video element to embed function
-												embed(placeholder);
-											}
-										}
-									}
-								}			
-							});
-						}
-					});
-				};
-				
-				var createThumbnail = function(imgurElement, placeholder, displayAttribute, data) {
-					var thumbnail = window.location.protocol + '//i.imgur.com/' + data.code + 'l.jpg';
-					placeholder.innerHTML = '<img src="' + thumbnail 
-						+ '" width="' + data.width + '" height="' + data.height + '">'
-						+ '</img>'
-						+ '<span style="display:' + displayAttribute + '"><br><br>' + data.url + '</span>';
-					// add click listener to replace img with video
-					if (imgurElement.parentNode) {
-						imgurElement.parentNode.replaceChild(placeholder, imgurElement);
-						// check if placeholder is visible (some placeholders will be off screen)
-						var position = placeholder.getBoundingClientRect();
-						if (position.top > window.innerHeight) {
-							return;
-						} else {
-							// pass placeholder video element to embed function
-							embed(placeholder);
-						}
-					}				
-					var img = placeholder.getElementsByTagName('img')[0];
-					img.title = "Click to play";
-					img.addEventListener('click', function(ev) {
-						ev.preventDefault();
-						placeholder.innerHTML = '<video width="' + data.width 
-								+ '" height="' + data.height 
-								+ '" loop >'
-								+ '</video>'
-								+ '<span style="display:' + display + '"><br><br>' + url + '</span>';
-						var video = placeholder.getElementsByTagName('video')[0];
-						placeholder.setAttribute('name', 'embedded_thumb');
-						video.src = placeholder.id;
-						video.title = "Click to pause";
-						video.play();
-						video.addEventListener('click', function(ev) {
-							video.title = "Click to play/pause";
-							if (!video.paused) {
-								video.pause();
-							}
-							else {
-								video.play();
-							}
-						});
-					});				
-				};
-				
-				var workSafeCheck = function(gfycatLink, nsfw, callback) {
-					// check whether link is nws using gfycat api & post content
-					var userbar = document.getElementsByTagName('h2')[0];
-					var postHTML = gfycatLink.parentNode.innerHTML;
-					// only check topics without NWS/NLS tags
-					if (!userbar.innerHTML.match(/N[WL]S/)) {				
-						if (nsfw || postHTML.match(/(n[wl]s)/i)) {
-							gfycatLink.className = 'nws_imgur';
-							callback(false);
-						}
-						else {
-							callback(true);
-						}
-					}
-					else {
-						callback(true);
-					}
-				};
-				
-				var embedOnHover = function(gfycatLink, url, width, height) {
-					// handle NWS videos
-					gfycatLink.className = 'nws_imgur';
-					gfycatLink.id = url;
-					gfycatLink.setAttribute('w', width);
-					gfycatLink.setAttribute('h', height);		
-					$(gfycatLink).hoverIntent(
-						function() {
-							// var that = this;
-							var color = $("table.message-body tr td.message").css("background-color");
-							if (this.className == "nws_imgur") {
-								$(this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
-										+ "background: " + color 
-										+ ";'><a id='" + url + '_embed'
-										+ "'class='embed_nws_imgur' href='##'>&nbsp<b>[Embed NWS Gfycat]</b></a></span>"));
-							}
-						}, function() {
-							// var that = this;
-							if (this.className == "nws_imgur") {
-								$(this).find("span").remove();
-							}
-						}
-					);
-				};
-				
-				var embed = function(placeholder) {
-					if (placeholder.className === 'imgur') {
-						// use placeholder element to embed gfycat video
-						var video = placeholder.getElementsByTagName('video')[0];
-						if (CHROMELL.config.show_gfycat_link) {
-							placeholder.getElementsByTagName('span')[0].style.display = 'inline';
-						}
-						placeholder.setAttribute('name', 'embedded');
-						// placeholder id is webm url
-						video.src = placeholder.id;
-						video.play();
-					}
-					else if (placeholder.className === 'nws_imgur') {
-						// create video element & embed gfycat
-						var video = document.createElement('video');
-						var width = placeholder.getAttribute('w');
-						var height = placeholder.getAttribute('h');				
-						video.setAttribute('width', width);
-						video.setAttribute('height', height);
-						video.setAttribute('name', 'embedded');
-						video.setAttribute('loop', true);
-						video.src = placeholder.id;				
-						placeholder.parentNode.replaceChild(video, placeholder);			
-						video.play();
-					}
-				};
-				
-				var pause = function() {
-					// pause all gfycat videos if document is hidden
-					if (document.hidden) {
-						var videos = document.getElementsByTagName('video');
-						var video;
-						for (var i = 0, len = videos.length; i < len; i++) {
-							video = videos[i];
-							if (video.src && !video.paused) {
-								video.pause();
-							}
-						}
-					}
-					else {
-						// Call loader method so that only visible gfycat videos are played
-						utils.gfycat.loader();
-					}
-				};			
 				
 				return {
 					loader: function() {
@@ -1995,15 +1670,14 @@
 								}
 							}
 							else if (imgurElement.tagName == 'A') {
-								if (imgurElement.getAttribute('name') == 'imgur_thumb') {					
-									var needThumbnail = true;
-									createPlaceholder(imgurElement, needThumbnail);			
+								if (imgurElement.getAttribute('name') == 'imgur_thumb') {
+									createPlaceholder('imgur', imgurElement, needThumbnail);			
 								} else {
-									createPlaceholder(imgurElement);
+									createPlaceholder('imgur', imgurElement);
 								}
 							}
 							else if (imgurElement.getAttribute('name') == 'placeholder') {
-								embed(imgurElement);
+								embed('imgur', imgurElement);
 							}
 							else if (imgurElement.getAttribute('name') == 'embedded'
 									&& imgurElement.getElementsByTagName('video')[0].paused) {
@@ -2018,8 +1692,9 @@
 			var youtube = function() {
 				// Contains methods for YouTube video embedding feature.
 				
-				var getVideoCode = function(href) {
-					var videoCode;				
+				var getVideoCode = function(anchor) {
+					var href = anchor.href;
+					var videoCode;
 					var videoCodeRegex = anchor.id.match(/^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/)				
 					if (videoCodeRegex && videoCodeRegex[2].length == 11) {
 						videoCode = videoCodeRegex[2];
@@ -2066,7 +1741,7 @@
 						var toEmbed = document.getElementById(anchor.id);
 						if (toEmbed.className == "youtube") {
 							var color = $("table.message-body tr td.message").css("background-color");		
-							var code = getVideoCode(toEmbed.href);
+							var code = getVideoCode(toEmbed);
 							var embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
 												+ "<a id='" + anchor.id + "' class='hide' href='#hide'>&nbsp<b>[Hide]</b></a></span>" 
 												+ "<br><div class='youtube'>" 
@@ -2876,7 +2551,7 @@
 							// TODO - Add Imgur embedding
 							else if (link.title.indexOf("gfycat.com/") > -1) {
 								if (CHROMELL.config.embed_gfycat || CHROMELL.config.embed_gfycat_thumbs) {
-									embed(link, 'gfycat');
+									embed(link, 'gfy');
 									gfycats = true;
 								}
 							}
@@ -3093,6 +2768,7 @@
 			}();						
 			
 			return {
+				embed: embed,
 				gfycat: gfycat,
 				imgur: imgur,
 				youtube: youtube,
