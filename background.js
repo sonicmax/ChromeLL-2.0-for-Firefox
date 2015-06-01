@@ -471,7 +471,7 @@ var background = {
 						};
 						
 						xhr.send();
-						// return true to prevent bug with sendResponse (See: https://code.google.com/p/chromium/issues/detail?id=343007)
+						// Return true so that we can use sendResponse asynchronously (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
 						return true;
 						break;
 					case "config":
