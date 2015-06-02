@@ -7,7 +7,8 @@ CHROMELL.background = (function() {
 	
 	var board = [];
 	var boards = {};
-	var drama = {};
+	var drama = {};	
+	var xhrCache = {};
 	var tabPorts = {};
 	var ignoratorInfo = {};
 	var scopeInfo = {};
@@ -342,16 +343,18 @@ CHROMELL.background = (function() {
 		}
 	};
 	
-	var getDrama = function(callback) {		
+	var getDrama = function(callback) {
 		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
 		var png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
 				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
 				+ 'DVmAAAAAElFTkSuQmCC';
-		var dramas;
 		
 		var request = {
 				url :	'http://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30',
-				withCredentials: true	
+				withCredentials: true,
+				// Dramalinks handles its own caching
+				ignoreCache: true
+				
 		};
 		
 		ajax(request, function(response, status) {
@@ -369,7 +372,7 @@ CHROMELL.background = (function() {
 				t = t.replace(/<script/gi, "<i");
 				t = t.replace(/(on)([A-Za-z]*)(=)/gi, "");
 				t = t.slice(t.indexOf("<!--- NEW STORIES GO HERE --->") + 29);
-				dramas = t.slice(0, t.indexOf("<!--- NEW STORIES END HERE --->"));
+				var dramas = t.slice(0, t.indexOf("<!--- NEW STORIES END HERE --->"));
 				t = t.slice(t.indexOf("<!--- CHANGE DRAMALINKS COLOR CODE HERE --->"));
 				t = t.slice(t.indexOf("{{") + 2);
 				var bgcol = t.slice(0, t.indexOf("}}"));
@@ -433,42 +436,68 @@ CHROMELL.background = (function() {
 			
 			if (callback) {				
 				callback(drama);
-			}		
+			}
 			
 		});
 	};
 	
-	
 	var ajax = function(request, callback) {
-		var xhr = new XMLHttpRequest();
+		// Check xhrCache before creating new XHR.
+		var url = request.url;
+		var currentTime = new Date().getTime();
 		
-		// Use GET for default value (as majority of requests will use this method)
-		var type = request.type || 'GET';
-		
-		xhr.open(type, request.url, true);
-		
-		if (request.auth) {
-			xhr.setRequestHeader('Authorization', request.auth);
-		}
-		if (request.withCredentials) {
-			xhr.withCredentials = "true";
+		if (!request.ignoreCache && xhrCache[url]
+				&& currentTime < xhrCache[url].refreshTime ) {
+			// Return cached response
+			callback(xhrCache[url].data);
+						
 		}
 		
-		xhr.onload = function() {
-			if (this.status === 200) {
-				callback(this.responseText);
+		else {
+			var xhr = new XMLHttpRequest();			
+			xhr.requestURL = url;
+			
+			// Use GET for default value (as majority of requests will use this method)
+			var type = request.type || 'GET';
+			
+			xhr.open(type, request.url, true);
+			
+			if (request.noCache) {
+				xhr.setRequestHeader('Cache-Control', 'no-cache');
 			}
-			else {
-				// Callback with false value so we know that request failed
-				callback(false, this.status);
+			if (request.auth) {
+				xhr.setRequestHeader('Authorization', request.auth);
+			}
+			if (request.withCredentials) {
+				xhr.withCredentials = "true";
 			}
 			
-		};
-		
-		xhr.send();
-	
+			xhr.onload = function() {
+				
+				if (this.status === 200) {
+					
+					if (!request.ignoreCache) {
+						// Cache response and check again after 24 hours
+						xhrCache[this.requestURL] = {
+							data: this.responseText,
+							refreshTime: currentTime + (86400 * 1000)
+						};
+					}
+					
+					callback(this.responseText);
+					
+				}
+				
+				else {
+					// Callback with false value so we know that request failed
+					callback(false, this.status);
+				}
+				
+			};
+			
+			xhr.send();		
+		}
 	};
-	
 	
 	var addListeners = function() {
 		chrome.tabs.onActivated.addListener(function(tab) {
@@ -508,20 +537,22 @@ CHROMELL.background = (function() {
 						
 						// Return true so that we can use sendResponse asynchronously (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
 						return true;
+						break;
 						
 					case "config":
 						// page script needs extension config.
-						CHROMELL.config = JSON.parse(localStorage['ChromeLL-Config']);
+						var config = JSON.parse(localStorage['ChromeLL-Config']);
 						if (request.sub) {
-							sendResponse({"data": CHROMELL.config[request.sub]});
+							sendResponse({"data": config[request.sub]});
 						} else if (request.tcs) {
 							var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
-							sendResponse({"data": CHROMELL.config, "tcs": tcs});
+							sendResponse({"data": config, "tcs": tcs});
 						} else {
-							sendResponse({"data": CHROMELL.config});
+							sendResponse({"data": config});
 						}
 						break;
-					case "save":
+						
+					case "save":					
 						// page script needs config save.
 						if (request.name === "tcs") {
 							localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
@@ -667,7 +698,8 @@ CHROMELL.background = (function() {
 	var getUserID = function() {
 		
 		var request = {
-				url: 'http://boards.endoftheinter.net/topics/LUE'
+				url: 'http://boards.endoftheinter.net/topics/LUE',
+				ignoreCache: true
 		};
 		
 		ajax(request, function(response) {
@@ -694,8 +726,10 @@ CHROMELL.background = (function() {
 	};
 	
 	var scrapeUserProfile = function(userID) {
+		
 		var request = {
-				url: "http://endoftheinter.net/profile.php?user=" + userID
+				url: "http://endoftheinter.net/profile.php?user=" + userID,				
+				ignoreCache: true
 		};
 		
 		console.log("User Profile = " + request.url);
