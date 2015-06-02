@@ -2,12 +2,20 @@ var CHROMELL = {};
 
 CHROMELL.config = {};
 
-chrome.runtime.sendMessage(
-		{
+CHROMELL.getConfig = function(callback) {
+	// Check whether CHROMELL.config is empty
+	if (Object.keys(CHROMELL.config).length === 0) {
+		chrome.runtime.sendMessage({
 				need: "config"
-		}, 
-				function(response) {
-					// NOTE: if this causes problems, we can access config synchronously using localStorage
-					CHROMELL.config = response.data;
-				}
-);
+			},
+			function(response) {
+				// Set config before executing callback function
+				CHROMELL.config = response.data;
+				callback();
+			}
+		);
+	}
+	else {
+		callback();
+	}
+};
