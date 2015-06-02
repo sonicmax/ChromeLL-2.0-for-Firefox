@@ -2317,7 +2317,8 @@
 						else {
 							// send quote to background page to be copied to clipboard
 							chrome.runtime.sendMessage({
-									"quote": output
+									need: "copy",
+									data: output
 							});				
 							utils.quote.notifyUser(evt.target);
 						}

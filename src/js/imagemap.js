@@ -293,9 +293,12 @@ var imagemap = function() {
 				src = src.replace(extensionToReplace[0], extension[0]);
 			}
 			// Create LLML img code string
-			clipboard.quote =  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />';
+			var request = {
+				need: 'copy',
+				data:  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />'
+			};
 			// Pass data to background page so we can copy it to clipboard
-			chrome.runtime.sendMessage(clipboard);
+			chrome.runtime.sendMessage(request);
 		}
 		// Always close popup after click event, even if user didn't click on an image
 		closePopup();

@@ -193,21 +193,6 @@ CHROMELL.background = (function() {
 		var textArea = backgroundPage.document.createElement("textarea");
 		textArea.id = "clipboard";
 		backgroundPage.document.body.appendChild(textArea);
-		chrome.runtime.onMessage.addListener(
-			// allows text content to be copied to clipboard from content scripts
-			function(request, sender, sendResponse) {
-				if (request.quote) {
-					var quote = request.quote;
-					var clipboard = document.getElementById('clipboard');
-					clipboard.value = quote;
-					clipboard.select();
-					document.execCommand("copy");
-					sendResponse({
-						clipboard: "Copied to clipboard."
-					});
-				}
-			}
-		);	
 	};
 	
 	var buildContextMenu = function() {
@@ -635,11 +620,18 @@ CHROMELL.background = (function() {
 								}
 						});	
 						break;
-					default:
-						if (CHROMELL.config.debug) {
-							console.log("Error in request listener - undefined parameter?", request);
-						}
+					
+					case "copy":
+						var clipboard = document.getElementById('clipboard');
+						clipboard.value = request.data;
+						clipboard.select();
+						document.execCommand("copy");
 						break;
+						
+					default:			
+						console.log("Error in request listener - undefined parameter?", request);
+						break;
+						
 				}
 			}
 		);
