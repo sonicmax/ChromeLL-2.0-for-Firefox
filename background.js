@@ -1,47 +1,61 @@
-var background = {
-	config: {},
-	board: [],
-	boards: {},
-	drama: {},
-	tabPorts: {},
-	ignoratorInfo: {},
-	scopeInfo: {},
-	imagemapCache: {},
-	// currentTab: '',
-	noIgnores: true,
-	init: function(defaultConfig) {
-		this.updateConfig(defaultConfig);
-		if (this.config.history_menubar_classic) {
-			this.boards['Misc.'] = {"ChromeLL Options":"%extension%options.html"};
-			if (this.config.sort_history) {				
-				this.boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php?b';
+// We have to set up separate namespaces for background and content scripts.
+var CHROMELL = {};
+
+CHROMELL.config = {};
+
+CHROMELL.background = (function() {
+	
+	var board = [];
+	var boards = {};
+	var drama = {};
+	var tabPorts = {};
+	var ignoratorInfo = {};
+	var scopeInfo = {};
+	var imagemapCache = {};
+	// var currentTab = '';
+	var noIgnores = true;	
+
+	var init = function(defaultConfig) {
+		updateConfig(defaultConfig);
+		
+		if (CHROMELL.config.history_menubar_classic) {
+			boards['Misc.'] = {"ChromeLL Options":"%extension%options.html"};
+			if (CHROMELL.config.sort_history) {				
+				boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php?b';
 			} else {
-				this.boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php';
+				boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php';
 			}
 		}
-		if (this.config.saved_tags) {
-			this.boards['Tags'] = this.config.saved_tags;
+		
+		if (CHROMELL.config.saved_tags) {
+			boards['Tags'] = CHROMELL.config.saved_tags;
 		}
-		if (this.config.context_menu) {
-			this.buildContextMenu();
+		
+		if (CHROMELL.config.context_menu) {
+			buildContextMenu();
 		}
+		
 		for (var i in allBg.activeListeners) {
 			// sets listeners for force_https, batch_uploader, etc
-			allBg.activeListeners[i] = this.config[i];
+			allBg.activeListeners[i] = CHROMELL.config[i];
 			console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
 		}	
-		allBg.init_listener(this.config);	
-		this.addListeners();
-		this.checkVersion();
-		this.omniboxSearch();
-		this.clipboardHandler();	
-		this.getUserID();
-		this.getDrama();
-		/*if (this.config.sync_cfg) {
-			this.checkSync();
+		
+		allBg.init_listeners(CHROMELL.config);
+		
+		addListeners();
+		
+		checkVersion();
+		omniboxSearch();
+		clipboardHandler();	
+		getUserID();
+		getDrama();
+		/*if (CHROMELL.config.sync_cfg) {
+			checkSync();
 		}*/
-	},
-	getDefaultConfig: function(callback) {
+	};	
+	
+	var getDefaultConfig = function(callback) {
 		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", defaultURL, true);
@@ -53,39 +67,41 @@ var background = {
 			}
 		}
 		xhr.send();	
-	},
-	updateConfig: function(defaultConfig) {
+	};
+	
+	var updateConfig = function(defaultConfig) {
 		if (localStorage['ChromeLL-Config'] == undefined) {
 			localStorage['ChromeLL-Config'] = defaultConfig;
-			background.config = defaultConfig;
+			config = defaultConfig;
 		}
 		if (localStorage['ChromeLL-TCs'] == undefined) {
 			localStorage['ChromeLL-TCs'] = "{}";
 		}
 		var configJS = JSON.parse(defaultConfig);
-		background.config = JSON.parse(localStorage['ChromeLL-Config']);
+		config = JSON.parse(localStorage['ChromeLL-Config']);
 		for (var i in configJS) {
 			// if this variable does not exist, set it to the default
-			if (background.config[i] === undefined) {
-				background.config[i] = configJS[i];
-				if (background.config.debug) {
-					console.log("upgrade diff!", i, background.config[i]);
+			if (config[i] === undefined) {
+				config[i] = configJS[i];
+				if (config.debug) {
+					console.log("upgrade diff!", i, config[i]);
 				}
 			}
 		}
 		// beta versions stored TC cache in the global config. Delete if found
-		if (background.config.tcs) {
-			delete background.config.tcs;
+		if (config.tcs) {
+			delete config.tcs;
 		}
 		// save the config, just in case it was updated
-		localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
-	},
-	checkVersion: function() {
+		localStorage['ChromeLL-Config'] = JSON.stringify(config);
+	};
+	
+	var checkVersion = function() {
 		var app = chrome.app.getDetails();
 		// notify user if chromeLL has been updated
 		if (localStorage['ChromeLL-Version'] != app.version 
 				&& localStorage['ChromeLL-Version'] != undefined 
-				&& this.config.sys_notifications) {
+				&& CHROMELL.config.sys_notifications) {
 			chrome.notifications.create('popup', {
 					type: "basic",
 					title: "ChromeLL has been updated",
@@ -103,7 +119,7 @@ var background = {
 						}
 					});
 					setTimeout(function() {
-						background.clearNotification(id);
+						clearNotification(id);
 					}, 5000);
 				}
 			);
@@ -113,34 +129,35 @@ var background = {
 		if (localStorage['ChromeLL-Version'] == undefined) {
 			localStorage['ChromeLL-Version'] = app.version;
 		}
-	},
-	checkSync: function() {
+	};
+	
+	var checkSync = function() {
 		chrome.storage.sync.get('config', function(syncData) {
-			if (syncData.config && syncData.config.last_saved > background.config.last_saved) {
+			if (syncData.config && syncData.config.last_saved > config.last_saved) {
 				// synced config file is more recent than version on computer
 				for (var keyName in syncData.config) {					
-					background.config[keyName] = syncData.config[keyName];					
+					config[keyName] = syncData.config[keyName];					
 				}
-				localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
+				localStorage['ChromeLL-Config'] = JSON.stringify(config);
 				var bSplit = [];
 				for (var k in split) {
-					if (background.config[split[k]]) {
+					if (config[split[k]]) {
 						bSplit.push(k);
 					}
 				}
 				chrome.storage.sync.get(bSplit, function(syncConfig) {
 					for (var l in syncConfig) {
-						background.config[l] = syncConfig[l];
+						config[l] = syncConfig[l];
 					}
-					localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
+					localStorage['ChromeLL-Config'] = JSON.stringify(config);
 				});
 			}
 			
-			else if (!syncData.config || syncData.config.last_saved < background.config.last_saved) {
+			else if (!syncData.config || syncData.config.last_saved < config.last_saved) {
 				var localConfig = JSON.parse(localStorage['ChromeLL-Config']);
 				var toSet = {};
 				for (var i in split) {
-					if (background.config[split[i]]) {
+					if (config[split[i]]) {
 						toSet[i] = localConfig[i];
 					}
 					delete localConfig[i];
@@ -169,8 +186,9 @@ var background = {
 				chrome.storage.sync.set(toSet);				
 			}
 		});
-	},
-	clipboardHandler: function() {
+	};
+	
+	var clipboardHandler = function() {
 		var backgroundPage = chrome.extension.getBackgroundPage();
 		var textArea = backgroundPage.document.createElement("textarea");
 		textArea.id = "clipboard";
@@ -190,8 +208,9 @@ var background = {
 				}
 			}
 		);	
-	},
-	buildContextMenu: function() {
+	};
+	
+	var buildContextMenu = function() {
 		// imageTransloader function is located in transloader.js
 		chrome.contextMenus.create({
 			"title": "Transload image",
@@ -200,7 +219,8 @@ var background = {
 			},
 			"contexts": ["image"]
 		});
-		if (this.config.enable_image_rename) {
+		
+		if (CHROMELL.config.enable_image_rename) {
 			chrome.contextMenus.create({
 				"title": "Rename and transload image",
 				"onclick": function(info) {
@@ -209,59 +229,66 @@ var background = {
 				"contexts": ["image"]
 			});
 		}
+		
 		chrome.contextMenus.create({
 			"title": "Search LUE",
-			"onclick": this.contextMenu.searchLUE,
+			"onclick": contextMenu.searchLUE,
 			"contexts": ["selection"]
 		});
-		if (this.config.eti_bash) {
+		
+		if (CHROMELL.config.eti_bash) {
 			chrome.contextMenus.create({
 				"title": "Submit to ETI Bash",
-				"onclick": this.contextMenu.bashHighlight,
+				"onclick": contextMenu.bashHighlight,
 				"documentUrlPatterns": ["*://boards.endoftheinter.net/*"],
 				"contexts": ["selection"]
 			});
 		}
-		if (this.config.copy_in_context) {
+		
+		if (CHROMELL.config.copy_in_context) {
 			chrome.contextMenus.create({
-				"title": "Copy img code",
-				"onclick": this.contextMenu.imageCopy,
+				"title": "Copy IMG code",
+				"onclick": contextMenu.imageCopy,
 				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
 				"contexts": ["image"]
 			});
 		}		
-		if (!this.config.simple_context_menu) {
+		
+		if (!CHROMELL.config.simple_context_menu) {
 			chrome.contextMenus.create({
 				"title": "View image map",
-				"onclick": this.contextMenu.imageMap,
+				"onclick": contextMenu.imageMap,
 				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
 				"contexts": ["image"]
 			});
-			for (var i in this.boards) {
-				if (this.boards[i] != this.boards[0]) {
+			for (var i in boards) {
+				
+				if (boards[i] != boards[0]) {
 					chrome.contextMenus.create({
 						"type": "separator",
 						"contexts": ["page", "image"]
 					});
 				}
-				for (var j in this.boards[i]) {
+				
+				for (var j in boards[i]) {
 					var id = chrome.contextMenus.create({
 						"title": j,
-						"onclick": this.contextMenu.handleContext,
+						"onclick": contextMenu.handleContext,
 						"contexts": ["page", "image"]
 					});					
-					this.board[id] = this.boards[i][j];
+					board[id] = boards[i][j];
 				}
 			}
 		}
-	},
-	contextMenu: {
+	};
+	
+	var contextMenu = {
 		imageMap: function(info) {
 			var str = info.srcUrl;
 			var tokens = str.split('/').slice(-2);
 			var imageURL = tokens.join('/');
 			var imageMap = "http://images.endoftheinter.net/imap/" + imageURL;
-			if (background.config.imagemap_new_tab) {
+			if (config.imagemap_new_tab) {
 				chrome.tabs.create({
 						url: imageMap
 				});
@@ -311,7 +338,7 @@ var background = {
 			});
 		},
 		handleContext: function(info) {
-			var url = background.board[info.menuItemId];			
+			var url = board[info.menuItemId];			
 			if (!url.match('%extension%')) {
 				if (url.match('history.php')) {		
 					// no changes necessary
@@ -328,9 +355,10 @@ var background = {
 				"url": url
 			});			
 		}
-	},
-	getDrama: function(callback) {
-		if (background.config.debug) {
+	};
+	
+	var getDrama = function(callback) {
+		if (config.debug) {
 			console.log('fetching dramalinks from wiki...');
 		}
 		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
@@ -410,43 +438,44 @@ var background = {
 						+ "</font></span><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
 						+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";	
 				}	
-				background.drama.txt = dramas;
-				background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));
+				drama.txt = dramas;
+				drama.time = parseInt(new Date().getTime() + (1800 * 1000));
 				if (callback) {
-					callback(background.drama);
+					callback(drama);
 				}
 			}
 			if (xhr.readyState == 4 && xhr.status == 404) {
 				// 404 error occurs if user has logged into ETI using multiple IP addresses
-				background.drama.txt = '<a id="retry" href="#">Error loading Dramalinks. Click to retry...</a>';
+				drama.txt = '<a id="retry" href="#">Error loading Dramalinks. Click to retry...</a>';
 			}
 		}
-	},
-	addListeners: function() {
+	};
+	
+	var addListeners = function() {
 		chrome.tabs.onActivated.addListener(function(tab) {
-			if (!background.tabPorts[tab.tabId]) {
+			if (!tabPorts[tab.tabId]) {
 				return;
 			}
 			else {
-				background.tabPorts[tab.tabId].postMessage({
+				tabPorts[tab.tabId].postMessage({
 					action: 'ignorator_update'
 				});
 			}
 		});
 		
 		chrome.tabs.onRemoved.addListener(function(tab) {
-			if (background.tabPorts[tab]) {				
-				delete background.tabPorts[tab];
-				delete background.ignoratorInfo[tab];
-				delete background.scopeInfo[tab];
+			if (tabPorts[tab]) {				
+				delete tabPorts[tab];
+				delete ignoratorInfo[tab];
+				delete scopeInfo[tab];
 			}
 		});
 		
 		chrome.runtime.onConnect.addListener(function(port) {
-			background.tabPorts[port.sender.tab.id] = {};
-			background.tabPorts[port.sender.tab.id] = port;
-			background.tabPorts[port.sender.tab.id].onMessage.addListener(function(msg) {
-				background.handle.ignoratorUpdate.call(background, port.sender.tab.id, msg);
+			tabPorts[port.sender.tab.id] = {};
+			tabPorts[port.sender.tab.id] = port;
+			tabPorts[port.sender.tab.id].onMessage.addListener(function(msg) {
+				eventHandlers.ignoratorUpdate(port.sender.tab.id, msg);
 			});
 		});
 		
@@ -457,32 +486,35 @@ var background = {
 			function(request, sender, sendResponse) {				
 				switch(request.need) {
 					case "xhr":
-						xhr.open("GET", request.url, true);		
+						// Use GET for default value
+						var type = request.type || 'GET';
+						
+						xhr.open(type, request.url, true);		
 						
 						if (request.auth) {
 							xhr.setRequestHeader('Authorization', request.auth);
 						}
 						
 						xhr.onload = function() {
-							if (this.status === 200) {
-								sendResponse(this.responseText);
+							if (status === 200) {
+								sendResponse(responseText);
 							}					
 						};
 						
 						xhr.send();
-						// Return true so that we can use sendResponse asynchronously (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
+						// return true to prevent bug with sendResponse (See: https://code.google.com/p/chromium/issues/detail?id=343007)
 						return true;
 						break;
 					case "config":
 						// page script needs extension config.
-						background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
+						CHROMELL.config = JSON.parse(localStorage['ChromeLL-Config']);
 						if (request.sub) {
-							sendResponse({"data": background.cfg[request.sub]});
+							sendResponse({"data": CHROMELL.config[request.sub]});
 						} else if (request.tcs) {
 							var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
-							sendResponse({"data": background.cfg, "tcs": tcs});
+							sendResponse({"data": CHROMELL.config, "tcs": tcs});
 						} else {
-							sendResponse({"data": background.cfg});
+							sendResponse({"data": CHROMELL.config});
 						}
 						break;
 					case "save":
@@ -490,11 +522,11 @@ var background = {
 						if (request.name === "tcs") {
 							localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
 						} else {
-							background.cfg[request.name] = request.data;
-							background.cfg.last_saved = new Date().getTime();
-							localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
+							CHROMELL.config[request.name] = request.data;
+							CHROMELL.config.last_saved = new Date().getTime();
+							localStorage['ChromeLL-Config'] = JSON.stringify(CHROMELL.config);
 						}
-						if (background.cfg.debug) {
+						if (CHROMELL.config.debug) {
 							console.log('saving ', request.name, request.data);
 						}
 						break;
@@ -506,31 +538,31 @@ var background = {
 							iconUrl: "src/images/lueshi_48.png"
 						},
 						function (id) {
-							if (!background.cfg.clear_notify) {
-								this.cfg.clear_notify = "5";
+							if (!CHROMELL.config.clear_notify) {
+								CHROMELL.config.clear_notify = "5";
 							}
-							if (background.cfg.clear_notify === "0") {
+							if (CHROMELL.config.clear_notify === "0") {
 								return;
 							}
 							setTimeout(function() {
-								background.clearNotification(id);
-							}, parseInt(background.cfg.clear_notify, 10) * 1000);
+								clearNotification(id);
+							}, parseInt(CHROMELL.config.clear_notify, 10) * 1000);
 						});
 						break;	
 					case "dramalinks":
 						var time = parseInt(new Date().getTime());
-						if (background.drama.time && (time < background.drama.time)){
-							if (background.cfg.debug) {
-								console.log('returning cached dramalinks. cache exp: ' + background.drama.time + ' current: ' + time);
+						if (drama.time && (time < drama.time)){
+							if (CHROMELL.config.debug) {
+								console.log('returning cached dramalinks. cache exp: ' + drama.time + ' current: ' + time);
 							}
-							sendResponse({"data": background.drama.txt});
+							sendResponse({"data": drama.txt});
 						} else {
-							sendResponse({"data": background.drama.txt});
-							background.getDrama();
+							sendResponse({"data": drama.txt});
+							getDrama();
 						}
 						break;
 					case "insertcss":
-						if (background.cfg.debug) {
+						if (CHROMELL.config.debug) {
 							console.log('inserting css ', request.file);
 						}
 						chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
@@ -539,36 +571,36 @@ var background = {
 						});
 						break;
 					case "opentab":
-						if (background.cfg.debug) {
+						if (CHROMELL.config.debug) {
 							console.log('opening tab ', request.url);
 						}
 						chrome.tabs.create({url: request.url});
 						break;
 					case "noIgnores":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								sendResponse({"noignores": background.noIgnores});										
+								sendResponse({"noignores": noIgnores});										
 						});
 						return true;								
 					case "getIgnored":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								sendResponse({
-										"ignorator": background.ignoratorInfo[tabs[0].id], 
-										"scope": background.scopeInfo[tabs[0].id]}
+										"ignorator": ignoratorInfo[tabs[0].id], 
+										"scope": scopeInfo[tabs[0].id]}
 								);
 						});		
 						return true;									
 					case "showIgnorated":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								background.tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
+								tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
 						});		
-						if (background.cfg.debug) {
+						if (CHROMELL.config.debug) {
 							console.log('showing hidden data', request);
 						}
 						return true;
 					case "options":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								// check whether bg script can send messages to current tab
-								if (background.tabPorts[tabs[0].id] && !background.cfg.options_window) {
+								if (tabPorts[tabs[0].id] && !CHROMELL.config.options_window) {
 									// open options in same tab
 									chrome.tabs.sendMessage(tabs[0].id, {
 										action: "showOptions"
@@ -585,20 +617,21 @@ var background = {
 						});	
 						break;
 					default:
-						if (background.cfg.debug) {
+						if (CHROMELL.config.debug) {
 							console.log("Error in request listener - undefined parameter?", request);
 						}
 						break;
 				}
 			}
 		);
-	},
-	handle: {
+	};
+	
+	var eventHandlers = {
 		ignoratorUpdate: function(tab, msg) {
 			switch (msg.action) {
 				case "ignorator_update":
-					this.ignoratorInfo[tab] = msg.ignorator;
-					this.scopeInfo[tab] = msg.scope;
+					ignoratorInfo[tab] = msg.ignorator;
+					scopeInfo[tab] = msg.scope;
 					if (msg.ignorator.total_ignored > 0) {
 						chrome.browserAction.setBadgeBackgroundColor({
 							tabId: tab,
@@ -608,9 +641,9 @@ var background = {
 							tabId: tab,
 							text: "" + msg.ignorator.total_ignored
 						});							
-						this.noIgnores = false;
+						noIgnores = false;
 					} else if (msg.ignorator.total_ignored == 0) {
-						this.noIgnores = true;
+						noIgnores = true;
 					}
 					break;
 				default:
@@ -618,8 +651,9 @@ var background = {
 					break;
 			}
 		}
-	},	
-	getUserID: function() {
+	};
+	
+	var getUserID = function() {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", "http://boards.endoftheinter.net/topics/LUE", true);
@@ -638,13 +672,14 @@ var background = {
 						.match(/\?user=([0-9]+)/)[1];
 					config.user_id = userID;
 					localStorage['ChromeLL-Config'] = JSON.stringify(config);
-					background.scrapeUserProfile(userID);
+					scrapeUserProfile(userID);
 				}
 			}
 		}
 		xhr.send();
-	},
-	scrapeUserProfile: function(userID) {
+	};
+	
+	var scrapeUserProfile = function(userID) {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
 		var url = "http://endoftheinter.net/profile.php?user=" + userID;
 		var xhr = new XMLHttpRequest();
@@ -688,16 +723,18 @@ var background = {
 			}
 		}
 		xhr.send();
-	},
-	clearNotification: function(ID) {
+	};
+	
+	var clearNotification = function(ID) {
 		chrome.notifications.clear(ID,
 			function() {
 				// empty callback - method requires function to be passed as 2nd parameter,
 				// but we just want to clear the notification
 			}
 		);
-	},
-	omniboxSearch: function() {
+	};
+	
+	var omniboxSearch = function() {
 		var arrayForSearch = [];
 		var tags, tag; 
 		var tagsForSearch = '';
@@ -734,9 +771,10 @@ var background = {
 				});
 			}
 		});
-	}
-};
-
-background.getDefaultConfig(function(config) {
-	background.init.call(background, config);
-});
+	};
+		
+	getDefaultConfig(function(config) {
+		init(config);
+	});
+	
+})();
