@@ -41,61 +41,61 @@ CHROMELL.background = (function() {
 			console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
 		}	
 		
-		allBg.init_listeners(CHROMELL.config);
-		
-		addListeners();
-		
+		allBg.init_listeners(CHROMELL.config);		
+		addListeners();	
 		checkVersion();
 		omniboxSearch();
 		clipboardHandler();	
 		getUserID();
 		getDrama();
+		
 		/*if (CHROMELL.config.sync_cfg) {
 			checkSync();
 		}*/
 	};	
 	
-	var getDefaultConfig = function(callback) {
-		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", defaultURL, true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var temp = JSON.parse(xhr.responseText);
+	var getDefaultConfig = function(callback) {			
+		var request = {
+				url: chrome.extension.getURL('/src/json/defaultconfig.json')
+		};
+		
+		ajax(request, function(response) {
+				var temp = JSON.parse(response);
 				var defaultConfig = JSON.stringify(temp);
-				callback(defaultConfig);
-			}
-		}
-		xhr.send();	
+				callback(defaultConfig);			
+		});
+		
 	};
 	
 	var updateConfig = function(defaultConfig) {
 		if (localStorage['ChromeLL-Config'] == undefined) {
 			localStorage['ChromeLL-Config'] = defaultConfig;
-			config = defaultConfig;
+			CHROMELL.config = defaultConfig;
 		}
 		if (localStorage['ChromeLL-TCs'] == undefined) {
 			localStorage['ChromeLL-TCs'] = "{}";
 		}
 		var configJS = JSON.parse(defaultConfig);
-		config = JSON.parse(localStorage['ChromeLL-Config']);
+		CHROMELL.config = JSON.parse(localStorage['ChromeLL-Config']);
 		for (var i in configJS) {
 			// if this variable does not exist, set it to the default
-			if (config[i] === undefined) {
-				config[i] = configJS[i];
-				if (config.debug) {
-					console.log("upgrade diff!", i, config[i]);
+			if (CHROMELL.config[i] === undefined) {
+				CHROMELL.config[i] = configJS[i];
+				if (CHROMELL.config.debug) {
+					console.log("upgrade diff!", i, CHROMELL.config[i]);
 				}
 			}
 		}
+		
 		// beta versions stored TC cache in the global config. Delete if found
-		if (config.tcs) {
-			delete config.tcs;
+		if (CHROMELL.config.tcs) {
+			delete CHROMELL.config.tcs;
 		}
+		
 		// save the config, just in case it was updated
-		localStorage['ChromeLL-Config'] = JSON.stringify(config);
+		localStorage['ChromeLL-Config'] = JSON.stringify(CHROMELL.config);
 	};
-	
+		
 	var checkVersion = function() {
 		var app = chrome.app.getDetails();
 		// notify user if chromeLL has been updated
@@ -357,22 +357,21 @@ CHROMELL.background = (function() {
 		}
 	};
 	
-	var getDrama = function(callback) {
-		if (config.debug) {
-			console.log('fetching dramalinks from wiki...');
-		}
+	var getDrama = function(callback) {		
 		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
 		var png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
 				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
 				+ 'DVmAAAAAElFTkSuQmCC';
 		var dramas;
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "http://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30", true);
-		xhr.withCredentials = "true";
-		xhr.send();
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var t = xhr.responseText;
+		
+		var request = {
+				url :	'http://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30',
+				withCredentials: true	
+		};
+		
+		ajax(request, function(response, status) {
+			if (response) {
+				var t = response;
 				t = t.replace(/\[\[(.+?)(\|(.+?))\]\]/g, 
 						"<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$3</a>");
 				t = t.replace(/\[\[(.+?)\]\]/g, 
@@ -440,16 +439,51 @@ CHROMELL.background = (function() {
 				}	
 				drama.txt = dramas;
 				drama.time = parseInt(new Date().getTime() + (1800 * 1000));
-				if (callback) {
-					callback(drama);
-				}
 			}
-			if (xhr.readyState == 4 && xhr.status == 404) {
-				// 404 error occurs if user has logged into ETI using multiple IP addresses
+			
+			else if (status === 404) {
+				// 404 error occurs if user has logged into ETI using multiple IP addresses (redirects to defunct luelinks.net URL)
 				drama.txt = '<a id="retry" href="#">Error loading Dramalinks. Click to retry...</a>';
 			}
-		}
+			
+			if (callback) {				
+				callback(drama);
+			}		
+			
+		});
 	};
+	
+	
+	var ajax = function(request, callback) {
+		var xhr = new XMLHttpRequest();
+		
+		// Use GET for default value (as majority of requests will use this method)
+		var type = request.type || 'GET';
+		
+		xhr.open(type, request.url, true);
+		
+		if (request.auth) {
+			xhr.setRequestHeader('Authorization', request.auth);
+		}
+		if (request.withCredentials) {
+			xhr.withCredentials = "true";
+		}
+		
+		xhr.onload = function() {
+			if (this.status === 200) {
+				callback(this.responseText);
+			}
+			else {
+				// Callback with false value so we know that request failed
+				callback(false, this.status);
+			}
+			
+		};
+		
+		xhr.send();
+	
+	};
+	
 	
 	var addListeners = function() {
 		chrome.tabs.onActivated.addListener(function(tab) {
@@ -479,32 +513,17 @@ CHROMELL.background = (function() {
 			});
 		});
 		
-		// Create XHR object outside of function so it can be reused
-		var xhr = new XMLHttpRequest();
-		
 		chrome.runtime.onMessage.addListener(
 			function(request, sender, sendResponse) {				
 				switch(request.need) {
-					case "xhr":
-						// Use GET for default value
-						var type = request.type || 'GET';
+					case "xhr":					
+						ajax(request, function(response) {							
+							sendResponse(response);
+						});
 						
-						xhr.open(type, request.url, true);		
-						
-						if (request.auth) {
-							xhr.setRequestHeader('Authorization', request.auth);
-						}
-						
-						xhr.onload = function() {
-							if (status === 200) {
-								sendResponse(responseText);
-							}					
-						};
-						
-						xhr.send();
-						// return true to prevent bug with sendResponse (See: https://code.google.com/p/chromium/issues/detail?id=343007)
+						// Return true so that we can use sendResponse asynchronously (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
 						return true;
-						break;
+						
 					case "config":
 						// page script needs extension config.
 						CHROMELL.config = JSON.parse(localStorage['ChromeLL-Config']);
@@ -654,75 +673,78 @@ CHROMELL.background = (function() {
 	};
 	
 	var getUserID = function() {
-		var config = JSON.parse(localStorage['ChromeLL-Config']);
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "http://boards.endoftheinter.net/topics/LUE", true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var html = document.createElement('html');
-				html.innerHTML = xhr.responseText;
-				if (html.getElementsByTagName('title')[0]
-						.innerText.indexOf("Das Ende des Internets") > -1) {
-					// user is logged out
-					return;
-				} 
-				else {
-					var userID = html.getElementsByClassName('userbar')[0]
-						.getElementsByTagName('a')[0].href
-						.match(/\?user=([0-9]+)/)[1];
-					config.user_id = userID;
-					localStorage['ChromeLL-Config'] = JSON.stringify(config);
-					scrapeUserProfile(userID);
-				}
+		
+		var request = {
+				url: 'http://boards.endoftheinter.net/topics/LUE'
+		};
+		
+		ajax(request, function(response) {
+			
+			var html = document.createElement('html');
+			html.innerHTML = response;
+			
+			if (html.getElementsByTagName('title')[0]
+					.innerText.indexOf("Das Ende des Internets") > -1) {
+				// user is logged out
+				return;
 			}
-		}
-		xhr.send();
+			
+			else {
+				var userID = html.getElementsByClassName('userbar')[0]
+					.getElementsByTagName('a')[0].href
+					.match(/\?user=([0-9]+)/)[1];
+				CHROMELL.config.user_id = userID;
+				localStorage['ChromeLL-Config'] = JSON.stringify(CHROMELL.config);
+				scrapeUserProfile(userID);
+			}
+		
+		});
 	};
 	
 	var scrapeUserProfile = function(userID) {
-		var config = JSON.parse(localStorage['ChromeLL-Config']);
-		var url = "http://endoftheinter.net/profile.php?user=" + userID;
-		var xhr = new XMLHttpRequest();
-		console.log("User Profile = " + url);
-		xhr.open("GET", url, true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var adminTags, modTags, isAdmin, isMod;
-				var html = document.createElement('html');
-				html.innerHTML = xhr.responseText;
-				var adminArray = [];
-				var modArray = [];
-				var tagArray = [];
-				var tds = html.getElementsByTagName("td");
-				for (var i = 0; i < tds.length; i++) {
-					var td = tds[i];
-					if (td.innerText.indexOf("Administrator of") > -1) {
-						var adminTags = tds[i + 1].getElementsByTagName('a');
-						isAdmin = true;
-					}
-					if (td.innerText.indexOf("Moderator of") > -1) {
-						var modTags = tds[i + 1].getElementsByTagName('a');
-						isMod = true;
-					}
+		var request = {
+				url: "http://endoftheinter.net/profile.php?user=" + userID
+		};
+		
+		console.log("User Profile = " + request.url);
+
+		ajax(request, function(response) {
+			
+			var adminTags, modTags, isAdmin, isMod;
+			var html = document.createElement('html');
+			html.innerHTML = response;
+			var adminArray = [];
+			var modArray = [];
+			var tagArray = [];
+			var tds = html.getElementsByTagName("td");
+			for (var i = 0; i < tds.length; i++) {
+				var td = tds[i];
+				if (td.innerText.indexOf("Administrator of") > -1) {
+					var adminTags = tds[i + 1].getElementsByTagName('a');
+					isAdmin = true;
 				}
-				if (isAdmin) {
-					adminArray = Array.prototype.slice.call(adminTags);
+				if (td.innerText.indexOf("Moderator of") > -1) {
+					var modTags = tds[i + 1].getElementsByTagName('a');
+					isMod = true;
 				}
-				if (isMod) {
-					modArray = Array.prototype.slice.call(modTags);
-				}
-				tagArray = adminArray.concat(modArray);
-				for (var i = 0, len = tagArray.length; i < len; i++) {
-					var tag = tagArray[i].innerText;
-					tagArray[i] = tag;
-				}
-				console.log(tagArray);
-				config.tag_admin = tagArray;
-				localStorage['ChromeLL-Config'] = JSON.stringify(config);
-				console.log("scraped profile for tag information");
 			}
-		}
-		xhr.send();
+			if (isAdmin) {
+				adminArray = Array.prototype.slice.call(adminTags);
+			}
+			if (isMod) {
+				modArray = Array.prototype.slice.call(modTags);
+			}
+			tagArray = adminArray.concat(modArray);
+			for (var i = 0, len = tagArray.length; i < len; i++) {
+				var tag = tagArray[i].innerText;
+				tagArray[i] = tag;
+			}
+			console.log(tagArray);
+			CHROMELL.config.tag_admin = tagArray;
+			localStorage['ChromeLL-Config'] = JSON.stringify(CHROMELL.config);
+			console.log("scraped profile for tag information");
+			
+		});
 	};
 	
 	var clearNotification = function(ID) {
@@ -773,8 +795,6 @@ CHROMELL.background = (function() {
 		});
 	};
 		
-	getDefaultConfig(function(config) {
-		init(config);
-	});
+	getDefaultConfig(init);	
 	
 })();
