@@ -11,11 +11,11 @@ CHROMELL.getConfig = function(callback) {
 			function(response) {
 				// Set config before executing callback function
 				CHROMELL.config = response.data;
-				callback();
+				callback(CHROMELL.config);
 			}
 		);
 	}
 	else {
-		callback();
+		callback(CHROMELL.config);
 	}
 };
