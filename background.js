@@ -133,60 +133,26 @@ CHROMELL.background = (function() {
 	};
 	
 	var checkSync = function() {
-		chrome.storage.sync.get('config', function(syncData) {
-			if (syncData.config && syncData.config.last_saved > config.last_saved) {
-				// synced config file is more recent than version on computer
-				for (var keyName in syncData.config) {					
-					config[keyName] = syncData.config[keyName];					
+		// TODO: Some parts of config should be ignored - user ID, list of tags from profile, etc
+		chrome.storage.sync.get('config', function(syncConfig) {
+			
+			if (syncConfig && syncConfig.last_saved > CHROMELL.config.last_saved) {
+				// Replace local config with synced version
+				for (var key in syncConfig) {
+					CHROMELL.config[key] = syncConfig[key];					
 				}
-				localStorage['ChromeLL-Config'] = JSON.stringify(config);
-				var bSplit = [];
-				for (var k in split) {
-					if (config[split[k]]) {
-						bSplit.push(k);
-					}
-				}
-				chrome.storage.sync.get(bSplit, function(syncConfig) {
-					for (var l in syncConfig) {
-						config[l] = syncConfig[l];
-					}
-					localStorage['ChromeLL-Config'] = JSON.stringify(config);
-				});
 			}
 			
-			else if (!syncData.config || syncData.config.last_saved < config.last_saved) {
-				var localConfig = JSON.parse(localStorage['ChromeLL-Config']);
-				var toSet = {};
-				for (var i in split) {
-					if (config[split[i]]) {
-						toSet[i] = localConfig[i];
-					}
-					delete localConfig[i];
-				}
-				toSet.config = localConfig;
-				for (var i in toSet) {
-					var f = function(v) {
-						chrome.storage.sync.getBytesInUse(v, function(use) {
-							// chrome.storage api allows 8,192 bytes per item
-							if (use > 8192) {
-								var sp = Math.ceil(use / 8192);
-								var c = 0;
-								for (var j in toSet[v]) {
-									if (!toSet[v + (c % sp)]) {
-										toSet[v + (c % sp)] = {};
-									}
-									toSet[v + (c % sp)][j] = toSet[v][j];
-									c++;
-								}
-								delete toSet[v];
-							}
-						});
-					}
-					f(i);
-				}
-				chrome.storage.sync.set(toSet);				
+			else if (Object.keys(syncConfig).length === 0 
+					|| syncConfig.last_saved < CHROMELL.config.last_saved) {
+				// Sync local config
+				chrome.storage.sync.set({
+						'config': CHROMELL.config 
+				});			
 			}
+			
 		});
+		
 	};
 	
 	var clipboardHandler = function() {
