@@ -133,22 +133,115 @@ CHROMELL.background = (function() {
 	};
 	
 	var checkSync = function() {
-		// TODO: Some parts of config should be ignored - user ID, list of tags from profile, etc
-		chrome.storage.sync.get('config', function(syncConfig) {
+		
+		var split = function(object) {
+			var totalBytes = 0;
+			var sectionSize = 0;
+			var sectionIndex = 0;
+			var splitKeys = {};
+			var keysToSplit = [];		
+			var maxSize = chrome.storage.sync.QUOTA_BYTES_PER_ITEM;
 			
-			if (syncConfig && syncConfig.last_saved > CHROMELL.config.last_saved) {
-				// Replace local config with synced version
-				for (var key in syncConfig) {
-					CHROMELL.config[key] = syncConfig[key];					
+			for (var key in object) {	
+			
+			/*	
+			 *	Size of item is measured by the "JSON stringification of its value plus its key length",
+			 *	so we also need to add 2 to account for quotes added by JSON.stringify method
+			 *
+			 *	(https://developer.chrome.com/extensions/storage#property-sync)					
+			 */					
+				
+				var item = object[key];				
+				var size = key.length + 2;
+				
+				if (item instanceof Object) {
+					var objectString = JSON.stringify(item);
+					size += objectString.length;
 				}
+				
+				else {
+					size += item.toString().length;
+				}
+				
+				if (sectionSize + size > maxSize) {
+					// Addition of key-value pair would exceed maxSize, so store existing values &
+					// start new section of split object
+					splitKeys['config_' + sectionIndex] = {};
+					splitKeys['config_' + sectionIndex] = createNewSection(object, keysToSplit);
+					
+					// Add size of last completed section to totalBytes.
+					totalBytes += sectionSize;
+
+					// Start new section.
+					sectionIndex++;							
+					sectionSize = 0;
+					keysToSplit.length = 0;								
+				}
+				
+				// If key fits in current section, we always want to add its size/value to the cache.
+				// If key doesn't fit, a new section has already been created and we should do this anyway.
+				sectionSize += size;
+				keysToSplit.push(key);
 			}
 			
-			else if (Object.keys(syncConfig).length === 0 
-					|| syncConfig.last_saved < CHROMELL.config.last_saved) {
-				// Sync local config
-				chrome.storage.sync.set({
-						'config': CHROMELL.config 
-				});			
+			// Check for any keys that haven't been accounted for yet
+			if (keysToSplit.length > 0) {
+				splitKeys['config_' + sectionIndex] = createNewSection(object, keysToSplit);
+				totalBytes += sectionSize;
+			}
+
+			return splitKeys;
+		};
+		
+		var createNewSection = function(source, keys) {
+			// Creates new object using a source object and an array of keys to include.
+			var newSection = {};			
+			for (var i = 0, len = keys.length; i < len; i++) {
+				var key = keys[i];
+				newSection[key] = source[key];														
+			}
+			return newSection;
+		};
+		
+		chrome.storage.sync.get(null, function(data) {
+			var configFromSync = data.config;
+			var lastSync = data.last_sync;			
+	
+			if (lastSync > CHROMELL.config.last_saved) {
+				// Replace local config with synced version
+				for (var section in data) {
+					if (section.match(/config/)) {
+						var configSection = data[section];
+						for (var key in configSection) {
+							CHROMELL.config[key] = configSection[key];
+						}
+					}
+				}
+				// Update last_saved time and save config.
+				CHROMELL.config.last_saved = new Date().getTime();
+				localStorage['ChromeLL-Config'] = CHROMELL.config;
+			}
+			
+			// storage api returns empty object if user hasn't synced before)
+			else if (Object.keys(data).length === 0 || lastSync <= CHROMELL.config.last_saved) {
+				
+				var configToSync = CHROMELL.config;	
+				// Delete user ID, tag admin list and bookmarks - these should always be generated from current login session
+				delete configToSync.user_id;
+				delete configToSync.tag_admin;
+				delete configToSync.saved_tags;
+				
+				var splitConfig = split(configToSync);			
+				var currentTime = new Date().getTime();		
+				var syncData = {
+					'last_sync': currentTime
+				};
+				
+				for (var key in splitConfig) {
+					syncData[key] = splitConfig[key];
+				}
+				
+				chrome.storage.sync.set(syncData);
 			}
 			
 		});
