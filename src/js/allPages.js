@@ -34,35 +34,28 @@
 				} catch (err) {
 					console.log("error in " + i + ":", err);
 				}
-			};			
-			
-			var fade = function(element, endState, duration) {
-				$( element ).animate({
-					opacity: endState
-				}, duration, function() {
-					// Do nothing
-				});
-			};			
+			};
 		
 			var addCSSRules = function() {
 				var sheet = document.styleSheets[0];
 				var customColors = getCustomColors();
-				// TODO: Find a way to make this look neater (too many concatenated strings)
+
+				// Dynamically create rules for user info popup using ETI colour scheme (to make sure that content is readable)
 				sheet.insertRule('#user-popup-div { color: ' + customColors.text 
 						+ '; background: ' + customColors.message 
-						+ '; border: 4px solid ' + customColors.body + '; }', 1);
-						
+						+ '; border: 4px solid ' + customColors.body + '; }', 1);					
 				sheet.insertRule('.popup_link { color: ' + customColors.anchor + '; background: ' + customColors.userbar + '; }', 1);
-				sheet.insertRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading { color: ' + customColors.text + '; opacity: 0.9; }', 1);
-				
+				sheet.insertRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading { color: ' + customColors.text + '; opacity: 0.9; }', 1);		
 				// #user-popup-div:before should be same colour as #user-popup-div background
 				sheet.insertRule('#user-popup-div:before { border-bottom-color: ' + customColors.body + '; }', 1);
 				// #user-popup-div:after should be same colour as #user-popup-div border
-				sheet.insertRule('#user-popup-div:after { border-bottom-color: ' +   customColors.infobar + '; }', 1);
-				
+				sheet.insertRule('#user-popup-div:after { border-bottom-color: ' +   customColors.infobar + '; }', 1);			
 				sheet.insertRule('#rep { color: ' + customColors.text + '; }', 1);
 				sheet.insertRule('#rep a { color: ' + customColors.text + '; opacity: 0.7; }', 1);
 				sheet.insertRule('#rep a:hover { opacity: 1; }', 1);
+				
+				// Use CSS transition for screen fade animations
+				sheet.insertRule('.body {	-webkit-transition: opacity 0.25s; }', 1);		
 			};		
 			
 			var getCustomColors = function() {
@@ -301,8 +294,7 @@
 			};
 			
 			return {
-				init: init,
-				fade: fade		
+				init: init	
 			};
 			
 		}();
@@ -442,7 +434,7 @@
 					},
 					hide: function() {
 						document.getElementById('user-popup-div').style.display = 'none';						
-						DOM.fade(document.getElementsByClassName('body')[0], 1, 250);
+						document.getElementsByClassName('body')[0].style.opacity = 1;
 						document.removeEventListener('mousemove', mousemoveHandler);
 					},
 					clickHandler: function(evt) {

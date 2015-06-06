@@ -497,10 +497,9 @@
 				CHROMELL.allPages.cacheEvent(evt);
 				// Store reference to allPages.utils.popup, as we can't access it from setTimeout
 				var popupMenu = CHROMELL.allPages.utils.popup;
-				var fade = CHROMELL.allPages.DOM.fade;
 				popupDebouncer = setTimeout(function() {
 						popupMenu.init();
-						fade(document.getElementsByClassName('body')[0], 0.6, 100);
+						document.getElementsByClassName('body')[0].style.opacity = 0.7;
 				}, 750);
 			};
 			

@@ -1295,7 +1295,7 @@
 					CHROMELL.allPages.cacheEvent(evt);
 					popupDebouncer = setTimeout(function() {
 							CHROMELL.allPages.utils.popup.init();
-							CHROMELL.allPages.DOM.fade(document.getElementsByClassName('body')[0], 0.6, 100);
+							document.getElementsByClassName('body')[0].style.opacity = 0.7;
 					}, 750);
 				}
 			};
