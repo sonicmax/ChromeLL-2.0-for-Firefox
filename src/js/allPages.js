@@ -592,7 +592,6 @@
 				
 				return {
 					show: function() {
-						console.log(this);
 						var url = chrome.extension.getURL('options.html');
 						var div = document.createElement('div');
 						var iframe = document.createElement('iframe');
@@ -641,7 +640,8 @@
 						document.body.removeEventListener('mousewheel', preventScroll);	
 					},
 				};
-			}
+				
+			}();
 		
 			var asyncUpload = function(tgt, i) {
 				console.log(tgt, i);
