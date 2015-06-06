@@ -55,7 +55,7 @@
 				sheet.insertRule('#rep a:hover { opacity: 1; }', 1);
 				
 				// Use CSS transition for screen fade animations
-				sheet.insertRule('.body {	-webkit-transition: opacity 0.25s; }', 1);		
+				sheet.insertRule('.body { -webkit-transition: opacity 0.25s; }', 1);		
 			};		
 			
 			var getCustomColors = function() {
