@@ -3,7 +3,7 @@ var allBg = {
 		"force_https" : false,
 		"batch_uploader" : false
 	},
-	init_listener : function(cfg) {
+	init_listeners : function(cfg) {
 		// use try...catch statement as options iframe causes problems with webRequest listeners
 		try {
 			if (cfg.force_https) {
