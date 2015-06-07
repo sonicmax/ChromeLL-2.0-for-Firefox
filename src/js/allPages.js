@@ -55,7 +55,7 @@
 				sheet.insertRule('#rep a:hover { opacity: 1; }', 1);
 				
 				// Use CSS transition for screen fade animations
-				sheet.insertRule('.body { -webkit-transition: opacity 0.25s; }', 1);		
+				sheet.insertRule('* { -webkit-transition: opacity 0.25s; }', 1);		
 			};		
 			
 			var getCustomColors = function() {
@@ -313,14 +313,16 @@
 
 					for (var i = 0, len = tds.length; i < len; i++) {
 						var td = tds[i];
-						if (td.innerText.indexOf('Status') > -1) {
+						if (td.innerText === 'Status') {
 							var status = tds[i + 1].innerText;
 						}
-						if (td.innerText.indexOf('Formerly') > -1) {
+						else if (td.innerText === 'Formerly') {
 							var aliases = tds[i + 1].innerText;
 						}
-						if (td.innerText.indexOf('Reputation') > -1) {
+						else if (td.innerText === 'Reputation') {
 							var rep = tds[i + 1].innerHTML;
+							// Break loop- we don't need to check any other elements
+							break;
 						}
 					}			
 					update(html, status, aliases, rep);

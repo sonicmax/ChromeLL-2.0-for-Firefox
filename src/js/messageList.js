@@ -85,12 +85,15 @@
 						tops = document.getElementsByClassName('message-top');
 					}
 					for (var i = 0, len = tops.length; i < len; i++) {
-						var top = tops[i];
-						var usernameAnchor = top.getElementsByTagName('a')[0];
-						usernameAnchor.className = 'username_anchor';
-						if (usernameAnchor.href.indexOf('http://endoftheinter.net/profile.php?user=') > -1) {
-							usernameAnchor.addEventListener('mouseenter', eventHandlers.mouseenter);
-							usernameAnchor.addEventListener('mouseleave', eventHandlers.mouseleave);
+						var top = tops[i];							
+						if (top.parentNode.className !== 'quoted-message') {
+							var anchor = top.getElementsByTagName('a')[0];						
+							if (anchor.href.indexOf('endoftheinter.net/profile.php?user=') > -1) {
+								// Non-anonymous user profile - add listeners for user info popup
+								anchor.className = 'username_anchor';
+								anchor.addEventListener('mouseenter', eventHandlers.mouseenter);
+								anchor.addEventListener('mouseleave', eventHandlers.mouseleave);
+							}
 						}
 					}
 				}
