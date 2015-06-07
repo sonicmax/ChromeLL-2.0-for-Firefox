@@ -60,19 +60,26 @@
 					}
 				}
 			}
-			for (var i = 0; CHROMELL.config.keyword_highlight_data[i]; i++) {
-				highlight.keywords[i] = {};
-				highlight.keywords[i].bg = CHROMELL.config.keyword_highlight_data[i].bg;
-				highlight.keywords[i].color = CHROMELL.config.keyword_highlight_data[i].color;
-				highlight.keywords[i].match = CHROMELL.config.keyword_highlight_data[i].match
-						.split(',');
+			
+			if (CHROMELL.config.keyword_highlight_data) {
+				for (var i = 0; CHROMELL.config.keyword_highlight_data[i]; i++) {
+					highlight.keywords[i] = {};
+					highlight.keywords[i].bg = CHROMELL.config.keyword_highlight_data[i].bg;
+					highlight.keywords[i].color = CHROMELL.config.keyword_highlight_data[i].color;
+					highlight.keywords[i].match = CHROMELL.config.keyword_highlight_data[i].match
+							.split(',');
+				}
 			}
-			for (var i = 0; CHROMELL.config.tag_highlight_data[i]; i++) {
-				highlight.tags[i] = {};	
-				highlight.tags[i].bg = CHROMELL.config.tag_highlight_data[i].bg;
-				highlight.tags[i].color = CHROMELL.config.tag_highlight_data[i].color;	
-				highlight.tags[i].match = CHROMELL.config.tag_highlight_data[i].match.split(',');
+			
+			if (CHROMELL.config.tag_highlight_data) {
+				for (var i = 0; CHROMELL.config.tag_highlight_data[i]; i++) {
+					highlight.tags[i] = {};	
+					highlight.tags[i].bg = CHROMELL.config.tag_highlight_data[i].bg;
+					highlight.tags[i].color = CHROMELL.config.tag_highlight_data[i].color;	
+					highlight.tags[i].match = CHROMELL.config.tag_highlight_data[i].match.split(',');
+				}
 			}
+			
 		};
 		
 		var checkTags = function() {
