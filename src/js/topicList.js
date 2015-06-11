@@ -109,21 +109,21 @@
 			var removeDisallowedChars = function(value, type) {
 				var suffix = type || '';
 				var valueToReturn = value.replace(/[^a-zA-Z0-9]/g, '');
-				return valueToReturn += type;
+				return type += valueToReturn;
 			};
 			
-			var convertHexToRGB = function(hex, alpha) {
-				console.log(typeof alpha);				
+			var convertHexToRGB = function(hex, alpha) {			
 				var rgb;
-				(typeof alpha == 'number') ? rgb = 'rgba(' : rgb = 'rgb(';				
+				(typeof alpha == 'number') ? rgb = 'rgba(' : rgb = 'rgb(';
+				
 				rgb += parseInt(hex.substring(0, 2), 16) + ', ';
 				rgb += parseInt(hex.substring(2, 4), 16) + ', ';
-				rgb += parseInt(hex.substring(4, 6), 16);		
+				rgb += parseInt(hex.substring(4, 6), 16);
+				
 				if (typeof alpha == 'number') {
 					rgb += ', ' + alpha;
 				}							
 				rgb += ')';
-				console.log(rgb);
 				return rgb;
 			};
 			
@@ -135,7 +135,7 @@
 				}
 				
 				// Add CSS rules for user/tag/keyword highlights				
-				styleSheet.addRule('a:hover', 'opacity: .9');
+				styleSheet.addRule('a:hover', 'opacity: 0.8');
 				
 				if (CHROMELL.config.enable_keyword_highlight) {
 					var data = CHROMELL.config.keyword_highlight_data;
@@ -143,24 +143,29 @@
 						var keyword = data[i];						
 						var bg = keyword.bg;
 						var color = keyword.color;							
-						//var rgbaStart = convertHexToRGB(bg, 1);
-						//var rgbaEnd = convertHexToRGB(bg, 0);
+						var rgbaStart = convertHexToRGB(bg, 0.4);
+						var rgbaEnd = convertHexToRGB(bg, 0.4);
 						
 						keywordsToHighlight[keyword.match] = true;
 						var keywordAttribute = removeDisallowedChars(keyword.match, 'keyword_');			
 						
-						styleSheet.addRule('table.grid td.oh[' + keywordAttribute + ']', 'background: #' + bg);
-						styleSheet.addRule('table.grid td.oh[' + keywordAttribute + ']', 'color: #' + color);
-						styleSheet.addRule('table.grid td.oh[' + keywordAttribute + '] a', 'color: #' + color);
+						// Highlight anchor tag containing match.
 						
-						// Make sure that keyword anchors retain their own style
-						/*styleSheet.addRule('a[' + keywordAttribute + ']', 'background: linear-gradient(to right, ' 
-								+ rgbaStart + ' 0%, '						
-								+ rgbaEnd + ' 100%) !important');	*/
+						// Use flat gradient for background, using alpha of 0.9 - this allows us to highlight <mark> elements 
+						// in the anchor tag innerHTML without changing the colour scheme (as matched keyword will have brighter
+						// background)
+						
+						styleSheet.addRule('a[' + keywordAttribute + ']', 'background: linear-gradient(to right, ' 
+								+ rgbaStart + ' 0%, '
+								+ rgbaEnd + ' 100%) !important');
 								
-						styleSheet.addRule('a[' + keywordAttribute + ']', 'background: #' + bg + ' !important');
-						styleSheet.addRule('a[' + keywordAttribute + ']', 'color: #' + color + ' !important');		
-					}					
+						styleSheet.addRule('a[' + keywordAttribute + ']', 'color: #' + color + ' !important');
+
+						// Highlight matched keyword.						
+						styleSheet.addRule('mark[' + keywordAttribute + ']', 'background: #' + bg + ' !important');
+						styleSheet.addRule('mark[' + keywordAttribute + ']', 'color: #' + color + ' !important');						
+						
+					}
 				}
 
 				if (CHROMELL.config.enable_tag_highlight) {
@@ -169,23 +174,24 @@
 						var tag = data[i];
 						var bg = tag.bg;
 						var color = tag.color;
-						//var rgbaStart = convertHexToRGB(bg, 0.8);
-						//var rgbaEnd = convertHexToRGB(bg, 0);						
-						tagsToHighlight[tag.match] = true;			
+						var rgbaStart = convertHexToRGB(bg, 0.8);
+						var rgbaEnd = convertHexToRGB(bg, 0);						
+						tagsToHighlight[tag.match] = true;
 						var tagAttribute = removeDisallowedChars(tag.match, 'tag_');
 						
+						// Highlight td element containing tags to be highlighted (can be overridden by user highlight)
 						styleSheet.addRule('table.grid td.oh[' + tagAttribute + ']', 'background: #' + bg);
 						styleSheet.addRule('table.grid td.oh[' + tagAttribute + ']', 'color: #' + color);
 						styleSheet.addRule('table.grid td.oh[' + tagAttribute + '] a', 'color: #' + color);
 						
-						// Make sure that tag anchors retain their own style
-						/*styleSheet.addRule('a[' + tagAttribute + ']', 'background: radial-gradient(ellipse at center, ' 
+						// Make sure that tag anchors always retain their highlight style
+						styleSheet.addRule('a[' + tagAttribute + ']', 'background: radial-gradient(ellipse at center, ' 
 								+ rgbaStart + ' 0%, '
-								+ rgbaStart + ' 50%, '
-								+ rgbaEnd + ' 100%) !important');*/						
-						
-						styleSheet.addRule('a[' + tagAttribute + ']', 'background: #' + bg + ' !important');
-						styleSheet.addRule('a[' + tagAttribute + ']', 'color: #' + color + ' !important');
+								+ rgbaStart + ' 70%, '
+								+ rgbaEnd + ' 100%) !important');
+								
+						styleSheet.addRule('a[' + tagAttribute + ']', 'color: ' + color);
+							
 					}		
 				}		
 			
@@ -198,10 +204,14 @@
 						usersToHighlight[name] = true;
 						var userAttribute = removeDisallowedChars(name, 'user_');
 						
-						// User highlights are allowed to override any other type of highlight, with exception of anchor tags
+						// User highlights are allowed to override any other type of highlight, with exception of anchor tags																
 						styleSheet.addRule('table.grid tr[' + userAttribute + '] td', 'background: #' + bg + ' !important');
 						styleSheet.addRule('table.grid tr[' + userAttribute + '] td', 'color: #' + color + ' !important');
-						styleSheet.addRule('tr[' + userAttribute + '] a', 'color: #' + color);
+						styleSheet.addRule('table.grid tr[' + userAttribute + '] a', 'background: #' + bg);
+						styleSheet.addRule('table.grid tr[' + userAttribute + '] a', 'color: #' + color);						
+					
+						styleSheet.addRule('table.grid tr[' + userAttribute + '] a.username_anchor', 'background: #' + bg + ' !important');
+						styleSheet.addRule('table.grid tr[' + userAttribute + '] a.username_anchor', 'color: #' + color + ' !important');
 					}	
 				}
 
@@ -377,13 +387,16 @@
 				var td = tr.getElementsByTagName('td')[0];
 				var title = td.getElementsByTagName('a')[0];
 				for (var word in keywordsToHighlight) {
-					if (title.innerHTML.indexOf(word) > -1) {
+					// Only match whole word					
+					var regex = new RegExp('\\b' + word + '\\b', 'g');
+					if (title.innerHTML.match(regex)) {
+						var htmlString = '<mark keyword_' + word + '="true">' + word + '</mark>';						
+						// Wrap matches with tags so we can highlight individual words in title
+						title.innerHTML = title.innerHTML.replace(regex, htmlString);
 						var keywordAttribute = removeDisallowedChars(word, 'keyword_');
 						td.setAttribute('highlighted', true);
 						td.setAttribute(keywordAttribute, true);
 						title.setAttribute(keywordAttribute, true);
-						// TODO: find way to highlight multiple keywords in title. For now, just break loop
-						break;
 					}
 				}
 			};
