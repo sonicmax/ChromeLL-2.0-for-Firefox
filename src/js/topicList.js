@@ -59,27 +59,7 @@
 								.toLowerCase().trim();
 					}
 				}
-			}
-			
-			if (CHROMELL.config.keyword_highlight_data) {
-				for (var i = 0; CHROMELL.config.keyword_highlight_data[i]; i++) {
-					highlight.keywords[i] = {};
-					highlight.keywords[i].bg = CHROMELL.config.keyword_highlight_data[i].bg;
-					highlight.keywords[i].color = CHROMELL.config.keyword_highlight_data[i].color;
-					highlight.keywords[i].match = CHROMELL.config.keyword_highlight_data[i].match
-							.split(',');
-				}
-			}
-			
-			if (CHROMELL.config.tag_highlight_data) {
-				for (var i = 0; CHROMELL.config.tag_highlight_data[i]; i++) {
-					highlight.tags[i] = {};	
-					highlight.tags[i].bg = CHROMELL.config.tag_highlight_data[i].bg;
-					highlight.tags[i].color = CHROMELL.config.tag_highlight_data[i].color;	
-					highlight.tags[i].match = CHROMELL.config.tag_highlight_data[i].match.split(',');
-				}
-			}
-			
+			} 
 		};
 		
 		var checkTags = function() {
@@ -111,11 +91,6 @@
 			keywords: []
 		};
 		
-		var highlight = {
-			keywords: {},
-			tags: {}
-		};
-		
 		var ignorated = {
 			total_ignored: 0,
 			data: {
@@ -125,6 +100,113 @@
 		};			
 		
 		var DOM = function() {
+			var currentUser;
+			// Keep track of highlight data 
+			var tagsToHighlight = {};
+			var keywordsToHighlight = {};
+			var usersToHighlight = {};
+			
+			var removeDisallowedChars = function(value, type) {
+				var suffix = type || '';
+				var valueToReturn = value.replace(/[^a-zA-Z0-9]/g, '');
+				return valueToReturn += type;
+			};
+			
+			var convertHexToRGB = function(hex, alpha) {
+				console.log(typeof alpha);				
+				var rgb;
+				(typeof alpha == 'number') ? rgb = 'rgba(' : rgb = 'rgb(';				
+				rgb += parseInt(hex.substring(0, 2), 16) + ', ';
+				rgb += parseInt(hex.substring(2, 4), 16) + ', ';
+				rgb += parseInt(hex.substring(4, 6), 16);		
+				if (typeof alpha == 'number') {
+					rgb += ', ' + alpha;
+				}							
+				rgb += ')';
+				console.log(rgb);
+				return rgb;
+			};
+			
+			var addCSSRules = function() {
+				var styleSheet = document.styleSheets[0];	
+				
+				if (CHROMELL.config.zebra_tables) {
+					styleSheet.addRule('table.grid tr:nth-child(odd) td', 'background: ' + CHROMELL.config.zebra_tables_color);							
+				}
+				
+				// Add CSS rules for user/tag/keyword highlights				
+				styleSheet.addRule('a:hover', 'opacity: .9');
+				
+				if (CHROMELL.config.enable_keyword_highlight) {
+					var data = CHROMELL.config.keyword_highlight_data;
+					for (var i in data) {
+						var keyword = data[i];						
+						var bg = keyword.bg;
+						var color = keyword.color;							
+						//var rgbaStart = convertHexToRGB(bg, 1);
+						//var rgbaEnd = convertHexToRGB(bg, 0);
+						
+						keywordsToHighlight[keyword.match] = true;
+						var keywordAttribute = removeDisallowedChars(keyword.match, 'keyword_');			
+						
+						styleSheet.addRule('table.grid td.oh[' + keywordAttribute + ']', 'background: #' + bg);
+						styleSheet.addRule('table.grid td.oh[' + keywordAttribute + ']', 'color: #' + color);
+						styleSheet.addRule('table.grid td.oh[' + keywordAttribute + '] a', 'color: #' + color);
+						
+						// Make sure that keyword anchors retain their own style
+						/*styleSheet.addRule('a[' + keywordAttribute + ']', 'background: linear-gradient(to right, ' 
+								+ rgbaStart + ' 0%, '						
+								+ rgbaEnd + ' 100%) !important');	*/
+								
+						styleSheet.addRule('a[' + keywordAttribute + ']', 'background: #' + bg + ' !important');
+						styleSheet.addRule('a[' + keywordAttribute + ']', 'color: #' + color + ' !important');		
+					}					
+				}
+
+				if (CHROMELL.config.enable_tag_highlight) {
+					var data = CHROMELL.config.tag_highlight_data;
+					for (var i in data) {
+						var tag = data[i];
+						var bg = tag.bg;
+						var color = tag.color;
+						//var rgbaStart = convertHexToRGB(bg, 0.8);
+						//var rgbaEnd = convertHexToRGB(bg, 0);						
+						tagsToHighlight[tag.match] = true;			
+						var tagAttribute = removeDisallowedChars(tag.match, 'tag_');
+						
+						styleSheet.addRule('table.grid td.oh[' + tagAttribute + ']', 'background: #' + bg);
+						styleSheet.addRule('table.grid td.oh[' + tagAttribute + ']', 'color: #' + color);
+						styleSheet.addRule('table.grid td.oh[' + tagAttribute + '] a', 'color: #' + color);
+						
+						// Make sure that tag anchors retain their own style
+						/*styleSheet.addRule('a[' + tagAttribute + ']', 'background: radial-gradient(ellipse at center, ' 
+								+ rgbaStart + ' 0%, '
+								+ rgbaStart + ' 50%, '
+								+ rgbaEnd + ' 100%) !important');*/						
+						
+						styleSheet.addRule('a[' + tagAttribute + ']', 'background: #' + bg + ' !important');
+						styleSheet.addRule('a[' + tagAttribute + ']', 'color: #' + color + ' !important');
+					}		
+				}		
+			
+				if (CHROMELL.config.enable_user_highlight) {
+					var data = CHROMELL.config.user_highlight_data;
+					for (var name in data) {						
+						var user = data[name];
+						var bg = user.bg;
+						var color = user.color;
+						usersToHighlight[name] = true;
+						var userAttribute = removeDisallowedChars(name, 'user_');
+						
+						// User highlights are allowed to override any other type of highlight, with exception of anchor tags
+						styleSheet.addRule('table.grid tr[' + userAttribute + '] td', 'background: #' + bg + ' !important');
+						styleSheet.addRule('table.grid tr[' + userAttribute + '] td', 'color: #' + color + ' !important');
+						styleSheet.addRule('tr[' + userAttribute + '] a', 'color: #' + color);
+					}	
+				}
+
+			};
+
 			var methods = {};
 			
 			methods.ignorator_topiclist = function(tr, i) {
@@ -139,28 +221,20 @@
 							// ignore anonymous topics
 							return;
 						}
-						else {						
-							var username = td.getElementsByTagName('a')[0];					
-							if (td.getElementsByTagName('a')[0]
-									&& td.getElementsByTagName('a')[0].innerHTML
-											.toLowerCase() == ignores[f]) {
+						else {					
+							if (currentUser == ignores[f]) {
+												
 								tr.setAttribute('ignored', true);
-								if (CHROMELL.config.debug) {
-									console
-											.log('found topic to remove: \"'
-													+ tr.getElementsByTagName('td')[0]
-															.getElementsByTagName('a')[0].innerHTML
-															.toLowerCase()
-													+ "\" author: " + ignores[f]
-													+ " topic: " + i);
-								}
-								tr.style.display = 'none';
+								
 								ignorated.total_ignored++;
+								
 								if (!ignorated.data.users[ignores[f]]) {
 									ignorated.data.users[ignores[f]] = {};
 									ignorated.data.users[ignores[f]].total = 1;
 									ignorated.data.users[ignores[f]].trs = [i];
-								} else {
+								}
+								
+								else {
 									ignorated.data.users[ignores[f]].total++;
 									ignorated.data.users[ignores[f]].trs.push(i);
 								}				
@@ -171,7 +245,7 @@
 			};
 			
 			methods.ignore_keyword = function(tr, i) {
-				if (!CHROMELL.config.ignore_keyword_list) {
+				/*if (!CHROMELL.config.ignore_keyword_list) {
 					return;
 				}
 				var re = false;
@@ -183,6 +257,7 @@
 					title = tr.getElementsByTagName('td')[0];
 					username = title.getElementsByTagName('a')[0].innerHTML;
 					for (var f = 0, len = keywords.length; f < len; f++) {
+						
 						if (re) {
 							if (keywords[f].substring(0, 1) == '/') {
 								reg = new RegExp(keywords[f].substring(1,
@@ -190,25 +265,24 @@
 										.substring(
 												keywords[f].lastIndexOf('/') + 1,
 												keywords[f].length));
-							} else {
+							} 
+							else {
 								reg = keywords[f];
 							}
+							
 							match = username.match(reg);
-						} else {
+						} 
+						
+						else {
+							
 							match = username.toLowerCase().indexOf(
 											keywords[f].toLowerCase()) != -1;
 						}
+						
 						if (match) {
-							if (CHROMELL.config.debug) {
-								console
-										.log('found topic to remove: \"'
-												+ tr.getElementsByTagName('td')[0]
-														.getElementsByTagName('a')[0].innerHTML
-														.toLowerCase()
-												+ "\" keyword: " + keywords[f]
-												+ " topic: " + i);
-							}
-							title.parentNode.style.display = 'none';
+							
+							tr.setAttribute('ignored', true);				
+							
 							ignorated.total_ignored++;
 							if (!ignorated.data.keywords[keywords[f]]) {
 								ignorated.data.keywords[keywords[f]] = {};
@@ -220,7 +294,7 @@
 							}				
 						}
 					}
-				}
+				}*/
 			};
 			
 			/*methods.append_tags = function(tr) {
@@ -300,119 +374,42 @@
 			};
 			
 			methods.enable_keyword_highlight = function(tr) {
-				var title;
-				var keys = highlight.keywords;
-				if (!keys) {
-					return;
-				}
-				var re = false;
-				title = tr.getElementsByTagName('td')[0]
-						.getElementsByClassName('fl')[0].getElementsByTagName('a')[0].innerHTML;
-				for (var j = 0; keys[j]; j++) {
-					for (var k = 0; keys[j].match[k]; k++) {
-						if (keys[j].match[k].substring(0, 1) == '/') {
-							var reg = new RegExp(keys[j].match[k].substring(1,
-									keys[j].match[k].lastIndexOf('/')),
-									keys[j].match[k].substring(keys[j].match[k]
-											.lastIndexOf('/') + 1,
-											keys[j].match[k].length));
-							match = title.match(reg);
-						} else {
-							reg = keys[j].match[k].toLowerCase();
-							var match = title.toLowerCase().indexOf(reg) != -1;
-						}
-						if (match) {
-							var node = tr.getElementsByTagName('td')[0];
-							var nodeAnchors = node.getElementsByTagName('a');
-							node.setAttribute('highlighted', true);
-							node.style.background = '#' + keys[j].bg;
-							node.style.color = '#' + keys[j].color;
-							for (var m = 0, anchorLen = nodeAnchors.length; m < anchorLen; m++) {
-								var nodeAnchor = nodeAnchors[m];
-								nodeAnchor.style.color = '#' + keys[j].color;
-							}
-							if (CHROMELL.config.debug) {
-								console.log('highlight topic ' + title
-										+ ' keyword ' + reg);
-							}							
-						}
+				var td = tr.getElementsByTagName('td')[0];
+				var title = td.getElementsByTagName('a')[0];
+				for (var word in keywordsToHighlight) {
+					if (title.innerHTML.indexOf(word) > -1) {
+						var keywordAttribute = removeDisallowedChars(word, 'keyword_');
+						td.setAttribute('highlighted', true);
+						td.setAttribute(keywordAttribute, true);
+						title.setAttribute(keywordAttribute, true);
+						// TODO: find way to highlight multiple keywords in title. For now, just break loop
+						break;
 					}
 				}
 			};
 			
 			methods.enable_tag_highlight = function(tr) {
-				var highlightTags = highlight.tags;
-				if (!highlightTags) {
-					return;
-				}
-				var tagsToCheck = tr.getElementsByTagName('td')[0]
-						.getElementsByClassName('fr')[0].getElementsByTagName('a');			
+				var td = tr.getElementsByTagName('td')[0];
+				var fr = td.getElementsByClassName('fr')[0]
+				var tagsToCheck = fr.getElementsByTagName('a');
+						
 				for (var j = 0, len = tagsToCheck.length; j < len; j++) {
-					tagToCheck = tagsToCheck[j];		
-					for (var k = 0; highlightTags[k]; k++) {
-						for (var l = 0; highlightTags[k].match[l]; l++) {
-							var highlightTag = highlightTags[k].match[l];
-							if (tagToCheck.innerHTML.toLowerCase()
-									.match(highlightTag)) {
-								var node = tr.getElementsByTagName('td')[0];
-								var nodeAnchors = node.getElementsByTagName('a');
-								node.setAttribute('highlighted', true);
-								node.style.background = '#' + highlightTags[k].bg;
-								node.style.color = '#' + highlightTags[k].color;							
-								for (var n = 0, anchorLen = nodeAnchors.length; n < anchorLen; n++) {
-									nodeAnchor = nodeAnchors[n];
-									nodeAnchor.style.color = '#' + highlightTags[k].color;
-								}
-								if (CHROMELL.config.debug) {
-									console.log('highlight topic ' + tr
-											+ ' tag ' + highlightTags[k].match[l]);
-								}					
-							}
-						}
+					var tagAnchor = tagsToCheck[j];
+					var tagName = tagAnchor.innerHTML.toLowerCase();
+					if (tagsToHighlight[tagName]) {
+						var tagAttribute = removeDisallowedChars(tagName, 'tag_');
+						td.setAttribute('highlighted', true);
+						td.setAttribute(tagAttribute, true);							
+						tagAnchor.setAttribute(tagAttribute, true);						
 					}
 				}
 			};
 			
 			methods.userhl_topiclist = function(tr) {
-				if (!CHROMELL.config.enable_user_highlight) {
-					return;
-				}
-				var user;
-				var highlightData = CHROMELL.config.user_highlight_data;
-				if (tr.getElementsByTagName('td')[1]
-						.getElementsByTagName('a')[0]) {
-					user = tr.getElementsByTagName('td')[1]
-							.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-					if (highlightData[user]) {
-						if (CHROMELL.config.debug) {
-							console.log('highlighting topic by ' + user);
-						}
-						tr.setAttribute('highlighted', true);
-						var tds = tr.getElementsByTagName('td');
-						for (var j = 0, tdsLen = tds.length; j < tdsLen; j++) {
-							var td = tds[j];
-							td.setAttribute('highlighted', true);
-							var tdAnchors = td.getElementsByTagName('a');
-							td.style.background = '#'	+ highlightData[user].bg;
-							td.style.color = '#' + highlightData[user].color;
-							for (var k = 0, anchorLen = tdAnchors.length; k < anchorLen; k++) {
-								var anchor = tdAnchors[k];
-								anchor.setAttribute('highlighted', true);
-								anchor.style.color = '#' + highlightData[user].color;
-							}				
-						}
-					}
-				}
-			};
-			
-			methods.zebra_tables = function(tr, i) {
-				if (i % 2 === 0) {
-					for (var j = 0; tr.getElementsByTagName('td')[j]; j++) {
-						if (tr.getElementsByTagName('td')[j].style.background === '') {
-							tr.getElementsByTagName('td')[j].style.background = '#'
-									+ CHROMELL.config.zebra_tables_color;
-						}
-					}
+				if (usersToHighlight[currentUser]) {
+					var userAttribute = removeDisallowedChars(currentUser, 'user_');
+					tr.setAttribute('highlighted', true);
+					tr.setAttribute(userAttribute, true);
 				}
 			};
 			
@@ -429,27 +426,41 @@
 			};
 			
 			return {
-				init: function() {	
+				init: function() {
+					addCSSRules();
+					
 					if (CHROMELL.config.dramalinks && !window.location.href.match(/[inbox|main].php/)) {
 						var element = document.getElementsByTagName('h1')[0];
 						dramalinks.appendTo(element);
 					}	
 					
 					var grids = document.getElementsByClassName('grid');
+					
 					for (var i = 0, gridLen = grids.length; i < gridLen; i++) {
 						var trs = grids[i].getElementsByTagName('tr');
+						
 						// iterate over trs and pass tr nodes to topicList functions
 						// (ignoring trs[0] as it's not a topic)
 						for (var j = 1, trsLen = trs.length; j < trsLen; j++) {
 							var tr = trs[j];
+							
 							if (tr.innerText && tr.innerText == 'See More') {
-								// ignore these elements (found only on main.php)					
+								// ignore these elements (found only on main.php)	
+								return;
 							}
+							
+							// Check that anchor tag is located here, so we know it's not an anonymous topic
+							var nodeToCheck = tr.getElementsByTagName('td')[1].getElementsByTagName('a')[0];
+							if (nodeToCheck) {
+								currentUser = nodeToCheck.innerHTML.toLowerCase();
+							} 
 							else {
-								for (var k in methods) {
-									if (CHROMELL.config[k + pm]) {
-										methods[k](tr, j);
-									}
+								// Anonymous topic
+								currentUser = false;
+							}
+							for (var k in methods) {
+								if (CHROMELL.config[k + pm]) {
+									methods[k](tr, j);
 								}
 							}
 						}
