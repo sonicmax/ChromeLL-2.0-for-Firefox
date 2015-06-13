@@ -62,7 +62,7 @@
 				styleSheet.addRule('*[ignored]', 'display: none');
 
 				// Override ETI styles for ins/del tags with default style in dramalinks_ticker
-				styleSheet.addRule('#dramalinks_ticker ins' 'text-decoration: underline !important');
+				styleSheet.addRule('#dramalinks_ticker ins', 'text-decoration: underline !important');
 				styleSheet.addRule('#dramalinks_ticker del', 'text-decoration: line-through !important');		
 				
 			};		
