@@ -23,7 +23,8 @@
   "content_scripts": [
   {
     "matches": ["*://*.endoftheinter.net/*"],
-    "js": ["src/js/init.js", "src/js/love.js"],
+    "css": ["src/css/allpages.css"],
+    "js": ["src/js/init.js", "src/js/love.js", "lib/jquery.js", "src/js/allPages.js"],
 		"run_at" : "document_start"
   },
   {
@@ -41,11 +42,6 @@
     "js": ["src/js/topicList.js"],
 		"run_at" : "document_start"
   },
-  {
-    "matches": ["*://*.endoftheinter.net/*"],
-    "js": ["lib/jquery.js", "src/js/allPages.js"],
-    "run_at": "document_end"
-  },	
   {
     "matches": ["*://*.endoftheinter.net/postmsg.php*"],
     "js": ["src/js/postMsg.js", "src/js/imagemap.js"],

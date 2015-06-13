@@ -109,21 +109,24 @@
 			var removeDisallowedChars = function(value, type) {
 				var suffix = type || '';
 				var valueToReturn = value.replace(/[^a-zA-Z0-9]/g, '');
-				return type += valueToReturn;
+				return suffix += valueToReturn;
 			};
 			
-			var convertHexToRGB = function(hex, alpha) {			
+			var convertHexToRGB = function(hex, alpha) {
+				// Takes hex triplet and returns values of colour in RGB form (or RGBA, if alpha value is provided)
 				var rgb;
 				(typeof alpha == 'number') ? rgb = 'rgba(' : rgb = 'rgb(';
-				
+				// Convert each byte of hex triplet and add to rgb string
 				rgb += parseInt(hex.substring(0, 2), 16) + ', ';
 				rgb += parseInt(hex.substring(2, 4), 16) + ', ';
 				rgb += parseInt(hex.substring(4, 6), 16);
-				
+				// Append alpha value
 				if (typeof alpha == 'number') {
 					rgb += ', ' + alpha;
-				}							
+				}	
+				
 				rgb += ')';
+
 				return rgb;
 			};
 			
@@ -131,11 +134,15 @@
 				var styleSheet = document.styleSheets[0];	
 				
 				if (CHROMELL.config.zebra_tables) {
-					styleSheet.addRule('table.grid tr:nth-child(odd) td', 'background: ' + CHROMELL.config.zebra_tables_color);							
+					var rule;
+					if (CHROMELL.config.fast_zebras || !CHROMELL.config.zebra_tables_color) {
+							rule = 'opacity: .75';
+					}
+					else {
+							rule = 'background: #' + CHROMELL.config.zebra_tables_color;
+					} 
+					styleSheet.addRule('table.grid tr:nth-child(odd) td', rule);
 				}
-				
-				// Add CSS rules for user/tag/keyword highlights				
-				styleSheet.addRule('a:hover', 'opacity: 0.8');
 				
 				if (CHROMELL.config.enable_keyword_highlight) {
 					var data = CHROMELL.config.keyword_highlight_data;
@@ -184,7 +191,7 @@
 						styleSheet.addRule('table.grid td.oh[' + tagAttribute + ']', 'color: #' + color);
 						styleSheet.addRule('table.grid td.oh[' + tagAttribute + '] a', 'color: #' + color);
 						
-						// Make sure that tag anchors always retain their highlight style
+						// Use !important radial gradient for background of tag anchor (in case td highlight has been overridden)
 						styleSheet.addRule('a[' + tagAttribute + ']', 'background: radial-gradient(ellipse at center, ' 
 								+ rgbaStart + ' 0%, '
 								+ rgbaStart + ' 70%, '

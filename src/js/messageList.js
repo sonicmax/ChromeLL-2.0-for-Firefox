@@ -174,14 +174,10 @@
 				firstTop = messageTops[0];
 			};		
 			
-			var addCSSRules = function(msg) {
+			var addCSSRules = function() {
 				styleSheet = document.styleSheets[0];
-				styleSheet.addRule('.like_button_custom', 'opacity: 0.5');
-				styleSheet.addRule('.like_button_custom:hover', 'opacity: 1.0');
-				styleSheet.addRule('#loading_image', '{ -webkit-animation:spin 2s linear infinite');
-				styleSheet.addRule('@-webkit-keyframes spin', '100% { -webkit-transform:rotate(360deg); }');
-				styleSheet.addRule('#map_div img:hover', 'opacity: 0.7');			
-				styleSheet.addRule('.userpic_addon', 'display: block; border: 1px outset; margin-left: 1em; cursor: pointer; float: right');
+				
+				styleSheet.addRule('.message-container .quoted-message[foxlinks]', 'border-color: #' + CHROMELL.config.foxlinks_quotes_color);
 				
 				if (CHROMELL.config.userhl_messagelist) {
 					var highlightData = CHROMELL.config.user_highlight_data;
@@ -198,15 +194,7 @@
 						// We want this to override the default value, if user is highlighted								
 						styleSheet.addRule('.quoted-message[foxlinks][' + username + ']',	'border-color: #' + bg);
 					}	
-				}
-				
-				if (CHROMELL.config.foxlinks_quotes) {
-					styleSheet.addRule('.message-container .quoted-message[foxlinks]', 'border-style: solid; border-width: 2px; border-radius: 5px; border-color: #' 
-							+ CHROMELL.config.foxlinks_quotes_color 
-							+ '; margin-right: 30px; margin-left: 10px; margin-top: 0px; padding-bottom: 10px');	
-					styleSheet.addRule('.quoted-message[foxlinks] .message-top', 'margin-top: 0px; padding-bottom: 2px; margin-left: -6px');	
-				}
-				
+				}	
 			};
 			
 			var appendScripts = function() {			

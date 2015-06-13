@@ -39,7 +39,6 @@
 			var addCSSRules = function() {
 				var styleSheet = document.styleSheets[0];
 				var customColors = getCustomColors();
-
 				// Dynamically create rules for user info popup using ETI colour scheme (to make sure that content is readable)
 				styleSheet.addRule('#user-popup-div',  'color: ' + customColors.text); 
 				styleSheet.addRule('#user-popup-div',  'background: ' + customColors.message);
@@ -53,19 +52,7 @@
 				styleSheet.addRule('#user-popup-div:after', 'border-bottom-color: ' +   customColors.infobar);			
 				styleSheet.addRule('#rep', 'color: ' + customColors.text);
 				styleSheet.addRule('#rep a', 'color: ' + customColors.text + '; opacity: 0.7');
-				styleSheet.addRule('#rep a:hover', 'opacity: 1');
-				
-				// Use CSS transition for screen fade animations
-				styleSheet.addRule('.body', '-webkit-transition: opacity 0.25s');		
-				
-				// Add CSS Rule for ignorator
-				styleSheet.addRule('*[ignored]', 'display: none');
-
-				// Override ETI styles for ins/del tags with default style in dramalinks_ticker
-				styleSheet.addRule('#dramalinks_ticker ins', 'text-decoration: underline !important');
-				styleSheet.addRule('#dramalinks_ticker del', 'text-decoration: line-through !important');		
-				
-			};		
+			};	
 			
 			var getCustomColors = function() {
 				// (first 'h1' element is either tag name (in topic list), or topic title (in message list)
