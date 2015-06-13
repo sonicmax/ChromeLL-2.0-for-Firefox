@@ -105,6 +105,7 @@
 					var msg = msgs[j];
 					// Get required elements from message-container
 					setActivePost(msg);
+					utils.anchors.check(msg);
 					// iterate over functions in messageList
 					for (var k in messagecontainer) {
 						if (config[k + pm]) {
@@ -114,11 +115,11 @@
 					}
 				}
 				
-				// page will appear to have been fully loaded by this point
 				if (len == 4) {
 					// iterate over rest of messages
-					for (var j = 4; msg = msgs[j]; j++) {
-						setActivePost(msg);						
+					for (var j = 4; msg = msgs[j]; j++) {				
+						setActivePost(msg);
+						utils.anchors.check(msg);			
 						for (var k in messagecontainer) {
 							if (config[k + pm]) {
 								messagecontainer[k](msg, j + 1);
@@ -136,6 +137,8 @@
 					});
 				}
 				
+				utils.anchors.embedHandler();
+				
 				// call methods that modify quickpost area
 				for (var i in quickpostbody) {
 					if (config[i + pm]) {
@@ -151,7 +154,6 @@
 				}
 				
 				// call methods that dont exist in posts/page/misc objects
-				utils.anchors.check();
 				addListeners();
 				appendScripts();
 				
@@ -170,8 +172,7 @@
 			var setActivePost = function(msg) {
 				messageTops = msg.getElementsByClassName('message-top');
 				firstTop = messageTops[0];
-			};
-			
+			};		
 			
 			var addCSSRules = function(msg) {
 				styleSheet = document.styleSheets[0];
@@ -207,8 +208,6 @@
 				}
 				
 			};
-			
-
 			
 			var appendScripts = function() {			
 				var head = document.getElementsByTagName("head")[0];
@@ -1582,8 +1581,8 @@
 					video.play();
 				}
 				
-			};			
-
+			};
+			
 			var gfycat = function() {
 
 				var handleAnchor = function(element) {
@@ -1768,7 +1767,7 @@
 				};
 				
 			}();
-
+			
 			var snippets = function() {
 				// Contains methods for snippet feature.
 				
@@ -2289,16 +2288,16 @@
 										// iterate backwards - oldest quote should be first
 										for (var m = quote.nested.length; m--;) {
 											var nestedQuote = quote.nested[m];
-											var quoteArray = utils.quote.returnQuotes(nestedQuote.childNodes, 
+											var quoteArray = returnQuotes(nestedQuote.childNodes, 
 													nestedQuote.attributes.msgid.value);
 											quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
 										}
-										quoteArray = utils.quote.returnQuotes(node.childNodes, quote.msgid);
+										quoteArray = returnQuotes(node.childNodes, quote.msgid);
 										quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
 										output += quoteOutput;
 									}
 									else {
-										var quoteArray = utils.quote.returnQuotes(node.childNodes, quote.msgid);					
+										var quoteArray = returnQuotes(node.childNodes, quote.msgid);					
 										quoteOutput = quoteArray[0] + quoteArray[1];
 										output += quoteOutput;
 									}
@@ -2317,7 +2316,7 @@
 									need: "copy",
 									data: output
 							});				
-							utils.quote.notifyUser(evt.target);
+							notifyUser(evt.target);
 						}
 					},		
 					addButtons: function() {
@@ -2473,8 +2472,11 @@
 					
 			}();
 			
-			var anchors = function() {			
+			var anchors = function() {
 				var checkedLinks = {};
+				var ytRegex = /youtube|youtu.be/;
+				var videoCodeRegex = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+				var gfycats, imgurs;			
 				
 				var handleYoutube = function(link) {
 					link.className = "youtube";
@@ -2524,54 +2526,64 @@
 					}
 				};
 				
-				return {
-					check: function(msg) {
-						var target = msg || document;
-						var links = target.getElementsByClassName('l');					
-						var i = links.length;
-						var ytRegex = /youtube|youtu.be/;
-						var videoCodeRegex = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-						var gfycats, imgurs;
-						// iterate backwards to prevent errors when modifying class of elements. order is irrelevant
-						while (i--) {
-							var link = links[i];
-							
-							if (link.href.match(ytRegex) && link.href.match(videoCodeRegex)
+				var checkNodes = function(nodes, sig) {
+					var j = sig || nodes.length - 1;
+					for (j; j >= 0; j--) {
+						var node = nodes[j];			
+						
+						if (node.className == 'l') {
+								
+							if (node.href.match(ytRegex) && node.href.match(videoCodeRegex)
 									&& CHROMELL.config.embed_on_hover) {	
-								handleYoutube(link);
+								handleYoutube(node);
 							}
 							
-							else if (link.href.indexOf('://lue.link/') > -1
+							/*else if (node.href.indexOf('://lue.link/') > -1
 									&& CHROMELL.config.full_link_names) {
-								unshorten(link);
-							}
+								unshorten(node);
+							}*/
 							
-							// TODO - Add Imgur embedding
-							else if (link.title.indexOf("gfycat.com/") > -1) {
+							else if (node.title.indexOf("gfycat.com/") > -1) {
 								if (CHROMELL.config.embed_gfycat || CHROMELL.config.embed_gfycat_thumbs) {
-									embed(link, 'gfy');
+									embed(node, 'gfy');
 									gfycats = true;
 								}
 							}
 							
-							else if (link.title.indexOf('imgur.com/') > -1 && link.title.match(/.webm|.gifv/)) {
+							else if (node.title.indexOf('imgur.com/') > -1 && node.title.match(/.webm|.gifv/)) {
 								if (CHROMELL.config.embed_gfycat || CHROMELL.config.embed_gfycat_thumbs) {
-									embed(link, 'imgur');
+									embed(node, 'imgur');
 									imgurs = true;
 								}							
 							}
+							
 						}
 						
-						if (gfycats) {
-							gfycat.loader();				
-							window.addEventListener('scroll', gfycat.loader);
-							document.addEventListener('visibilitychange', pauseVideos);
+						else if (node.className == 'quoted-message' && node.getElementsByClassName('l')) {
+							checkNodes(node.childNodes);
 						}
-						
-						if (imgurs) {					
-							imgur.loader();				
-							window.addEventListener('scroll', imgur.loader);
-							document.addEventListener('visibilitychange', pauseVideos);
+					}
+				};
+				
+				
+				
+				return {
+					check: function(container) {
+						if (!container.getElementsByClassName('l')) {
+							return;
+						}
+						else {
+							var nodes = container.getElementsByClassName('message')[0].childNodes;
+							var i = nodes.length - 1;
+							var messageEnd;						
+							for (i; i > 0; i--) {
+								var node = nodes[i];
+								if (node.nodeType == 3 && node.nodeValue.replace(/^\s+|\s+$/g, "") == '---') {
+									messageEnd = i - 1;
+									break;
+								}
+							}							
+							checkNodes(nodes, messageEnd);
 						}
 					},
 					fixRedirect: function(anchor, type) {
@@ -2581,6 +2593,18 @@
 						}
 						else if (type === "imagemap") {				
 							window.open(anchor.href.replace("boards", "images"));
+						}
+					},
+					embedHandler: function() {
+						if (gfycats) {			
+							gfycat.loader();				
+							window.addEventListener('scroll', gfycat.loader);
+							document.addEventListener('visibilitychange', pauseVideos);
+						}							
+						if (imgurs) {					
+							imgur.loader();				
+							window.addEventListener('scroll', imgur.loader);
+							document.addEventListener('visibilitychange', pauseVideos);
 						}
 					}
 				};
