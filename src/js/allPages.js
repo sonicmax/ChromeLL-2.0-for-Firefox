@@ -37,25 +37,34 @@
 			};
 		
 			var addCSSRules = function() {
-				var sheet = document.styleSheets[0];
+				var styleSheet = document.styleSheets[0];
 				var customColors = getCustomColors();
 
 				// Dynamically create rules for user info popup using ETI colour scheme (to make sure that content is readable)
-				sheet.insertRule('#user-popup-div { color: ' + customColors.text 
-						+ '; background: ' + customColors.message 
-						+ '; border: 4px solid ' + customColors.body + '; }', 1);					
-				sheet.insertRule('.popup_link { color: ' + customColors.anchor + '; background: ' + customColors.userbar + '; }', 1);
-				sheet.insertRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading { color: ' + customColors.text + '; opacity: 0.9; }', 1);		
+				styleSheet.addRule('#user-popup-div',  'color: ' + customColors.text); 
+				styleSheet.addRule('#user-popup-div',  'background: ' + customColors.message);
+				styleSheet.addRule('#user-popup-div',  'border: 4px solid ' + customColors.body);
+				styleSheet.addRule('.popup_link', 'color: ' + customColors.anchor);
+				styleSheet.addRule('.popup_link', 'background: ' + customColors.userbar);
+				styleSheet.addRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading', 'color: ' + customColors.text + '; opacity: 0.9');
 				// #user-popup-div:before should be same colour as #user-popup-div background
-				sheet.insertRule('#user-popup-div:before { border-bottom-color: ' + customColors.body + '; }', 1);
+				styleSheet.addRule('#user-popup-div:before', 'border-bottom-color: ' + customColors.body);
 				// #user-popup-div:after should be same colour as #user-popup-div border
-				sheet.insertRule('#user-popup-div:after { border-bottom-color: ' +   customColors.infobar + '; }', 1);			
-				sheet.insertRule('#rep { color: ' + customColors.text + '; }', 1);
-				sheet.insertRule('#rep a { color: ' + customColors.text + '; opacity: 0.7; }', 1);
-				sheet.insertRule('#rep a:hover { opacity: 1; }', 1);
+				styleSheet.addRule('#user-popup-div:after', 'border-bottom-color: ' +   customColors.infobar);			
+				styleSheet.addRule('#rep', 'color: ' + customColors.text);
+				styleSheet.addRule('#rep a', 'color: ' + customColors.text + '; opacity: 0.7');
+				styleSheet.addRule('#rep a:hover', 'opacity: 1');
 				
 				// Use CSS transition for screen fade animations
-				sheet.insertRule('* { -webkit-transition: opacity 0.25s; }', 1);		
+				styleSheet.addRule('.body', '-webkit-transition: opacity 0.25s');		
+				
+				// Add CSS Rule for ignorator
+				styleSheet.addRule('*[ignored]', 'display: none');
+
+				// Override ETI styles for ins/del tags with default style in dramalinks_ticker
+				styleSheet.addRule('#dramalinks_ticker ins' 'text-decoration: underline !important');
+				styleSheet.addRule('#dramalinks_ticker del', 'text-decoration: line-through !important');		
+				
 			};		
 			
 			var getCustomColors = function() {
