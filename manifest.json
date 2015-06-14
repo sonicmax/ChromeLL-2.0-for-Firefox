@@ -4,6 +4,10 @@
   "manifest_version": 2,
   "description": "Enhancements for the forums at the End of the Internet",
   "options_page": "options.html",
+  "options_ui": {
+		"page": "options.html",
+    "chrome_style": true
+  },	
   "minimum_chrome_version": "20.0.0.0",
   "web_accessible_resources": [ "src/images/lueshi_48.png", "src/images/lueshi_128.png", "src/images/popup.png", "src/images/heart_tiles.png", "src/images/loading.png", "src/js/like.js", "src/js/topicPostTemplate.js", "options.html", "src/json/defaultconfig.json" ],
   "icons": {

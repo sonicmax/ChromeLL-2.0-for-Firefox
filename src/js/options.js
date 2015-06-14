@@ -1,58 +1,3 @@
-$(document)
-		.ready(
-				function() {
-					$('.options_navigation_link').click(
-							function() {
-								toLink = $(this).attr('id').split('_link')[0];
-
-								selectedPage = $('.navbar-item-selected').attr(
-										"id").split('_link')[0];
-
-								if (toLink == selectedPage) {
-									// Already on the page, clicking does not
-									// refresh the page!
-									return true;
-								}
-
-								$('#' + selectedPage + '_link').removeClass(
-										"navbar-item-selected");
-								$('#' + toLink + '_link').addClass(
-										"navbar-item-selected");
-
-								$('#' + selectedPage + '_page').removeClass(
-										"shown").addClass("hidden");
-								$('#' + toLink + '_page').removeClass("hidden")
-										.addClass("shown");
-
-								if (toLink == "supersecretabout") {
-									$('body').css("background-color", "#000");
-								} else {
-									$('body').css("background-color",
-											"transparent");
-								}
-							});				
-					// restore config settings
-					if (localStorage['ChromeLL-Config'] == ''
-							|| localStorage['ChromeLL-Config'] == undefined) {
-						console.log("Blank Config. Rebuilding");
-						
-						options.getDefault(function(defaultConfig) {
-							localStorage['ChromeLL-Config'] = defaultConfig;
-						});
-						
-						if (localStorage['chromeLL_userhighlight']
-								&& localStorage['chromeLL_userhighlight'] != '') {
-							options.restoreV1();
-						}
-						else {
-							options.init();
-						}				
-					}
-					else {
-						options.init();
-					}
-				});
-
 var options = {
 	init: function() {
 		console.log('loading config');
@@ -1017,8 +962,11 @@ var options = {
 				anchor.appendChild(close);
 				likeList.appendChild(linebreak);
 			}
-			document.getElementById(mostRecent.id).className = 'active_like';
-			textarea.value = config.custom_like_data[mostRecent.id].contents;	
+			if (document.getElementById(mostRecent.id)) {			
+				document.getElementById(mostRecent.id).className = 'active_like';
+				textarea.value = config.custom_like_data[mostRecent.id].contents;	
+			}
+			
 		},
 		/*displayUserscripts: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
@@ -1361,9 +1309,15 @@ var options = {
 				}
 			}
 			config.clear_notify = document.getElementById('clear_notify').value;
-			config.last_saved = new Date().getTime();
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);
-			allBg.init_listener(config);	
+			config.last_saved = new Date().getTime();		
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);	
+			
+			// Make sure that content scripts are using latest version of config
+			chrome.runtime.sendMessage({
+				need: "config_push"
+			});				
+			
+			allBg.init_listeners(config);
 	},
 	restoreFromText: function(evt) {
 		var file = evt.target.files[0];
@@ -1424,3 +1378,28 @@ var options = {
 	},
 	debouncer: ''
 };
+
+$(document)
+	.ready(
+		function() {
+			// Restore config settings
+			if (localStorage['ChromeLL-Config'] == '' || localStorage['ChromeLL-Config'] == undefined) {
+				console.log("Blank Config. Rebuilding");
+
+				options.getDefault(function(defaultConfig) {
+					localStorage['ChromeLL-Config'] = defaultConfig;
+				});
+
+				if (localStorage['chromeLL_userhighlight'] && localStorage['chromeLL_userhighlight'] != '') {
+					// Support for people with legacy config flesthis
+					// TODO: It seems safe to remove this now, after so many years
+					options.restoreV1();
+				} else {
+					options.init();
+				}
+			} else {
+				options.init();
+			}
+		}
+		
+	);
