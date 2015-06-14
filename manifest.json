@@ -24,9 +24,12 @@
   {
     "matches": ["*://*.endoftheinter.net/*"],
     "css": ["src/css/allpages.css"],
-    "js": ["src/js/init.js", "src/js/love.js", "lib/jquery.js", "src/js/allPages.js"],
 		"run_at" : "document_start"
   },
+	{
+	  "js": ["src/js/init.js", "src/js/love.js", "lib/jquery.js", "src/js/allPages.js"],
+		"run_at" : "document_start"
+	},
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/history.php*"],
     "js": ["src/js/dramalinks.js"],

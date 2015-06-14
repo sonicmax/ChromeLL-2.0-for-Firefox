@@ -24,35 +24,36 @@
 		var DOM = function() {
 			
 			var init = function() {
-				addCSSRules();
-				try {
-					for (var i in methods) {
-						if (CHROMELL.config[i]) {
-							methods[i]();
-						}
-					}		
-				} catch (err) {
-					console.log("error in " + i + ":", err);
+				
+				if (CHROMELL.config.short_title) {
+					document.title = document.title.replace(/End of the Internet - /i, '');
 				}
+				
+				addCSSRules();
+				
+				for (var i in methods) {
+					if (CHROMELL.config[i]) {
+						methods[i]();
+					}
+				}
+				
 			};
 		
 			var addCSSRules = function() {
 				var styleSheet = document.styleSheets[0];
-				var customColors = getCustomColors();
+				var customColors = getCustomColors();			
 				// Dynamically create rules for user info popup using ETI colour scheme (to make sure that content is readable)
-				styleSheet.addRule('#user-popup-div',  'color: ' + customColors.text); 
+				styleSheet.addRule('#user-popup-div',  'color: ' + customColors.text);			
 				styleSheet.addRule('#user-popup-div',  'background: ' + customColors.message);
-				styleSheet.addRule('#user-popup-div',  'border: 4px solid ' + customColors.body);
+				styleSheet.addRule('#user-popup-div',  'border-color: ' + customColors.body);		
 				styleSheet.addRule('.popup_link', 'color: ' + customColors.anchor);
-				styleSheet.addRule('.popup_link', 'background: ' + customColors.userbar);
-				styleSheet.addRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading', 'color: ' + customColors.text + '; opacity: 0.9');
+				styleSheet.addRule('.popup_link', 'background: ' + customColors.userbar);	
+				styleSheet.addRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading, #rep', 'color: ' + customColors.text);
 				// #user-popup-div:before should be same colour as #user-popup-div background
-				styleSheet.addRule('#user-popup-div:before', 'border-bottom-color: ' + customColors.body);
+				styleSheet.addRule('#user-popup-div:before', 'border-bottom-color: ' + customColors.body);	
 				// #user-popup-div:after should be same colour as #user-popup-div border
 				styleSheet.addRule('#user-popup-div:after', 'border-bottom-color: ' +   customColors.infobar);			
-				styleSheet.addRule('#rep', 'color: ' + customColors.text);
-				styleSheet.addRule('#rep a', 'color: ' + customColors.text + '; opacity: 0.7');
-			};	
+			};		
 			
 			var getCustomColors = function() {
 				// (first 'h1' element is either tag name (in topic list), or topic title (in message list)
@@ -246,18 +247,9 @@
 				userbar.style.zIndex = '2';
 			};
 			
-			methods.short_title = function() {
-				document.title = document.title.replace(/End of the Internet - /i, '');
-			};
-			
 			methods.user_info_popup = function() {
-				chrome.runtime.sendMessage({
-					need : "insertcss",
-					file : "src/css/arrowbox.css"
-				}, function() {
 					var links = [ "PM", "GT", "BT", "HIGHLIGHT",
-							"UNHIGHLIGHT", "IGNORATE" ];
-							
+							"UNHIGHLIGHT", "IGNORATE" ];					
 					var popup = document.createElement('div');			
 					popup.className = 'user_info_popup';
 					popup.id = 'user-popup-div';
@@ -279,14 +271,12 @@
 					popup.appendChild(user);
 					popup.appendChild(info);
 					document.body.appendChild(popup);				
-					document.getElementById('user-popup-div').style.display = 'none';
 					
 					document.addEventListener('click', function(evt) {
 						if (evt.target.className != 'popup_link') {
 							utils.popup.hide();
 						}
 					});			
-				});
 			};
 			
 			return {
