@@ -6,13 +6,14 @@
 	<script type="text/javascript" src="src/js/options.js"></script>
 	<script type="text/javascript" src="lib/colorpicker.js"></script>
 	<script type="text/javascript" src="src/js/allBg.js"></script>
-  <title>ChromeLL Options</title>
-  <style>
+	<title>ChromeLL Options</title>
+	<style>
 		/* General style rules. */
 		
     body {
 			width: 1200px;
-			height: 900px;
+			height: 600px;
+			overflow-x: hidden;
 		}
 				
 		input[type=radio] ~ span,
@@ -84,20 +85,21 @@
 		
 		.tab {
 			float: left;
-			margin: -5px auto;
+			margin: -7px auto;
 		}
 		
 		.tab label[for] {
 			opacity: .8;
 			border-radius: 5px 15px 0px 0px;
-			background: #eee; 
-			padding: 10px;
-			border: 1px solid #ccc; 
-			margin-left: -1px;
+			background: linear-gradient(to bottom, rgba(238, 238, 238, 1) 0%, rgba(255, 255, 255, 0) 85%); 
+			padding: 10px;			
+			border-left: 1px solid #ccc;
+			border-right: 1px solid #ccc;
+			border-top: 1px solid #ccc;
+			margin-left: -2px;
 			position: relative;
-			left: 1px;
 			-webkit-user-select: none;
-			-webkit-transition: all 0.25s;			
+			-webkit-transition: all 0.075s;			
 		}
 		
 		.tab label[for]:hover, .tab-radio:checked ~ label {
@@ -124,7 +126,6 @@
 		
 		.tab-radio:checked ~ label {
 			background: white;
-			border-bottom: 1px solid white;
 			z-index: 2;
 		}
 		
@@ -1449,7 +1450,7 @@
 				</section>
 			</div>
 		</div>
-		<!--end of option tabs-->	
+
 </div>
 </body>
 </html>
