@@ -32,6 +32,16 @@
 		float: right;
 	}
 
+/* [ Style for unhandled exception error dialog ] */
+	
+	#error_dialog {
+		border: 1px solid rgba(0, 0, 0, 0.3);					
+		border-radius: 6px;		
+		boxShadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+		background: white no-repeat center bottom;
+		background-repeat: no-repeat;
+		background-position: center bottom;
+	}
 
 /* [ For user/keyword ignorator ] */
 				
