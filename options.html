@@ -72,9 +72,8 @@
 		section.flexed {
 			display: flex;
 		}
-		
 				
-		/* Rules for CSS tab trick (based on guide presented at https://css-tricks.com/functional-css-tabs-revisited/ */
+		/* Rules for CSS tabs (based on guide presented at https://css-tricks.com/functional-css-tabs-revisited/ */
 					
 		.tabs {
 			position: float;   
@@ -89,21 +88,15 @@
 		}
 		
 		.tab label[for] {
-			opacity: .8;
 			border-radius: 5px 15px 0px 0px;
 			background: linear-gradient(to bottom, rgba(238, 238, 238, 1) 0%, rgba(255, 255, 255, 0) 85%); 
+			background: eee#;
 			padding: 10px;			
-			border-left: 1px solid #ccc;
 			border-right: 1px solid #ccc;
-			border-top: 1px solid #ccc;
 			margin-left: -2px;
 			position: relative;
 			-webkit-user-select: none;
 			-webkit-transition: all 0.075s;			
-		}
-		
-		.tab label[for]:hover, .tab-radio:checked ~ label {
-			opacity: 1;
 		}
 		
 		/* Hide radio buttons used for CSS tab trick */
@@ -120,11 +113,16 @@
 			right: 0;
 			bottom: 0;
 			padding: 20px;
-			border: 1px 0px 0px 0px solid #ccc;
 			display: none;
 		}
 		
+		.tab-radio:hover ~ label {
+			text-decoration: underline;
+		}
+		
 		.tab-radio:checked ~ label {
+			font-weight: bold;
+			border-left: 1px solid #ccc;
 			background: white;
 			z-index: 2;
 		}
@@ -252,7 +250,7 @@
 
 <body>
 <div id="tabs">	
-	
+		<!-- General -->
 		<div class="tab">
 			<input class="tab-radio" type="radio" id="tab-general" name="options" checked>
 			<label for="tab-general">General</label>	
@@ -438,7 +436,7 @@
 				</section>
 			</div>		
 		</div>
-		
+		<!-- Sync -->
 		<div class="tab">	
 			<input class="tab-radio" type="radio" id="tab-sync" name="options">
 			<label for="tab-sync">Sync</label>		
@@ -484,7 +482,7 @@
 				</section>
 			</div>	
 		</div>
-
+		<!-- Ignorator -->
 		<div class="tab">	
 			<input class="tab-radio" type="radio" id="tab-ig" name="options">
 			<label for="tab-ig">Ignorator</label>		
@@ -527,7 +525,7 @@
 				</section>
 			</div>		
 		</div>
-		
+		<!-- Highlights -->
 		<div class="tab">		
 			<input class="tab-radio" type="radio" id="tab-high" name="options">			
 			<label for="tab-high">User Highlights</label>		
@@ -595,7 +593,7 @@
 				</section>
 			</div>		
 		</div>	
-		
+		<!-- Bookmarks -->
 		<div class="tab">		
 			<input class="tab-radio" type="radio" id="tab-book" name="options">
 			<label for="tab-book">Bookmarks</label>	
@@ -645,7 +643,7 @@
 				</section>
 			</div>	
 		</div>
-		
+		<!-- Snippets -->
 		<div class="tab">
 				<input class="tab-radio" type="radio" id="tab-snip" name="options">
 				<label for="tab-snip">Snippets</label>		
@@ -709,7 +707,7 @@
 				</div>
 				
 		</div>				
-		
+		<!-- Topic List -->
 		<div class="tab">
 			<input class="tab-radio" type="radio" id="tab-tl" name="options">
 			<label for="tab-tl">Topic List</label>		
@@ -774,24 +772,24 @@
 								<input type="checkbox" id="enable_keyword_highlight" />
 								<span>Highlight topics containing keywords below</span>
 							</label>
-							<br />
+							<br><br>
 							<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
 								<div class="columns" style="overflow: hidden;">
 									<div style="float: left; width: 257px; margin-right: 20px;">
 										Keywords:
-										<br />
+										<br>
 
 									</div>
 									<div style="float: left; width: 80px; margin-right: 20px;">
 										Background:
-										<br />
+										<br>
 
 									</div>
 									<div style="float: left; width: 70px; margin-right: 20px;">
 										Text:
-										<br />
+										<br>
 									</div>
-								</div>
+								</div>							
 							</div>
 							<div style="font-size: small!important; margin-left: 17px;" id="keyword_highlight">
 								<div class="columns" style="overflow: hidden; display: none;" class="keyword_highlight_data_blank">
@@ -818,25 +816,26 @@
 								</div>
 							</div>
 						</div>
+						<br>
 						<div class="checkbox">
 							<label>
 								<input type="checkbox" id="enable_tag_highlight" />
 								<span>Highlight topics containing tags below</span>
 							</label>
-							<br />
+							<br><br>
 							<div style="font-size: small!important; margin-left: 17px; margin-top: -10px;">
 								<div class="columns" style="overflow: hidden;">
 									<div style="float: left; width: 257px; margin-right: 20px;">
 										Tags:
-										<br />
+										<br>
 									</div>
 									<div style="float: left; width: 80px; margin-right: 20px;">
 										Background:
-										<br />
+										<br>
 									</div>
 									<div style="float: left; width: 70px; margin-right: 20px;">
 										Text:
-										<br />
+										<br>
 									</div>
 								</div>
 							</div>
@@ -869,7 +868,7 @@
 				</section>
 			</div>		
 		</div>		
-		
+		<!-- Message List -->
 		<div class="tab">
 			<input class="tab-radio" type="radio" id="tab-ml" name="options">
 			<label for="tab-ml">Message List</label>
@@ -956,7 +955,7 @@
 								</span>
 							</label>
 						</div>								
-						<div class="checkbox">
+						<div class="checkbox subbox">
 							<input type="checkbox" id="resize_gfys" />
 							<span>Resize Gfycat videos that are wider than <input type="text" id="gfy_max_width" class="color-input" value="1440" /> px</span>
 						</div>								
@@ -1069,10 +1068,12 @@
 							<input type="checkbox" id="highlight_tc" />
 							<span>Highlight the TC's username color <input type="text" id="tc_highlight_color" class="color color-input" value="ffff00" /></span>
 						</div>
+						<br>
 						<div class="checkbox">
 							<input type="checkbox" id="label_tc" />
 							<span>Show <b>TC</b> next to the TC's username<input type="text" id="tc_label_color" class="color color-input" /></span>
 						</div>
+						<br>
 						<div class="checkbox">
 							<input type="checkbox" id="label_self_anon" />
 							<span>Show <b>(Me)</b> next to own posts in anonymous topics
@@ -1085,6 +1086,7 @@
 								</a>																	
 							</span>
 						</div>
+						<br>
 						<div class="checkbox">
 							<input type="checkbox" id="foxlinks_quotes" />
 							<span>Foxlinks style quotes color #<input type="text" id="foxlinks_quotes_color" class="color-input" /> 
@@ -1185,7 +1187,7 @@
 			</div>
 		
 	</div>
-		
+		<!-- Like Button -->
 		<div class="tab">
 			<input class="tab-radio" type="radio" id="tab-like" name="options">
 			<label for="tab-like">Like Button</label>
@@ -1210,7 +1212,7 @@
 				</section>
 			</div>
 		</div>						
-	
+		<!-- Profile/PM -->
 		<div class="tab">
 			<input class="tab-radio" type="radio" id="tab-pro" name="options">
 			<label for="tab-pro">Profile/PM</label>
@@ -1356,7 +1358,7 @@
 				</section>
 			</div>
 		</div>		
-	 
+		<!-- Imagemap Cache -->
 		<div class="tab">
 			<input class="tab-radio" type="radio" id="tab-img" name="options">
 			<label for="tab-img">Imagemap Cache</label>
@@ -1391,7 +1393,7 @@
 				</section>
 			</div>
 		</div>
-		
+		<!-- About -->
 		<div class="tab">
 			<input class="tab-radio" type="radio" id="tab-about" name="options">
 			<label for="tab-about">About</label>
@@ -1450,7 +1452,6 @@
 				</section>
 			</div>
 		</div>
-
 </div>
 </body>
 </html>
