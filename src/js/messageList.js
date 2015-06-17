@@ -1389,23 +1389,34 @@
 				helpers.clearUnreadPosts();
 				
 				// Automatically load next page
-				if (true 
+				if (CHROMELL.config.load_after_reading 
 						&& nextPage.style.display === 'block' 
-						&& window.innerHeight + document.body.scrollTop >= document.body.offsetHeight - 5) {
-										
-					var currentPage = window.location.href.match(/(page=)([0-9]+)/);						
-					var targetPage = nextPage.href.match(/(page=)([0-9]+)/);										
-					var nextPageNumber = parseInt(currentPage[2], 10) + 1;
-					var href;
-					if (targetPage[2] == currentPage[2]) {
-						// Need to motify HTML element to keep track of page changes
-						href = nextPage.href.replace(targetPage[0], 'page=' + nextPageNumber);
-						nextPage.href = href;
+						&& window.innerHeight + document.body.scrollTop >= document.body.offsetHeight - 5) {							
+							
+					var currentPage;
+					var regex = window.location.href.match(/(page=)([0-9]+)/);
+					if (!regex) {
+						currentPage = 1;
 					}
 					else {
+						currentPage = parseInt(regex[2], 10);
+					}
+					
+					regex = nextPage.href.match(/(page=)([0-9]+)/);
+					nextPageNumber = parseInt(regex[2], 10);						
+					
+					var href;			
+					if (nextPageNumber > currentPage) {
 						// Nextpage element should be correct
 						href = nextPage.href;
-					}				
+					}
+					else {
+						// Need to modify HTML element to keep track of page changes
+						nextPageNumber++;
+						href = nextPage.href.replace(regex[0], 'page=' + nextPageNumber);
+						nextPage.href = href;						
+					}
+					
 					// Make sure that address bar reflects current page location.
 					history.pushState(null, null, href)
 					
