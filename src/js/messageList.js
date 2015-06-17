@@ -60,6 +60,7 @@
 			var styleSheet;
 			
 			var scrolling = false;
+			var replaying = false;
 			var topsTotal = 0;
 			var ignorated = {
 				total_ignored: 0,
@@ -162,11 +163,14 @@
 						childList: true
 				});	
 				
+				var newPageNotifier = document.getElementById('nextpage');
+				
 				if (CHROMELL.config.new_page_notify) {
-					newPageObserver.observe(document.getElementById('nextpage'), {
+					newPageObserver.observe(newPageNotifier, {
 							attributes: true
 					});
-				}
+				}	
+				
 			};
 		
 			var setActivePost = function(msg) {
@@ -209,12 +213,13 @@
 			
 			var addListeners = function(newPost) {
 				if (!newPost) {
-					document.body.addEventListener('click', eventHandlers.mouseclick);
+					document.body.addEventListener('click', eventHandlers.mouseclick);				
+					document.addEventListener('scroll', eventHandlers.scrollDebouncer);
 					
 					var searchBox = document.getElementById('image_search');			
 					if (searchBox) {
 						searchBox.addEventListener('keyup', eventHandlers.search);
-					}
+					}										
 				}
 				if (CHROMELL.config.user_info_popup) {
 					var tops;
@@ -250,18 +255,104 @@
 				}
 			};
 			
+			var appendToPage = function(nextPage) {
+				
+				// Save reference to document.head - we will need to append some scripts later
+				var head = document.getElementsByTagName('head')[0];
+				var html = document.createElement('html');
+				html.innerHTML = nextPage;
+				console.log(html);				
+				var scripts = html.querySelectorAll('script');
+				var containerDiv = document.getElementById('u0_1');
+				var pageList = document.getElementById('u0_3');
+				var newPages = html.getElementsByClassName('infobar')[1];			
+				var containers = html.querySelectorAll('.message-container');
+				
+				// This script creates new TopicManager object and allows us to receive livelinks posts
+				var topicManager = scripts[scripts.length - 4];
+				var newScript = document.createElement('script');
+				newScript.text = topicManager.text;				
+				head.appendChild(newScript);
+				
+				// Set 'replaying' flag to make sure that notifications/etc aren't called.
+				replaying = true;
+				
+				for (var i = 0, len = containers.length; i < len; i++) {
+					var container = containers[i];					
+					var containerScripts = container.getElementsByTagName('script');
+					for (var j = 0, scriptLen = containerScripts.length; j < scriptLen; j++) {
+						var script = containerScripts[j];
+						if (script) {
+							if (script.text.match(/ImageLoader/)) {
+								// We have to manually find the correct src for each image by checking the array of parameters 
+								// used by the ImageLoader constructor.The placeholder element for each image is always script.previousSibling
+								var array = script.text.split(',');
+								var escapedURL = array[1];
+								var url = escapedURL.replace(/\\/g, '');
+								url = url.replace('"//', window.location.protocol + '//');
+								url = url.substring(0, url.length - 1);
+								var img = document.createElement('img');
+								img.src = url;
+								var placeholder = script.previousSibling;								
+								placeholder.appendChild(img);															
+								placeholder.className = 'img-loaded';
+								script.remove();									
+							}	
+						}
+					}
+					
+					if (container) {
+						containerDiv.appendChild(container);
+						livelinksHandler(container);
+					}
+					else {
+						console.log(container);
+					}
+				}
+				// We can now allow notifications/etc to be passed to user
+				replaying = false;
+				// Replace list of pages last (as it is located at bottom of screen);
+				pageList.outerHTML = newPages.outerHTML;				
+				
+				
+			};
+			
 			var newPageObserver = new MutationObserver(function(mutations) {
 				for (var i = 0, len = mutations.length; i < len; i++) {
 					var mutation = mutations[i];
+					
 					if (mutation.type === 'attributes' 
 							&& mutation.target.style.display === 'block') {
+						
 						chrome.runtime.sendMessage({
-							need: "notify",
-							title: "New Page Created",
-							message: document.title
-						});
+								
+								need: "notify",
+								title: "New Page Created",
+								
+								message: document.title
+						});	
+						
+						if (CHROMELL.config.follow_new_pages) {
+							// Scrape message-containers from next page & append to current page.
+							// We want function to be able to fire again when necessary.
+							var newPage = mutation.target.href;
+							mutation.target.style.display = 'none';
+							chrome.runtime.sendMessage({
+									
+									need: "xhr",
+									url: newPage,
+							
+							}, appendToPage );				
+						}
+												
+						else {
+							// Disconnect listener to prevent function from firing again
+							this.disconnect();
+						}
+						
 					}
 				}
+				
 			});
 			
 			var livelinksObserver = new MutationObserver(function(mutations) {
@@ -280,17 +371,25 @@
 			var livelinksHandler = function(container) {
 				var index = document.getElementsByClassName('message-container').length;
 				DOM.setActivePost(container);
-				var isLivelinksPost = true;
+				var isLivelinksPost;
+				if (!replaying) {
+					isLivelinksPost = true;
+				}
+				
 				for (var i in messagecontainer) {
 					if (CHROMELL.config[i + pm]) {
 							messagecontainer[i](container, index, isLivelinksPost);
 					}
 				}		
+				
 				addListeners(container);
+				
 				utils.anchors.check(container);
+				
 				if (CHROMELL.config.click_expand_thumbnail) {
 					misc.click_expand_thumbnail(container);
 				}
+				
 				if (!CHROMELL.config.hide_ignorator_badge) {
 					// send updated ignorator data to background script
 					globalPort.postMessage({
@@ -942,7 +1041,6 @@
 			
 			misc.post_title_notification = function() {
 				document.addEventListener('visibilitychange', helpers.clearUnreadPosts);
-				document.addEventListener('scroll', helpers.clearUnreadPosts);
 				document.addEventListener('mousemove', helpers.clearUnreadPosts);
 			};
 
@@ -1118,7 +1216,8 @@
 				init: init,
 				scrolling: scrolling,
 				addCSSRules: addCSSRules,
-				setActivePost: setActivePost
+				setActivePost: setActivePost,
+				appendToPage: appendToPage
 			};
 			
 		}();
@@ -1127,7 +1226,10 @@
 			var imagemapDebouncer = '';
 			var menuDebouncer = '';
 			var popupDebouncer = '';
+			var debouncer = '';
 			var _cachedEvent = '';
+			var _cachedScrollEvt = '';
+			var embeddedVideos = false;
 			
 			var ignoratorUpdate = function(msg) {
 				if (msg.action !== 'ignorator_update') {	
@@ -1274,18 +1376,65 @@
 				}, 250);
 			};
 			
+			var scrollDebouncer = function(evt){
+				clearTimeout(debouncer);
+				_cachedScrollEvt = evt;
+				debouncer = setTimeout(scrollHandler, 25);
+			};
+			
+			var scrollHandler = function() {
+				var evt = _cachedScrollEvt;
+				var nextPage = document.getElementById('nextpage');
+
+				helpers.clearUnreadPosts();
+				
+				// Automatically load next page
+				if (true 
+						&& nextPage.style.display === 'block' 
+						&& window.innerHeight + document.body.scrollTop >= document.body.offsetHeight - 5) {
+										
+					var currentPage = window.location.href.match(/(page=)([0-9]+)/);						
+					var targetPage = nextPage.href.match(/(page=)([0-9]+)/);										
+					var nextPageNumber = parseInt(currentPage[2], 10) + 1;
+					var href;
+					if (targetPage[2] == currentPage[2]) {
+						// Need to motify HTML element to keep track of page changes
+						href = nextPage.href.replace(targetPage[0], 'page=' + nextPageNumber);
+						nextPage.href = href;
+					}
+					else {
+						// Nextpage element should be correct
+						href = nextPage.href;
+					}				
+					// Make sure that address bar reflects current page location.
+					history.pushState(null, null, href)
+					
+					chrome.runtime.sendMessage({
+						need: "xhr",
+						url: nextPage.href					
+					}, DOM.appendToPage);
+					
+				}
+				
+				utils.anchors.embedHandler();
+			};
+			
 			return {
 				ignoratorUpdate: ignoratorUpdate,
 				mouseclick: mouseclick, 
 				mouseenter: mouseenter,
 				mouseleave: mouseleave,
 				search: search,
+				scrollDebouncer: scrollDebouncer,
 				cacheEvent: function(event) {
-						_cachedEvent = event;
+					_cachedEvent = event;
 				},
 				cachedEvent: function() {					
-						return _cachedEvent;
-				}				
+					return _cachedEvent;
+				},
+				videoEmbed: function() {
+					_embeddedVideos = true;
+				}
 			};
 			
 		}();
@@ -2585,13 +2734,11 @@
 					},
 					embedHandler: function() {
 						if (gfycats) {			
-							gfycat.loader();				
-							window.addEventListener('scroll', gfycat.loader);
+							gfycat.loader();
 							document.addEventListener('visibilitychange', pauseVideos);
 						}							
 						if (imgurs) {					
 							imgur.loader();				
-							window.addEventListener('scroll', imgur.loader);
 							document.addEventListener('visibilitychange', pauseVideos);
 						}
 					}
