@@ -1391,39 +1391,9 @@
 				// Automatically load next page
 				if (CHROMELL.config.load_after_reading 
 						&& nextPage.style.display === 'block' 
-						&& window.innerHeight + document.body.scrollTop >= document.body.offsetHeight - 5) {							
-							
-					var currentPage;
-					var regex = window.location.href.match(/(page=)([0-9]+)/);
-					if (!regex) {
-						currentPage = 1;
-					}
-					else {
-						currentPage = parseInt(regex[2], 10);
-					}
+						&& window.innerHeight + document.body.scrollTop >= document.body.offsetHeight - 5) {						
 					
-					regex = nextPage.href.match(/(page=)([0-9]+)/);
-					nextPageNumber = parseInt(regex[2], 10);						
-					
-					var href;			
-					if (nextPageNumber > currentPage) {
-						// Nextpage element should be correct
-						href = nextPage.href;
-					}
-					else {
-						// Need to modify HTML element to keep track of page changes
-						nextPageNumber++;
-						href = nextPage.href.replace(regex[0], 'page=' + nextPageNumber);
-						nextPage.href = href;						
-					}
-					
-					// Make sure that address bar reflects current page location.
-					history.pushState(null, null, href)
-					
-					chrome.runtime.sendMessage({
-						need: "xhr",
-						url: nextPage.href					
-					}, DOM.appendToPage);
+					helpers.loadNextPage();
 					
 				}
 				
@@ -2957,6 +2927,59 @@
 		var helpers = function() {
 			// TODO: Some of these methods may be better located elsewhere
 			return {
+				loadNextPage: function() {
+					var nextPage = document.getElementById('nextpage');					
+					var regex = window.location.href.match(/(page=)([0-9]+)/);
+					
+					var currentPage;
+					// "page" parameter may not exist
+					if (!regex) {
+						currentPage = 1;
+					}
+					else {
+						currentPage = parseInt(regex[2], 10);
+					}
+					
+					// This regex will always find a match - no need to check.
+					regex = nextPage.href.match(/(page=)([0-9]+)/);
+					nextPageNumber = parseInt(regex[2], 10);						
+					
+					var href;			
+					if (nextPageNumber > currentPage) {
+						// Nextpage element should be correct
+						href = nextPage.href;
+					}
+					else {
+						// Need to modify HTML element to keep track of page changes
+						nextPageNumber++;
+						href = nextPage.href.replace(regex[0], 'page=' + nextPageNumber);
+						nextPage.href = href;						
+					}
+					
+					// Make sure that address bar reflects current page location.
+					history.pushState(null, null, href)
+					
+					chrome.runtime.sendMessage({
+						need: "xhr",
+						url: href					
+					},  function(response) {
+						
+						var html = document.createElement('html');
+						html.innerHTML = response;
+						
+						var containers = html.getElementsByClassName('message');
+						if (containers.length < 50) {	
+							nextPage.style.display = 'none';								
+						}
+						else {
+							nextPage.style.display = 'block';
+						}
+						
+						DOM.appendToPage(response);		
+						
+					});	
+					
+				},
 				startBatchUpload: function(evt) {
 					var chosen = document.getElementById('batch_uploads');
 					if (chosen.files.length == 0) {
@@ -3023,7 +3046,7 @@
 						document.title = newTitle;
 					}
 				},			
-				loadNextPage: function() {
+				/*loadNextPage: function() {
 					var page = 1;
 					if (window.location.href.match('asyncpg')) {
 						page = parseInt(window.location.href.match('asyncpg=(\d+)')[1]);
@@ -3032,7 +3055,7 @@
 					}
 					page++;
 					var topic = window.location.href.match('topic=(\d+)')[1];
-				},		
+				},*/		
 				qpTagButton: function(e) {
 					if (e.target.tagName != 'INPUT') {
 						return 0;
