@@ -2929,15 +2929,15 @@
 			return {
 				loadNextPage: function() {
 					var nextPage = document.getElementById('nextpage');					
-					var regex = window.location.href.match(/(page=)([0-9]+)/);
+					nextPage.innerHTML = 'Loading...';
 					
-					var currentPage;
+					var regex = window.location.href.match(/(page=)([0-9]+)/);
 					// "page" parameter may not exist
 					if (!regex) {
-						currentPage = 1;
+						var currentPage = 1;
 					}
 					else {
-						currentPage = parseInt(regex[2], 10);
+						var currentPage = parseInt(regex[2], 10);
 					}
 					
 					// This regex will always find a match - no need to check.
