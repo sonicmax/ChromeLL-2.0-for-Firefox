@@ -2,7 +2,7 @@
 	
 	CHROMELL.topicList = function() {
 		
-		var globalPort = chrome.runtime.connect();
+		var globalPort = CHROMELL.globalPort;
 		
 		var pm = '';	
 		
@@ -22,16 +22,8 @@
 			else if (window.location.href.match(/inbox.php/)) {
 				pm = "_pm";
 			}
-			
-			if (document.readyState == 'loading') {
-				document.addEventListener('DOMContentLoaded', function() {
-					DOM.init();
-				});
-			}
-			else {
-				// DOM was already loaded			
-				DOM.init();
-			}		
+				
+			CHROMELL.whenDOMReady(DOM.init);
 		};	
 		
 		var prepareArrays = function() {

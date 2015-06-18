@@ -6,18 +6,16 @@
 		
 		var init = function() {
 			chrome.runtime.onMessage.addListener(messageHandler);
-			
-			if (document.readyState === 'loading') {
-				document.addEventListener('DOMContentLoaded', DOM.init);
-			}
-			else {
-				DOM.init();
-			}
+			CHROMELL.whenDOMReady(DOM.init);
 		};		
 		
 		var messageHandler = function(msg) {
 			if (msg.action == 'showOptions') {
 				utils.optionsMenu.show();
+			}
+			else if (msg.action == "config_push") {
+				// Config has changed from options page - make sure that content scripts are using latest version
+				CHROMELL.config = JSON.parse(localStorage['ChromeLL-Config']);
 			}
 		};
 		

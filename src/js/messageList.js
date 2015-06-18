@@ -2,7 +2,7 @@
 	
 	CHROMELL.messageList = function() {
 		
-		var globalPort = chrome.runtime.connect();
+		var globalPort = CHROMELL.globalPort;
 		var pm = '';
 		var ignores;
 		
@@ -31,15 +31,7 @@
 				});
 			}
 			
-			if (document.readyState == 'loading') {
-				// wait for DOMContentLoaded to fire before attempting to modify DOM
-				document.addEventListener('DOMContentLoaded', function() {
-					DOM.init();
-				});
-			}
-			else {
-				DOM.init();
-			}
+			CHROMELL.whenDOMReady(DOM.init);
 		};	
 		
 		var DOM = function() {		
