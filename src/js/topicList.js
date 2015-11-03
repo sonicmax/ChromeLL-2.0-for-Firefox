@@ -27,6 +27,8 @@
 		};	
 		
 		var prepareArrays = function() {
+			// Convert strings from ignorator config values into arrays of lowercase usernames.
+			// (this can be done before DOM has loaded)
 			if (CHROMELL.config.ignorator_list) {
 				if (CHROMELL.config.ignorator_list.indexOf(',') == -1) {
 					// ignorator list only has one user
@@ -330,53 +332,46 @@
 			
 			methods.page_jump_buttons = function(tr, i) {
 				var inbox;
-				if (window.location.href.indexOf('inbox.php') > -1) {
-					if (!CHROMELL.config.page_jump_buttons_pm) {
-						return;
-					}
+				if (window.location.href.indexOf('inbox.php') > -1) {				
 					inbox = true;
 				}
-				var insert;
-				var tmp, topic;
 				var td = tr.getElementsByTagName('td')[0];
 				if (td) {
-					insert = document.createElement('span');
+					var fr = td.getElementsByClassName('fr')[0];
+					var insert = document.createElement('span');
 					if (inbox) {
 						insert.style.cssFloat = 'right';
 					}
-					try {
-						topic = td.getElementsByTagName('a');
-						var space = document.createTextNode(' ');
-						var jumpWindow = document.createElement('a');
-						jumpWindow.href = '##' + i;
-						jumpWindow.id = 'jumpWindow';
-						jumpWindow.innerHTML = '#';
-						var jumpLast = document.createElement('a');
-						jumpLast.href = '##' + i;
-						jumpLast.id = 'jumpLast';
-						jumpLast.innerHTML = '&gt;';
-						insert.appendChild(jumpWindow);
-						insert.appendChild(space);
-						insert.appendChild(jumpLast);
-						if (inbox) {
-							td.appendChild(insert);				
-						}
-						else {
-							td.getElementsByClassName('fr')[0].appendChild(insert);
-						}					
-					} catch (e) {
-						if (CHROMELL.config.debug) {
-							console.log('locked topic?');
-						}
-						var span = td.getElementsByTagName('span')[0];
-						if (span) { 
-							topic = span.getElementsByTagName('a');
-							tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
+					topic = td.getElementsByTagName('a');
+					var space = document.createTextNode(' ');
+					var jumpWindow = document.createElement('a');
+					jumpWindow.href = '##' + i;
+					jumpWindow.id = 'jumpWindow';
+					jumpWindow.innerHTML = '#';
+					var jumpLast = document.createElement('a');
+					jumpLast.href = '##' + i;
+					jumpLast.id = 'jumpLast';
+					jumpLast.innerHTML = '&gt;';
+					insert.appendChild(jumpWindow);
+					insert.appendChild(space);
+					insert.appendChild(jumpLast);
+					if (inbox) {
+						td.appendChild(insert);				
+					}
+					else {
+						fr.appendChild(insert);
+					}
+					var span = td.getElementsByTagName('span')[0];
+					if (span) {
+						var topic = span.getElementsByTagName('a');
+						
+						match = topic[0].href.match(/(topic|thread)=([0-9]+)/)
+						if (match) {
+							var tmp = match[2];						
 							insert.innerHTML = '<a href="##' + tmp
 									+ '" id="jumpWindow">#</a> <a href="##' + tmp
 									+ '" id="jumpLast">&gt;</a>';
-							td.getElementsByClassName('fr')[0].insertBefore(
-									insert, null);
+							fr.insertBefore(insert, null);
 						}
 					}
 				}
