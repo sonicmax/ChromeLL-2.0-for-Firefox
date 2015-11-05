@@ -1851,7 +1851,7 @@
 							var embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
 												+ "<a id='" + anchor.id + "' class='hide' href='#hide'>&nbsp<b>[Hide]</b></a></span>" 
 												+ "<br><div class='youtube'>" 
-												+ "<iframe id='" + "yt" + anchor.id + "' type='text/html' width='640' height='390'" 
+												+ "<iframe id='" + "yt" + anchor.id + "' type='text/html' width='640' height='390' allowfullscreen='allowfullscreen'"
 												+ "src='https://www.youtube.com/embed/" + code 
 												+ "'?autoplay='0' frameborder='0'/>" 
 												+ "</div>";
