@@ -61,7 +61,7 @@
 	},
   {
     "matches": ["*://endoftheinter.net/profile.php*"],
-    "js": ["lib/jquery.js", "src/js/profile.js"] 
+    "js": ["src/js/profile.js"] 
   },
   {
     "matches": ["*://*.endoftheinter.net/search.php*"],
