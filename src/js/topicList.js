@@ -100,7 +100,8 @@
 			var keywordsToHighlight = {};
 			var usersToHighlight = {};
 			
-			var removeDisallowedChars = function(value, type) {
+			var makeCSSAttributeName = function(value, type) {
+				// Takes value to be used for CSS attribute and type of attribute (user, keyword, etc), returns CSS atribute name				
 				var suffix = type || '';
 				var valueToReturn = value.replace(/[^a-zA-Z0-9]/g, '');
 				return suffix += valueToReturn;
@@ -148,7 +149,7 @@
 						var rgbaEnd = convertHexToRGB(bg, 0.4);
 						
 						keywordsToHighlight[keyword.match] = true;
-						var keywordAttribute = removeDisallowedChars(keyword.match, 'keyword_');			
+						var keywordAttribute = makeCSSAttributeName(keyword.match, 'keyword_');			
 						
 						// Highlight anchor tag containing match.
 						
@@ -178,7 +179,7 @@
 						var rgbaStart = convertHexToRGB(bg, 0.8);
 						var rgbaEnd = convertHexToRGB(bg, 0);						
 						tagsToHighlight[tag.match] = true;
-						var tagAttribute = removeDisallowedChars(tag.match, 'tag_');
+						var tagAttribute = makeCSSAttributeName(tag.match, 'tag_');
 						
 						// Highlight td element containing tags to be highlighted (can be overridden by user highlight)
 						styleSheet.addRule('table.grid td.oh[' + tagAttribute + ']', 'background: #' + bg);
@@ -203,7 +204,7 @@
 						var bg = user.bg;
 						var color = user.color;
 						usersToHighlight[name] = true;
-						var userAttribute = removeDisallowedChars(name, 'user_');
+						var userAttribute = makeCSSAttributeName(name, 'user_');
 						
 						// User highlights are allowed to override any other type of highlight, with exception of anchor tags																
 						styleSheet.addRule('table.grid tr[' + userAttribute + '] td', 'background: #' + bg + ' !important');
@@ -387,7 +388,7 @@
 						var htmlString = '<mark keyword_' + word + '="true">' + word + '</mark>';						
 						// Wrap matches with tags so we can highlight individual words in title
 						title.innerHTML = title.innerHTML.replace(regex, htmlString);
-						var keywordAttribute = removeDisallowedChars(word, 'keyword_');
+						var keywordAttribute = makeCSSAttributeName(word, 'keyword_');
 						td.setAttribute('highlighted', true);
 						td.setAttribute(keywordAttribute, true);
 						title.setAttribute(keywordAttribute, true);
@@ -404,7 +405,7 @@
 					var tagAnchor = tagsToCheck[j];
 					var tagName = tagAnchor.innerHTML.toLowerCase();
 					if (tagsToHighlight[tagName]) {
-						var tagAttribute = removeDisallowedChars(tagName, 'tag_');
+						var tagAttribute = makeCSSAttributeName(tagName, 'tag_');
 						td.setAttribute('highlighted', true);
 						td.setAttribute(tagAttribute, true);							
 						tagAnchor.setAttribute(tagAttribute, true);						
@@ -414,7 +415,7 @@
 			
 			methods.userhl_topiclist = function(tr) {
 				if (usersToHighlight[currentUser]) {
-					var userAttribute = removeDisallowedChars(currentUser, 'user_');
+					var userAttribute = makeCSSAttributeName(currentUser, 'user_');
 					tr.setAttribute('highlighted', true);
 					tr.setAttribute(userAttribute, true);
 				}
