@@ -13,7 +13,6 @@ CHROMELL.background = (function() {
 	var ignoratorInfo = {};
 	var scopeInfo = {};
 	var imagemapCache = {};
-	// var currentTab = '';
 	var noIgnores = true;	
 
 	var init = function(defaultConfig) {
