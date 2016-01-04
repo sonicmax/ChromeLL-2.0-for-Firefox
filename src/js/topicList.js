@@ -154,7 +154,7 @@
 						
 						// Highlight anchor tag containing match.
 						
-						// Use flat gradient for background, using alpha of 0.9 - this allows us to highlight <mark> elements 
+						// Use flat gradient for background, using alpha of 0.4 - this allows us to highlight <mark> elements 
 						// in the anchor tag innerHTML without changing the colour scheme (as matched keyword will have brighter
 						// background)
 						
@@ -163,10 +163,9 @@
 								+ rgbaEnd + ' 100%) !important');
 								
 						styleSheet.addRule('a[' + keywordDataset + ']', 'color: #' + color + ' !important');
-
-						// Highlight matched keyword.						
-						styleSheet.addRule('mark[' + keywordDataset + ']', 'background: #' + bg + ' !important');
-						styleSheet.addRule('mark[' + keywordDataset + ']', 'color: #' + color + ' !important');						
+			
+						styleSheet.addRule('a[' + keywordDataset + '] mark', 'background: #' + bg + ' !important');
+						styleSheet.addRule('a[' + keywordDataset + '] mark', 'color: #' + color + ' !important');						
 						
 					}
 				}
