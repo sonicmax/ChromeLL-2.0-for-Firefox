@@ -8,7 +8,7 @@ CHROMELL.background = (function() {
 	var board = [];
 	var boards = {};
 	var drama = {};	
-	var xhrCache = {};
+	var ajaxCache = {};
 	var tabPorts = {};
 	var ignoratorInfo = {};
 	var scopeInfo = {};
@@ -514,11 +514,11 @@ CHROMELL.background = (function() {
 		var url = request.url;
 		var currentTime = new Date().getTime();
 		
-		if (!request.ignoreCache && xhrCache[url]
-				&& currentTime < xhrCache[url].refreshTime ) {
+		if (!request.ignoreCache && ajaxCache[url]
+				&& currentTime < ajaxCache[url].refreshTime ) {
+					
 			// Return cached response
-			callback(xhrCache[url].data);
-						
+			callback(ajaxCache[url].data);
 		}
 		
 		else {
@@ -546,7 +546,7 @@ CHROMELL.background = (function() {
 					
 					if (!request.ignoreCache) {
 						// Cache response and check again after 24 hours
-						xhrCache[this.requestURL] = {
+						ajaxCache[this.requestURL] = {
 							data: this.responseText,
 							refreshTime: currentTime + (86400 * 1000)
 						};
