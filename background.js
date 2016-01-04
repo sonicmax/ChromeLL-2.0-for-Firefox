@@ -521,12 +521,10 @@ CHROMELL.background = (function() {
 		}
 		
 		else {
-			var xhr = new XMLHttpRequest();			
-			xhr.requestURL = url;
-			
-			// Use GET for default value (as majority of requests will use this method)
+			var TWENTY_FOUR_HOURS = 86400000; // 24 hours in milliseconds
 			var type = request.type || 'GET';
-			
+			var xhr = new XMLHttpRequest();
+			xhr.requestURL = url;
 			xhr.open(type, request.url, true);
 			
 			if (request.noCache) {
@@ -540,19 +538,16 @@ CHROMELL.background = (function() {
 			}
 			
 			xhr.onload = function() {
-				
 				if (this.status === 200) {
-					
 					if (!request.ignoreCache) {
 						// Cache response and check again after 24 hours
 						ajaxCache[this.requestURL] = {
 							data: this.responseText,
-							refreshTime: currentTime + (86400 * 1000)
+							refreshTime: currentTime + TWENTY_FOUR_HOURS
 						};
 					}
 					
 					callback(this.responseText);
-					
 				}
 				
 				else {
