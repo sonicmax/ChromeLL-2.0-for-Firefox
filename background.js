@@ -139,7 +139,6 @@ CHROMELL.background = (function() {
 			var sectionIndex = 0;
 			var splitKeys = {};
 			var keysToSplit = [];
-			var maxSize = chrome.storage.sync.QUOTA_BYTES_PER_ITEM;
 			
 			for (var key in object) {
 			
@@ -162,8 +161,8 @@ CHROMELL.background = (function() {
 					size += item.toString().length;
 				}
 				
-				if (sectionSize + size > maxSize) {
-					// Addition of key-value pair would exceed maxSize, so store existing values &
+				if (sectionSize + size > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
+					// Addition of key-value pair would exceed QUOTA_BYTES_PER_ITEM, so store existing values &
 					// start new section of split object
 					splitKeys['config_' + sectionIndex] = {};
 					splitKeys['config_' + sectionIndex] = createNewSection(object, keysToSplit);
@@ -174,7 +173,7 @@ CHROMELL.background = (function() {
 					keysToSplit.length = 0;								
 				}
 				
-				// Push key to current section (or to new section, depending on whether maxSize was exceeded)
+				// Push key to current section (or to new section, depending on whether chrome.storage.sync.QUOTA_BYTES_PER_ITEM was exceeded)
 				keysToSplit.push(key);
 				sectionSize += size;
 			}
