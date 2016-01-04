@@ -818,8 +818,6 @@ CHROMELL.background = (function() {
 		console.log("User Profile = " + request.url);
 
 		ajax(request, function(response) {
-			
-			var adminTags, modTags, isAdmin, isMod;
 			var html = document.createElement('html');
 			html.innerHTML = response;
 			var adminArray = [];
@@ -830,19 +828,18 @@ CHROMELL.background = (function() {
 				var td = tds[i];
 				if (td.innerText.indexOf("Administrator of") > -1) {
 					var adminTags = tds[i + 1].getElementsByTagName('a');
-					isAdmin = true;
 				}
 				if (td.innerText.indexOf("Moderator of") > -1) {
 					var modTags = tds[i + 1].getElementsByTagName('a');
-					isMod = true;
 				}
 			}
-			if (isAdmin) {
+			if (adminTags) {
 				adminArray = Array.prototype.slice.call(adminTags);
 			}
-			if (isMod) {
+			if (modTags) {
 				modArray = Array.prototype.slice.call(modTags);
 			}
+			// Concats two empty arrays if no tags are scraped from profile
 			tagArray = adminArray.concat(modArray);
 			for (var i = 0, len = tagArray.length; i < len; i++) {
 				var tag = tagArray[i].innerText;
