@@ -590,154 +590,154 @@ CHROMELL.background = (function() {
 		});
 
 		var messageHandler = function(request, sender, sendResponse) {
-			switch(request.need) {			
-					case "xhr":					
-						ajax(request, function(response) {							
-							sendResponse(response);
-						});			
-						// Return true so that we can use sendResponse asynchronously (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
-						return true;
-						
-					case "config":
-						// page script needs extension config.
-						var config = CHROMELL.config;
-						
-						if (request.sub) {
-							sendResponse({"data": config[request.sub]});
-						}
-						
-						else if (request.tcs) {
-							var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
-							sendResponse({"data": config, "tcs": tcs});
-						} 
-						
-						else {
-							sendResponse({"data": config});
-						}
-						
-						break;
-						
-					case "config_push":	
-						// Updates background config object without saving to localStorage.
-						CHROMELL.config = request.data;
-						CHROMELL.config.last_saved = new Date().getTime();
-						break;
-						
-					case "save":					
-						// page script needs config save.
-						if (request.name === "tcs") {
-							localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
-						} else {
-							CHROMELL.config[request.name] = request.data;
-							CHROMELL.config.last_saved = new Date().getTime();
-							localStorage['ChromeLL-Config'] = JSON.stringify(CHROMELL.config);
-						}
-						if (CHROMELL.config.debug) {
-							console.log('saving ', request.name, request.data);
-						}
-						break;
-						
-					case "notify":
-						chrome.notifications.create('popup', {
-							type: "basic",
-							title: request.title,
-							message: request.message,
-							iconUrl: "src/images/lueshi_48.png"
-						},
-						function (id) {
-							if (!CHROMELL.config.clear_notify) {
-								CHROMELL.config.clear_notify = "5";
-							}
-							if (CHROMELL.config.clear_notify === "0") {
-								return;
-							}
-							setTimeout(function() {
-								clearNotification(id);
-							}, parseInt(CHROMELL.config.clear_notify, 10) * 1000);
-						});
-						break;
-						
-					case "dramalinks":
-						var time = parseInt(new Date().getTime());
-						if (drama.time && (time < drama.time)){
-							if (CHROMELL.config.debug) {
-								console.log('returning cached dramalinks. cache exp: ' + drama.time + ' current: ' + time);
-							}
-							sendResponse({"data": drama.txt});
-						} else {
-							sendResponse({"data": drama.txt});
-							getDrama();
-						}
-						break;
-						
-					case "insertcss":
-						if (CHROMELL.config.debug) {
-							console.log('inserting css ', request.file);
-						}
-						chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
-						sendResponse({
-							// no response needed
-						});
-						break;
-						
-					case "opentab":
-						if (CHROMELL.config.debug) {
-							console.log('opening tab ', request.url);
-						}
-						chrome.tabs.create({url: request.url});
-						break;
-						
-					case "noIgnores":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								sendResponse({"noignores": noIgnores});										
-						});
-						return true;
-						
-					case "getIgnored":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								sendResponse({
-										"ignorator": ignoratorInfo[tabs[0].id], 
-										"scope": scopeInfo[tabs[0].id]}
-								);
-						});		
-						return true;
-						
-					case "showIgnorated":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
-						});		
-						if (CHROMELL.config.debug) {
-							console.log('showing hidden data', request);
-						}
-						return true;
-						
-					case "options":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								// check whether bg script can send messages to active tab
-								if (tabPorts[tabs[0].id] && !CHROMELL.config.options_window) {
-									// open options in iframe
-									chrome.tabs.sendMessage(tabs[0].id, {
-										action: "showOptions"
-									}, function() {
-										// Do nothing
-									});
-								}
-								else {
-									chrome.runtime.openOptionsPage();				
-								}
-						});	
-						break;
+			switch(request.need) {
+				case "xhr":		
+					ajax(request, function(response) {			
+						sendResponse(response);
+					});	
+					// Return true so that we can use sendResponse asynchronously (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
+					return true;
 					
-					case "copy":
-						var clipboard = document.getElementById('clipboard');
-						clipboard.value = request.data;
-						clipboard.select();
-						document.execCommand("copy");
-						break;
-						
-					default:			
-						console.log("Error in request listener - undefined parameter?", request);
-						break;
+				case "config":
+					// page script needs extension config.
+					var config = CHROMELL.config;
+					
+					if (request.sub) {
+						sendResponse({"data": config[request.sub]});
+					}
+					
+					else if (request.tcs) {
+						var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
+						sendResponse({"data": config, "tcs": tcs});
+					}
+					
+					else {
+						sendResponse({"data": config});
+					}
+					
+					break;
+					
+				case "config_push":	
+					// Updates background config object without saving to localStorage.
+					CHROMELL.config = request.data;
+					CHROMELL.config.last_saved = new Date().getTime();
+					break;
+					
+				case "save":					
+					// page script needs config save.
+					if (request.name === "tcs") {
+						localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
+					} else {
+						CHROMELL.config[request.name] = request.data;
+						CHROMELL.config.last_saved = new Date().getTime();
+						localStorage['ChromeLL-Config'] = JSON.stringify(CHROMELL.config);
+					}
+					if (CHROMELL.config.debug) {
+						console.log('saving ', request.name, request.data);
+					}
+					break;
+					
+				case "notify":
+					chrome.notifications.create('popup', {
+						type: "basic",
+						title: request.title,
+						message: request.message,
+						iconUrl: "src/images/lueshi_48.png"
+					},
+					function (id) {
+						if (!CHROMELL.config.clear_notify) {
+							CHROMELL.config.clear_notify = "5";
+						}
+						if (CHROMELL.config.clear_notify === "0") {
+							return;
+						}
+						setTimeout(function() {
+							clearNotification(id);
+						}, parseInt(CHROMELL.config.clear_notify, 10) * 1000);
+					});
+					break;
+					
+				case "dramalinks":
+					var time = parseInt(new Date().getTime());
+					if (drama.time && (time < drama.time)){
+						if (CHROMELL.config.debug) {
+							console.log('returning cached dramalinks. cache exp: ' + drama.time + ' current: ' + time);
+						}
+						sendResponse({"data": drama.txt});
+					} else {
+						sendResponse({"data": drama.txt});
+						getDrama();
+					}
+					break;
+					
+				case "insertcss":
+					if (CHROMELL.config.debug) {
+						console.log('inserting css ', request.file);
+					}
+					chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
+					sendResponse({
+						// no response needed
+					});
+					break;
+					
+				case "opentab":
+					if (CHROMELL.config.debug) {
+						console.log('opening tab ', request.url);
+					}
+					chrome.tabs.create({url: request.url});
+					break;
+					
+				case "noIgnores":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							sendResponse({"noignores": noIgnores});										
+					});
+					return true;
+					
+				case "getIgnored":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							sendResponse({
+									"ignorator": ignoratorInfo[tabs[0].id], 
+									"scope": scopeInfo[tabs[0].id]}
+							);
+					});		
+					return true;
+					
+				case "showIgnorated":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
+					});		
+					if (CHROMELL.config.debug) {
+						console.log('showing hidden data', request);
+					}
+					return true;
+					
+				case "options":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							// check whether bg script can send messages to active tab
+							if (tabPorts[tabs[0].id] && !CHROMELL.config.options_window) {
+								// open options in iframe
+								chrome.tabs.sendMessage(tabs[0].id, {
+									action: "showOptions"
+								}, function() {
+									// Do nothing
+								});
+							}
+							else {
+								chrome.runtime.openOptionsPage();				
+							}
+					});	
+					break;
+				
+				case "copy":
+					var clipboard = document.getElementById('clipboard');
+					clipboard.value = request.data;
+					clipboard.select();
+					document.execCommand("copy");
+					break;
+					
+				default:			
+					console.log("Error in request listener - undefined parameter?", request);
+					break;
 						
 			}
 			
