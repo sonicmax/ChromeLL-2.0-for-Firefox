@@ -594,30 +594,39 @@ CHROMELL.background = (function() {
 				eventHandlers.ignoratorUpdate(port.sender.tab.id, msg);
 			});
 		});
-		
-		chrome.runtime.onMessage.addListener(
-			function(request, sender, sendResponse) {				
-				switch(request.need) {
+
+		var messageHandler = function(request, sender, sendResponse) {
+			switch(request.need) {			
 					case "xhr":					
 						ajax(request, function(response) {							
 							sendResponse(response);
-						});
-						
+						});			
 						// Return true so that we can use sendResponse asynchronously (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
 						return true;
-						break;
 						
 					case "config":
 						// page script needs extension config.
-						var config = JSON.parse(localStorage['ChromeLL-Config']);
+						var config = CHROMELL.config;
+						
 						if (request.sub) {
 							sendResponse({"data": config[request.sub]});
-						} else if (request.tcs) {
+						}
+						
+						else if (request.tcs) {
 							var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
 							sendResponse({"data": config, "tcs": tcs});
-						} else {
+						} 
+						
+						else {
 							sendResponse({"data": config});
 						}
+						
+						break;
+						
+					case "config_push":	
+						// Updates background config object without saving to localStorage.
+						CHROMELL.config = request.data;
+						CHROMELL.config.last_saved = new Date().getTime();
 						break;
 						
 					case "save":					
@@ -633,6 +642,7 @@ CHROMELL.background = (function() {
 							console.log('saving ', request.name, request.data);
 						}
 						break;
+						
 					case "notify":
 						chrome.notifications.create('popup', {
 							type: "basic",
@@ -651,7 +661,8 @@ CHROMELL.background = (function() {
 								clearNotification(id);
 							}, parseInt(CHROMELL.config.clear_notify, 10) * 1000);
 						});
-						break;	
+						break;
+						
 					case "dramalinks":
 						var time = parseInt(new Date().getTime());
 						if (drama.time && (time < drama.time)){
@@ -664,6 +675,7 @@ CHROMELL.background = (function() {
 							getDrama();
 						}
 						break;
+						
 					case "insertcss":
 						if (CHROMELL.config.debug) {
 							console.log('inserting css ', request.file);
@@ -673,17 +685,20 @@ CHROMELL.background = (function() {
 							// no response needed
 						});
 						break;
+						
 					case "opentab":
 						if (CHROMELL.config.debug) {
 							console.log('opening tab ', request.url);
 						}
 						chrome.tabs.create({url: request.url});
 						break;
+						
 					case "noIgnores":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								sendResponse({"noignores": noIgnores});										
 						});
-						return true;								
+						return true;
+						
 					case "getIgnored":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								sendResponse({
@@ -691,7 +706,8 @@ CHROMELL.background = (function() {
 										"scope": scopeInfo[tabs[0].id]}
 								);
 						});		
-						return true;									
+						return true;
+						
 					case "showIgnorated":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
@@ -700,22 +716,20 @@ CHROMELL.background = (function() {
 							console.log('showing hidden data', request);
 						}
 						return true;
+						
 					case "options":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								// check whether bg script can send messages to current tab
+								// check whether bg script can send messages to active tab
 								if (tabPorts[tabs[0].id] && !CHROMELL.config.options_window) {
-									// open options in same tab
+									// open options in iframe
 									chrome.tabs.sendMessage(tabs[0].id, {
 										action: "showOptions"
-									}, function(response) {
-										// empty callback
+									}, function() {
+										// Do nothing
 									});
 								}
 								else {
-									// open options in new tab
-									chrome.tabs.create({
-											url: chrome.extension.getURL('options.html')
-									});							
+									chrome.runtime.openOptionsPage();				
 								}
 						});	
 						break;
@@ -731,9 +745,11 @@ CHROMELL.background = (function() {
 						console.log("Error in request listener - undefined parameter?", request);
 						break;
 						
-				}
 			}
-		);
+			
+		};
+		
+		chrome.runtime.onMessage.addListener(messageHandler);
 	};
 	
 	var eventHandlers = {
