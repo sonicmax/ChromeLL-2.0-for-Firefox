@@ -100,18 +100,19 @@
 			var keywordsToHighlight = {};
 			var usersToHighlight = {};
 			
-			var makeCSSAttributeName = function(value, type) {
-				// Takes value to be used for CSS attribute and type of attribute (user, keyword, etc), returns CSS atribute name				
+			var makeCSSDatasetAttribute = function(string, type) {	
 				var suffix = type || '';
-				var valueToReturn = value.replace(/[^a-zA-Z0-9]/g, '');
-				return suffix += valueToReturn;
+				// Remove disallowed chars from string
+				var cleanedString = string.replace(/[^a-zA-Z0-9]/g, '');				
+				var datasetAttribute = "data-" + type + "='" + cleanedString + "'"; // eg. data-user='username'
+				return datasetAttribute;
 			};
 			
 			var convertHexToRGB = function(hex, alpha) {
 				// Takes hex triplet and returns values of colour in RGB form (or RGBA, if alpha value is provided)
 				var rgb;
 				(typeof alpha == 'number') ? rgb = 'rgba(' : rgb = 'rgb(';
-				// Convert each byte of hex triplet and add to rgb string
+				// Parse each byte of hex triplet and add to rgb string
 				rgb += parseInt(hex.substring(0, 2), 16) + ', ';
 				rgb += parseInt(hex.substring(2, 4), 16) + ', ';
 				rgb += parseInt(hex.substring(4, 6), 16);
@@ -149,7 +150,7 @@
 						var rgbaEnd = convertHexToRGB(bg, 0.4);
 						
 						keywordsToHighlight[keyword.match] = true;
-						var keywordAttribute = makeCSSAttributeName(keyword.match, 'keyword_');			
+						var keywordDataset = makeCSSDatasetAttribute(keyword.match, 'keyword');			
 						
 						// Highlight anchor tag containing match.
 						
@@ -157,15 +158,15 @@
 						// in the anchor tag innerHTML without changing the colour scheme (as matched keyword will have brighter
 						// background)
 						
-						styleSheet.addRule('a[' + keywordAttribute + ']', 'background: linear-gradient(to right, ' 
+						styleSheet.addRule('a[' + keywordDataset + ']', 'background: linear-gradient(to right, ' 
 								+ rgbaStart + ' 0%, '
 								+ rgbaEnd + ' 100%) !important');
 								
-						styleSheet.addRule('a[' + keywordAttribute + ']', 'color: #' + color + ' !important');
+						styleSheet.addRule('a[' + keywordDataset + ']', 'color: #' + color + ' !important');
 
 						// Highlight matched keyword.						
-						styleSheet.addRule('mark[' + keywordAttribute + ']', 'background: #' + bg + ' !important');
-						styleSheet.addRule('mark[' + keywordAttribute + ']', 'color: #' + color + ' !important');						
+						styleSheet.addRule('mark[' + keywordDataset + ']', 'background: #' + bg + ' !important');
+						styleSheet.addRule('mark[' + keywordDataset + ']', 'color: #' + color + ' !important');						
 						
 					}
 				}
@@ -179,20 +180,20 @@
 						var rgbaStart = convertHexToRGB(bg, 0.8);
 						var rgbaEnd = convertHexToRGB(bg, 0);						
 						tagsToHighlight[tag.match] = true;
-						var tagAttribute = makeCSSAttributeName(tag.match, 'tag_');
+						var tagDataset = makeCSSDatasetAttribute(tag.match, 'tag');
 						
-						// Highlight td element containing tags to be highlighted (can be overridden by user highlight)
-						styleSheet.addRule('table.grid td.oh[' + tagAttribute + ']', 'background: #' + bg);
-						styleSheet.addRule('table.grid td.oh[' + tagAttribute + ']', 'color: #' + color);
-						styleSheet.addRule('table.grid td.oh[' + tagAttribute + '] a', 'color: #' + color);
+						// Highlight td element containing tags to be highlighted (can be overridden by username highlight)
+						styleSheet.addRule('table.grid td.oh[' + tagDataset + ']', 'background: #' + bg);
+						styleSheet.addRule('table.grid td.oh[' + tagDataset + ']', 'color: #' + color);
+						styleSheet.addRule('table.grid td.oh[' + tagDataset + '] a', 'color: #' + color);
 						
-						// Use !important radial gradient for background of tag anchor (in case td highlight has been overridden)
-						styleSheet.addRule('a[' + tagAttribute + ']', 'background: radial-gradient(ellipse at center, ' 
+						// Use !improtant radial gradient for background of tag anchor (in case td highlight has been overridden)
+						styleSheet.addRule('a[' + tagDataset + ']', 'background: radial-gradient(ellipse at center, ' 
 								+ rgbaStart + ' 0%, '
 								+ rgbaStart + ' 70%, '
 								+ rgbaEnd + ' 100%) !important');
 								
-						styleSheet.addRule('a[' + tagAttribute + ']', 'color: ' + color);
+						styleSheet.addRule('a[' + tagDataset + ']', 'color: ' + color);
 							
 					}		
 				}		
@@ -204,17 +205,17 @@
 						var bg = user.bg;
 						var color = user.color;
 						usersToHighlight[name] = true;
-						var userAttribute = makeCSSAttributeName(name, 'user_');
+						var usernameDataset = makeCSSDatasetAttribute(name, 'user');
 						
 						// User highlights are allowed to override any other type of highlight, with exception of anchor tags																
-						styleSheet.addRule('table.grid tr[' + userAttribute + '] td', 'background: #' + bg + ' !important');
-						styleSheet.addRule('table.grid tr[' + userAttribute + '] td', 'color: #' + color + ' !important');
-						styleSheet.addRule('table.grid tr[' + userAttribute + '] a', 'background: #' + bg);
-						styleSheet.addRule('table.grid tr[' + userAttribute + '] a', 'color: #' + color);						
+						styleSheet.addRule('table.grid tr[' + usernameDataset + '] td', 'background: #' + bg + ' !important');
+						styleSheet.addRule('table.grid tr[' + usernameDataset + '] td', 'color: #' + color + ' !important');
+						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a', 'background: #' + bg);
+						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a', 'color: #' + color);						
 					
-						styleSheet.addRule('table.grid tr[' + userAttribute + '] a.username_anchor', 'background: #' + bg + ' !important');
-						styleSheet.addRule('table.grid tr[' + userAttribute + '] a.username_anchor', 'color: #' + color + ' !important');
-					}	
+						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a.username_anchor', 'background: #' + bg + ' !important');
+						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a.username_anchor', 'color: #' + color + ' !important');
+					}
 				}
 
 			};
@@ -381,17 +382,17 @@
 			methods.enable_keyword_highlight = function(tr) {
 				var td = tr.getElementsByTagName('td')[0];
 				var title = td.getElementsByTagName('a')[0];
-				for (var word in keywordsToHighlight) {
+				for (var keyword in keywordsToHighlight) {
 					// Only match whole word					
-					var regex = new RegExp('\\b' + word + '\\b', 'g');
+					var regex = new RegExp('\\b' + keyword + '\\b', 'g');
 					if (title.innerHTML.match(regex)) {
-						var htmlString = '<mark keyword_' + word + '="true">' + word + '</mark>';						
-						// Wrap matches with tags so we can highlight individual words in title
+						// Wrap matched keyword with <mark> tags so we can highlight individual words in title
+						var htmlString = '<mark>' + keyword + '</mark>';			
 						title.innerHTML = title.innerHTML.replace(regex, htmlString);
-						var keywordAttribute = makeCSSAttributeName(word, 'keyword_');
-						td.setAttribute('highlighted', true);
-						td.setAttribute(keywordAttribute, true);
-						title.setAttribute(keywordAttribute, true);
+						// Set dataset attributes for CSS
+						title.dataset.keyword = keyword;
+						td.dataset.keyword = keyword;						
+						td.dataset.highlighted = true;
 					}
 				}
 			};
@@ -405,19 +406,17 @@
 					var tagAnchor = tagsToCheck[j];
 					var tagName = tagAnchor.innerHTML.toLowerCase();
 					if (tagsToHighlight[tagName]) {
-						var tagAttribute = makeCSSAttributeName(tagName, 'tag_');
-						td.setAttribute('highlighted', true);
-						td.setAttribute(tagAttribute, true);							
-						tagAnchor.setAttribute(tagAttribute, true);						
+						tagAnchor.dataset.tag = tagName;
+						td.dataset.tag = tagName;						
+						td.dataset.highlighted = true;				
 					}
 				}
 			};
 			
 			methods.userhl_topiclist = function(tr) {
-				if (usersToHighlight[currentUser]) {
-					var userAttribute = makeCSSAttributeName(currentUser, 'user_');
-					tr.setAttribute('highlighted', true);
-					tr.setAttribute(userAttribute, true);
+				if (usersToHighlight[currentUser]) {				
+					tr.dataset.user = currentUser;
+					tr.dataset.highlighted = true;					
 				}
 			};
 			
