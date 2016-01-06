@@ -2234,227 +2234,177 @@
 				
 			}();
 			
+			/*
+			 *	Convert messages into ETI-formatted markup for archive quoting/like button
+			 */
 			var quote = function() {
-				// Contains methods which convert posts into LLML for archive quoting/like button
-				
-				var returnQuotes = function(nodes, msgid) {
-					var output = [];
-					if (!msgid) {
-						output[0] = '<quote>';
-					} else {
-						output[0] = '<quote msgid="' + msgid + '">';
-					}
-					output[1] = '';
-					for (var i = 0, len = nodes.length; i < len; i++) {
-						// iterate over childNodes of quoted message and add relevant parts to output string
-						var node = nodes[i];
+
+				var getMarkup = function(parentElement) {
+					var output = '';
+					var childNodes = parentElement.childNodes;
+					
+					for (var i = 0, len = childNodes.length; i < len; i++) {				
+						var node = childNodes[i];
 						if (node.nodeType === 3) {
-							output[1] += node.nodeValue;
+							if (node.nodeValue.replace(/^\s+|\s+$/g, "") != '---') {	
+								output += node.nodeValue;
+							}
+							else {
+								// Stop processing post once we reach sig belt
+								break;
+							}
 						}
+													
 						if (node.tagName) {
 							if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
-								tagName = node.tagName.toLowerCase();
-								output[1] += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
+								var tagName = node.tagName.toLowerCase(); 
+								output += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
 							}
-							else if (node.tagName === 'A') {
-								output[1] += node.href;
-							}
-						}
-						if (node.className == 'pr') {
-							output[1] += '<pre>' + node.innerHTML + '</pre>';		
-						}
-						if (node.className == 'imgs') {
-							var imgNodes = node.getElementsByTagName('A');
-							for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
-								var imgNode = imgNodes[l];
-								output[1] += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
+							else if (node.tagName == 'A') {
+								output += node.href;
 							}
 						}
-						if (node.className == 'spoiler_closed') {
-							var spoiler = {};
-							spoiler.caption = node.getElementsByClassName('caption')[0]
-									.innerText.replace(/<|\/>/g, '');
-							spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-							output[1] += utils.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
-						}
-					}
-					output[1] += '</quote>';
-					return output;
-				};
-				
-				var returnSpoiler = function(caption, nodes) {
-					var output = '';
-					var childNode, imgNodes, imgNode;
-					// iterate over childNodes (ignoring first & last elements)
-					for (var k = 1, k_len = nodes.length; k < k_len - 1; k++) {
-						childNode = nodes[k];
-						if (childNode.nodeType === 3) {
-							output += childNode.nodeValue;
-						}
-						if (childNode.tagName) {
-							if (childNode.tagName == 'B' || childNode.tagName == 'I' || childNode.tagName == 'U') {
-								tagName = childNode.tagName.toLowerCase(); 
-								output += '<' + tagName + '>' + childNode.innerText + '</' + tagName + '>';
-							}
-							else if (childNode.tagName === 'A') {
-								output += childNode.innerText;
-							}
-						}
-						if (childNode.className == 'imgs') {
-							imgNodes = childNode.getElementsByTagName('A');
-							for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
-								imgNode = imgNodes[l];
-								output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
-							}
-						}
-					}
-					if (caption) {
-						return '<spoiler caption="' + caption + '">' + output + '</spoiler>';	
-					} 
-					else {
-						return '<spoiler>' + output + '</spoiler>';	
-					}
-				};
-				
-				var notifyUser = function(node) {
-					var bgColor = $(node.parentNode)
-						.css('background-color');
-					// create hidden notification so we can use fadeIn() later
-					$(node)
-						.append($('<span id="copied"' 
-								+ 'style="display: none; position: absolute; z-index: 1; left: 100; '
-								+ 'background: ' + bgColor 
-								+ ';">&nbsp<b>[copied to clipboard]</b></span>'));
-					$("#copied")
-						.fadeIn(200);
-					setTimeout(function() {
-						$(node)
-							.find("span:last")
-							.fadeOut(400);
-					}, 1500);
-					setTimeout(function() {
-						$(node)
-							.find("span:last")
-							.remove();
-					}, 2000);
-				};
-			
-				return {
-					handler: function(evt) {
-						var msgID;
-						if (evt.likeButton) {
-							msgID = evt.id;
-						}
-						else {
-							msgID = evt.target.id;
-						}
-						var nodes = document.querySelector('[msgid="' + msgID + '"]').childNodes;
-						var spoiler = {};
-						var quote = {};
-						var output = '';
-						for (var i = 0, len = nodes.length; i < len; i++) {
-							// iterate over childNodes and add required data to output string				
-							var node = nodes[i];
-							if (node.nodeType === 3) {
-								if (node.nodeValue.replace(/^\s+|\s+$/g, "") != '---') {	
-									output += node.nodeValue;
-								}
-								else {
-									// stop processing post once we reach the sig belt
+						
+						if (node.className) {
+							switch (node.className) {
+								case 'pr':
+									output += '<pre>' + node.innerHTML.replace(/<br>/g, '') + '</pre>';		
 									break;
-								}
-							}		
-							if (node.tagName) {
-								if (node.tagName == 'B' || node.tagName == 'I' || node.tagName == 'U') {
-									var tagName = node.tagName.toLowerCase(); 
-									output += '<' + tagName + '>' + node.innerText + '</' + tagName + '>';
-								}
-								else if (node.tagName == 'A') {
-									output += node.href;
-								}
-							}	
-							if (node.className) {
-								if (node.className == 'pr') {
-									output += '<pre>' + node.innerHTML.replace(/<br>/g, '') + '</pre>';								
-								}	
-								else if (node.className == 'imgs') {
+									
+								case 'imgs':
 									imgNodes = node.getElementsByTagName('A');
 									for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
 										var imgNode = imgNodes[l];
 										output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
-									}
-								}				
-								else if (node.className == 'spoiler_closed') {
-									spoiler.caption = node.getElementsByClassName('caption')[0]
-											.innerText.replace(/<|\/>/g, '');
-									spoiler.nodes = node.getElementsByClassName('spoiler_on_open')[0].childNodes;
-									output += utils.quote.returnSpoiler(spoiler.caption, spoiler.nodes);
-								}	
-								else if (node.className == 'quoted-message') {
-									var quoteOutput = '';
-									quote.msgid = node.attributes.msgid.value;
-									quote.nested = node.getElementsByClassName('quoted-message');
-									if (quote.nested.length > 0) {
-										// iterate backwards - oldest quote should be first
-										for (var m = quote.nested.length; m--;) {
-											var nestedQuote = quote.nested[m];
-											var quoteArray = returnQuotes(nestedQuote.childNodes, 
-													nestedQuote.attributes.msgid.value);
-											quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
-										}
-										quoteArray = returnQuotes(node.childNodes, quote.msgid);
-										quoteOutput = quoteArray[0] + quoteOutput + quoteArray[1];
-										output += quoteOutput;
-									}
-									else {
-										var quoteArray = returnQuotes(node.childNodes, quote.msgid);					
-										quoteOutput = quoteArray[0] + quoteArray[1];
-										output += quoteOutput;
-									}
-								}
+									}									
+									break;
+									
+								case 'spoiler_closed':
+									output += getMarkupFromSpoiler(node);
+									break;
+									
+								case 'quoted_message':
+									output += getMarkupFromQuote(node);
+									break;
+								
+								default:
+									// Do nothing
+									break;
 							}
 						}
-						output = '<quote msgid="' + msgID + '">' + output + '</quote>';
+					}
+					
+					return output;
+				};
+				
+				var getMarkupFromQuote = function(node) {
+					var openQuote = '<quote>';
+					var closeQuote = '</quote>';
+					var msgId = node.attributes.msgid.value;
+					if (msgId) {
+						openQuote = '<quote msgid="' + msgId + '">';
+					}
+					
+					return openQuote + getMarkup(node) + closeQuote;	
+				};
+				
+				var getMarkupFromSpoiler = function(node) {
+					var openSpoiler = '<spoiler>';
+					var closeSpoiler = '</spoiler>';					
+					var spoiler = node.getElementsByClassName('spoiler_on_open')[0];
+					var caption = node.getElementsByClassName('caption')[0]
+							.innerText.replace(/<|\/>/g, '');
+							
+					if (caption) {
+						openSpoiler = '<spoiler caption="' + caption + '">';
+					}
+
+					// First and last elements of node list are part of the UI and should not be included in markup
+					spoiler.removeChild(spoiler.firstChild);
+					spoiler.removeChild(spoiler.lastChild);
+					
+					return openSpoiler + getMarkup(spoiler) + closeSpoiler;
+				};
+				
+				var notifyUser = function(node) {
+					var bgColor = $(node.parentNode).css('background-color');
+					// create hidden notification so we can use fadeIn() later
+					
+					$(node)
+					.append($('<span id="copied"' 
+								+ 'style="display: none; position: absolute; z-index: 1; left: 100; '
+								+ 'background: ' + bgColor 
+								+ ';">&nbsp<b>[copied to clipboard]</b></span>'));
+								
+					$("#copied").fadeIn(200);
+					
+					setTimeout(function() {
+						$(node)
+							.find("#copied")
+							.fadeOut(400);
+					}, 1500);
+					
+					setTimeout(function() {
+						$(node)
+							.find("#copied")
+							.remove();
+					}, 2000);
+					
+				};
+			
+				return {
+					handler: function(evt) {
 						
 						if (evt.likeButton) {
-							// return output to likeButton.handler
-							return output;			
-						}	
+							var msgId = evt.id;
+						}
 						else {
-							// send quote to background page to be copied to clipboard
+							var msgId = evt.target.id;
+						}
+						
+						var messageContainer = document.querySelector('[msgid="' + msgId + '"]');
+						var markup = '<quote msgid="' + msgId + '">' + getMarkup(messageContainer) + '</quote>';
+						
+						if (evt.likeButton) {
+							// Return output to likeButton.handler
+							return markup;			
+						}
+						else {
+							// Send markup to background page to be copied to clipboard
 							chrome.runtime.sendMessage({
 									need: "copy",
-									data: output
-							});				
+									data: markup
+							});
+							
 							notifyUser(evt.target);
 						}
-					},		
+					},
+					
 					addButtons: function() {
-					var hostname = window.location.hostname;
-					var topicId = window.location.search.replace("?topic=", "");
-					var container;
-					var tops = [];
-					if (hostname.indexOf("archives") > -1) {
-						var links = document.getElementsByTagName("a");
-						var msgs = document.getElementsByClassName("message");
-						var containers = document.getElementsByClassName("message-container");
-						for (var i = 0, len = containers.length; i < len; i++) {
-							var container = containers[i];
-							tops[i] = container.getElementsByClassName("message-top")[0];
-							var msgID = msgs[i].getAttribute("msgid");
-							var quote = document.createElement("a");
-							var quoteText = document.createTextNode("Quote");
-							var space = document.createTextNode(" | ");
-							quote.appendChild(quoteText);
-							quote.href = "#";
-							quote.id = msgID;
-							quote.className = "archivequote";
-							tops[i].appendChild(space);
-							tops[i].appendChild(quote);
+						var hostname = window.location.hostname;
+						var topicId = window.location.search.replace("?topic=", "");
+						var container;
+						if (hostname.indexOf("archives") > -1) {
+							var msgs = document.getElementsByClassName("message");
+							var containers = document.getElementsByClassName("message-container");
+							for (var i = 0, len = containers.length; i < len; i++) {
+								var container = containers[i];
+								var top = container.getElementsByClassName("message-top")[0];
+								console.log(top);
+								var msgId = msgs[i].getAttribute("msgid");
+								var quote = document.createElement("a");
+								var quoteText = document.createTextNode("Quote");
+								var space = document.createTextNode(" | ");
+								quote.appendChild(quoteText);
+								quote.href = "#";
+								quote.id = msgId;
+								quote.className = "archivequote";
+								top.appendChild(space);
+								top.appendChild(quote);
+							}
 						}
 					}
-				}			
-				};		
+				};
 				
 			}();
 			
