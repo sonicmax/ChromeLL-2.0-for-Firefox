@@ -1248,69 +1248,100 @@
 			};
 			
 			var mouseclick = function(evt) {
-				// TODO - reorganise this using switch statements			
-				if (evt.target.className == 'expand_post_template') {
-					helpers.postTemplateExpand(evt.target);
+				
+				if (evt.target.className) {
+					switch (evt.target.className) {
+						case 'expand_post_template':
+							helpers.postTemplateExpand(evt.target);
+							return;
+							
+						case 'shrink_post_template':
+							helpers.postTemplateShrink(evt.target);
+							return;
+							
+						case 'post_template_title':
+							helpers.postTemplateExpand(evt.target);					
+							return;
+							
+						case 'notebook':
+							utils.usernotes.open(evt.target);
+							evt.preventDefault();						
+							return;
+							
+						case 'like_button':
+							utils.likeButton.process(evt.target);
+							evt.preventDefault();
+							return;
+							
+						case 'like_button_custom':
+							var templateNumber = evt.target.id;
+							for (var i = 0, len = evt.path.length; i < len; i++) {
+								var pathNode = evt.path[i];
+								if (pathNode.className == 'like_button') {
+									utils.likeButton.process(pathNode, templateNumber);			
+									break;
+								}
+							}
+							evt.preventDefault();					
+							return;
+							
+						case 'youtube':
+							// Prevent div containing embedded video acting as anchor tag
+							if (evt.target.tagName === 'DIV') {
+								evt.preventDefault();
+							}
+							return;
+							
+						case 'gfycat':
+							// Prevent div containing embedded video acting as anchor tag
+							if (evt.target.tagName === 'DIV') {
+								evt.preventDefault();
+							}
+							return;
+							
+						case 'archivequote':
+							utils.quote.handler(evt);
+							evt.preventDefault();						
+							return;
+							
+						case 'bash':
+							if (!evt.target.getAttribute('ignore')) {
+								evt.target.className = 'bash_this';			
+								evt.target.style.fontWeight = 'bold';
+								evt.target.innerHTML = '&#9745;';
+								utils.bash.checkSelection(evt.target);
+								utils.bash.showPopup();	
+								evt.preventDefault();								
+							}
+							return;
+							
+						case 'bash_this':
+							evt.target.className = 'bash';
+							evt.target.style.fontWeight = 'initial';
+							evt.target.innerHTML = '&#9744;';
+							utils.bash.checkSelection(evt.target);
+							evt.preventDefault();
+							return;
+							
+						default:						
+							break;
+						
+					}
 				}
-				else if (evt.target.className == 'shrink_post_template') {
-					helpers.postTemplateShrink(evt.target);
-				}
-				else if (evt.target.className == 'post_template_title') {
-					helpers.postTemplateExpand(evt.target);
-				}
-				else if (evt.target.className == 'notebook') {
-					utils.usernotes.open(evt.target);
-					evt.preventDefault();
-				}
+				
 				else if (evt.target.id == 'quick_image') {
 					// imagemap object located in imagemap.js
 					imagemap.init();
-					evt.preventDefault();
+					evt.preventDefault();					
 				}
-				else if (evt.target.className == 'like_button') {
-					utils.likeButton.process(evt.target);
-					evt.preventDefault();
-				}
-				else if (evt.target.className == 'like_button_custom') {
-					var templateNumber = evt.target.id;
-					for (var i = 0, len = evt.path.length; i < len; i++) {
-						var pathNode = evt.path[i];
-						if (pathNode.className == 'like_button') {
-							utils.likeButton.process(pathNode, templateNumber);			
-							break;
-						}
-					}
-					evt.preventDefault();	
-				}
+				
 				else if (evt.target.title.indexOf("/index.php") === 0) {
 					utils.anchors.fixRedirect(evt.target, "wiki");
 					evt.preventDefault();
 				}
+				
 				else if (evt.target.title.indexOf("/imap/") === 0) {
 					utils.anchors.fixRedirect(evt.target, "imagemap");					
-					evt.preventDefault();
-				}
-				else if (evt.target.className.match(/youtube|gfycat/)
-						&& evt.target.tagName == 'DIV') {
-					evt.preventDefault();
-				}
-				else if (evt.target.className == 'archivequote') {
-					utils.quote.handler(evt);
-					evt.preventDefault();
-				}
-				else if (evt.target.className == 'bash' && evt.target.getAttribute('ignore') !== 'true') {
-					evt.target.className = 'bash_this';			
-					evt.target.style.fontWeight = 'bold';
-					evt.target.innerHTML = '&#9745;';
-					utils.bash.checkSelection(evt.target);
-					utils.bash.showPopup();	
-					evt.preventDefault();				
-				}
-				else if (evt.target.className == 'bash_this') {
-					evt.target.className = 'bash';
-					evt.target.style.fontWeight = 'initial';
-					evt.target.innerHTML = '&#9744;';
-					utils.bash.checkSelection(evt.target);
 					evt.preventDefault();
 				}
 				
