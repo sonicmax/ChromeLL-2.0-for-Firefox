@@ -136,55 +136,57 @@ CHROMELL.background = (function() {
 		/**
 		 * Splits config object into smaller objects, based on size of chrome.storage.sync.QUOTA_BYTES_PER_ITEM constant
 		 */
-		var splitObjectForSync = function(object) {
+		var prepareConfigForSync = function(config) {
 			var objectSize = 0;
-			var index = 0;
-			var splitObject = {};
+			var index = 0;	
+			var splitConfig = {};
 			var keysToSplit = [];
-			
-			for (var key in object) {
-			
-			/*	
-			 *	Size of item is measured by the "JSON stringification of its value plus its key length",
-			 *	so we also need to add 2 to account for quotes added by JSON.stringify method
-			 *
-			 *	(https://developer.chrome.com/extensions/storage#property-sync)					
-			 */					
-				
-				var item = object[key];				
-				var itemSize;
-				
-				if (item instanceof Object) {
-					var objectString = JSON.stringify(item);
-					itemSize = objectString.length;
-				}
-				
-				else {
-					itemSize = item.toString().length;
-				}
-				
-				itemSize += key.length + 2;
-				
-				if (objectSize + itemSize > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
-					// Create object using cached keys & start new section of split object
-					splitObject['config_' + index] = {};
-					splitObject['config_' + index] = createNewSection(object, keysToSplit);
-					index++;							
-					objectSize = 0;
-					keysToSplit.length = 0;								
-				}
-				
-				// Push key to current section (or to new section, depending on whether chrome.storage.sync.QUOTA_BYTES_PER_ITEM was exceeded)
-				keysToSplit.push(key);
-				objectSize += itemSize;
-			}
-			
-			// Check for any keys that haven't been accounted for yet
-			if (keysToSplit.length > 0) {
-				splitObject['config_' + index] = createNewSection(object, keysToSplit);
-			}
 
-			return splitObject;
+			var configSize = JSON.stringify(config).length;
+			
+			if (configSize > chrome.storage.sync.QUOTA_BYTES) {				
+				// Return false - we will have to store config locally and notify user that there was an error.
+				// Seems unlikely that this will be a problem.
+				return false;
+			}
+			
+			if (configSize < chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
+				// We can sync config without making any changes
+				return {
+						"config": config
+				};
+			}
+			
+			else {
+				for (var key in config) {
+					var item = config[key];
+					// Add 2 to key length to account for quotes
+					var itemSize = key.length + 2 + JSON.stringify(item).length;
+													
+					if (objectSize + itemSize > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
+						// Create split object using currently cached keys
+						splitConfig['config_' + index] = {};
+						splitConfig['config_' + index] = createNewSection(config, keysToSplit);
+						
+						// Clear key cache and start new section of split object												
+						keysToSplit.length = 0;
+						objectSize = 0;
+						index++;
+					}
+					
+					// Push key to current section
+					keysToSplit.push(key);
+					objectSize += itemSize;
+				}
+				
+				// Check for any keys that haven't been accounted for yet
+				if (keysToSplit.length > 0) {
+					splitConfig['config_' + index] = {};
+					splitConfig['config_' + index] = createNewSection(object, keysToSplit);
+				}
+
+				return splitObject;
+			}
 		};
 		
 		/**
@@ -200,29 +202,29 @@ CHROMELL.background = (function() {
 		};
 		
 		var syncLocalConfig = function() {
-			var configToSync = CHROMELL.config;	
+			var config = CHROMELL.config;	
 			// Delete user ID, tag admin list and bookmarks - these should always be generated from current login session
-			delete configToSync.user_id;
-			delete configToSync.tag_admin;
-			delete configToSync.saved_tags;
+			delete config.user_id;
+			delete config.tag_admin;
+			delete config.saved_tags;
 			
-			// Split config to make sure that we do not exceed QUOTA_BYTES_PER_ITEM value
-			var splitConfig = splitObjectForSync(configToSync);
+			// Make sure that we do not exceed QUOTA_BYTES_PER_ITEM value
+			var syncConfig = prepareConfigForSync(config);
 			var currentTime = new Date().getTime();
 			
 			var syncData = {
 				'last_sync': currentTime
 			};
 						
-			for (var key in splitConfig) {
-				syncData[key] = splitConfig[key];
+			for (var key in syncConfig) {
+				syncData[key] = syncConfig[key];
 			}
-						
+			
 			chrome.storage.sync.set(syncData);
 		};
 		
 		var loadConfigFromSync = function(data) {
-			// Iterate over each object key to find split config items
+			// Iterate over each object to find split config items
 			for (var key in data) {
 				if (key.match(/config/)) {
 					var configSection = data[key];
