@@ -64,7 +64,6 @@
 			};		
 		
 			var init = function() {
-				// Get useful elements from page
 				var msgs = document.getElementsByClassName('message-container');				
 				infobarElement = document.getElementById('u0_2');
 				quickpostElement = document.getElementsByClassName('quickpost-body')[0];
@@ -72,9 +71,9 @@
 				currentUser = userbarElement.getElementsByTagName('a')[0].innerHTML.replace(/ \((\d+)\)$/, "");
 				currentID = userbarElement.getElementsByTagName('a')[0].href.match(/\?user=([0-9]+)/)[1];
 				
-				var element = document.getElementsByTagName('h2')[0];
+				var title = document.getElementsByTagName('h2')[0];
 				if (config.dramalinks && !config.hide_dramalinks_topiclist) {
-					dramalinks.appendTo(element);
+					dramalinks.appendTo(title);
 				}
 				
 				// Call methods which modify the infobar element
@@ -90,7 +89,8 @@
 				// Inject CSS rules before adding dataset attributes to elements
 				addCSSRules();
 				
-				// Chrome caches DOM changes when they are made in a loop - unrolling the loop will make it seem faster
+				// Chrome seems to cache DOM changes when they are made in a loop (to minimise browser reflow/repaint).
+				// Partially unrolling the loop minimises flash of unstyled content when users load topics
 				var len;
 				if (msgs.length < 4) {
 					len = msgs.length;
