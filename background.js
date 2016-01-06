@@ -210,10 +210,9 @@ CHROMELL.background = (function() {
 			
 			// Make sure that we do not exceed QUOTA_BYTES_PER_ITEM value
 			var syncConfig = prepareConfigForSync(config);
-			var currentTime = new Date().getTime();
 			
 			var syncData = {
-				'last_sync': currentTime
+				'last_sync': new Date().getTime()
 			};
 						
 			for (var key in syncConfig) {
