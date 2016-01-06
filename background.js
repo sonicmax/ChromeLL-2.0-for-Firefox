@@ -133,10 +133,13 @@ CHROMELL.background = (function() {
 	
 	var sync = function() {
 		
-		var splitObject = function(object) {
-			var sectionSize = 0;
-			var sectionIndex = 0;
-			var splitKeys = {};
+		/**
+		 * Splits config object into smaller objects, based on size of chrome.storage.sync.QUOTA_BYTES_PER_ITEM constant
+		 */
+		var splitObjectForSync = function(object) {
+			var objectSize = 0;
+			var index = 0;
+			var splitObject = {};
 			var keysToSplit = [];
 			
 			for (var key in object) {
@@ -149,52 +152,53 @@ CHROMELL.background = (function() {
 			 */					
 				
 				var item = object[key];				
-				var size = key.length + 2;
+				var itemSize;
 				
 				if (item instanceof Object) {
 					var objectString = JSON.stringify(item);
-					size += objectString.length;
+					itemSize = objectString.length;
 				}
 				
 				else {
-					size += item.toString().length;
+					itemSize = item.toString().length;
 				}
 				
-				if (sectionSize + size > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
-					// Addition of key-value pair would exceed QUOTA_BYTES_PER_ITEM, so store existing values &
-					// start new section of split object
-					splitKeys['config_' + sectionIndex] = {};
-					splitKeys['config_' + sectionIndex] = createNewSection(object, keysToSplit);
-
-					// Start new section.
-					sectionIndex++;							
-					sectionSize = 0;
+				itemSize += key.length + 2;
+				
+				if (objectSize + itemSize > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
+					// Create object using cached keys & start new section of split object
+					splitObject['config_' + index] = {};
+					splitObject['config_' + index] = createNewSection(object, keysToSplit);
+					index++;							
+					objectSize = 0;
 					keysToSplit.length = 0;								
 				}
 				
 				// Push key to current section (or to new section, depending on whether chrome.storage.sync.QUOTA_BYTES_PER_ITEM was exceeded)
 				keysToSplit.push(key);
-				sectionSize += size;
+				objectSize += itemSize;
 			}
 			
 			// Check for any keys that haven't been accounted for yet
 			if (keysToSplit.length > 0) {
-				splitKeys['config_' + sectionIndex] = createNewSection(object, keysToSplit);
+				splitObject['config_' + index] = createNewSection(object, keysToSplit);
 			}
 
-			return splitKeys;
+			return splitObject;
 		};
 		
-		var createNewSection = function(source, keys) {
-			// Creates new object using a source object and an array of keys to include.
+		/**
+		 * Returns new split object from config containing items referenced in key array
+		 */
+		var createNewSection = function(config, keys) {
 			var newSection = {};			
 			for (var i = 0, len = keys.length; i < len; i++) {
 				var key = keys[i];
-				newSection[key] = source[key];														
+				newSection[key] = config[key];														
 			}
 			return newSection;
 		};
-
+		
 		var syncLocalConfig = function() {
 			var configToSync = CHROMELL.config;	
 			// Delete user ID, tag admin list and bookmarks - these should always be generated from current login session
@@ -203,18 +207,17 @@ CHROMELL.background = (function() {
 			delete configToSync.saved_tags;
 			
 			// Split config to make sure that we do not exceed QUOTA_BYTES_PER_ITEM value
-			var splitConfig = splitObject(configToSync);			
-			var currentTime = new Date().getTime();		
+			var splitConfig = splitObjectForSync(configToSync);
+			var currentTime = new Date().getTime();
 			
 			var syncData = {
 				'last_sync': currentTime
 			};
-			
-			// Prepare to sync split config keys
+						
 			for (var key in splitConfig) {
 				syncData[key] = splitConfig[key];
 			}
-			
+						
 			chrome.storage.sync.set(syncData);
 		};
 		
@@ -234,24 +237,24 @@ CHROMELL.background = (function() {
 		};		
 			
 		return {
-						
 			init: function() {
-				// Pass null to storage.sync.get method to retrieve all synced data
+				// Pass null to storage.sync.get method to retrieve all currently synced data
 				chrome.storage.sync.get(null, function(data) {
 					var configFromSync = data.config;
 					var lastSync = data.last_sync;			
 			
 					if (lastSync > CHROMELL.config.last_saved) {
+						console.log('Loading config from sync.');
 						loadConfigFromSync(data);
 					}
 					
 					else if (Object.keys(data).length === 0 || lastSync <= CHROMELL.config.last_saved) {
-						// (storage api returns empty object if user hasn't synced before)
+						console.log('Syncing local config.');
 						syncLocalConfig();
 					}
+					
 				});
 			}
-			
 		};
 		
 	}();
