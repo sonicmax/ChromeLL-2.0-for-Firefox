@@ -16,16 +16,18 @@
 			
 			// set up globalPort so we can interact with background page
 			globalPort.onMessage.addListener(eventHandlers.ignoratorUpdate);
-			
+						
 			if (window.location.href.match('inboxthread.php')) {
+				// pm variable is added to method name to determine config setting for PM inbox
+				// eg. userhl_messagelist and userhl_messagelist_pm
 				pm = "_pm";
 			}
 			
-			// check whether we need to display dramalinks ticker
-			if (CHROMELL.config.dramalinks && !pm) {
+			// Check whether we need to display dramalinks ticker and fetch HTML
+			if (CHROMELL.config.dramalinks && !pm) {				
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
-				}, function(response) {
+				}, function(response) {					
 					dramalinks.html = response.data;					
 					dramalinks.config = CHROMELL.config;
 				});
@@ -34,14 +36,14 @@
 			CHROMELL.whenDOMReady(DOM.init);
 		};	
 		
-		var DOM = function() {		
-			// TODO: Figure out better names for DOM method container objects
+		var DOM = function() {
+			// Containers for DOM methods
 			var messagecontainer = {};
 			var infobar = {};
 			var quickpostbody = {};
 			var misc = {};
 			
-			// These variables are set by init method and used in most DOM methods
+			// These variables are set by init method
 			var infobarElement;
 			var quickpostElement;
 			var userbarElement;
@@ -62,8 +64,8 @@
 			};		
 		
 			var init = function() {
-				var msgs = document.getElementsByClassName('message-container');
 				// Get useful elements from page
+				var msgs = document.getElementsByClassName('message-container');				
 				infobarElement = document.getElementById('u0_2');
 				quickpostElement = document.getElementsByClassName('quickpost-body')[0];
 				userbarElement = document.getElementsByClassName('userbar')[0];					
@@ -82,34 +84,37 @@
 					}
 				}
 				
-				// add archive quote buttons before highlights/post numbers are added
+				// Add archive quote buttons before highlights/post numbers are added
 				utils.quote.addButtons();
-				// Add CSS rules before modifying element className/attributes/etc
+				
+				// Inject CSS rules before adding dataset attributes to elements
 				addCSSRules();
-				// iterate over first 5 message-containers (or fewer)
+				
+				// Chrome caches DOM changes when they are made in a loop - unrolling the loop will make it seem faster
 				var len;
 				if (msgs.length < 4) {
 					len = msgs.length;
 				}
-				else {
+				else {					
 					len = 4;
 				}
+				// Iterate over first 5 containers
 				for (var j = 0; j < len; j++) {
 					var msg = msgs[j];
 					// Get required elements from message-container
 					setActivePost(msg);
 					utils.anchors.check(msg);
-					// iterate over functions in messageList
+					// Iterate over messagecontainer methods
 					for (var k in messagecontainer) {
 						if (config[k + pm]) {
-							// pass msg and index value to function
+							// Pass message-container and index value to method
 							messagecontainer[k](msg, j + 1);
 						}
 					}
 				}
 				
-				if (len == 4) {
-					// iterate over rest of messages
+				if (len === 4) {
+					// Iterate over rest of messages
 					for (var j = 4; msg = msgs[j]; j++) {				
 						setActivePost(msg);
 						utils.anchors.check(msg);			
@@ -120,9 +125,9 @@
 						}
 					}
 				}
-				
-				// pass updated ignorator data to background page
+								
 				if (!CHROMELL.config.hide_ignorator_badge) {
+					// Update ChromeLL badge with current ignorator count
 					globalPort.postMessage({
 						action: 'ignorator_update',
 						ignorator: ignorated,
@@ -130,23 +135,23 @@
 					});
 				}
 				
+				// Check if we need to embed any Gfycat/Imgur videos
 				utils.anchors.embedHandler();
 				
-				// call methods that modify quickpost area
+				// Call methods that modify quickpost area (changes will probably not be visible to user)
 				for (var i in quickpostbody) {
 					if (config[i + pm]) {
 						quickpostbody[i]();
 					}
 				}
 				
-				// call methods that dont modify DOM
+				// Add listeners, set observers, etc
 				for (var i in misc) {
 					if (config[i + pm]) {
 						misc[i]();
 					}
 				}
 				
-				// call methods that dont exist in posts/page/misc objects
 				addListeners();
 				appendScripts();
 				
@@ -161,8 +166,9 @@
 					newPageObserver.observe(newPageNotifier, {
 							attributes: true
 					});
-				}	
+				}
 				
+				// By this point all ChromeLL features should be working
 			};
 		
 			var setActivePost = function(msg) {
@@ -530,7 +536,6 @@
 			};
 			
 			messagecontainer.userhl_messagelist = function(msg, index, live) {
-				// TODO: Figure out why this needs two config settings...?
 				if (CHROMELL.config.enable_user_highlight) {
 					var tops = messageTops;
 					if (CHROMELL.config.no_user_highlight_quotes) {
@@ -628,16 +633,16 @@
 				}
 			};	
 			
-			// NOTE: The following 4 methods are only called for livelinks posts:
+			// NOTE: The following 4 methods are only called for livelinks posts
 			
-			messagecontainer.autoscroll_livelinks = function(mutation, index, live) {
-				if (live && document.hidden && autoscrollCheck(mutation) ) {
+			messagecontainer.autoscroll_livelinks = function(mutation, index, isLive) {
+				if (isLive && document.hidden && autoscrollCheck(mutation) ) {
 					$.scrollTo(mutation);
 				}
 			};
 			
-			messagecontainer.autoscroll_livelinks_active = function(mutation, index, live) {
-				if (live && !document.hidden && autoscrollCheck(mutation)) {
+			messagecontainer.autoscroll_livelinks_active = function(mutation, index, isLive) {
+				if (isLive && !document.hidden && autoscrollCheck(mutation)) {
 					// trigger after 10ms delay to prevent undesired 
 					// behaviour in post_title_notification	
 					setTimeout(function() {
@@ -651,8 +656,8 @@
 				}
 			},
 			
-			messagecontainer.post_title_notification = function(mutation, index, live) {
-				if (live) {
+			messagecontainer.post_title_notification = function(mutation, index, isLive) {
+				if (isLive) {
 					if (mutation.style.display === "none") {
 						if (CHROMELL.config.debug) {
 							console.log('not updating for ignorated post');
@@ -678,8 +683,8 @@
 				}
 			};
 			
-			messagecontainer.notify_quote_post = function(mutation, index, live) {
-				if (live) {
+			messagecontainer.notify_quote_post = function(mutation, index, isLive) {
+				if (isLive) {
 					if (!mutation.getElementsByClassName('quoted-message')) {
 						return;
 					}
