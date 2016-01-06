@@ -68,7 +68,7 @@
 				infobarElement = document.getElementById('u0_2');
 				quickpostElement = document.getElementsByClassName('quickpost-body')[0];
 				userbarElement = document.getElementsByClassName('userbar')[0];					
-				currentUser = userbarElement.getElementsByTagName('a')[0].innerHTML.replace(/ \((\d+)\)$/, "");
+				currentUser = userbarElement.getElementsByTagName('a')[0].innerHTML.replace(/ \((\d+)\)$/, "").toLowerCase();
 				currentID = userbarElement.getElementsByTagName('a')[0].href.match(/\?user=([0-9]+)/)[1];
 				
 				var title = document.getElementsByTagName('h2')[0];
@@ -188,18 +188,27 @@
 						var username = name.replace(/\s|\)|:/g, '');
 						var bg = highlightData[name].bg;
 						var color = highlightData[name].color;
-						styleSheet.addRule('.message-container[' + username + '] .message-top[' + username + ']', 'background: #' + bg);
-						styleSheet.addRule('.message-container[' + username + '] .message-top[' + username + ']', 'color: #' + color);											
-						styleSheet.addRule('.message-container[' + username + '] .message-top[' + username + '] a', 'color: #' + color);
-						styleSheet.addRule('.message-container[' + username + '] .message-top[' + username + '] a:hover', 'opacity: 0.8');
+						var datasetAttribute = makeCSSDatasetAttribute(username, 'user');
+						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'background: #' + bg);
+						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'color: #' + color);											
+						styleSheet.addRule('.message-top[' + datasetAttribute + '] a', 'color: #' + color);
+						styleSheet.addRule('.message-top[' + datasetAttribute + '] a:hover', 'opacity: 0.8');
 						
 						// We want this to override the default value, if user is highlighted								
 						styleSheet.addRule('.quoted-message[foxlinks][' + username + ']',	'border-color: #' + bg);
 					}	
-				}	
+				}
 			};
 			
-			var appendScripts = function() {			
+			var makeCSSDatasetAttribute = function(string, type) {
+				var suffix = type || '';
+				// Remove disallowed chars from string
+				var cleanedString = string.replace(/[^a-zA-Z0-9]/g, '');				
+				var datasetAttribute = "data-" + type + "='" + cleanedString + "'"; // eg. data-user='username'
+				return datasetAttribute;
+			};			
+			
+			var appendScripts = function() {
 				var head = document.getElementsByTagName("head")[0];
 				if (config.post_templates) {
 					var templates = document.createElement('script');
@@ -537,30 +546,32 @@
 			
 			messagecontainer.userhl_messagelist = function(msg, index, live) {
 				if (CHROMELL.config.enable_user_highlight) {
-					var tops = messageTops;
+					var length = messageTops.length;
+					
 					if (CHROMELL.config.no_user_highlight_quotes) {
 						// Only check first message-top element from message-container
-						var tops = firstTop;
+						length = 1;
 					}
-					for (var k = 0; k < tops.length; k++) {
-						var top = tops[k];			
+					
+					for (var k = 0; k < length; k++) {
+						var top = messageTops[k];			
 						var user = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
 						
 						if (CHROMELL.config.user_highlight_data[user]) {
 							
 							var userAttribute = user.replace(/\s|\)|:/g, '');			
-							msg.setAttribute(userAttribute, true);							
-							top.setAttribute(userAttribute, true);
-							top.setAttribute('highlighted', true);							
+							msg.dataset.user = userAttribute;
+							top.dataset.user = userAttribute;
+							top.dataset.highlighted = true;							
 														
-							if (live && CHROMELL.config.notify_userhl_post
-									&& firstTop.getElementsByTagName('a')[0].innerHTML != currentUser) {
+							if (CHROMELL.config.notify_userhl_post && live && k === 0 && user !== currentUser) {
 							
 								chrome.runtime.sendMessage({
+									
 									need: "notify",
-									message: document.title
-											.replace(/End of the Internet - /i, ''),
+									message: document.title.replace(/End of the Internet - /i, ''),
 									title: "Post by " + user
+									
 								}, function() {
 									// Do nothing - we just need to notify user
 								});
