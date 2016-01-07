@@ -16,17 +16,15 @@ var imagemap = function() {
 		(currentPage === 1)
 				? page = ''
 				: page = '?page=' + currentPage;
-		var url = window.location.protocol + '//images.endoftheinter.net/imagemap.php' + page;
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", url, true);
-		xhr.onload = function() {
-			if (this.status == 200) {
+		var url = window.location.protocol + '//images.endoftheinter.net/imagemap.php' + page;		
+		chrome.runtime.sendMessage({
+				need: "xhr",
+				url: url,
+		}, function(response) {
 				var html = document.createElement('html');
-				html.innerHTML = this.responseText;						
+				html.innerHTML = response;						
 				callback.call(imagemap, html);
-			}
-		}
-		xhr.send();
+		});			
 	};
 	
 	var processResponse = function(imagemap) {
