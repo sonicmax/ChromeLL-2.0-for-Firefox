@@ -16,7 +16,7 @@ CHROMELL.background = (function() {
 	var noIgnores = true;	
 
 	var init = function(defaultConfig) {
-		updateConfig(defaultConfig);
+		initConfig(defaultConfig);
 		
 		if (CHROMELL.config.history_menubar_classic) {
 			boards['Misc.'] = {"ChromeLL Options":"%extension%options.html"};
@@ -49,9 +49,9 @@ CHROMELL.background = (function() {
 		getUserID();
 		getDrama();
 		
-		/*if (CHROMELL.config.sync_cfg) {
-			checkSync();
-		}*/
+		if (CHROMELL.config.sync_cfg) {
+			sync.init();
+		}
 	};	
 	
 	var getDefaultConfig = function(callback) {			
@@ -60,29 +60,30 @@ CHROMELL.background = (function() {
 		};
 		
 		ajax(request, function(response) {
-				var temp = JSON.parse(response);
-				var defaultConfig = JSON.stringify(temp);
+				var defaultConfig = JSON.parse(response);
 				callback(defaultConfig);			
 		});
 		
 	};
 	
-	var updateConfig = function(defaultConfig) {
+	var initConfig = function(defaultConfig) {
+		
 		if (localStorage['ChromeLL-Config'] == undefined) {
-			localStorage['ChromeLL-Config'] = defaultConfig;
-			CHROMELL.config = defaultConfig;
-		}
-		if (localStorage['ChromeLL-TCs'] == undefined) {
+			localStorage['ChromeLL-Config'] = JSON.stringify(defaultConfig);
 			localStorage['ChromeLL-TCs'] = "{}";
+			CHROMELL.config = defaultConfig;
+			// We don't need to do anything else here
+			return;
 		}
-		var configJS = JSON.parse(defaultConfig);
+		
 		CHROMELL.config = JSON.parse(localStorage['ChromeLL-Config']);
-		for (var i in configJS) {
-			// if this variable does not exist, set it to the default
-			if (CHROMELL.config[i] === undefined) {
-				CHROMELL.config[i] = configJS[i];
+		
+		for (var key in defaultConfig) {
+			// If key does not exist, set it to default value
+			if (CHROMELL.config[key] === undefined) {
+				CHROMELL.config[key] = defaultConfig[key];
 				if (CHROMELL.config.debug) {
-					console.log("upgrade diff!", i, CHROMELL.config[i]);
+					console.log("upgrade diff!", key, CHROMELL.config[key]);
 				}
 			}
 		}
@@ -92,7 +93,6 @@ CHROMELL.background = (function() {
 			delete CHROMELL.config.tcs;
 		}
 		
-		// save the config, just in case it was updated
 		localStorage['ChromeLL-Config'] = JSON.stringify(CHROMELL.config);
 	};
 		
