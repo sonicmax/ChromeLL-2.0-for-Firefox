@@ -137,16 +137,12 @@ CHROMELL.background = (function() {
 		 * Splits config object into smaller objects, based on size of chrome.storage.sync.QUOTA_BYTES_PER_ITEM constant
 		 */
 		var prepareConfigForSync = function(config) {
-			var objectSize = 0;
-			var index = 0;	
-			var splitConfig = {};
-			var keysToSplit = [];
-
+			
 			var configSize = JSON.stringify(config).length;
 			
-			if (configSize > chrome.storage.sync.QUOTA_BYTES) {				
+			if (configSize > chrome.storage.sync.QUOTA_BYTES) {	
 				// Return false - we will have to store config locally and notify user that there was an error.
-				// Seems unlikely that this will be a problem.
+				// Seems unlikely that this will ever be a problem.
 				return false;
 			}
 			
@@ -158,47 +154,39 @@ CHROMELL.background = (function() {
 			}
 			
 			else {
+				// Subtract 100 to account for stringification of each section
+				// (probably doesn't need to be this large, but I'm lazy)
+				var QUOTA_BYTES_PER_ITEM = chrome.storage.sync.QUOTA_BYTES_PER_ITEM - 100;
+				var splitConfig = {};
+				var section = {};
+				var index = 0;
+				
+				// Iterate over each config item and split into sections that fit QUOTA_BYTES_PER_ITEM
 				for (var key in config) {
 					var item = config[key];
-					// Add 2 to key length to account for quotes
-					var itemSize = key.length + 2 + JSON.stringify(item).length;
-													
-					if (objectSize + itemSize > chrome.storage.sync.QUOTA_BYTES_PER_ITEM) {
-						// Create split object using currently cached keys
-						splitConfig['config_' + index] = {};
-						splitConfig['config_' + index] = createNewSection(config, keysToSplit);
-						
-						// Clear key cache and start new section of split object												
-						keysToSplit.length = 0;
-						objectSize = 0;
+					
+					if (getObjectLength(section) + getObjectLength(item) >= QUOTA_BYTES_PER_ITEM) {
+						// Add current section to split config
+						splitConfig['config_' + index] = section;
+						// Start new section
+						section = {};
 						index++;
 					}
-					
-					// Push key to current section
-					keysToSplit.push(key);
-					objectSize += itemSize;
+
+					section[key] = item;
 				}
 				
-				// Check for any keys that haven't been accounted for yet
-				if (keysToSplit.length > 0) {
-					splitConfig['config_' + index] = {};
-					splitConfig['config_' + index] = createNewSection(object, keysToSplit);
+				// Handle any leftover items
+				if (Object.keys(section).length > 0) {
+					splitConfig['config_' + index] = section;
 				}
-
-				return splitObject;
+				
+				return splitConfig;
 			}
 		};
 		
-		/**
-		 * Returns new split object from config containing items referenced in key array
-		 */
-		var createNewSection = function(config, keys) {
-			var newSection = {};			
-			for (var i = 0, len = keys.length; i < len; i++) {
-				var key = keys[i];
-				newSection[key] = config[key];														
-			}
-			return newSection;
+		var getObjectLength = function(object) {
+			return JSON.stringify(object).length;
 		};
 		
 		var syncLocalConfig = function() {
