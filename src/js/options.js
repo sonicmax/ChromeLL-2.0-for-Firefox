@@ -1032,54 +1032,6 @@ var options = {
 		},
 		data: {}
 	},
-	/*userscriptsMenu: {
-		open: function() {
-			var button = document.getElementById('script_menu');
-			var menuElement = document.createElement('span');				
-			var items = ['New', 'Save'];
-			menuElement.id = 'menu_items';	
-			menuElement.style.position = 'absolute';
-			menuElement.style.overflow = 'auto';
-			menuElement.style.padding = '3px 3px';
-			menuElement.style.borderStyle = 'solid';
-			menuElement.style.borderWidth = '2px';
-			menuElement.style.borderRadius = '3px';
-			for (var i = 0, len = items.length; i < len; i++) {
-				var item = items[i];
-				populateMenu.call(this, item, i, menuElement);
-			}
-			button.appendChild(menuElement);
-		
-			function populateMenu(item, index, menuElement) {
-				var menuSpan = document.createElement('span');
-				var menuItem = document.createElement('anchor');
-				var lineBreak = document.createElement('br');
-				menuSpan.className = 'unhigh_span';
-				menuItem.innerHTML = '&nbsp' + item + '&nbsp';
-				menuItem.href = '#';
-				menuItem.className = 'script_menu_items';
-				menuItem.id = 'script_' + item.toLowerCase();
-				menuSpan.appendChild(menuItem);
-				menuElement.appendChild(menuSpan);
-				menuElement.appendChild(lineBreak);
-			}
-		},
-		findCaret: function(ta) {
-			var caret = 0;
-			if (ta.selectionStart || ta.selectionStart == '0') {
-				caret = ta.selectionStart; 
-			}
-			return caret;
-		},
-		tabHandler: function(contents, caretPosition) {
-			var scriptInput = document.getElementById('script_ta');
-			var text = contents.substring(0, caret);
-			contents = contents.replace(text, text + '\t');						
-			var newCaret = contents.lastIndexOf(text + '\t');
-			scriptInput.value = contents;		
-			scriptInput.setSelectionRange(newCaret, newCaret);
-		}
-	},*/
 	customLikeMenu: {
 		open: function() {
 			var button = document.getElementById('like_menu');
