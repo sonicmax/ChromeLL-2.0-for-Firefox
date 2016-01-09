@@ -584,9 +584,7 @@ CHROMELL.background = (function() {
 		var messageHandler = function(request, sender, sendResponse) {
 			switch(request.need) {
 				case "xhr":		
-					ajax(request, function(response) {			
-						sendResponse(response);
-					});	
+					ajax(request, sendResponse);	
 					// Return true so that we can use sendResponse asynchronously (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
 					return true;
 					
