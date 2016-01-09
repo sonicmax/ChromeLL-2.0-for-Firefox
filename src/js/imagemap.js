@@ -1,81 +1,202 @@
 var imagemap = function() {
-	var cache = {};
+	const DB_NAME = 'ChromeLL-Imagemap'
+	const DB_VERSION = 1;
+	const IMAGE_DB = 'images';
+	const READ_WRITE = 'readwrite';
+	
+	var db;
+	var imagemapCache = {};
 	var currentPage = 1;
 	var lastPage = '?';
 	
+	/**
+	 *	Called after user clicks Browse Imagemap button
+	 */
 	var init = function() {
-		// Called after user clicks Browse Imagemap button
-		loadCache(function(cached) {
-			cache = cached.imagemap;
-			getImagemap(processResponse);
-		});
+		
+		if (!CHROMELL.config.imagemap_database) {
+			
+			loadCache(function(cache) {
+			
+				if (Object.keys(cache.imagemap).length > 0) {
+					// Add existing cache to database
+					imagemapCache = cache.imagemap;
+					openDatabase(convertCacheToDb);
+				}
+								
+				CHROMELL.config.imagemap_database = true;
+				
+				// By this point chrome.storage cache will have been added to database
+				getImagemap(processResponse);
+			});
+		}
+		
+		else {
+			openDatabase(function(request) {
+					request.onsuccess = function(event) {
+						db = event.target.result;		
+						getImagemap(processResponse)
+					};
+			});
+		}
 	};
 	
+	/**
+	 *	Opens connection to database and calls back with IDBOpenDBRequest object.	 
+	 */
+	var openDatabase = function(callback) {
+		callback(window.indexedDB.open(DB_NAME, DB_VERSION));
+	};
+	
+	/**
+	 *	Iterates through existing cache in chrome.storage and adds objects to database.
+	 */
+	var convertCacheToDb = function(request) {
+		request.onsuccess = function(event) {
+			db = event.target.result;
+		};
+		
+		// This function will be called after opening database for first time
+		request.onupgradeneeded = function(event) {			
+			var db = event.target.result;
+						
+			// Use src for keyPath
+			var objectStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
+
+			// Create an index to search database by filename.
+			objectStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
+
+			objectStore.transaction.oncomplete = function(event) {
+				var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
+				
+				for (var src in cache) {
+					var record = cache[src];
+					// We need to add src property to object before adding to database
+					record.src = src;
+					imageObjectStore.add(record);
+				}
+				
+				// TODO: We should probably clear chrome.storage as well
+				imagemapCache = null;
+			};
+		};
+	};	
+	
+	/**
+	 *	Opens XHR to get current page of imagemap (1 by default)
+	 */
 	var getImagemap = function(callback) {
-		var page;
-		(currentPage === 1)
-				? page = ''
-				: page = '?page=' + currentPage;
-		var url = window.location.protocol + '//images.endoftheinter.net/imagemap.php' + page;		
+		var page = ''
+		
+		if (currentPage > 1) {
+			page = '?page=' + currentPage;
+		}
+
+		var url = window.location.protocol + '//images.endoftheinter.net/imagemap.php' + page;
+		
 		chrome.runtime.sendMessage({
 				need: "xhr",
 				url: url,
 		}, function(response) {
 				var html = document.createElement('html');
-				html.innerHTML = response;						
+				html.innerHTML = response;		
 				callback.call(imagemap, html);
 		});			
 	};
-	
+		
 	var processResponse = function(imagemap) {
-		// Scrape grid of images from imagemap
-		var imageGrid = scrape(imagemap);
-		var infobar = imagemap.getElementsByClassName('infobar')[1];
-		var anchors = infobar.getElementsByTagName('a');
-		// Find size of imagemap by checking the page navigation anchor tags
-		lastPage = anchors[anchors.length - 1].innerHTML;
-		// Now ready to create imagemap popup and cache the thumbnails (if necessary)
-		createPopup(imageGrid);
-		sendToEncoder(imageGrid);
+
+		scrapeImagegrid(imagemap, function(imageGrid) {		
+			var infobar = imagemap.getElementsByClassName('infobar')[1];
+			var anchors = infobar.getElementsByTagName('a');
+			
+			// Find size of imagemap by checking the page navigation anchor tags
+			lastPage = anchors[anchors.length - 1].innerHTML;
+			
+			// Ready to create imagemap popup and cache the thumbnails (if necessary)
+			createPopup(imageGrid);
+			sendToEncoder(imageGrid);
+		});
 	};
-	
-	var scrape = function(imagemap) {
+
+	var scrapeImagegrid = function(imagemap, callback) {
 		// Returns modified grid of images from imagemap for popup
 		var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
-		var imgs = imageGrid.getElementsByTagName('img');
-		for (var i = 0, len = imgs.length; i < len; i++) {
-			var img = imgs[i];
-			var src = img.src;
-			// Replace src attribute value with cached base64 strings (if they exist)
-			if (cache[src]) {
-				img.setAttribute('oldsrc', img.src);
-				img.src = cache[src].data;							
+		var imgs = imageGrid.getElementsByTagName('img')
+
+		loadImagesFromCache(imgs, function() {
+			var blockDescs = imageGrid.getElementsByClassName('block_desc');
+			
+			for (var i = 0, len = blockDescs.length; i < len; i++) {
+				var blockDesc = blockDescs[i];
+				blockDesc.style.display = 'none';
 			}
-		}
-		var blockDescs = imageGrid.getElementsByClassName('block_desc');
-		var gridBlocks = imageGrid.getElementsByClassName('grid_block');
-		for (var i = 0, len = blockDescs.length; i < len; i++) {
-			var blockDesc = blockDescs[i];
-			blockDesc.style.display = 'none';
-		}
-		for (var i = 0, len = gridBlocks.length; i < len; i++) {
-			var gridBlock = gridBlocks[i];
-			gridBlock.title = "Click to copy image code to clipboard";
-		}
-		return imageGrid;
+			
+			var gridBlocks = imageGrid.getElementsByClassName('grid_block');
+			for (var i = 0, len = gridBlocks.length; i < len; i++) {
+				var gridBlock = gridBlocks[i];
+				gridBlock.title = "Click to copy image code to clipboard";
+			}
+			
+			callback(imageGrid);		
+		});
+		
 	};
 	
+	var loadImagesFromCache = function(imgs, callback) {
+		// Check database for img.src and replace with base64 string when possible.
+		// Wait for all db queries to complete before continuing
+		for (let i = 0, len = imgs.length; i < len; i++) {
+			let img = imgs[i];
+
+			queryDb(img.src, function(result) {
+				
+				if (result) {
+					img.dataset.oldsrc = img.src;
+					img.src = result;
+				}
+				
+				if (i == len - 1) {
+					callback();
+				}
+				
+			});
+		}
+	}	
+		
+	var queryDb = function(src, callback) {
+		var request = db.transaction(IMAGE_DB)
+				.objectStore(IMAGE_DB)
+				.get(src);		
+					
+		request.onsuccess = function(event) {
+			if (event.target.result) {
+				// Callback with base64 string
+				callback(event.target.result.data);
+			}
+			else {				
+				callback(false);
+			}
+		};
+		
+		request.onerror = function(event) {
+			// Couldn't find src in database.
+			callback(false);
+		};
+	}	
+	
 	var createPopup = function(imageGrid, searchResults) {
-		// Create div element for popup and style as required	
 		var div = document.createElement('div');
 		var width = window.innerWidth;
 		var height = window.innerHeight;
 		var bodyClass = document.getElementsByClassName('body')[0];
-		var anchorHeight;	
+		var anchorHeight;
+		
+		// Style main div
 		div.id = "map_div";
-		div.style.position = "fixed";				
+		div.style.position = "fixed";
 		div.style.width = (width * 0.95) + 'px';
-		div.style.height = (height * 0.95) / 2 + 'px';
+		div.style.height = (height * 0.475) + 'px';
 		div.style.left = (width - (width * 0.975)) + 'px';
 		div.style.top = (height - (height * 0.975)) + 'px';
 		div.style.boxShadow = "5px 5px 7px black";		
@@ -83,6 +204,7 @@ var imagemap = function() {
 		div.style.opacity = 1;
 		div.style.backgroundColor = 'white';
 		div.style.overFlow = 'scroll';
+		
 		if (searchResults) {
 			var header = document.createElement('div');
 			var text = document.createTextNode('Displaying results for query "' + query + '" :');
@@ -106,27 +228,35 @@ var imagemap = function() {
 			imageGrid.style.maxWidth = (width * 0.95) - 6 + 'px';
 			imageGrid.style.maxHeight = ((height * 0.95) / 2)  - 6 + 'px';
 		}
+		
 		imageGrid.style.position = 'relative';
 		imageGrid.style.top = '5px';
 		imageGrid.style.overflow = 'scroll';
 		imageGrid.style.overflowX = 'hidden';
+		
 		bodyClass.style.opacity = 0.3;
+		
 		if (searchResults) {
 			header.appendChild(imageGrid);
 		}
 		else {
 			div.appendChild(imageGrid);
 		}
+		
 		document.body.appendChild(div);
 		document.body.style.overflow = 'hidden';
+		
 		// Prevent scrolling in imagemap div from affecting the rest of the page
 		bodyClass.addEventListener('mousewheel', preventScroll);
+		
 		// Add click listeners to close popup/copy img code to clipboard when appropriate
 		bodyClass.addEventListener('click', closePopup);
+		
 		div.addEventListener('click', function(evt) {
 			clickHandler(evt);
 			evt.preventDefault();
 		});
+		
 		if (!searchResults) {
 			// Load new page after user has scrolled to bottom of existing page.
 			// Uses debouncing to improve performance.
@@ -137,13 +267,15 @@ var imagemap = function() {
 	var sendToEncoder = function(imageGrid) {
 		// Iterate over images and send to encoder method
 		var imgs = imageGrid.getElementsByTagName('img');
+		
 		for (var i = 0, len = imgs.length; i < len; i++) {
 			var img = imgs[i];
 			var src = img.src;
-			// Images without oldsrc attribute need to be cached
-			if (!img.getAttribute('oldsrc')) {
+
+			// Images without oldsrc dataset need to be cached
+			if (!img.dataset.oldsrc) {
 				// We need to look in different places for loaded and placeholder image hrefs
-				if (img.parentNode.className === 'img-loaded') {					
+				if (img.parentNode.className === 'img-loaded') {		
 					var href = img.parentNode.parentNode.href;
 				}
 				else {
@@ -165,12 +297,11 @@ var imagemap = function() {
 			canvas.height = this.height;
 			canvas.width = this.width;
 			context.drawImage(this, 0, 0);
-			var dataURI = canvas.toDataURL();
+			var dataUri = canvas.toDataURL();
 			var imageData = {
-					'dataURI': dataURI, 
+					'dataUri': dataUri, 
 					'src': src, 
-					'href': href, 
-					'index': i
+					'href': href
 			};
 			prepareCacheData(imageData);
 		};
@@ -180,10 +311,9 @@ var imagemap = function() {
 	
 	var prepareCacheData = function(imageData) {
 		var cacheData = {};
-		var dataURI = imageData.dataURI;
+		var dataUri = imageData.dataUri;
 		var href = imageData.href;
 		var src = imageData.src;
-		var i = imageData.index;
 		// Thumbnails are always jpgs - fullsize image could have a different file format (found in href)			
 		var extension = href.match(/\.(gif|jpg|png)$/i)[0];
 		var fullsize = src.replace('.jpg', extension);
@@ -191,39 +321,43 @@ var imagemap = function() {
 		var filename = fullsize.match(/\/([^/]*)$/)[1];						
 		filename = decodeURIComponent(filename);
 		
-		if (!filename || !fullsize || !dataURI) {
+		if (!filename || !fullsize || !dataUri) {
 			// This probably shouldn't happen
-			console.log('Error while caching image: ', '\n', src, filename, fullsize, dataURI);
+			console.log('Error while caching image: ', '\n', src, filename, fullsize, dataUri);
 			return;
 		}
-		else {		
-			cacheData[src] = {"filename": filename, "fullsize": fullsize, "data": dataURI};
-			// Finished encoding image - update cache
-			updateCache(cacheData);
-		}
-	};
-	
-	var updateCache = function(cacheData) {
-		if (Object.keys(cache).length === 0) {
-			// First time caching 
-			cache = cacheData;
-		}
 		else {
-			// Add new image to existing cached data
-			for (var i in cacheData) {
-				cache[i] = cacheData[i];							
-			}
+			cacheData[src] = {"src": src, "filename": filename, "fullsize": fullsize, "data": dataUri};
+			// Finished encoding image - update cache
+			updateDatabase(cacheData);
 		}
 	};
 	
-	var loadCache = function(callback) {
+	var updateDatabase = function(cacheData) {
+		var transaction = db.transaction([IMAGE_DB], READ_WRITE);
+
+		transaction.onerror = function(event) {
+			// Can't use add() method if src already exists in databse. This shouldn't happen
+			console.log(event.target.error.message);
+		};
+
+		var objectStore = transaction.objectStore(IMAGE_DB);
+		
+		for (var src in cacheData) {
+			var request = objectStore.add(cacheData[src]);
+		}
+	};
+	
+	var loadCache = function(callback) {		
 		chrome.storage.local.get("imagemap", function(cache) {
+			
 			if (Object.keys(cache).length === 0) {
-				// Return empty imagemap object
+				// Return empty object
 				callback({
 					"imagemap": {}
 				});
 			}
+			
 			else if (cache) {
 				callback(cache);
 			}
@@ -240,7 +374,6 @@ var imagemap = function() {
 	var debounceTimer = '';
 	
 	var debouncer = function() {
-		// Prevents scroll handler from being called repeatedly
 		clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(scrollHandler, 250);
 	};
@@ -258,9 +391,12 @@ var imagemap = function() {
 				// Load next page and append to current grid 
 				currentPage++;
 				getImagemap(function(imagemap) {
-					var newGrid = scrape(imagemap);
-					imageGrid.appendChild(newGrid);
-					sendToEncoder(newGrid);
+					
+					scrapeImagegrid(imagemap, function(newGrid) {
+						imageGrid.appendChild(newGrid);
+						sendToEncoder(newGrid);
+					});
+					
 				});
 			}
 		}
@@ -320,7 +456,6 @@ var imagemap = function() {
 		saveCache();
 	};
 	
-	
 	var preventScroll = function(evt) {
 		evt.preventDefault();
 	};
@@ -341,7 +476,8 @@ var imagemap = function() {
 						// display loading_image element while waiting for results div to update
 						document.getElementById('loading_image').style.display = 'block';				
 					}
-					getMatches(results, query);
+					
+					checkMatches(results, query);
 				});
 			}
 			else {
@@ -352,45 +488,84 @@ var imagemap = function() {
 			}
 		};
 	
+		
 		var lookup = function(query, callback) {
-			// Iterate over imagemap, check for query and push matches to new array
-			var results = [];
-			loadCache(function(cached) {
-				for (var i in cached.imagemap) {
-					var filename = cached.imagemap[i].filename;
-					if (filename.indexOf(query) > -1) {
-						results.push(i);
+						
+			if (!CHROMELL.config.imagemap_database) {
+				
+				loadCache(function(cache) {
+					
+					if (Object.keys(cache.imagemap).length > 0) {
+						imagemapCache = cache.imagemap;
+						openDatabase(convertCacheToDb);				
 					}
-				}
-				callback(results, query);
-			});				
+					// Set config flag so we know not to do this again
+					CHROMELL.config.imagemap_database = true;
+					
+					lookupInDb(query, callback);
+				});
+				
+			}
+			
+			else {
+				lookupInDb(query, callback);
+			}
+			
 		};
 		
-		var getMatches = function(results, query) {
-			var resultsToShow = results;
+		var lookupInDb = function(query, callback) {
+			
+			openDatabase(function(request) {
+				var results = [];
+				
+				request.onsuccess = function(event) {					
+					db = event.target.result;
+					
+					var transaction = db.transaction(IMAGE_DB);
+					var objectStore = transaction.objectStore(IMAGE_DB);							
+					
+					// TODO: Maybe we should open cursor after checking whether index returns any exact matches
+					
+					var request = objectStore.openCursor();
+					
+					request.onsuccess = function(event) {
+							var cursor = event.target.result;									
+							if (cursor) {
+									// TODO: If query is "foo bar", should we return match if cursor value is "foo something bar"? What about partial matches?
+									if (cursor.key.indexOf(query) !== -1) {
+											results.push(cursor.value);
+									}
+
+									cursor.continue();          
+							}
+							else {
+								// TODO: We should probably return results as we find them
+								// Reached end of db
+								callback(results, query);
+							}
+					};							
+					
+				};
+			});
+		};		
+		
+		var checkMatches = function(results, query) {
 			if (results.length === 0) {
-				// No matches - pass false value instead of data
+				// No matches - call updatePopup with false value
 				updatePopup(false, query);
 			}
 			else {
-				// Get image data for each match from cache
-				loadCache(function(cached) {
-					var data = {};
-					for (var i = 0, len = results.length; i < len; i++) {
-						var result = results[i];
-						data[result] = cached.imagemap[result];
-					}
-					formatResults(data, query);
-				});
+				// Format search results to be displayed in popup
+				formatResults(results);
 			}
 		};
 		
 		var formatResults = function(data, query) {
-			// Format search results to be displayed in popup
 			var grid = document.createElement('div');	
 			grid.className = 'image_grid';
 			grid.id = 'results_grid';
-			grid.style.clear = 'left';		
+			grid.style.clear = 'left';
+			
 			for (var i in data) {
 				var block = document.createElement('div');
 				block.className = 'grid_block';
@@ -403,6 +578,7 @@ var imagemap = function() {
 				block.appendChild(img);
 				grid.appendChild(block);						
 			}
+			
 			updatePopup(grid, query);
 		};
 		
