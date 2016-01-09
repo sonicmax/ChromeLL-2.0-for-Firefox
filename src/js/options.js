@@ -901,43 +901,6 @@ var options = {
 			}
 			
 		},
-		/*displayUserscripts: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var scriptData = config.userscript_data;
-			var textarea = document.getElementById('script_ta');
-			var activeScript = document.getElementsByClassName('active_script')[0];
-			var scriptList = document.getElementById('script_list');
-			var mostRecent = {
-					'time': 0,
-					'id': ''
-			};
-			for (var i in scriptData) {
-				var script = scriptData[i];
-				console.log(script);
-				if (script.last_saved > mostRecent.time) {
-					mostRecent.time = script.last_saved;
-					mostRecent.id = i;
-				}
-				var anchor = document.createElement('a');
-				var close = document.createElement('a');
-				var linebreak = document.createElement('br');	
-				anchor.href = '#';
-				anchor.id = i;
-				anchor.className = 'inactive_script';
-				anchor.innerHTML = script.name;				
-				close.style.cssFloat = "right";
-				close.style.fontSize = "18px";
-				close.href = '#';
-				close.style.textDecoration = "none";
-				close.id = "delete_custom";
-				close.innerHTML = '&#10006;';		
-				scriptList.appendChild(anchor);
-				anchor.appendChild(close);
-				scriptList.appendChild(linebreak);
-			}
-			document.getElementById(mostRecent.id).className = 'active_script';
-			textarea.value = config.userscript_data[mostRecent.id].contents;			
-		},*/
 		switchActive: function(ID) {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var type = ID.replace(/[0-9]/g, '');
