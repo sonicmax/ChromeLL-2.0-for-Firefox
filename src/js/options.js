@@ -529,13 +529,6 @@ var options = {
 			}
 		},
 		
-		emptyCache: function() {
-			chrome.storage.local.remove('imagemap', function() {
-				console.log('Cleared imagemap cache.');
-				location.reload();
-			});
-		},
-		
 		newLike: function() {
 			options.ui.closeMenu();
 			var textarea = document.getElementById('like_ta');
@@ -1007,17 +1000,7 @@ var options = {
 	imageCache: {
 		
 		save: function() {
-			var cacheData = options.imageCache.data;
-			options.imageCache.open(function(cached) {
-				var cache = cached.imagemap;
-				// replace old filename value with value from cacheChanges
-				for (var i in cacheData) {
-					cache[i].filename = cacheData[i];
-				}
-				chrome.storage.local.set({"imagemap": cache}, function() {
-					console.log('Cache updated:', cacheData);
-				});
-			});
+
 		},
 		
 		open: function(callback) {

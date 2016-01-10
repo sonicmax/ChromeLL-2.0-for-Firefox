@@ -9,27 +9,7 @@ var imagemap = function() {
 	var init = function() {
 	
 		openDatabase(function() {
-		
-			if (!CHROMELL.config.imagemap_database) {
-				
-				loadCache(function(cache) {
-					if (Object.keys(cache.imagemap).length > 0) {
-						// Add existing cache in chrome.storage to database
-						imagemapCache = cache.imagemap;
-						chrome.runtime.sendMessage({ need: 'convertCacheToDb' });
-					}
-									
-					CHROMELL.config.imagemap_database = true;
-					
-					getImagemap(processResponse);
-					
-				});	
-			}
-			
-			else {
-				getImagemap(processResponse);
-			}
-			
+				getImagemap(processResponse);		
 		});
 	};
 	
@@ -276,29 +256,6 @@ var imagemap = function() {
 		}
 	};
 	
-	var loadCache = function(callback) {		
-		chrome.storage.local.get("imagemap", function(cache) {
-			
-			if (Object.keys(cache).length === 0) {
-				// Return empty object
-				callback({
-					"imagemap": {}
-				});
-			}
-			
-			else if (cache) {
-				callback(cache);
-			}
-		});
-	};
-	
-	var saveCache = function() {
-		chrome.storage.local.set({"imagemap": cache}, function() {
-			// Clear cache object after storage.local.set method has completed
-			imagemap.cache = {};
-		});
-	};
-	
 	var debounceTimer = '';
 	
 	var debouncer = function() {
@@ -426,28 +383,9 @@ var imagemap = function() {
 	
 		
 		var lookup = function(query, callback) {
-						
-			openDatabase(function() {
-						
-				if (!CHROMELL.config.imagemap_database) {
-				
-					loadCache(function(cache) {
-						
-						if (Object.keys(cache.imagemap).length > 0) {
-							imagemapCache = cache.imagemap;
-							chrome.runtime.sendMessage({ need: 'convertCacheToDb' });
-						}
-						// Set config flag so we know not to do this again
-						CHROMELL.config.imagemap_database = true;
-						
-						lookupInDb(query, callback);
-					});
-				}
-				
-				else {
-					lookupInDb(query, callback);
-				}
 			
+			openDatabase(function() {
+					lookupInDb(query, callback);	
 			});
 			
 		};

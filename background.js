@@ -52,6 +52,13 @@ CHROMELL.background = (function() {
 		if (CHROMELL.config.sync_cfg) {
 			sync.init();
 		}
+		
+		if (!CHROMELL.config.imagemap_database) {
+			
+			database.convertCache(function() {	
+				CHROMELL.config.imagemap_database = true;		
+			});		
+		}
 	};	
 	
 	var getDefaultConfig = function(callback) {			
@@ -814,7 +821,7 @@ CHROMELL.background = (function() {
 			},
 			
 			/**
-			 *	Iterates through existing cache in chrome.storage and adds objects to database.
+			 *	Adds objects from chrome.storage cache to current database.
 			 */
 			convertCache: function(callback) {
 				getStorageApiCache(function(cache) {
