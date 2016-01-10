@@ -143,21 +143,36 @@ var options = {
 					options.ui.addDiv.tagHighlight();
 			}
 		});
-		// show version
+		
+		// Show ChromeLL version
 		var app = chrome.app.getDetails();
 		document.getElementById('version').innerText = app.version;
+		
+		// Find 'Save config' button and set config blob as href
 		document.getElementById('downloadcfg').href = options.download();
-		// show size on disk of imagemap cache
-		chrome.storage.local.getBytesInUse("imagemap", function(bytes) {
-			var megabytes = bytes / 1048576;
-			// round to 2 decimal places
-			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100;
+		
+		// Show size of imagemap cache
+		options.imageCache.open(function() {
+			
+			chrome.runtime.sendMessage({ need: 'getSizeInBytes' }, function(bytes) {
+				var megabytes = bytes / 1048576;
+				
+				// Round to 2 decimal places
+				document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100;
+				
+			});
+			
 		});
+		
+		// Secret CSS feature
 		var cssBox = document.getElementById('fun_css_div');
 		if (config.user_id == 13547 || config.user_id == 5599) {
 			cssBox.style.display = 'block';			
-		}		
+		}
+		
+		// Add listeners, populate remaining UI elements, etc
 		if (document.readyState == 'loading') {
+			
 			document.addEventListener('DOMContentLoaded', function() {
 				options.ui.hideUnusedMenus();
 				options.ui.setColorPicker();
@@ -684,10 +699,10 @@ var options = {
 				var newFilename = evt.target.value;
 				var src = evt.target.id;
 				if (src && newFilename) {					
-					options.cache.data[src] = newFilename;
+					options.imageCache.data[src] = newFilename;
 				}
 				clearTimeout(cacheTimer);
-				cacheTimer = setTimeout(options.cache.save, 500);				
+				cacheTimer = setTimeout(options.imageCache.save, 500);				
 			});
 			
 			cacheMenu.addEventListener('change', function(evt) {
@@ -788,11 +803,12 @@ var options = {
 				}
 			});
 		},
-		populateCacheTable: function(sortedCache) {
+		populateCacheTable: function(sortedCache) {		
 			var table = document.getElementById('cache_contents');
 			var loadingImage = document.getElementById('loading_img');
 						
 			if (sortedCache && sortedCache !== 'default') {
+				
 				table.style.display = "none";
 				loadingImage.style.display = "block";
 				// Remove existing cache data from table
@@ -802,7 +818,7 @@ var options = {
 					table.removeChild(child);
 				}
 				
-				options.cache.open(function() {		
+				options.imageCache.open(function() {
 					for (let i = 0, len = sortedCache.length; i < len; i++) {						
 						options.ui.createTableRow(sortedCache[i]);					
 					}
@@ -814,7 +830,7 @@ var options = {
 			}
 			
 			else {
-				options.cache.open(function() {
+				options.imageCache.open(function() {
 					// TODO: Get all keys, split into pages and display 1 page at a time (with option to show all)
 					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {
 						if (!images) {
@@ -977,12 +993,12 @@ var options = {
 			}
 		}
 	},
-	cache: {
-		data: {},
+	
+	imageCache: {
 		
 		save: function() {
-			var cacheData = options.cache.data;
-			options.cache.open(function(cached) {
+			var cacheData = options.imageCache.data;
+			options.imageCache.open(function(cached) {
 				var cache = cached.imagemap;
 				// replace old filename value with value from cacheChanges
 				for (var i in cacheData) {
@@ -996,20 +1012,11 @@ var options = {
 		
 		open: function(callback) {
 			chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);
-		},
-		
-		getStorageApiCache: function(callback) {
-			chrome.storage.local.get("imagemap", function(cache) {
-				if (Object.keys(cache.imagemap).length > 0) {
-					callback(cache);
-				}
-				else {
-					callback(false);
-				}
-			});						
-		}		
+		}
 	},
+	
 	customLikeMenu: {
+		
 		open: function() {
 			var button = document.getElementById('like_menu');
 			var menuElement = document.createElement('span');				
