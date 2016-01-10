@@ -730,12 +730,25 @@ CHROMELL.background = (function() {
 					return true;
 					
 				case "convertCacheToDb":
-					convertCacheToDb(sendResponse);
+					getCacheFromStorage(function(cache) {
+						
+						if (cache !== null) {
+							convertCacheToDb(cache);
+						}
+						
+						sendResponse();	
+						
+					});
+					
 					return true;
 					
 				case "queryDb":
 					queryDb(request.src, sendResponse);
 					return true;
+					
+				case "clearDatabase":
+					clearDatabase();
+					break;
 					
 				case "updateDatabase":
 					updateDatabase(request.data, sendResponse);
@@ -745,10 +758,22 @@ CHROMELL.background = (function() {
 					searchDatabase(request.query, sendResponse);
 					return true;
 					
+				case "getAllFromDb":
+					getAll(sendResponse);
+					return true;
+					
+				case "getDbSize":
+					getSize(sendResponse);
+					return true;
+				
+				case "getSizeInBytes":
+					getSizeInBytes(sendResponse);
+					return true;
+					
 				default:			
 					console.log("Error in request listener - undefined parameter?", request);
 					break;
-						
+					
 			}
 			
 		};
@@ -762,9 +787,7 @@ CHROMELL.background = (function() {
 	const READ_WRITE = 'readwrite';	
 	var db;
 	
-	var openDatabase = function(callback) {		
-
-		
+	var openDatabase = function(callback) {
 		var request = window.indexedDB.open(DB_NAME, DB_VERSION);
 		
 		request.onsuccess = function(event) {
@@ -783,12 +806,14 @@ CHROMELL.background = (function() {
 		};		
 	};
 	
+	var clearDatabase = function() {
+		var request = db.transaction(IMAGE_DB).objectStore(IMAGE_DB).clear();		
+	};
+	
 	/**
 	 *	Iterates through existing cache in chrome.storage and adds objects to database.
-	 *	Assumes that database has already been opened.
 	 */
-	var convertCacheToDb = function() {
-		// Use src for keyPath
+	var convertCacheToDb = function(cache) {		
 		var objectStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
 
 		// Create an index to search database by filename.
@@ -799,7 +824,8 @@ CHROMELL.background = (function() {
 			
 			for (var src in cache) {
 				var record = cache[src];
-				// We need to add src property to object before adding to database
+				
+				// We need to manually add src property to object before adding to database
 				record.src = src;
 				imageObjectStore.add(record);
 			}
@@ -808,6 +834,19 @@ CHROMELL.background = (function() {
 		};
 	};
 	
+	var getCacheFromStorage = function(callback) {
+		chrome.storage.local.get("imagemap", function(cache) {
+			
+			if (Object.keys(cache).length === 0) {				
+				callback(null);
+			}
+			
+			else if (cache) {
+				callback(cache);
+			}
+		});
+	};	
+	
 	var queryDb = function(src, callback) {
 		var request = db.transaction(IMAGE_DB)
 				.objectStore(IMAGE_DB)
@@ -815,8 +854,7 @@ CHROMELL.background = (function() {
 					
 		request.onsuccess = function(event) {
 			if (event.target.result) {
-				// Callback with base64 string
-				callback(event.target.result.data);
+				callback(event.target.result);
 			}
 			else {				
 				callback(false);
@@ -869,6 +907,79 @@ CHROMELL.background = (function() {
 					// Reached end of db
 					callback(results, query);
 				}
+		};
+	};
+	
+	
+	var getAll = function(callback) {
+		var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
+		// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
+		if (objectStore.getAll != null) {
+			var request = objectStore.getAll();
+			
+			request.onsuccess = function(event) {
+				// TODO: Need to test what happens if database exists but is empty
+				callback(event.target.result);
+			};
+			
+			request.onerror = function(event) {
+				callback(false);
+			};
+		}
+		
+		else {		
+			var cache = [];
+			objectStore.openCursor().onsuccess = function(event) {
+				var cursor = event.target.result;
+				if (cursor) {
+					cache.push(cursor.value);
+					cursor.continue();
+				}
+				else {
+					callback(cache);
+				}
+			};								
+		}
+	};
+	
+	var getSize = function(callback) {
+		var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
+		var size = 0;
+		// TODO: Maybe it would be faster to use a key cursor here
+		objectStore.openCursor().onsuccess = function(event) {
+			var cursor = event.target.result;
+			if (cursor) {					
+				size++;
+				cursor.continue();
+			}
+			else {
+				callback(cache);
+			}
+		};			
+	};
+	
+	var getSizeInBytes = function(callback) {
+		var size = 0;
+
+		var transaction = db.transaction([IMAGE_DB])
+				.objectStore(IMAGE_DB)
+				.openCursor();
+
+		transaction.onsuccess = function(event) {
+			var cursor = event.target.result;
+			if (cursor) {
+				var storedObject = cursor.value;
+				var json = JSON.stringify(storedObject);
+				size += json.length;
+				cursor.continue();
+			}
+			else {
+				callback(size);
+			}
+		};
+		
+		transaction.onerror = function(err) {
+				callback(null);
 		};
 	};
 	
