@@ -55,10 +55,14 @@ CHROMELL.background = (function() {
 		
 		if (!CHROMELL.config.imagemap_database) {
 			
-			database.convertCache(function() {	
-				CHROMELL.config.imagemap_database = true;		
-			});		
+			database.open(function() {
+				
+				database.convertCache(function() {
+					CHROMELL.config.imagemap_database = true;		
+				});	
+			});
 		}
+		
 	};	
 	
 	var getDefaultConfig = function(callback) {			
@@ -786,13 +790,14 @@ CHROMELL.background = (function() {
 		var getStorageApiCache = function(callback) {
 			chrome.storage.local.get("imagemap", function(cache) {
 				
-				if (Object.keys(cache).length === 0) {				
+				if (Object.keys(cache.imagemap).length === 0) {				
 					callback(null);
 				}
 				
-				else if (cache) {
-					callback(cache);
+				else {
+					callback(cache.imagemap);
 				}
+				
 			});
 		};		
 		
@@ -824,17 +829,14 @@ CHROMELL.background = (function() {
 			 *	Adds objects from chrome.storage cache to current database.
 			 */
 			convertCache: function(callback) {
-				getStorageApiCache(function(cache) {
-					var objectStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
-
-					// Create an index to search database by filename.
-					objectStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
-
-					objectStore.transaction.oncomplete = function(event) {
+				
+				getStorageApiCache(function(imagemap) {		
+				
+					if (Object.keys(imagemap).length > 0) {			
 						var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
 						
-						for (var src in cache) {
-							var record = cache[src];
+						for (var src in imagemap) {
+							var record = imagemap[src];
 							
 							// We need to manually add src property to object before adding to database
 							record.src = src;
@@ -842,8 +844,13 @@ CHROMELL.background = (function() {
 						}
 																	
 						// TODO: We should probably clear chrome.storage
-						callback();
-					};
+						callback();							
+					}
+					
+					else {
+						callback()
+					}
+					
 				});
 			},	
 			
@@ -980,7 +987,10 @@ CHROMELL.background = (function() {
 				transaction.onerror = function(err) {
 						callback(null);
 				};
-			}
+			},
+			
+			db: db
+		
 		};
 		
 	})();
