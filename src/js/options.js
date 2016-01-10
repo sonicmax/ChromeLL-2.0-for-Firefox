@@ -1185,10 +1185,9 @@ var options = {
 			chrome.runtime.sendMessage({
 				need: "config_push",
 				data: config
-			});				
-			
-			allBg.init_listeners(config);
+			});
 	},
+	
 	restoreFromText: function(evt) {
 		var file = evt.target.files[0];
 		if (!file.type.match('text.*')) {
