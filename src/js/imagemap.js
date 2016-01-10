@@ -113,9 +113,9 @@ var imagemap = function() {
 					src: img.src
 			}, function(result) {
 				
-				if (result) {
+				if (result.data) {
 					img.dataset.oldsrc = img.src;
-					img.src = result;
+					img.src = result.data;
 				}
 				
 				if (i == len - 1) {
