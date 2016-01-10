@@ -877,16 +877,26 @@ var options = {
 					var url = result.fullsize;
 				}
 				
-				// TODO: This would probably look cleaner without the HTML strings			
-				filenameData.innerHTML = '<input type="text" class="cache_filenames" value="' + result.filename +'" style="width:400px;">';
+				var input = document.createElement('input');
+				input.type = 'text';
+				input.className = 'cache_filenames';
+				input.value = result.filename;
+				input.style.width = '400px';
+				filenameData.appendChild(input);
 						
-				urlData.innerHTML = '<a class="cache_url" title="' + result.fullsize + '" href="' + result.data + '">' + url + '</a>';
+				var anchor = document.createElement('a');
+				anchor.className = 'cache_url';
+				anchor.title = result.fullsize;
+				anchor.href = result.data;
+				anchor.innerHTML = url;
+				urlData.appendChild(anchor);
 				
 				table.appendChild(tableRow);
 				tableRow.appendChild(filenameData);
 				tableRow.appendChild(urlData);
 			}
 		},
+		
 		displayLBContent: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var likeData = config.custom_like_data;
