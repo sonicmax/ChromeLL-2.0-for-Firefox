@@ -410,15 +410,17 @@ var options = {
 			return JSON.parse(Base64.decode(config));
 		},
 		sortCache: function(sortType) {
+			
 			if (sortType === 'default') {
 				options.ui.populateCacheTable(sortType);
 			}
+			
 			else {
 				var filenames = [];
 				var results = [];
 				var duplicateCheck = {};
 				var filetypes = {};
-				options.cache.restore(function(cached) {
+				options.cache.open(function(cached) {
 					var cache = cached.imagemap;
 					if (sortType === 'filetype') {						
 						filetypes["none"] = [];
@@ -478,7 +480,7 @@ var options = {
 			var results = [];
 			var duplicateCheck = {};
 			if (/\S/.test(query)) {
-				options.cache.restore(function(cached) {
+				options.cache.open(function(cached) {
 					var cache = cached.imagemap;
 					for (var src in cache) {
 						var filename = cache[src].filename;
@@ -772,93 +774,108 @@ var options = {
 		populateCacheTable: function(sortedCache) {
 			var table = document.getElementById('cache_contents');
 			var loadingImage = document.getElementById('loading_img');
+						
 			if (sortedCache && sortedCache !== 'default') {
 				table.style.display = "none";
 				loadingImage.style.display = "block";
-				// remove cache data from table
+				// Remove existing cache data from table
 				var nodes = table.childNodes;
 				for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
 					var child = nodes[i];
 					table.removeChild(child);
 				}
-				options.cache.restore(function(cached) {
-					var cache = cached.imagemap;
-					for (var i = 0, len = sortedCache.length; i < len; i++) {
-						var srcFromArray = sortedCache[i];
-						var image = cache[srcFromArray];
-						var tableRow = document.createElement('tr');				
-						var filenameData = document.createElement('td');
-						var urlData = document.createElement('td');								
-						var filename = image.filename;
-						var fullsize = image.fullsize;
-						if (fullsize.length > 100) {
-							var url = fullsize.substring(0, 99) + '...';
-						}
-						else {
-							var url = fullsize;
-						}
-						var data = image.data;
-						tableRow.id = i;
-						// filename table row contains input field						
-						filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
-								+ '" value="' + filename +'" style="width:400px;">';
-						urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
-						table.appendChild(tableRow);
-						tableRow.appendChild(filenameData);
-						tableRow.appendChild(urlData);
+				
+				options.cache.open(function() {		
+					for (let i = 0, len = sortedCache.length; i < len; i++) {
+						let src = sortedCache[i];
+						// Query database using list of sorted src attributes and display data if a match is found
+						chrome.runtime.sendMessage({ need: 'queryDb', src: src }, createTableRow);						
 					}
+					
 					loadingImage.style.display = "none";
 					table.style.display = "block";
+
 				});
 			}
+			
 			else {
-				// display table of imagemap cache contents
-				options.cache.restore(function(cached) {
-					var cachedImagemap = cached.imagemap;
-					if (!cachedImagemap) {
-						var empty = document.createElement('tr');
-						empty.innerHTML = 'Empty';
-						table.appendChild(empty);
-						return;
-					}
-					else {
-						if (sortedCache == 'default') {
-							table.style.display = "none";
-							loadingImage.style.display = "block";
-							// remove existing cache data from table							
-							var nodes = table.childNodes;
-							for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
-								var child = nodes[i];
-								table.removeChild(child);
-							}
+				options.cache.open(function() {
+					// TODO: Get all keys, split into pages and display 1 page at a time (with option to show all)
+					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {				
+						if (!images) {
+							var empty = document.createElement('tr');
+							empty.innerHTML = 'Empty';
+							table.appendChild(empty);
+							return;
 						}
-						for (var i in cachedImagemap) {
-							var image = cachedImagemap[i];
-							var tableRow = document.createElement('tr');				
-							var filenameData = document.createElement('td');
-							var urlData = document.createElement('td');								
-							var filename = image.filename;
-							var fullsize = image.fullsize;
-							if (fullsize.length > 80) {
-								var url = fullsize.substring(0, 80) + '...';
+						
+						else {
+							if (sortedCache == 'default') {
+								table.style.display = "none";
+								loadingImage.style.display = "block";
+								// remove existing cache data from table							
+								var nodes = table.childNodes;
+								for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
+									var child = nodes[i];
+									table.removeChild(child);
+								}
 							}
-							else {
-								var url = fullsize;
+							
+							for (var i in images) {
+								var image = images[i];
+								var tableRow = document.createElement('tr');				
+								var filenameData = document.createElement('td');
+								var urlData = document.createElement('td');								
+								var filename = image.filename;
+								var fullsize = image.fullsize;
+								if (fullsize.length > 80) {
+									var url = fullsize.substring(0, 80) + '...';
+								}
+								else {
+									var url = fullsize;
+								}
+								var data = image.data;
+								tableRow.id = i;
+								// filename table row contains input field
+								filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
+										+ '" value="' + filename +'" style="width:400px;">';
+								urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
+								table.appendChild(tableRow);
+								tableRow.appendChild(filenameData);
+								tableRow.appendChild(urlData);
 							}
-							var data = image.data;
-							tableRow.id = i;
-							// filename table row contains input field
-							filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
-									+ '" value="' + filename +'" style="width:400px;">';
-							urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
-							table.appendChild(tableRow);
-							tableRow.appendChild(filenameData);
-							tableRow.appendChild(urlData);
+							loadingImage.style.display = "none";
+							table.style.display = "block";
 						}
-						loadingImage.style.display = "none";
-						table.style.display = "block";				
-					}
+					});
 				});
+			}
+		},
+		createTableRow: function(result) {
+			if (result) {
+				var table = document.getElementById('cache_contents');			
+				var tableRow = document.createElement('tr');				
+				var filenameData = document.createElement('td');
+				var urlData = document.createElement('td');								
+				
+				if (result.fullsize.length > 100) {
+					var url = result.fullsize.substring(0, 99) + '...';
+				}
+				else {
+					var url = result.fullsize;
+				}
+				
+				tableRow.id = i;
+				
+				// TODO: This would probably look cleaner without the HTML strings			
+				filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
+						+ '" value="' + result.filename +'" style="width:400px;">';
+						
+				urlData.innerHTML = '<a class="cache_url" title="' + result.fullsize + '" href="' + result.data + '">' + url + '</a>';
+				
+				table.appendChild(tableRow);
+				tableRow.appendChild(filenameData);
+				tableRow.appendChild(urlData);
 			}
 		},
 		displayLBContent: function() {
@@ -968,9 +985,11 @@ var options = {
 		}
 	},
 	cache: {
+		data: {},
+		
 		save: function() {
 			var cacheData = options.cache.data;
-			options.cache.restore(function(cached) {
+			options.cache.open(function(cached) {
 				var cache = cached.imagemap;
 				// replace old filename value with value from cacheChanges
 				for (var i in cacheData) {
@@ -981,17 +1000,21 @@ var options = {
 				});
 			});
 		},
-		restore: function(callback) {
+		
+		open: function(callback) {
+			chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);
+		},
+		
+		getStorageApiCache: function(callback) {
 			chrome.storage.local.get("imagemap", function(cache) {
-				if (cache) {
+				if (Object.keys(cache.imagemap).length > 0) {
 					callback(cache);
 				}
 				else {
-					// TODO - handle empty imagemap cache
+					callback(false);
 				}
-			});	
-		},
-		data: {}
+			});						
+		}		
 	},
 	customLikeMenu: {
 		open: function() {
@@ -1160,7 +1183,8 @@ var options = {
 			
 			// Make sure that content scripts are using latest version of config
 			chrome.runtime.sendMessage({
-				need: "config_push"
+				need: "config_push",
+				data: config
 			});				
 			
 			allBg.init_listeners(config);
@@ -1237,7 +1261,7 @@ $(document)
 				});
 
 				if (localStorage['chromeLL_userhighlight'] && localStorage['chromeLL_userhighlight'] != '') {
-					// Support for people with legacy config flesthis
+					// Support for people with legacy config
 					// TODO: It seems safe to remove this now, after so many years
 					options.restoreV1();
 				} else {
