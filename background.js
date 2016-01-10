@@ -665,9 +665,6 @@ CHROMELL.background = (function() {
 						console.log('inserting css ', request.file);
 					}
 					chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
-					sendResponse({
-						// no response needed
-					});
 					break;
 					
 				case "opentab":
