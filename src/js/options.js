@@ -166,8 +166,6 @@ var options = {
 				options.listeners.change();
 				options.listeners.menuButton();
 				options.ui.populateCacheTable();
-				// disabled for 2.30 release
-				// options.ui.displayUserscripts();
 				options.ui.displayLBContent();
 				options.save();
 			});
