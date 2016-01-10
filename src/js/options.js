@@ -811,12 +811,7 @@ var options = {
 				
 				table.style.display = "none";
 				loadingImage.style.display = "block";
-				// Remove existing cache data from table
-				var nodes = table.childNodes;
-				for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
-					var child = nodes[i];
-					table.removeChild(child);
-				}
+				clearTable();
 				
 				options.imageCache.open(function() {
 					for (let i = 0, len = sortedCache.length; i < len; i++) {						
@@ -843,13 +838,8 @@ var options = {
 						else {
 							if (sortedCache == 'default') {
 								table.style.display = "none";
-								loadingImage.style.display = "block";
-								// remove existing cache data from table							
-								var nodes = table.childNodes;
-								for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
-									var child = nodes[i];
-									table.removeChild(child);
-								}
+								loadingImage.style.display = "block";								
+								clearTable();
 							}
 							
 							for (var i in images) {
@@ -863,6 +853,16 @@ var options = {
 				});
 			}
 		},
+		
+		clearTable: function() {
+			var table = document.getElementById('cache_contents');
+			var nodes = table.childNodes;
+			for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
+				var child = nodes[i];
+				table.removeChild(child);
+			}			
+		},
+		
 		createTableRow: function(result) {
 			if (result) {
 				var table = document.getElementById('cache_contents');			
