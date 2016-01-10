@@ -409,6 +409,7 @@ var options = {
 			}
 			return JSON.parse(Base64.decode(config));
 		},
+		
 		sortCache: function(sortType) {
 			
 			if (sortType === 'default') {
@@ -420,15 +421,18 @@ var options = {
 				var results = [];
 				var duplicateCheck = {};
 				var filetypes = {};
-				options.cache.open(function(cached) {
-					var cache = cached.imagemap;
+				
+				chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {					
+				
 					if (sortType === 'filetype') {						
 						filetypes["none"] = [];
 						filetypes[".gif"] = [];
 						filetypes[".jpg"] = [];
 						filetypes[".png"] = [];
-						for (var src in cache) {
-							var filename = cache[src].filename;
+						
+						// Iterate over images and push filenames to appropriate array
+						for (var i in images) {
+							var filename = images[i].filename;
 							var extension = filename.match(/\.(gif|jpg|png)$/i);
 							if (extension) {
 								filetypes[extension[0]].push(filename);
@@ -436,6 +440,7 @@ var options = {
 								filetypes["none"].push(filename);
 							}
 						}
+												
 						for (var filetype in filetypes) {
 							if (filetypes[filetype] === []) {
 								return;
@@ -445,65 +450,77 @@ var options = {
 							}
 						}
 					}
+					
 					else {
-						// sort by filename
-						for (var src in cache) {
-							var filename = cache[src].filename;
+						// Sort by filename
+						for (var i in images) {
+							var filename = images[i].filename;
 							filenames.push(filename);
 						}
+						
 						filenames.sort();
+						
 						if (sortType === 'z_a') {
 							filenames.reverse();
 						}
 					}
-					// iterate over filenames array and match with their respective src values from cache
+					
+					// Iterate over filenames array and match with their respective src values from cache
 					for (var i = 0, len = filenames.length; i < len; i++) {
 						var sortedFilename = filenames[i];
-						for (var src in cache) {
-							var cacheFilename = cache[src].filename;
+						
+						for (var j in images) {
+							var image = images[j];
+							var cacheFilename = image.filename
+							var src = image.src;
+							
 							if (cacheFilename == sortedFilename) {
+								
 								if (!duplicateCheck[src]) {
-									// check that src hasn't been pushed to results array before - this ensures that
+									// Check that src hasn't been pushed to results array before - this ensures that
 									// duplicate filenames aren't assigned the same src value
-									results.push(src);						
+									results.push(image);
 									duplicateCheck[src] = {"filename": sortedFilename, "index": i};
 								}
 							}
 						}
 					}
-					options.ui.populateCacheTable(results);				
+					
+					// Now we can populate database table using sorted array as a reference
+					options.ui.populateCacheTable(results);
+					
 				});
 			}
 		},
+		
 		searchCache: function() {
 			var query = document.getElementById('imagemap_search').value;
 			var results = [];
 			var duplicateCheck = {};
+			
 			if (/\S/.test(query)) {
-				options.cache.open(function(cached) {
-					var cache = cached.imagemap;
-					for (var src in cache) {
-						var filename = cache[src].filename;
-						if (!duplicateCheck[src]) {
-							if (filename.indexOf(query) > -1) {
-								results.push(src);
-								duplicateCheck[src] = filename;
-							}
-						}
-					}
-					options.ui.populateCacheTable(results);
+				var request = {
+						need: 'searchDatabase',
+						query: query			
+				};
+				
+				chrome.runtime.sendMessage(request, function(results) {
+						options.ui.populateCacheTable(results);			
 				});
 			}
+			
 			else {
 				options.ui.populateCacheTable('default');
 			}
 		},
+		
 		emptyCache: function() {
 			chrome.storage.local.remove('imagemap', function() {
 				console.log('Cleared imagemap cache.');
 				location.reload();
 			});
 		},
+		
 		newLike: function() {
 			options.ui.closeMenu();
 			var textarea = document.getElementById('like_ta');
@@ -786,10 +803,8 @@ var options = {
 				}
 				
 				options.cache.open(function() {		
-					for (let i = 0, len = sortedCache.length; i < len; i++) {
-						let src = sortedCache[i];
-						// Query database using list of sorted src attributes and display data if a match is found
-						chrome.runtime.sendMessage({ need: 'queryDb', src: src }, createTableRow);						
+					for (let i = 0, len = sortedCache.length; i < len; i++) {						
+						options.ui.createTableRow(sortedCache[i]);					
 					}
 					
 					loadingImage.style.display = "none";
@@ -801,7 +816,7 @@ var options = {
 			else {
 				options.cache.open(function() {
 					// TODO: Get all keys, split into pages and display 1 page at a time (with option to show all)
-					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {				
+					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {
 						if (!images) {
 							var empty = document.createElement('tr');
 							empty.innerHTML = 'Empty';
@@ -822,28 +837,9 @@ var options = {
 							}
 							
 							for (var i in images) {
-								var image = images[i];
-								var tableRow = document.createElement('tr');				
-								var filenameData = document.createElement('td');
-								var urlData = document.createElement('td');								
-								var filename = image.filename;
-								var fullsize = image.fullsize;
-								if (fullsize.length > 80) {
-									var url = fullsize.substring(0, 80) + '...';
-								}
-								else {
-									var url = fullsize;
-								}
-								var data = image.data;
-								tableRow.id = i;
-								// filename table row contains input field
-								filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
-										+ '" value="' + filename +'" style="width:400px;">';
-								urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
-								table.appendChild(tableRow);
-								tableRow.appendChild(filenameData);
-								tableRow.appendChild(urlData);
+								options.ui.createTableRow(images[i]);
 							}
+							
 							loadingImage.style.display = "none";
 							table.style.display = "block";
 						}
@@ -865,11 +861,8 @@ var options = {
 					var url = result.fullsize;
 				}
 				
-				tableRow.id = i;
-				
 				// TODO: This would probably look cleaner without the HTML strings			
-				filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
-						+ '" value="' + result.filename +'" style="width:400px;">';
+				filenameData.innerHTML = '<input type="text" class="cache_filenames" value="' + result.filename +'" style="width:400px;">';
 						
 				urlData.innerHTML = '<a class="cache_url" title="' + result.fullsize + '" href="' + result.data + '">' + url + '</a>';
 				
