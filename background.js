@@ -725,6 +725,26 @@ CHROMELL.background = (function() {
 					document.execCommand("copy");
 					break;
 					
+				case "openDatabase":
+					openDatabase(sendResponse);					
+					return true;
+					
+				case "convertCacheToDb":
+					convertCacheToDb(sendResponse);
+					return true;
+					
+				case "queryDb":
+					queryDb(request.src, sendResponse);
+					return true;
+					
+				case "updateDatabase":
+					updateDatabase(request.data, sendResponse);
+					return true;
+					
+				case "searchDatabase":
+					searchDatabase(request.query, sendResponse);
+					return true;
+					
 				default:			
 					console.log("Error in request listener - undefined parameter?", request);
 					break;
@@ -734,6 +754,122 @@ CHROMELL.background = (function() {
 		};
 		
 		chrome.runtime.onMessage.addListener(messageHandler);
+	};
+		
+	const DB_NAME = 'ChromeLL-Imagemap';
+	const DB_VERSION = 1;
+	const IMAGE_DB = 'images';
+	const READ_WRITE = 'readwrite';	
+	var db;
+	
+	var openDatabase = function(callback) {		
+
+		
+		var request = window.indexedDB.open(DB_NAME, DB_VERSION);
+		
+		request.onsuccess = function(event) {
+			db = event.target.result;
+			callback();
+		};
+		
+		request.onupgradeneeded = function(event) {
+			var db = event.target.result;
+			
+			// Use src for keyPath
+			var objectStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
+
+			// Create an index to search by filename.
+			objectStore.createIndex("filename", "filename", { unique: false, multiEntry: true });	
+		};		
+	};
+	
+	/**
+	 *	Iterates through existing cache in chrome.storage and adds objects to database.
+	 *	Assumes that database has already been opened.
+	 */
+	var convertCacheToDb = function() {
+		// Use src for keyPath
+		var objectStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
+
+		// Create an index to search database by filename.
+		objectStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
+
+		objectStore.transaction.oncomplete = function(event) {
+			var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
+			
+			for (var src in cache) {
+				var record = cache[src];
+				// We need to add src property to object before adding to database
+				record.src = src;
+				imageObjectStore.add(record);
+			}
+			
+			// TODO: We should probably clear chrome.storage
+		};
+	};
+	
+	var queryDb = function(src, callback) {
+		var request = db.transaction(IMAGE_DB)
+				.objectStore(IMAGE_DB)
+				.get(src);		
+					
+		request.onsuccess = function(event) {
+			if (event.target.result) {
+				// Callback with base64 string
+				callback(event.target.result.data);
+			}
+			else {				
+				callback(false);
+			}
+		};
+		
+		request.onerror = function(event) {
+			// Couldn't find src in database.
+			callback(false);
+		};
+	};
+	
+	var updateDatabase = function(cacheData) {
+		var transaction = db.transaction([IMAGE_DB], READ_WRITE);
+
+		transaction.onerror = function(event) {
+			// Can't use add() method if src already exists in databse. This shouldn't happen
+			console.log(event.target.error.message);
+		};
+
+		var objectStore = transaction.objectStore(IMAGE_DB);
+		
+		for (var src in cacheData) {
+			var request = objectStore.add(cacheData[src]);
+		}
+	};
+	
+	var searchDatabase = function(query, callback) {
+		var results = [];
+		var transaction = db.transaction(IMAGE_DB);
+		var objectStore = transaction.objectStore(IMAGE_DB);							
+		
+		// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
+		var request = objectStore.openCursor();
+		
+		request.onsuccess = function(event) {
+				var cursor = event.target.result;
+				
+				if (cursor) {
+						// TODO: If query is "foo bar", should we return match if cursor value is "foo something bar"? What about partial matches?
+						if (cursor.key.indexOf(query) !== -1) {
+								results.push(cursor.value);
+						}
+
+						cursor.continue();          
+				}
+				
+				else {
+					// TODO: We should probably return results as we find them
+					// Reached end of db
+					callback(results, query);
+				}
+		};
 	};
 	
 	var eventHandlers = {

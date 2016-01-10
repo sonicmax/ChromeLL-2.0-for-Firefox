@@ -1,10 +1,4 @@
 var imagemap = function() {
-	const DB_NAME = 'ChromeLL-Imagemap'
-	const DB_VERSION = 1;
-	const IMAGE_DB = 'images';
-	const READ_WRITE = 'readwrite';
-	
-	var db;
 	var imagemapCache = {};
 	var currentPage = 1;
 	var lastPage = '?';
@@ -13,74 +7,39 @@ var imagemap = function() {
 	 *	Called after user clicks Browse Imagemap button
 	 */
 	var init = function() {
+	
+		openDatabase(function() {
 		
-		if (!CHROMELL.config.imagemap_database) {
-			
-			loadCache(function(cache) {
-			
-				if (Object.keys(cache.imagemap).length > 0) {
-					// Add existing cache to database
-					imagemapCache = cache.imagemap;
-					openDatabase(convertCacheToDb);
-				}
-								
-				CHROMELL.config.imagemap_database = true;
+			if (!CHROMELL.config.imagemap_database) {
 				
-				// By this point chrome.storage cache will have been added to database
+				loadCache(function(cache) {
+					if (Object.keys(cache.imagemap).length > 0) {
+						// Add existing cache in chrome.storage to database
+						imagemapCache = cache.imagemap;
+						chrome.runtime.sendMessage({ need: 'convertCacheToDb' });
+					}
+									
+					CHROMELL.config.imagemap_database = true;
+					
+					getImagemap(processResponse);
+					
+				});	
+			}
+			
+			else {
 				getImagemap(processResponse);
-			});
-		}
-		
-		else {
-			openDatabase(function(request) {
-					request.onsuccess = function(event) {
-						db = event.target.result;		
-						getImagemap(processResponse)
-					};
-			});
-		}
+			}
+			
+		});
 	};
 	
 	/**
-	 *	Opens connection to database and calls back with IDBOpenDBRequest object.	 
+	 *	Opens connection to database in background page.
 	 */
 	var openDatabase = function(callback) {
-		callback(window.indexedDB.open(DB_NAME, DB_VERSION));
+		console.log('opening db');
+		chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);
 	};
-	
-	/**
-	 *	Iterates through existing cache in chrome.storage and adds objects to database.
-	 */
-	var convertCacheToDb = function(request) {
-		request.onsuccess = function(event) {
-			db = event.target.result;
-		};
-		
-		// This function will be called after opening database for first time
-		request.onupgradeneeded = function(event) {			
-			var db = event.target.result;
-						
-			// Use src for keyPath
-			var objectStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
-
-			// Create an index to search database by filename.
-			objectStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
-
-			objectStore.transaction.oncomplete = function(event) {
-				var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
-				
-				for (var src in cache) {
-					var record = cache[src];
-					// We need to add src property to object before adding to database
-					record.src = src;
-					imageObjectStore.add(record);
-				}
-				
-				// TODO: We should probably clear chrome.storage as well
-				imagemapCache = null;
-			};
-		};
-	};	
 	
 	/**
 	 *	Opens XHR to get current page of imagemap (1 by default)
@@ -149,7 +108,10 @@ var imagemap = function() {
 		for (let i = 0, len = imgs.length; i < len; i++) {
 			let img = imgs[i];
 
-			queryDb(img.src, function(result) {
+			chrome.runtime.sendMessage({
+					need: 'queryDb',
+					src: img.src
+			}, function(result) {
 				
 				if (result) {
 					img.dataset.oldsrc = img.src;
@@ -162,28 +124,7 @@ var imagemap = function() {
 				
 			});
 		}
-	}	
-		
-	var queryDb = function(src, callback) {
-		var request = db.transaction(IMAGE_DB)
-				.objectStore(IMAGE_DB)
-				.get(src);		
-					
-		request.onsuccess = function(event) {
-			if (event.target.result) {
-				// Callback with base64 string
-				callback(event.target.result.data);
-			}
-			else {				
-				callback(false);
-			}
-		};
-		
-		request.onerror = function(event) {
-			// Couldn't find src in database.
-			callback(false);
-		};
-	}	
+	}
 	
 	var createPopup = function(imageGrid, searchResults) {
 		var div = document.createElement('div');
@@ -329,22 +270,10 @@ var imagemap = function() {
 		else {
 			cacheData[src] = {"src": src, "filename": filename, "fullsize": fullsize, "data": dataUri};
 			// Finished encoding image - update cache
-			updateDatabase(cacheData);
-		}
-	};
-	
-	var updateDatabase = function(cacheData) {
-		var transaction = db.transaction([IMAGE_DB], READ_WRITE);
-
-		transaction.onerror = function(event) {
-			// Can't use add() method if src already exists in databse. This shouldn't happen
-			console.log(event.target.error.message);
-		};
-
-		var objectStore = transaction.objectStore(IMAGE_DB);
-		
-		for (var src in cacheData) {
-			var request = objectStore.add(cacheData[src]);
+			chrome.runtime.sendMessage({
+					need: 'updateDatabase',
+					data: cacheData
+			});			
 		}
 	};
 	
@@ -453,7 +382,8 @@ var imagemap = function() {
 		currentPage = 1;
 		// Save cache after closing popup - this prevents us from having to continually access the
 		// chrome.storage APIs after encoding each image (which would be terrible for performance)
-		saveCache();
+		
+		// TODO: Decide whether to copy this behaviour when working with IndexedDB
 	};
 	
 	var preventScroll = function(evt) {
@@ -464,12 +394,16 @@ var imagemap = function() {
 
 		var init = function() {
 			var query = document.getElementById('image_search').value;
+			
 			// Check that query contains characters other than whitespace
 			if (/\S/.test(query)) {
+				
 				lookup(query, function(results, query) {
+					
 					if (!document.getElementById('search_results')) {
 						createPopup(query);
 					}
+					
 					else {
 						var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');								
 						oldGrid.remove();
@@ -478,76 +412,55 @@ var imagemap = function() {
 					}
 					
 					checkMatches(results, query);
+					
 				});
 			}
+			
 			else {
 				// Detected empty search box after keyup event - close imagemap popup (if it exists)
 				if (document.getElementById('search_results')) {
 					closePopup();
 				}
 			}
+			
 		};
 	
 		
 		var lookup = function(query, callback) {
 						
-			if (!CHROMELL.config.imagemap_database) {
+			openDatabase(function() {
+						
+				if (!CHROMELL.config.imagemap_database) {
 				
-				loadCache(function(cache) {
-					
-					if (Object.keys(cache.imagemap).length > 0) {
-						imagemapCache = cache.imagemap;
-						openDatabase(convertCacheToDb);				
-					}
-					// Set config flag so we know not to do this again
-					CHROMELL.config.imagemap_database = true;
-					
+					loadCache(function(cache) {
+						
+						if (Object.keys(cache.imagemap).length > 0) {
+							imagemapCache = cache.imagemap;
+							chrome.runtime.sendMessage({ need: 'convertCacheToDb' });
+						}
+						// Set config flag so we know not to do this again
+						CHROMELL.config.imagemap_database = true;
+						
+						lookupInDb(query, callback);
+					});
+				}
+				
+				else {
 					lookupInDb(query, callback);
-				});
-				
-			}
+				}
 			
-			else {
-				lookupInDb(query, callback);
-			}
+			});
 			
 		};
 		
 		var lookupInDb = function(query, callback) {
+			var request = {
+					need: 'searchDatabase',
+					query: query			
+			};
 			
-			openDatabase(function(request) {
-				var results = [];
-				
-				request.onsuccess = function(event) {					
-					db = event.target.result;
-					
-					var transaction = db.transaction(IMAGE_DB);
-					var objectStore = transaction.objectStore(IMAGE_DB);							
-					
-					// TODO: Maybe we should open cursor after checking whether index returns any exact matches
-					
-					var request = objectStore.openCursor();
-					
-					request.onsuccess = function(event) {
-							var cursor = event.target.result;									
-							if (cursor) {
-									// TODO: If query is "foo bar", should we return match if cursor value is "foo something bar"? What about partial matches?
-									if (cursor.key.indexOf(query) !== -1) {
-											results.push(cursor.value);
-									}
-
-									cursor.continue();          
-							}
-							else {
-								// TODO: We should probably return results as we find them
-								// Reached end of db
-								callback(results, query);
-							}
-					};							
-					
-				};
-			});
-		};		
+			chrome.runtime.sendMessage(request, callback);			
+		};
 		
 		var checkMatches = function(results, query) {
 			if (results.length === 0) {
