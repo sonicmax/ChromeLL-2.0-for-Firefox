@@ -72,7 +72,7 @@
 				currentID = userbarElement.getElementsByTagName('a')[0].href.match(/\?user=([0-9]+)/)[1];
 				
 				var title = document.getElementsByTagName('h2')[0];
-				if (config.dramalinks && !config.hide_dramalinks_topiclist) {
+				if (CHROMELL.config.dramalinks && !CHROMELL.config.hide_dramalinks_topiclist) {
 					dramalinks.appendTo(title);
 				}
 				
@@ -106,7 +106,7 @@
 					utils.anchors.check(msg);
 					// Iterate over messagecontainer methods
 					for (var k in messagecontainer) {
-						if (config[k + pm]) {
+						if (CHROMELL.config[k + pm]) {
 							// Pass message-container and index value to method
 							messagecontainer[k](msg, j + 1);
 						}
@@ -119,7 +119,7 @@
 						setActivePost(msg);
 						utils.anchors.check(msg);			
 						for (var k in messagecontainer) {
-							if (config[k + pm]) {
+							if (CHROMELL.config[k + pm]) {
 								messagecontainer[k](msg, j + 1);
 							}
 						}
@@ -140,14 +140,14 @@
 				
 				// Call methods that modify quickpost area (changes will probably not be visible to user)
 				for (var i in quickpostbody) {
-					if (config[i + pm]) {
+					if (CHROMELL.config[i + pm]) {
 						quickpostbody[i]();
 					}
 				}
 				
 				// Add listeners, set observers, etc
 				for (var i in misc) {
-					if (config[i + pm]) {
+					if (CHROMELL.config[i + pm]) {
 						misc[i]();
 					}
 				}
@@ -210,7 +210,7 @@
 			
 			var appendScripts = function() {
 				var head = document.getElementsByTagName("head")[0];
-				if (config.post_templates) {
+				if (CHROMELL.config.post_templates) {
 					var templates = document.createElement('script');
 					templates.type = 'text/javascript';
 					templates.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
