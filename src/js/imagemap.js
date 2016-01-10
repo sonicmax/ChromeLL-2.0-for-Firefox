@@ -37,7 +37,6 @@ var imagemap = function() {
 	 *	Opens connection to database in background page.
 	 */
 	var openDatabase = function(callback) {
-		console.log('opening db');
 		chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);
 	};
 	
