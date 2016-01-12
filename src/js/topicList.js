@@ -8,7 +8,7 @@
 		
 		var init = function() {
 			globalPort.onMessage.addListener(eventHandlers.message);
-			prepareArrays();
+			buildArraysFromConfig();
 			
 			if (window.location.href.match(/topics/)) {
 				if (CHROMELL.config.dramalinks) {
@@ -23,12 +23,12 @@
 				pm = "_pm";
 			}
 				
+			CHROMELL.injectCss(DOM.generateCssRules);
 			CHROMELL.whenDOMReady(DOM.init);
 		};	
 		
-		var prepareArrays = function() {
+		var buildArraysFromConfig = function() {
 			// Convert strings from ignorator config values into arrays of lowercase usernames.
-			// (this can be done before DOM has loaded)
 			if (CHROMELL.config.ignorator_list) {
 				if (CHROMELL.config.ignorator_list.indexOf(',') == -1) {
 					// ignorator list only has one user
@@ -95,12 +95,66 @@
 		
 		var DOM = function() {
 			var currentUser;
-			// Keep track of highlight data 
-			var tagsToHighlight = {};
-			var keywordsToHighlight = {};
-			var usersToHighlight = {};
 			
-			var makeCSSDatasetAttribute = function(string, type) {	
+			var init = function() {
+				if (CHROMELL.config.dramalinks && !window.location.href.match(/[inbox|main].php/)) {
+					var element = document.getElementsByTagName('h1')[0];
+					dramalinks.appendTo(element);
+				}	
+				
+				var grids = document.getElementsByClassName('grid');
+				
+				for (var i = 0, gridLen = grids.length; i < gridLen; i++) {
+					var trs = grids[i].getElementsByTagName('tr');
+					
+					// iterate over trs and pass tr nodes to topicList functions
+					// (ignoring trs[0] as it's not a topic)
+					for (var j = 1, trsLen = trs.length; j < trsLen; j++) {
+						var tr = trs[j];
+						
+						if (tr.innerText && tr.innerText == 'See More') {
+							// ignore these elements (found only on main.php)	
+							return;
+						}
+						
+						// Check that anchor tag is located here, so we know it's not an anonymous topic
+						var nodeToCheck = tr.getElementsByTagName('td')[1].getElementsByTagName('a')[0];
+						if (nodeToCheck) {
+							currentUser = nodeToCheck.innerHTML.toLowerCase();
+						} 
+						else {
+							// Anonymous topic
+							currentUser = false;
+						}
+						for (var k in methods) {
+							if (CHROMELL.config[k + pm]) {
+								methods[k](tr, j);
+							}
+						}
+					}
+				}
+				
+				if (CHROMELL.config['page_jump_buttons' + pm]) {
+					addListeners();
+				}		
+				
+				try {
+					checkTags();
+				} catch (e) {
+					console.log("Error finding tags");
+				}
+				
+				if (!CHROMELL.config.hide_ignorator_badge) {
+					// send ignorator data to background script
+					globalPort.postMessage({
+						action: 'ignorator_update',
+						ignorator: ignorated,
+						scope: "topicList"
+					});
+				}
+			};			
+			
+			var makeCssDatasetAttribute = function(string, type) {
 				var suffix = type || '';
 				// Remove disallowed chars from string
 				var cleanedString = string.replace(/[^a-zA-Z0-9]/g, '');				
@@ -126,31 +180,33 @@
 				return rgb;
 			};
 			
-			var addCSSRules = function() {
+			var generateCssRules = function() {
 				var styleSheet = document.styleSheets[0];	
 				
 				if (CHROMELL.config.zebra_tables) {
 					var rule;
+					
 					if (CHROMELL.config.fast_zebras || !CHROMELL.config.zebra_tables_color) {
 							rule = 'opacity: .75';
 					}
+					
 					else {
 							rule = 'background: #' + CHROMELL.config.zebra_tables_color;
-					} 
+					}
+					
 					styleSheet.addRule('table.grid tr:nth-child(odd) td', rule);
 				}
 				
 				if (CHROMELL.config.enable_keyword_highlight) {
-					var data = CHROMELL.config.keyword_highlight_data;
-					for (var i in data) {
-						var keyword = data[i];						
-						var bg = keyword.bg;
-						var color = keyword.color;							
+					
+					for (var keyword in CHROMELL.config.keyword_highlight_data) {
+						var entry = CHROMELL.config.keyword_highlight_data;[keyword];	
+						var bg = entry.bg;
+						var color = entry.color;							
 						var rgbaStart = convertHexToRGB(bg, 0.4);
 						var rgbaEnd = convertHexToRGB(bg, 0.4);
 						
-						keywordsToHighlight[keyword.match] = true;
-						var keywordDataset = makeCSSDatasetAttribute(keyword.match, 'keyword');			
+						var keywordDataset = makeCssDatasetAttribute(keyword, 'keyword');			
 						
 						// Highlight anchor tag containing match.
 						
@@ -171,40 +227,37 @@
 				}
 
 				if (CHROMELL.config.enable_tag_highlight) {
-					var data = CHROMELL.config.tag_highlight_data;
-					for (var i in data) {
-						var tag = data[i];
-						var bg = tag.bg;
-						var color = tag.color;
+					
+					for (var tag in CHROMELL.config.tag_highlight_data) {
+						var entry = CHROMELL.config.tag_highlight_data[tag];
+						var bg = entry.bg;
+						var color = entry.color;
 						var rgbaStart = convertHexToRGB(bg, 0.8);
-						var rgbaEnd = convertHexToRGB(bg, 0);						
-						tagsToHighlight[tag.match] = true;
-						var tagDataset = makeCSSDatasetAttribute(tag.match, 'tag');
+						var rgbaEnd = convertHexToRGB(bg, 0);					
+						var tagDataset = makeCssDatasetAttribute(tag, 'tag');
 						
 						// Highlight td element containing tags to be highlighted (can be overridden by username highlight)
 						styleSheet.addRule('table.grid td.oh[' + tagDataset + ']', 'background: #' + bg);
 						styleSheet.addRule('table.grid td.oh[' + tagDataset + ']', 'color: #' + color);
 						styleSheet.addRule('table.grid td.oh[' + tagDataset + '] a', 'color: #' + color);
 						
-						// Use !improtant radial gradient for background of tag anchor (in case td highlight has been overridden)
+						// Use !important radial gradient for background of tag anchor (in case td highlight has been overridden)
 						styleSheet.addRule('a[' + tagDataset + ']', 'background: radial-gradient(ellipse at center, ' 
 								+ rgbaStart + ' 0%, '
 								+ rgbaStart + ' 70%, '
 								+ rgbaEnd + ' 100%) !important');
 								
 						styleSheet.addRule('a[' + tagDataset + ']', 'color: ' + color);
-							
 					}		
 				}		
 			
 				if (CHROMELL.config.enable_user_highlight) {
-					var data = CHROMELL.config.user_highlight_data;
-					for (var name in data) {						
-						var user = data[name];
-						var bg = user.bg;
-						var color = user.color;
-						usersToHighlight[name] = true;
-						var usernameDataset = makeCSSDatasetAttribute(name, 'user');
+					
+					for (var username in CHROMELL.config.user_highlight_data) {						
+						var entry = CHROMELL.config.user_highlight_data[username];
+						var bg = entry.bg;
+						var color = entry.color;
+						var usernameDataset = makeCssDatasetAttribute(username, 'user');
 						
 						// User highlights are allowed to override any other type of highlight, with exception of anchor tags																
 						styleSheet.addRule('table.grid tr[' + usernameDataset + '] td', 'background: #' + bg + ' !important');
@@ -381,7 +434,7 @@
 			methods.enable_keyword_highlight = function(tr) {
 				var td = tr.getElementsByTagName('td')[0];
 				var title = td.getElementsByTagName('a')[0];
-				for (var keyword in keywordsToHighlight) {
+				for (var keyword in CHROMELL.config.keyword_highlight_data) {
 					// Only match whole word					
 					var regex = new RegExp('\\b' + keyword + '\\b', 'g');
 					if (title.innerHTML.match(regex)) {
@@ -404,7 +457,7 @@
 				for (var j = 0, len = tagsToCheck.length; j < len; j++) {
 					var tagAnchor = tagsToCheck[j];
 					var tagName = tagAnchor.innerHTML.toLowerCase();
-					if (tagsToHighlight[tagName]) {
+					if (CHROMELL.config.tag_highlight_data[tagName]) {
 						tagAnchor.dataset.tag = tagName;
 						td.dataset.tag = tagName;						
 						td.dataset.highlighted = true;				
@@ -413,7 +466,7 @@
 			};
 			
 			methods.userhl_topiclist = function(tr) {
-				if (usersToHighlight[currentUser]) {				
+				if (CHROMELL.config.user_highlight_data[currentUser]) {		
 					tr.dataset.user = currentUser;
 					tr.dataset.highlighted = true;					
 				}
@@ -432,65 +485,8 @@
 			};
 			
 			return {
-				init: function() {
-					addCSSRules();
-					
-					if (CHROMELL.config.dramalinks && !window.location.href.match(/[inbox|main].php/)) {
-						var element = document.getElementsByTagName('h1')[0];
-						dramalinks.appendTo(element);
-					}	
-					
-					var grids = document.getElementsByClassName('grid');
-					
-					for (var i = 0, gridLen = grids.length; i < gridLen; i++) {
-						var trs = grids[i].getElementsByTagName('tr');
-						
-						// iterate over trs and pass tr nodes to topicList functions
-						// (ignoring trs[0] as it's not a topic)
-						for (var j = 1, trsLen = trs.length; j < trsLen; j++) {
-							var tr = trs[j];
-							
-							if (tr.innerText && tr.innerText == 'See More') {
-								// ignore these elements (found only on main.php)	
-								return;
-							}
-							
-							// Check that anchor tag is located here, so we know it's not an anonymous topic
-							var nodeToCheck = tr.getElementsByTagName('td')[1].getElementsByTagName('a')[0];
-							if (nodeToCheck) {
-								currentUser = nodeToCheck.innerHTML.toLowerCase();
-							} 
-							else {
-								// Anonymous topic
-								currentUser = false;
-							}
-							for (var k in methods) {
-								if (CHROMELL.config[k + pm]) {
-									methods[k](tr, j);
-								}
-							}
-						}
-					}
-					
-					if (CHROMELL.config['page_jump_buttons' + pm]) {
-						addListeners();
-					}		
-					
-					try {
-						checkTags();
-					} catch (e) {
-						console.log("Error finding tags");
-					}
-					
-					if (!CHROMELL.config.hide_ignorator_badge) {
-						// send ignorator data to background script
-						globalPort.postMessage({
-							action: 'ignorator_update',
-							ignorator: ignorated,
-							scope: "topicList"
-						});
-					}
-				}		
+				init: init,
+				generateCssRules: generateCssRules
 			};
 			
 		}();

@@ -33,7 +33,8 @@
 				});
 			}
 			
-			CHROMELL.whenDOMReady(DOM.init);
+			CHROMELL.injectCss(DOM.generateCss);		
+			CHROMELL.whenDOMReady(DOM.init);				
 		};	
 		
 		var DOM = function() {
@@ -85,9 +86,6 @@
 				
 				// Add archive quote buttons before highlights/post numbers are added
 				utils.quote.addButtons();
-				
-				// Inject CSS rules before adding dataset attributes to elements
-				addCSSRules();
 				
 				// Chrome seems to cache DOM changes when they are made in a loop (to minimise browser reflow/repaint).
 				// Partially unrolling the loop minimises flash of unstyled content when users load topics
@@ -176,19 +174,20 @@
 				firstTop = messageTops[0];
 			};		
 			
-			var addCSSRules = function() {
+			var generateCss = function() {
 				styleSheet = document.styleSheets[0];
 				
 				styleSheet.addRule('.message-container .quoted-message[foxlinks]', 'border-color: #' + CHROMELL.config.foxlinks_quotes_color);
 				
 				if (CHROMELL.config.userhl_messagelist) {
 					var highlightData = CHROMELL.config.user_highlight_data;
-					for (var name in highlightData) {
+					
+					for (var username in CHROMELL.config.user_highlight_data) {
 						// Remove disallowed characters from username to create CSS attribute selector
-						var username = name.replace(/\s|\)|:/g, '');
-						var bg = highlightData[name].bg;
-						var color = highlightData[name].color;
-						var datasetAttribute = makeCSSDatasetAttribute(username, 'user');
+						var bg = CHROMELL.config.user_highlight_data[username].bg;
+						var color = CHROMELL.config.user_highlight_data[username].color;
+						var datasetAttribute = makeCssDatasetAttribute(username, 'user');
+						
 						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'background: #' + bg);
 						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'color: #' + color);											
 						styleSheet.addRule('.message-top[' + datasetAttribute + '] a', 'color: #' + color);
@@ -200,7 +199,7 @@
 				}
 			};
 			
-			var makeCSSDatasetAttribute = function(string, type) {
+			var makeCssDatasetAttribute = function(string, type) {
 				var suffix = type || '';
 				// Remove disallowed chars from string
 				var cleanedString = string.replace(/[^a-zA-Z0-9]/g, '');				
@@ -1223,7 +1222,7 @@
 			return {
 				init: init,
 				scrolling: scrolling,
-				addCSSRules: addCSSRules,
+				generateCss: generateCss,
 				setActivePost: setActivePost,
 				appendToPage: appendToPage
 			};

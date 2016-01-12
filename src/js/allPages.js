@@ -6,8 +6,9 @@
 		
 		var init = function() {
 			chrome.runtime.onMessage.addListener(messageHandler);
+			CHROMELL.injectCss(DOM.generateCss);
 			CHROMELL.whenDOMReady(DOM.init);
-		};		
+		};
 		
 		var messageHandler = function(msg) {
 			if (msg.action == 'showOptions') {
@@ -25,9 +26,7 @@
 				
 				if (CHROMELL.config.short_title) {
 					document.title = document.title.replace(/End of the Internet - /i, '');
-				}
-				
-				addCSSRules();				
+				}			
 				
 				var errorCheck = function() {
 					// Check for unhandled exceptions and display dialog with link to message history (useful
@@ -75,32 +74,34 @@
 				
 			};
 		
-			var addCSSRules = function() {
+			var generateCss = function() {
 				var styleSheet = document.styleSheets[0];
-				var customColors = getCustomColors();			
-				// Dynamically create rules for user info popup using ETI colour scheme (to make sure that content is readable)
-				styleSheet.addRule('#user-popup-div',  'color: ' + customColors.text);			
-				styleSheet.addRule('#user-popup-div',  'background: ' + customColors.message);
-				styleSheet.addRule('#user-popup-div',  'border-color: ' + customColors.body);		
-				styleSheet.addRule('.popup_link', 'color: ' + customColors.anchor);
-				styleSheet.addRule('.popup_link', 'background: ' + customColors.userbar);	
-				styleSheet.addRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading, #rep', 'color: ' + customColors.text);
-				// #user-popup-div:before should be same colour as #user-popup-div background
-				styleSheet.addRule('#user-popup-div:before', 'border-bottom-color: ' + customColors.body);	
-				// #user-popup-div:after should be same colour as #user-popup-div border
-				styleSheet.addRule('#user-popup-div:after', 'border-bottom-color: ' +   customColors.infobar);			
+				if (window.location.href.match(/\/topics\/|showmessages.php|history.php/)) {
+					var customColors = getCustomColors();
+					// Dynamically create rules for user info popup using ETI colour scheme (to make sure that content is readable)
+					styleSheet.addRule('#user-popup-div',  'color: ' + customColors.text);			
+					styleSheet.addRule('#user-popup-div',  'background: ' + customColors.message);
+					styleSheet.addRule('#user-popup-div',  'border-color: ' + customColors.body);		
+					styleSheet.addRule('.popup_link', 'color: ' + customColors.anchor);
+					styleSheet.addRule('.popup_link', 'background: ' + customColors.userbar);	
+					styleSheet.addRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading, #rep', 'color: ' + customColors.text);
+					// #user-popup-div:before should be same colour as #user-popup-div background
+					styleSheet.addRule('#user-popup-div:before', 'border-bottom-color: ' + customColors.body);	
+					// #user-popup-div:after should be same colour as #user-popup-div border
+					styleSheet.addRule('#user-popup-div:after', 'border-bottom-color: ' +   customColors.infobar);
+				}
 			};		
 			
 			var getCustomColors = function() {
-				// (first 'h1' element is either tag name (in topic list), or topic title (in message list)
-				var titleText = document.getElementsByTagName('h1')[0];
+				// First 'h1' element is either tag name (in topic list), or topic title (in message list)
+				var header = document.getElementsByTagName('h1')[0];
 				var anchor = document.getElementsByTagName('a')[0];
 				var userbar = document.getElementsByClassName('userbar')[0];
 				var infobar = document.getElementsByClassName('infobar')[0];
 				var message = document.getElementsByClassName('message')[0] || document.getElementsByTagName('th')[0];			
 
 				var customColors = {};
-				customColors.text = window.getComputedStyle(titleText).getPropertyValue('color');			
+				customColors.text = window.getComputedStyle(header).getPropertyValue('color');			
 				customColors.anchor = window.getComputedStyle(anchor).getPropertyValue('color');				
 				customColors.body = window.getComputedStyle(document.body).getPropertyValue('background-color');
 				customColors.message = window.getComputedStyle(message).getPropertyValue('background-color');
@@ -275,7 +276,8 @@
 			};
 			
 			return {
-				init: init	
+				init: init,
+				generateCss: generateCss
 			};
 			
 		}();
