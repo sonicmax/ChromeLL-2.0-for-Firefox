@@ -564,15 +564,7 @@
 				}
 				
 				
-				var last;
-
-				if (a.innerHTML.indexOf('(') > -1) {
-					last = Math.ceil(a.innerHTML.split('(')[0] / 50);
-				}
-				else {
-					last = Math.ceil(a.innerHTML.split('<')[0] / 50);
-				}
-				
+				var last = Math.ceil(a.innerHTML.split('<')[0] / 50);	
 				
 				if (evt.target.id == 'jumpWindow') {
 					pg = prompt("Page Number (" + last + " total)", "Page");
