@@ -5,9 +5,11 @@
 		var init = function(config) {
 			
 			CHROMELL.whenDOMReady(function() {
-				if (config.sort_history) {
+				
+				if (CHROMELL.config.sort_history) {
 					sortHistory();
 				}
+				
 				addControlPanelLinks();
 			});
 			
