@@ -6,7 +6,6 @@
 		
 		var init = function() {
 			chrome.runtime.onMessage.addListener(messageHandler);
-			CHROMELL.injectCss(DOM.generateCss);
 			CHROMELL.whenDOMReady(DOM.init);
 		};
 		
@@ -23,6 +22,8 @@
 		var DOM = function() {
 			
 			var init = function() {
+				
+				generateCss();
 				
 				if (CHROMELL.config.short_title) {
 					document.title = document.title.replace(/End of the Internet - /i, '');
