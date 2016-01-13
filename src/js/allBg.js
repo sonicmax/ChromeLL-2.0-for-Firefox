@@ -22,9 +22,7 @@ var allBg = {
 			if (cfg.drop_batch_uploader) {
 				chrome.webRequest.onBeforeSendHeaders.addListener(
 						allBg.handle_batch_uploader, {
-							"urls" : [ "http://u.endoftheinter.net/*",
-									"https://u.endoftheinter.net/*",
-									"https://chairface.org/*" ]
+							"urls" : [ "http://u.endoftheinter.net/*", "https://u.endoftheinter.net/*" ]
 						}, [ 'blocking', 'requestHeaders' ]);
 				allBg.activeListeners.batch_uploader = true;
 			}
