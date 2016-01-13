@@ -177,13 +177,12 @@
 			var generateCss = function() {
 				styleSheet = document.styleSheets[0];
 				
-				styleSheet.addRule('.message-container .quoted-message[foxlinks]', 'border-color: #' + CHROMELL.config.foxlinks_quotes_color);
+				styleSheet.addRule('.quoted-message[data-foxlinks="true"]', 'border-color: #' + CHROMELL.config.foxlinks_quotes_color);
 				
 				if (CHROMELL.config.userhl_messagelist) {
 					var highlightData = CHROMELL.config.user_highlight_data;
 					
 					for (var username in CHROMELL.config.user_highlight_data) {
-						// Remove disallowed characters from username to create CSS attribute selector
 						var bg = CHROMELL.config.user_highlight_data[username].bg;
 						var color = CHROMELL.config.user_highlight_data[username].color;
 						var datasetAttribute = makeCssDatasetAttribute(username, 'user');
@@ -194,7 +193,7 @@
 						styleSheet.addRule('.message-top[' + datasetAttribute + '] a:hover', 'opacity: 0.8');
 						
 						// We want this to override the default value, if user is highlighted								
-						styleSheet.addRule('.quoted-message[foxlinks][' + username + ']',	'border-color: #' + bg);
+						styleSheet.addRule('.quoted-message[data-foxlinks="true"][' + datasetAttribute + ']',	'border-color: #' + bg);
 					}	
 				}
 			};
@@ -583,22 +582,24 @@
 				}
 			};
 				
-			messagecontainer.foxlinks_quotes = function(msg) {										
-				var quotes = msg.getElementsByClassName('quoted-message');				
+			messagecontainer.foxlinks_quotes = function(msg) {								
+				var quotes = msg.getElementsByClassName('quoted-message');
+				
 				for (var i = 0, len = quotes.length; i < len; i++) {
 					var quote = quotes[i];
 					
-					// Set username as attribute to make sure that foxlinks quotes colours match user highlights
-					if (msg.parentNode.className === 'message-top') {
-						var anchor = messageTops[i].getElementsByTagName('a');
-						if (anchor) {
-							var user = anchor[0].innerHTML;
+					// Ignore unattributed quotes (ie. quotes without message-top element as first child)
+					if (quote.firstChild.className === 'message-top') {
+						var anchors = quote.firstChild.getElementsByTagName('a');					
+						if (anchors) {
+							// Set username as attribute to make sure that foxlinks quotes colours match user highlights
+							var user = anchors[0].innerHTML;
 							var userAttribute = user.replace(/[^a-zA-Z0-9]/g, '');
-							quote.setAttribute(userAttribute, true);
+							quote.dataset.user = userAttribute;
 						}
 					}
 					
-					quote.setAttribute('foxlinks', true);											
+					quote.dataset.foxlinks = true;									
 				}				
 			};
 			
