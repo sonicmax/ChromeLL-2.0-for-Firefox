@@ -562,22 +562,45 @@
 					a = evt.target.parentNode.parentNode.parentNode.parentNode
 							.getElementsByTagName('td')[2];
 				}
-				var last = Math.ceil(a.innerHTML.split('<')[0] / 50);
+				
+				
+				var last;
+
+				if (a.innerHTML.indexOf('(') > -1) {
+					last = Math.ceil(a.innerHTML.split('(')[0] / 50);
+				}
+				else {
+					last = Math.ceil(a.innerHTML.split('<')[0] / 50);
+				}
+				
+				
 				if (evt.target.id == 'jumpWindow') {
 					pg = prompt("Page Number (" + last + " total)", "Page");
+					
 					if (pg == undefined || pg == "Page") {
 						return 0;
 					}
-				} else {
+					
+				} 
+				
+				else {
 					pg = last;
 				}
+				
+				
 				if (history) {
 					return evt.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
 							+ '&page=' + pg;
 				}
 				else if (inbox) {
-					return evt.target.parentNode.parentNode.firstChild.href 
-							+ '&page=' + pg;
+						if (evt.target.parentNode.parentNode.firstChild.firstChild.href) {
+							return evt.target.parentNode.parentNode.firstChild.firstChild.href 
+									+ '&page=' + pg;
+						}
+						else {
+							return evt.target.parentNode.parentNode.firstChild.href 
+									+ '&page=' + pg;							
+						}
 				}
 				else {
 					return evt.target.parentNode.parentNode.parentNode.parentNode
