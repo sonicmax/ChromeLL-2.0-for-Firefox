@@ -200,7 +200,7 @@
 				if (CHROMELL.config.enable_keyword_highlight) {
 					
 					for (var keyword in CHROMELL.config.keyword_highlight_data) {
-						var entry = CHROMELL.config.keyword_highlight_data;[keyword];	
+						var entry = CHROMELL.config.keyword_highlight_data[keyword];	
 						var bg = entry.bg;
 						var color = entry.color;							
 						var rgbaStart = convertHexToRGB(bg, 0.4);
