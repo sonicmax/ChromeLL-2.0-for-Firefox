@@ -40,6 +40,7 @@
 		var DOM = function() {
 			// Containers for DOM methods
 			var messagecontainer = {};
+			var messagecontainer_livelinks = {};
 			var infobar = {};
 			var quickpostbody = {};
 			var misc = {};
@@ -376,16 +377,21 @@
 			var livelinksHandler = function(container) {
 				var index = document.getElementsByClassName('message-container').length;
 				DOM.setActivePost(container);
-				var isLivelinksPost;
-				if (!replaying) {
-					isLivelinksPost = true;
+				
+				for (var i in messagecontainer) {				
+					if (CHROMELL.config[i + pm]) {
+						messagecontainer[i](container, index, isLivelinksPost);
+					}
 				}
 				
-				for (var i in messagecontainer) {
-					if (CHROMELL.config[i + pm]) {
-							messagecontainer[i](container, index, isLivelinksPost);
-					}
-				}		
+				if (!replaying) {
+					
+					for (var i in messagecontainer_livelinks) {						
+						if (CHROMELL.config[i + pm]) {
+							messagecontainer_livelinks[i](container, index);
+						}
+					}				
+				}
 				
 				addListeners(container);
 				
@@ -644,16 +650,14 @@
 				}
 			};	
 			
-			// NOTE: The following 4 methods are only called for livelinks posts
-			
-			messagecontainer.autoscroll_livelinks = function(mutation, index, isLive) {
-				if (isLive && document.hidden && autoscrollCheck(mutation) ) {
+			messagecontainer_livelinks.autoscroll_livelinks = function(mutation, index) {
+				if (document.hidden && autoscrollCheck(mutation) ) {
 					$.scrollTo(mutation);
 				}
 			};
 			
-			messagecontainer.autoscroll_livelinks_active = function(mutation, index, isLive) {
-				if (isLive && !document.hidden && autoscrollCheck(mutation)) {
+			messagecontainer_livelinks.autoscroll_livelinks_active = function(mutation, index) {
+				if (!document.hidden && autoscrollCheck(mutation)) {
 					// trigger after 10ms delay to prevent undesired 
 					// behaviour in post_title_notification	
 					setTimeout(function() {
@@ -667,65 +671,61 @@
 				}
 			},
 			
-			messagecontainer.post_title_notification = function(mutation, index, isLive) {
-				if (isLive) {
-					if (mutation.style.display === "none") {
-						if (CHROMELL.config.debug) {
-							console.log('not updating for ignorated post');
-						}
-						return;
+			messagecontainer_livelinks.post_title_notification = function(mutation, index) {
+				if (mutation.style.display === "none") {
+					if (CHROMELL.config.debug) {
+						console.log('not updating for ignorated post');
 					}
-					if (mutation.getElementsByClassName('message-top')[0]
-							.getElementsByTagName('a')[0].innerHTML == currentUser) {
-						return;
-					}
-					var posts = 1;
-					var ud = '';
-					if (document.getElementsByClassName('message-container')[49]) {
-						ud = ud + "+";
-					}
-					if (document.title.match(/\(\d+\)/)) {
-						posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
-						document.title = "(" + (posts + 1) + ud + ") "
-								+ document.title.replace(/\(\d+\) /, "");
-					} else {
-						document.title = "(" + posts + ud + ") " + document.title;
-					}
+					return;
+				}
+				if (mutation.getElementsByClassName('message-top')[0]
+						.getElementsByTagName('a')[0].innerHTML == currentUser) {
+					return;
+				}
+				var posts = 1;
+				var ud = '';
+				if (document.getElementsByClassName('message-container')[49]) {
+					ud = ud + "+";
+				}
+				if (document.title.match(/\(\d+\)/)) {
+					posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
+					document.title = "(" + (posts + 1) + ud + ") "
+							+ document.title.replace(/\(\d+\) /, "");
+				} else {
+					document.title = "(" + posts + ud + ") " + document.title;
 				}
 			};
 			
-			messagecontainer.notify_quote_post = function(mutation, index, isLive) {
-				if (isLive) {
-					if (!mutation.getElementsByClassName('quoted-message')) {
-						return;
-					}
-					if (mutation.getElementsByClassName('message-top')[0]
+			messagecontainer_livelinks.notify_quote_post = function(mutation, index) {
+				if (!mutation.getElementsByClassName('quoted-message')) {
+					return;
+				}
+				if (mutation.getElementsByClassName('message-top')[0]
+						.getElementsByTagName('a')[0].innerHTML == currentUser) {
+					// dont notify when quoting own posts
+					return;
+				}
+				var notify = false;
+				var msg = mutation.getElementsByClassName('quoted-message');
+				for (var i = 0, len = msg.length; i < len; i++) {
+					if (msg[i].getElementsByClassName('message-top')[0]
 							.getElementsByTagName('a')[0].innerHTML == currentUser) {
-						// dont notify when quoting own posts
-						return;
+						if (msg[i].parentNode.className != 'quoted-message')
+							// only display notification if user has been directly quoted
+							notify = true;
 					}
-					var notify = false;
-					var msg = mutation.getElementsByClassName('quoted-message');
-					for (var i = 0, len = msg.length; i < len; i++) {
-						if (msg[i].getElementsByClassName('message-top')[0]
-								.getElementsByTagName('a')[0].innerHTML == currentUser) {
-							if (msg[i].parentNode.className != 'quoted-message')
-								// only display notification if user has been directly quoted
-								notify = true;
-						}
-					}
-					if (notify) {
-						chrome.runtime.sendMessage({
-							need: "notify",
-							title: "Quoted by "
-									+ mutation.getElementsByClassName('message-top')[0]
-											.getElementsByTagName('a')[0].innerHTML,
-							message: document.title.replace(/End of the Internet - /i, '')
-						}, function(data) {
-							console.log(data);
-						});
-					}
-				}	
+				}
+				if (notify) {
+					chrome.runtime.sendMessage({
+						need: "notify",
+						title: "Quoted by "
+								+ mutation.getElementsByClassName('message-top')[0]
+										.getElementsByTagName('a')[0].innerHTML,
+						message: document.title.replace(/End of the Internet - /i, '')
+					}, function(data) {
+						console.log(data);
+					});
+				}
 			};	
 			
 			/*messagecontainer.userpics = function(msg) {
