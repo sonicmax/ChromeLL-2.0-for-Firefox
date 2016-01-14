@@ -380,7 +380,7 @@
 				
 				for (var i in messagecontainer) {				
 					if (CHROMELL.config[i + pm]) {
-						messagecontainer[i](container, index, isLivelinksPost);
+						messagecontainer[i](container, index);
 					}
 				}
 				
