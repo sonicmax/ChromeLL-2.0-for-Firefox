@@ -478,7 +478,7 @@
 					return;
 				}
 				var notebook = document.createElement('a');	
-				notebook.id = 'notebook';
+				notebook.className = 'notebook';
 				var divider = document.createTextNode(' | ');
 				firstTop.appendChild(divider);
 				var tempID = firstTop.getElementsByTagName('a')[0].href
