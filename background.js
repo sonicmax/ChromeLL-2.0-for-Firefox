@@ -292,15 +292,6 @@ CHROMELL.background = (function() {
 			"contexts": ["selection"]
 		});
 		
-		if (CHROMELL.config.eti_bash) {
-			chrome.contextMenus.create({
-				"title": "Submit to ETI Bash",
-				"onclick": contextMenu.bashHighlight,
-				"documentUrlPatterns": ["*://boards.endoftheinter.net/*"],
-				"contexts": ["selection"]
-			});
-		}
-		
 		if (CHROMELL.config.copy_in_context) {
 			chrome.contextMenus.create({
 				"title": "Copy IMG code",
@@ -365,32 +356,6 @@ CHROMELL.background = (function() {
 		searchLUE: function(info) {
 			chrome.tabs.create({
 					url: "http://boards.endoftheinter.net/topics/LUE?q=" + info.selectionText
-			});
-		},
-		bashHighlight: function(info) {
-			var selection_text = info.selectionText;
-			var bash_data, formData, xhr;
-			chrome.tabs.query({currentWindow: true, active: true}, function(tabs) {
-				chrome.tabs.sendMessage(tabs[0].id, {
-					action: "get_bash"
-				}, function(response) {
-					console.log(response);
-					bash_data = response.data;
-					if (bash_data[0] !== null) {
-						// create formData
-						formData = new FormData();
-						formData.append('quotes_user', bash_data[0]);
-						formData.append('quotes_topic', bash_data[1]);
-						formData.append('quotes_content', selection_text);
-						// send formData to ETI Bash
-						xhr = new XMLHttpRequest;
-						xhr.open('POST', 'http://fuckboi.club/bash/submit-quote.php', true);
-						xhr.send(formData);
-					}
-					else {
-						console.log('bash_data array contains null value: ', bash_data);
-					}
-				});
 			});
 		},
 		handleContext: function(info) {
