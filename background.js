@@ -414,98 +414,139 @@ CHROMELL.background = (function() {
 	};
 	
 	var getDrama = function(callback) {
-		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
-		var png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
+		const TEN_MINUTES = 600000;
+		// Use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
+		const PNG_AS_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
 				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
 				+ 'DVmAAAAAElFTkSuQmCC';
 		
 		var request = {
 				url :	'http://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30',
 				withCredentials: true,
-				// Dramalinks handles its own caching
-				ignoreCache: true
-				
+				ignoreCache: true				
 		};
 		
 		ajax(request, function(response, status) {
 			if (response) {
-				var t = response;
-				t = t.replace(/\[\[(.+?)(\|(.+?))\]\]/g, 
-						"<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$3</a>");
-				t = t.replace(/\[\[(.+?)\]\]/g, 
+				
+				// Typical response:
+				
+				/* 			
+					<div style="float: left; width:70%" id="dramalinks-stories">
+					<!--- TO KEEP TICKER WORKING: DO NOT USE HTTPS LINKS. DO USE HTML TAGS FOR BOLD AND ITALIC. --->
+					<!--- NEW STORIES GO HERE --->
+					* [[Username]] did something stupid that we should all know about [http://boards.endoftheinter.net/showmessages.php?topic=sometopic]
+					<!--- NEW STORIES END HERE --->
+					</div>
+					<!--- CHANGE DRAMALINKS COLOR CODE HERE --->
+					{{Orange}} 			
+				*/
+				
+				// Handle wiki-formatted links and relative URLs
+				response = response.replace(/\[\[(.+?)(\|(.+?))\]\]/g, 
+						"<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$3</a>");							
+				response = response.replace(/href="\/index\.php/g, 
+						"href=\"http://wiki.endoftheinter.net/index.php");					
+				response = response.replace(/\[\[(.+?)\]\]/g, 
 						"<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$1</a>");
-				t = t.replace(/\[(.+?)\]/g, 
-						"<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + png + "\"></a>");
-				t = t.replace(/href="\/index\.php/g, 
-						"href=\"http://wiki.endoftheinter.net/index.php");
-				t = t.replace(/style=/gi, "");
-				t = t.replace(/<script/gi, "<i");
-				t = t.replace(/(on)([A-Za-z]*)(=)/gi, "");
-				t = t.slice(t.indexOf("<!--- NEW STORIES GO HERE --->") + 29);
-				var dramas = t.slice(0, t.indexOf("<!--- NEW STORIES END HERE --->"));
-				t = t.slice(t.indexOf("<!--- CHANGE DRAMALINKS COLOR CODE HERE --->"));
-				t = t.slice(t.indexOf("{{") + 2);
-				var bgcol = t.slice(0, t.indexOf("}}"));
-				var col;
-				var kermit = false;
-				var other = false;
-				var error = false;
-				switch (bgcol.toLowerCase()) {
+				
+				// Add navigation anchor
+				response = response.replace(/\[(.+?)\]/g, 
+						"<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + PNG_AS_BASE64 + "\"></a>");
+				
+				// Prevent people from messing with style, running scripts, etc
+				response = response.replace(/style=/gi, "");
+				response = response.replace(/<script/gi, "<i");
+				response = response.replace(/(on)([A-Za-z]*)(=)/gi, "");
+				response = response.slice(response.indexOf("<!--- NEW STORIES GO HERE --->") + 29);
+				
+				var dramas = response.slice(0, response.indexOf("<!--- NEW STORIES END HERE --->"));
+				var dramaHtml = dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+				
+				response = response.slice(response.indexOf("<!--- CHANGE DRAMALINKS COLOR CODE HERE --->"));
+				response = response.slice(response.indexOf("{{") + 2);				
+				var bgColor = response.slice(0, response.indexOf("}}"));
+				var color;
+				
+				// Check dramalinks code - we may need to modify things or set flags
+				switch (bgColor.toLowerCase()) {
+					
 					case "kermit":
-						document.getElementById("dramalinks_ticker").style.border = "2px solid #990099";
-						bgcol = "black";
-						kermit = true;
+						var kermit = true;
+						bgColor = "black";						
+						
 					case "black":
 					case "blue":
 					case "green":
-						col = "white";
+						color = "white";
 						break;
+						
 					case "lovelinks":
 					case "yellow":
 					case "orange":
 					case "red":
-						col = "black";
+						color = "black";
 						break;
+						
+					case "rainbow":
+						var rainbow = true;
+						break;
+						
 					case "errorlinks":
-						bgcol = "blue";
-						col = "white";
-						error = true;
+						var error = true;
+						bgColor = "blue";
+						color = "white";						
 						break;
+						
 					default:
-						other = true;
 						break;
 				}
+				
+				// Create dramalinks ticker				
+				var parentDiv = document.createElement('div');
+				
+				var dramalinksLevel = document.createElement('span');							
+				dramalinksLevel.innerHTML = 'Current Dramalinks Level: ';				
+				
+				var dramalinksColor = document.createElement('span');
+				dramalinksColor.innerHTML = bgColor;
+				dramalinksColor.style.textTransform = "capitalize";
+				dramalinksColor.style.color = bgColor;				
+				
+				var dramaTicker = document.createElement('div');
+				dramaTicker.style.backgroundColor = bgColor;
+				dramaTicker.style.color = color;
+				dramaTicker.innerHTML = dramaHtml;					
+				
 				if (kermit) {
-					dramas = "Current Dramalinks Level: <blink><font color='" + bgcol
-							+ "'>CODE KERMIT</font></blink><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
-							+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";			
+					dramalinksColor.className = 'blink';
+					dramalinksColor.innerHTML = 'CODE KERMIT';	
 				}
 				else if (error) {
-					dramas = "<font face='Lucida Console'>"
-							+ "<div style='background-color: " + bgcol + "; color: " + col + ";'>" 
-							+ "A problem has been detected and ETI has been shut down to prevent damage to your computer."
-							+ "<br><br> Technical information: </font>" + dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") 
-							+ "</div></font>";	
-				} 
-				else if (other) {
-					dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
-							+ "</font></span><div>" + dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";				
-				} else {
-					dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
-						+ "</font></span><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
-						+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";	
-				}	
-				drama.txt = dramas;
+					dramaLinksLevel.style.fontFamily = 'Lucida Console';
+					dramalinksLevel.innerHTML = 'A problem has been detected and ETI has been shut down to prevent damage to your computer.';
+					dramaTicker.innerHTML = 'Technical information:' + dramaHtml;
+				}				
+				else if (rainbow) {
+					dramalinksColor.className = 'rainbow';									
+				}
+
+				parentDiv.appendChild(dramalinksLevel);
+				parentDiv.appendChild(dramalinksColor);	
+				parentDiv.appendChild(dramaTicker);
+				
+				// We can only send JSON-serializable objects via message passing, so we have to use innerHTML string				
+				drama.html = parentDiv.innerHTML;
 				drama.time = parseInt(new Date().getTime() + (1800 * 1000));
 			}
 			
 			else if (status === 404) {
-				// 404 error occurs if user has logged into ETI using multiple IP addresses (redirects to defunct luelinks.net URL)
-				drama.txt = '<a id="retry" href="#">Error loading Dramalinks. Click to retry...</a>';
+				// 404 error occurs if user has logged into ETI using multiple IP addresses (redirects to broken luelinks.net URL)
+				drama.html = '<a id="retry" href="#">Error loading Dramalinks. Click to retry...</a>';
 			}
 			
-			if (callback) {				
-				callback(drama);
+			if (callback) {
+				callback(parentDiv.innerHTML);
 			}
 			
 		});
@@ -664,9 +705,9 @@ CHROMELL.background = (function() {
 						if (CHROMELL.config.debug) {
 							console.log('returning cached dramalinks. cache exp: ' + drama.time + ' current: ' + time);
 						}
-						sendResponse({"data": drama.txt});
+						sendResponse(drama.html);
 					} else {
-						sendResponse({"data": drama.txt});
+						sendResponse(drama.html);
 						getDrama();
 					}
 					break;
