@@ -130,7 +130,7 @@ CHROMELL.background = (function() {
 						}
 					});
 					setTimeout(function() {
-						clearNotification(id);
+						chrome.notifications.clear(ID, null);	
 					}, 5000);
 				}
 			);
@@ -659,7 +659,7 @@ CHROMELL.background = (function() {
 							return;
 						}
 						setTimeout(function() {
-							clearNotification(id);
+							chrome.notifications.clear(ID, null);	
 						}, parseInt(CHROMELL.config.clear_notify, 10) * 1000);
 					});
 					break;
@@ -1101,15 +1101,6 @@ CHROMELL.background = (function() {
 			console.log("scraped profile for tag information");
 			
 		});
-	};
-	
-	var clearNotification = function(ID) {
-		chrome.notifications.clear(ID,
-			function() {
-				// empty callback - method requires function to be passed as 2nd parameter,
-				// but we just want to clear the notification
-			}
-		);
 	};
 	
 	var omniboxSearch = function() {
