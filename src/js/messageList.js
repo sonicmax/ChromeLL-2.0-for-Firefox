@@ -138,10 +138,12 @@
 				// Check if we need to embed any Gfycat/Imgur videos
 				utils.anchors.embedHandler();
 				
-				// Call methods that modify quickpost area (changes will probably not be visible to user)
-				for (var i in quickpostbody) {
-					if (CHROMELL.config[i + pm]) {
-						quickpostbody[i]();
+				if (quickpostElement) {
+					// Call methods that modify quickpost area (changes will probably not be visible to user)
+					for (var i in quickpostbody) {
+						if (CHROMELL.config[i + pm]) {
+							quickpostbody[i]();
+						}
 					}
 				}
 				
