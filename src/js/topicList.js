@@ -1,29 +1,44 @@
 (function(CHROMELL) {
 	
 	CHROMELL.topicList = function() {
-		
 		var globalPort = CHROMELL.globalPort;
 		
+		// pm variable is added to method name to determine config setting for PM inbox
+		// eg. userhl_topiclist and userhl_topiclist_pm
 		var pm = '';	
 		
 		var init = function() {
 			globalPort.onMessage.addListener(eventHandlers.message);
 			buildArraysFromConfig();
 			
-			if (window.location.href.match(/topics/)) {
-				if (CHROMELL.config.dramalinks) {
-					chrome.runtime.sendMessage({
-							need : "dramalinks"
-					}, function(response) {
-						dramalinks.html = response.data;
-					});
-				}
+			if (CHROMELL.config.dramalinks && window.location.href.match(/topics/)) {								
+				chrome.runtime.sendMessage({ 
+						need: 'insertcss', 
+						file: 'src/css/dramalinks.css' 
+				});						
+				
+				chrome.runtime.sendMessage({
+						need : "dramalinks"
+				}, function(response) {
+					dramalinks.html = response;
+				});				
 			}
+			
 			else if (window.location.href.match(/inbox.php/)) {
 				pm = "_pm";
 			}
+						
+			if (localStorage['ChromeLL-topicList-CSS'] !== undefined) {				
 				
-			CHROMELL.injectCss(DOM.generateCssRules);
+				chrome.runtime.sendMessage({
+						need: 'insertcss',
+						code: localStorage['ChromeLL-topicList-CSS']
+				});
+			}
+			else {
+				CHROMELL.injectCss(DOM.generateCssRules);				
+			}
+						
 			CHROMELL.whenDOMReady(DOM.init);
 		};	
 		

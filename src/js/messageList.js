@@ -23,18 +23,42 @@
 				pm = "_pm";
 			}
 			
+			if (CHROMELL.config.foxlinks_quotes) {
+				chrome.runtime.sendMessage({ 
+						need: 'insertcss', 
+						file: 'src/css/foxlinks.css' 
+				});
+			}
+			
+			if (localStorage['ChromeLL-messageList-CSS'] !== undefined) {
+				chrome.runtime.sendMessage({
+						need: 'insertcss',
+						code: localStorage['ChromeLL-messageList-CSS']
+				});				
+			}
+			
+			else {
+				CHROMELL.injectCss(DOM.generateCss);
+			}										
+
 			// Check whether we need to display dramalinks ticker and fetch HTML
-			if (CHROMELL.config.dramalinks && !pm) {				
+			if (CHROMELL.config.dramalinks && !pm) {
+				
+				chrome.runtime.sendMessage({ 
+						need: 'insertcss', 
+						file: 'src/css/dramalinks.css' 
+				});	
+				
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
-				}, function(response) {					
+				}, function(response) {
 					dramalinks.html = response.data;					
 					dramalinks.config = CHROMELL.config;
 				});
 			}
+
+			CHROMELL.whenDOMReady(DOM.init);
 			
-			CHROMELL.injectCss(DOM.generateCss);		
-			CHROMELL.whenDOMReady(DOM.init);				
 		};	
 		
 		var DOM = function() {
