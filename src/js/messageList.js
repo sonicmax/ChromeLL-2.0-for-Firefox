@@ -42,7 +42,7 @@
 			}										
 
 			// Check whether we need to display dramalinks ticker and fetch HTML
-			if (CHROMELL.config.dramalinks && !pm) {
+			if (CHROMELL.config.dramalinks && !CHROMELL.config.hide_dramalinks_topiclist && !pm) {
 				
 				chrome.runtime.sendMessage({ 
 						need: 'insertcss', 
