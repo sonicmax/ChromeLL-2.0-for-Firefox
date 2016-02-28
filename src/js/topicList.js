@@ -196,17 +196,20 @@
 			};
 			
 			var generateCssRules = function() {
-				var styleSheet = document.styleSheets[0];	
+				var style = document.createElement("style");				
+				document.head.appendChild(style);
+
+				var styleSheet = style.sheet;
 				
 				if (CHROMELL.config.zebra_tables) {
 					var rule;
 					
 					if (CHROMELL.config.fast_zebras || !CHROMELL.config.zebra_tables_color) {
-							rule = 'opacity: .75';
+						rule = 'opacity: .75';
 					}
 					
 					else {
-							rule = 'background: #' + CHROMELL.config.zebra_tables_color;
+						rule = 'background: #' + CHROMELL.config.zebra_tables_color;
 					}
 					
 					styleSheet.addRule('table.grid tr:nth-child(odd) td', rule);
@@ -219,25 +222,13 @@
 						var bg = entry.bg;
 						var color = entry.color;							
 						var rgbaStart = convertHexToRGB(bg, 0.4);
-						var rgbaEnd = convertHexToRGB(bg, 0.4);
+						var rgbaEnd = convertHexToRGB(bg, 0.4);						
+						var keywordDataset = makeCssDatasetAttribute(keyword, 'keyword');
 						
-						var keywordDataset = makeCssDatasetAttribute(keyword, 'keyword');			
-						
-						// Highlight anchor tag containing match.
-						
-						// Use flat gradient for background, using alpha of 0.4 - this allows us to highlight <mark> elements 
-						// in the anchor tag innerHTML without changing the colour scheme (as matched keyword will have brighter
-						// background)
-						
-						styleSheet.addRule('a[' + keywordDataset + ']', 'background: linear-gradient(to right, ' 
-								+ rgbaStart + ' 0%, '
-								+ rgbaEnd + ' 100%) !important');
-								
-						styleSheet.addRule('a[' + keywordDataset + ']', 'color: #' + color + ' !important');
-			
-						styleSheet.addRule('a[' + keywordDataset + '] mark', 'background: #' + bg + ' !important');
-						styleSheet.addRule('a[' + keywordDataset + '] mark', 'color: #' + color + ' !important');						
-						
+						// Highlight td element containing tags to be highlighted (can be overridden by tag highlight)
+						styleSheet.addRule('table.grid td.oh[' + keywordDataset + ']', 'background: #' + bg);
+						styleSheet.addRule('table.grid td.oh[' + keywordDataset + ']', 'color: #' + color);
+						styleSheet.addRule('table.grid td.oh[' + keywordDataset + '] a', 'color: #' + color);								
 					}
 				}
 
@@ -255,14 +246,6 @@
 						styleSheet.addRule('table.grid td.oh[' + tagDataset + ']', 'background: #' + bg);
 						styleSheet.addRule('table.grid td.oh[' + tagDataset + ']', 'color: #' + color);
 						styleSheet.addRule('table.grid td.oh[' + tagDataset + '] a', 'color: #' + color);
-						
-						// Use !important radial gradient for background of tag anchor (in case td highlight has been overridden)
-						styleSheet.addRule('a[' + tagDataset + ']', 'background: radial-gradient(ellipse at center, ' 
-								+ rgbaStart + ' 0%, '
-								+ rgbaStart + ' 70%, '
-								+ rgbaEnd + ' 100%) !important');
-								
-						styleSheet.addRule('a[' + tagDataset + ']', 'color: ' + color);
 					}		
 				}		
 			
@@ -274,19 +257,32 @@
 						var color = entry.color;
 						var usernameDataset = makeCssDatasetAttribute(username, 'user');
 						
-						// User highlights are allowed to override any other type of highlight, with exception of anchor tags																
+						// User highlights are allowed to override any other type of highlight										
 						styleSheet.addRule('table.grid tr[' + usernameDataset + '] td', 'background: #' + bg + ' !important');
 						styleSheet.addRule('table.grid tr[' + usernameDataset + '] td', 'color: #' + color + ' !important');
 						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a', 'background: #' + bg);
-						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a', 'color: #' + color);						
+						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a', 'color: #' + color);
+					}
+				}
+				
+				var cssString = '';
+				
+				for (var rule in styleSheet.cssRules) {		
+					var cssText = styleSheet.cssRules[rule].cssText;
 					
-						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a.username_anchor', 'background: #' + bg + ' !important');
-						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a.username_anchor', 'color: #' + color + ' !important');
+					if (cssText) {
+						cssString += cssText + '\n';						
 					}
 				}
 
+				localStorage['ChromeLL-topicList-CSS'] = cssString;
+				
 			};
-
+			
+			var handlePopupClick = function(methodName, element, index) {
+				methods[methodName](element, index);
+			};
+			
 			var methods = {};
 			
 			methods.ignorator_topiclist = function(tr, i) {
@@ -325,79 +321,56 @@
 			};
 			
 			methods.ignore_keyword = function(tr, i) {
-				/*if (!CHROMELL.config.ignore_keyword_list) {
-					return;
-				}
-				var re = false;
-				var keywords = ignore.keywords;
-				var title;
-				var match = false;
-				var reg;
-				if (tr.getElementsByTagName('td')[0]) {
-					title = tr.getElementsByTagName('td')[0];
-					username = title.getElementsByTagName('a')[0].innerHTML;
-					for (var f = 0, len = keywords.length; f < len; f++) {
-						
-						if (re) {
-							if (keywords[f].substring(0, 1) == '/') {
-								reg = new RegExp(keywords[f].substring(1,
-										keywords[f].lastIndexOf('/')), keywords[f]
-										.substring(
-												keywords[f].lastIndexOf('/') + 1,
-												keywords[f].length));
+				if (CHROMELL.config.ignore_keyword_list) {
+					var re = false;
+					var keywords = ignore.keywords;
+					var title;
+					var match = false;
+					var reg;
+					if (tr.getElementsByTagName('td')[0]) {
+						title = tr.getElementsByTagName('td')[0];
+						username = title.getElementsByTagName('a')[0].innerHTML;
+						for (var f = 0, len = keywords.length; f < len; f++) {
+							
+							if (re) {
+								if (keywords[f].substring(0, 1) == '/') {
+									reg = new RegExp(keywords[f].substring(1,
+											keywords[f].lastIndexOf('/')), keywords[f]
+											.substring(
+													keywords[f].lastIndexOf('/') + 1,
+													keywords[f].length));
+								} 
+								else {
+									reg = keywords[f];
+								}
+								
+								match = username.match(reg);
 							} 
+							
 							else {
-								reg = keywords[f];
+								
+								match = username.toLowerCase().indexOf(
+												keywords[f].toLowerCase()) != -1;
 							}
 							
-							match = username.match(reg);
-						} 
-						
-						else {
-							
-							match = username.toLowerCase().indexOf(
-											keywords[f].toLowerCase()) != -1;
-						}
-						
-						if (match) {
-							
-							tr.setAttribute('ignored', true);				
-							
-							ignorated.total_ignored++;
-							if (!ignorated.data.keywords[keywords[f]]) {
-								ignorated.data.keywords[keywords[f]] = {};
-								ignorated.data.keywords[keywords[f]].total = 1;
-								ignorated.data.keywords[keywords[f]].trs = [ i ];
-							} else {
-								ignorated.data.keywords[keywords[f]].total++;
-								ignorated.data.keywords[keywords[f]].trs.push(i);
-							}				
-						}
-					}
-				}*/
-			};
-			
-			/*methods.append_tags = function(tr) {
-				for (var i = 0; i < tags.length; i++) {
-					var tag_children = tags[i].children;
-					for (var j = 0; j < tag_children.length; j++) {
-						if (tag_children[j].textContent.indexOf('NWS') != -1
-								|| tag_children[j].textContent.indexOf('NLS') != -1) {
-							var temp_link = tag_children[j];
-							tags[i].removeChild(temp_link);
-							var temp_tag_name = temp_link.textContent;
-							var text_color = document.createElement("font");
-							text_color.setAttribute("color", "red");
-							tags[i].previousSibling.appendChild(temp_link);
-							tags[i].previousSibling.lastChild.textContent = " ";
-							tags[i].previousSibling.lastChild.appendChild(text_color);
-							tags[i].previousSibling.lastChild.lastChild.textContent = "   "
-									+ temp_tag_name + "";
-
+							if (match) {
+								
+								tr.setAttribute('ignored', true);				
+								
+								ignorated.total_ignored++;
+								if (!ignorated.data.keywords[keywords[f]]) {
+									ignorated.data.keywords[keywords[f]] = {};
+									ignorated.data.keywords[keywords[f]].total = 1;
+									ignorated.data.keywords[keywords[f]].trs = [ i ];
+								} else {
+									ignorated.data.keywords[keywords[f]].total++;
+									ignorated.data.keywords[keywords[f]].trs.push(i);
+								}				
+							}
 						}
 					}
 				}
-			};*/
+			};
 			
 			methods.page_jump_buttons = function(tr, i) {
 				var inbox;
@@ -453,9 +426,6 @@
 					// Only match whole word					
 					var regex = new RegExp('\\b' + keyword + '\\b', 'g');
 					if (title.innerHTML.match(regex)) {
-						// Wrap matched keyword with <mark> tags so we can highlight individual words in title
-						var htmlString = '<mark>' + keyword + '</mark>';			
-						title.innerHTML = title.innerHTML.replace(regex, htmlString);
 						// Set dataset attributes for CSS
 						title.dataset.keyword = keyword;
 						td.dataset.keyword = keyword;						
