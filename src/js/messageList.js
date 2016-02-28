@@ -105,46 +105,24 @@
 					if (CHROMELL.config[k + pm]) {
 							infobar[k]();
 					}
-				}
+				}							
 				
 				// Add archive quote buttons before highlights/post numbers are added
 				utils.quote.addButtons();
 				
-				// Chrome seems to cache DOM changes when they are made in a loop (to minimise browser reflow/repaint).
-				// Partially unrolling the loop minimises flash of unstyled content when users load topics
-				var len;
-				if (msgs.length < 4) {
-					len = msgs.length;
-				}
-				else {					
-					len = 4;
-				}
-				// Iterate over first 5 containers
-				for (var j = 0; j < len; j++) {
-					var msg = msgs[j];
-					// Get required elements from message-container
-					setActivePost(msg);
-					utils.anchors.check(msg);
-					// Iterate over messagecontainer methods
-					for (var k in messagecontainer) {
-						if (CHROMELL.config[k + pm]) {
-							// Pass message-container and index value to method
-							messagecontainer[k](msg, j + 1);
+				// Call message-container methods
+				for (let i = 0, len = messages.length; i < len; i++) {
+					var message = messages[i];
+					setActivePost(message);
+					utils.anchors.check(message);
+					for (var method in messagecontainer) {
+						if (CHROMELL.config[method + pm]) {
+							messagecontainer[method](message, i + 1);
 						}
-					}
-				}
-				
-				if (len === 4) {
-					// Iterate over rest of messages
-					for (var j = 4; msg = msgs[j]; j++) {				
-						setActivePost(msg);
-						utils.anchors.check(msg);			
-						for (var k in messagecontainer) {
-							if (CHROMELL.config[k + pm]) {
-								messagecontainer[k](msg, j + 1);
-							}
+						else {							
+							delete messagecontainer[method];
 						}
-					}
+					}		
 				}
 								
 				if (!CHROMELL.config.hide_ignorator_badge) {
