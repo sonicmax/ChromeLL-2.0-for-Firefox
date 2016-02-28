@@ -432,32 +432,22 @@
 				for (var j = 0; j < messageTops.length; j++) {
 					var top = messageTops[j];
 					if (top) {
-						var username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+						var currentUser = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
 						for (var f = 0, len = ignores.length; f < len; f++) {
-							if (username == ignores[f]) {
-								// calculate equivalent index of message-top for
-								// show_ignorator function
-								if (j == 0 && topsTotal > 0) {
-									currentIndex = topsTotal - messageTops.length; 
-								}
-								else {
-									currentIndex = topsTotal - j;
-								}
+							var userToCheck = ignores[f];
+							if (currentUser == userToCheck) {				
 								top.parentNode.setAttribute('ignored', true);
-								if (CHROMELL.config.debug) {
-									console.log('removed post by '
-											+ ignores[f]);
-								}
 								ignorated.total_ignored++;
-								if (!ignorated.data.users[ignores[f]]) {
-									ignorated.data.users[ignores[f]] = {};
-									ignorated.data.users[ignores[f]].total = 1; 
-									ignorated.data.users[ignores[f]].trs = [ currentIndex ];
-								} else {
+								
+								if (!ignorated.data.users[userToCheck]) {
+									ignorated.data.users[userToCheck] = {};
+									ignorated.data.users[userToCheck].total = 1;
+								} 
+								
+								else {
 									ignorated.data.users[ignores[f]].total++;
-									ignorated.data.users[ignores[f]].trs
-											.push(currentIndex);
 								}
+								
 								if (!CHROMELL.config.hide_ignorator_badge) {
 									CHROMELL.globalPort.postMessage({
 										action: 'ignorator_update',
@@ -1216,31 +1206,27 @@
 			var embeddedVideos = false;
 			
 			var ignoratorUpdate = function(msg) {
-				if (msg.action !== 'ignorator_update') {	
-					switch (msg.action) {
+					switch (msg.action) {		
 						case "showIgnorated":				
-							if (CHROMELL.config.debug) {
-								console.log("showing hidden msg", msg.ids);
-							}
-							var tops = document.getElementsByClassName('message-top');
-							for (var i = 0; i < msg.ids.length; i++) {
-								if (CHROMELL.config.debug) {
-									console.log(tops[msg.ids[i]]);
-								}
-								tops[msg.ids[i]].parentNode.style.display = 'block';
-								tops[msg.ids[i]].parentNode.style.opacity = '.7';
+							var ignoredMessages = document.querySelectorAll('[ignored]');
+							for (var i = 0, len = ignoredMessages.length; i < len; i++) {
+								ignoredMessages[i].style.display = '';
+								ignoredMessages[i].style.opacity = '.7';	
 							}
 							break;
+							
+						case "ignorator_update": 
+							// Do nothing - handled elsewhere
+							break;
+							
 						default:
 							if (CHROMELL.config.debug)
 								console.log('invalid action', msg);
 							break;
 					}
-				}
 			};
 			
 			var mouseclick = function(evt) {
-				
 				if (evt.target.className) {
 					switch (evt.target.className) {
 						case 'expand_post_template':
