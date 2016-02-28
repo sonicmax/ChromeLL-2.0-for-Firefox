@@ -423,17 +423,6 @@
 				}
 			};
 			
-			messagecontainer.eti_bash = function(msg, index) {
-				anchor = document.createElement('a');
-				anchor.style.cssFloat = 'right';
-				anchor.href = '##bash';
-				anchor.className = 'bash';
-				anchor.id = "bash_" + index;
-				anchor.innerHTML = '&#9744;';
-				anchor.style.textDecoration = 'none';
-				firstTop.appendChild(anchor);
-			};	
-			
 			messagecontainer.ignorator_messagelist = function(msg, index) {
 				if (!CHROMELL.config.ignorator) {
 					return;
