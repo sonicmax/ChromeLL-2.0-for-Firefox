@@ -577,37 +577,12 @@
 									message: document.title.replace(/End of the Internet - /i, ''),
 									title: "Post by " + user
 									
-								}, function() {
-									// Do nothing - we just need to notify user
-								});
+								}, null);
 								
-							}
-							
-						}
-						
+							}							
+						}						
 					}
 				}
-			};
-				
-			messagecontainer.foxlinks_quotes = function(msg) {								
-				var quotes = msg.getElementsByClassName('quoted-message');
-				
-				for (var i = 0, len = quotes.length; i < len; i++) {
-					var quote = quotes[i];
-					
-					// Ignore unattributed quotes (ie. quotes without message-top element as first child)
-					if (quote.firstChild.className === 'message-top') {
-						var anchors = quote.firstChild.getElementsByTagName('a');					
-						if (anchors) {
-							// Set username as attribute to make sure that foxlinks quotes colours match user highlights
-							var user = anchors[0].innerHTML;
-							var userAttribute = user.replace(/[^a-zA-Z0-9]/g, '');
-							quote.dataset.user = userAttribute;
-						}
-					}
-					
-					quote.dataset.foxlinks = true;									
-				}				
 			};
 			
 			messagecontainer.label_self_anon = function(msg) {
