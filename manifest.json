@@ -52,7 +52,7 @@
   },
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
-    "js": ["src/js/imagemap.js", "src/js/bash.js"],
+    "js": ["src/js/imagemap.js"],
 		"run_at" : "document_start"
   },
   {
