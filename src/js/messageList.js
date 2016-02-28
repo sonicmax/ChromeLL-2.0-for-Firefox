@@ -88,12 +88,13 @@
 			};		
 		
 			var init = function() {
-				var msgs = document.getElementsByClassName('message-container');				
+				var messages = document.getElementsByClassName('message-container');				
 				infobarElement = document.getElementById('u0_2');
-				quickpostElement = document.getElementsByClassName('quickpost-body')[0];
-				userbarElement = document.getElementsByClassName('userbar')[0];					
-				currentUser = userbarElement.getElementsByTagName('a')[0].innerHTML.replace(/ \((\d+)\)$/, "").toLowerCase();
-				currentID = userbarElement.getElementsByTagName('a')[0].href.match(/\?user=([0-9]+)/)[1];
+				userbarElement = document.getElementsByClassName('userbar')[0];
+				quickpostElement = document.getElementsByClassName('quickpost-body')[0];				
+				var profileAnchor = userbarElement.getElementsByTagName('a')[0];
+				currentUser = getUsername(profileAnchor);
+				currentID = getUserId(profileAnchor);
 				
 				var title = document.getElementsByTagName('h2')[0];
 				if (CHROMELL.config.dramalinks && !CHROMELL.config.hide_dramalinks_topiclist) {
@@ -173,7 +174,16 @@
 			var setActivePost = function(msg) {
 				messageTops = msg.getElementsByClassName('message-top');
 				firstTop = messageTops[0];
-			};		
+				profileAnchor = firstTop.getElementsByTagName('a')[0];
+			};
+			
+			var getUsername = function(element) {
+				return element.innerHTML.replace(/ \((\d+)\)$/, "");				
+			};
+			
+			var getUserId = function(element) {
+				return element.href.match(/\?user=([0-9]+)/)[1];				
+			};
 			
 			var generateCss = function() {
 				styleSheet = document.styleSheets[0];
