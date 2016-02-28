@@ -1,8 +1,6 @@
 (function(CHROMELL) {
 	
 	CHROMELL.messageList = function() {
-		
-		var globalPort = CHROMELL.globalPort;
 		var pm = '';
 		var ignores;
 		
@@ -15,7 +13,7 @@
 			}
 			
 			// set up globalPort so we can interact with background page
-			globalPort.onMessage.addListener(eventHandlers.ignoratorUpdate);
+			CHROMELL.globalPort.onMessage.addListener(eventHandlers.ignoratorUpdate);
 						
 			if (window.location.href.match('inboxthread.php')) {
 				// pm variable is added to method name to determine config setting for PM inbox
@@ -151,7 +149,7 @@
 								
 				if (!CHROMELL.config.hide_ignorator_badge) {
 					// Update ChromeLL badge with current ignorator count
-					globalPort.postMessage({
+					CHROMELL.globalPort.postMessage({
 						action: 'ignorator_update',
 						ignorator: ignorated,
 						scope: "messageList"
@@ -427,7 +425,7 @@
 				
 				if (!CHROMELL.config.hide_ignorator_badge) {
 					// send updated ignorator data to background script
-					globalPort.postMessage({
+					CHROMELL.globalPort.postMessage({
 						action: 'ignorator_update',
 						ignorator: ignorated,
 						scope: "messageList"
@@ -482,7 +480,7 @@
 											.push(currentIndex);
 								}
 								if (!CHROMELL.config.hide_ignorator_badge) {
-									globalPort.postMessage({
+									CHROMELL.globalPort.postMessage({
 										action: 'ignorator_update',
 										ignorator: ignorated,
 										scope: "messageList"
