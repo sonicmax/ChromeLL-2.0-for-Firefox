@@ -72,7 +72,7 @@ function imageTransloader(info, rename) {
 					iconUrl: "src/images/lueshi_48_i.png"
 				}, function(id) {
 					setTimeout(function() {
-						clearNotification(id);
+						chrome.notifications.clear(id, null);
 					}, 3000);
 				});
 			}
@@ -115,7 +115,7 @@ function imageTransloader(info, rename) {
 							iconUrl: "src/images/lueshi_48.png"
 						}, function(id) {
 							setTimeout(function() {
-								clearNotification(id);
+								chrome.notifications.clear(id, null);
 							}, 3000);
 						});
 					} 
@@ -135,12 +135,4 @@ function imageTransloader(info, rename) {
 	};
 	
 	fileGet.send();
-}
-
-function clearNotification(id) {
-	chrome.notifications.clear(id,
-		function() {
-			// empty callback
-		}
-	);
 }
