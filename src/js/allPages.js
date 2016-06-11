@@ -1,7 +1,6 @@
 (function(CHROMELL) {
 	
 	CHROMELL.allPages = function () {
-		
 		var _cachedEvent = '';
 		
 		var init = function() {
@@ -21,8 +20,7 @@
 		
 		var DOM = function() {
 			
-			var init = function() {
-				
+			var init = function() {				
 				generateCss();
 				
 				if (CHROMELL.config.short_title) {
@@ -113,19 +111,6 @@
 			};
 		
 			var methods = {};
-			
-			/*methods.userscripts: function() {
-				// var location = window.location;
-				var head = document.getElementsByTagName('head')[0];
-				var data = CHROMELL.config.userscript_data;
-				for (var script in data) {
-					var scriptElement = document.createElement('script');
-					var contents = data[script].contents;
-					scriptElement.type = 'text/javascript';
-					scriptElement.innerHTML = contents;
-					head.appendChild(scriptElement);
-				}
-			};*/
 			
 			methods.notify_pm = function() {
 				var userbar_pms = document.getElementById('userbar_pms');
