@@ -2149,11 +2149,10 @@
 								var top = container.getElementsByClassName("message-top")[0];
 								console.log(top);
 								var msgId = msgs[i].getAttribute("msgid");
-								var quote = document.createElement("a");
+								var quote = document.createElement("span");
 								var quoteText = document.createTextNode("Quote");
 								var space = document.createTextNode(" | ");
 								quote.appendChild(quoteText);
-								quote.href = "#";
 								quote.id = msgId;
 								quote.className = "archivequote";
 								top.appendChild(space);

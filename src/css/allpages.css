@@ -85,3 +85,10 @@
 			-webkit-transform:rotate(360deg);
 		}
 	}
+	
+	/* Treat .archivequote spans as anchors */
+	
+	.archivequote {
+		cursor: pointer;
+		text-decoration: underline;		
+	}
