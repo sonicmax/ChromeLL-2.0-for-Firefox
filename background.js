@@ -410,7 +410,7 @@ CHROMELL.background = (function() {
 	var getDrama = function(callback) {
 		const TEN_MINUTES = 600000;
 		// Use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
-		const PNG_AS_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
+		const ANCHOR_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
 				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
 				+ 'DVmAAAAAElFTkSuQmCC';
 		
@@ -420,7 +420,7 @@ CHROMELL.background = (function() {
 				ignoreCache: true				
 		};
 		
-		ajax(request, function(response, status) {
+		ajax(request, (response, status) => {
 			if (response) {
 				
 				// Typical response:
@@ -444,9 +444,9 @@ CHROMELL.background = (function() {
 				response = response.replace(/\[\[(.+?)\]\]/g, 
 						"<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$1</a>");
 				
-				// Add navigation anchor
+				// Add navigation anchors
 				response = response.replace(/\[(.+?)\]/g, 
-						"<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + PNG_AS_BASE64 + "\"></a>");
+						"<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + ANCHOR_IMAGE + "\"></a>");
 				
 				// Prevent people from messing with style, running scripts, etc
 				response = response.replace(/style=/gi, "");
@@ -516,10 +516,18 @@ CHROMELL.background = (function() {
 					dramalinksColor.className = 'blink';
 					dramalinksColor.innerHTML = 'CODE KERMIT';	
 				}
-				else if (error) {
-					dramaLinksLevel.style.fontFamily = 'Lucida Console';
+				else if (error) {					
 					dramalinksLevel.innerHTML = 'A problem has been detected and ETI has been shut down to prevent damage to your computer.';
-					dramaTicker.innerHTML = 'Technical information:' + dramaHtml;
+					dramalinksLevel.style.fontFamily = 'Lucida Console';
+					dramalinksLevel.style.color = color;
+					dramalinksLevel.style.backgroundColor = bgColor;
+					dramalinksColor.innerHTML = '<br><br>';
+					var header = document.createElement('span');
+					header.innerHTML = 'Technical information: ';
+					header.style.fontFamily = 'Lucida Console';
+					header.style.color = color;
+					header.style.backgroundColor = bgColor;
+					dramaTicker.innerHTML = header.outerHTML + dramaHtml;
 				}				
 				else if (rainbow) {
 					dramalinksColor.className = 'rainbow';									
@@ -529,8 +537,9 @@ CHROMELL.background = (function() {
 				parentDiv.appendChild(dramalinksColor);	
 				parentDiv.appendChild(dramaTicker);
 				
-				// We can only send JSON-serializable objects via message passing, so we have to use innerHTML string				
+				// We can only send JSON-serializable objects via message passing, so we have to use innerHTML string			
 				drama.html = parentDiv.innerHTML;
+				drama.type = bgColor.toLowerCase();
 				drama.time = parseInt(new Date().getTime() + (1800 * 1000));
 			}
 			
