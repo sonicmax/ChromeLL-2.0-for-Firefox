@@ -230,35 +230,41 @@
 			};
 			
 			methods.user_info_popup = function() {
-					var links = [ "PM", "GT", "BT", "HIGHLIGHT",
-							"UNHIGHLIGHT", "IGNORATE" ];					
-					var popup = document.createElement('div');			
-					popup.className = 'user_info_popup';
-					popup.id = 'user-popup-div';
-					var info = document.createElement('div');
-					popup.className = 'user_info_popup';
-					info.id = 'popup_info';
-					var user = document.createElement('div');
-					popup.className = 'user_info_popup';
-					user.id = 'popup_user';
+				
+				if (window.location.href.indexOf('//endoftheinter.net/profile.php?') > -1) {
+					return;
+				}
+				
+				// Create placeholder popup that we can populate later.
+				var links = [ "PM", "GT", "BT", "HIGHLIGHT",
+						"UNHIGHLIGHT", "IGNORATE" ];					
+				var popup = document.createElement('div');			
+				popup.className = 'user_info_popup';
+				popup.id = 'user-popup-div';
+				var info = document.createElement('div');
+				info.className = 'user_info_popup';
+				info.id = 'popup_info';
+				var user = document.createElement('div');
+				user.className = 'user_info_popup';
+				user.id = 'popup_user';
 
-					for (var i = 0, len = links.length; i < len; i++) {
-						var span = document.createElement('span');
-						span.className = 'popup_link';
-						span.innerHTML = links[i];
-						span.addEventListener('click', utils.popup.clickHandler);
-						info.appendChild(span);
+				for (var i = 0, len = links.length; i < len; i++) {
+					var span = document.createElement('span');
+					span.className = 'popup_link';
+					span.innerHTML = links[i];
+					span.addEventListener('click', utils.popup.clickHandler);
+					info.appendChild(span);
+				}
+				
+				popup.appendChild(user);
+				popup.appendChild(info);
+				document.body.appendChild(popup);				
+				
+				document.addEventListener('click', function(evt) {
+					if (evt.target.className != 'popup_link') {
+						utils.popup.hide();
 					}
-					
-					popup.appendChild(user);
-					popup.appendChild(info);
-					document.body.appendChild(popup);				
-					
-					document.addEventListener('click', function(evt) {
-						if (evt.target.className != 'popup_link') {
-							utils.popup.hide();
-						}
-					});			
+				});			
 			};
 			
 			return {
@@ -271,9 +277,9 @@
 		var utils = function() {
 		
 			var popup = function() {
-				// Creates popup containing scraped info from user profile.
-				var popupScope = CHROMELL.messageList || CHROMELL.topicList;			
-				var debouncer, waiting, currentUser, currentPost, currentID;
+				var popupScope = CHROMELL.messageList || CHROMELL.topicList;
+				
+				var currentUser, currentPost, currentID;
 				
 				var scrapeProfile = function(responseText) {
 					var html = document.createElement('html');
@@ -285,13 +291,11 @@
 						if (td.innerText === 'Status') {
 							var status = tds[i + 1].innerText;
 						}
-						else if (td.innerText === 'Formerly') {
+						if (td.innerText === 'Formerly') {
 							var aliases = tds[i + 1].innerText;
 						}
-						else if (td.innerText === 'Reputation') {
+						if (td.innerText === 'Reputation') {
 							var rep = tds[i + 1].innerHTML;
-							// Break loop- we don't need to check any other elements
-							break;
 						}
 					}			
 					update(html, status, aliases, rep);
@@ -348,21 +352,33 @@
 						return '';
 					}
 				};
+												
+				var popupBoundaryCheck = function(target) {
+					switch (target.className) {				
+						case 'user_info_popup':
+						case 'username_anchor':
+						case 'popup_link':
+						case 'popup_user':
+						case 'rep_anchor':
+							return true;						
+					}
+					
+					return false;
+				};
+				
+				var debouncerId;				
+				var waitingForTimer = false;
 				
 				var mousemoveHandler = function(evt) {
-					// Close popup if user moves mouse outside of popup (triggered after 250ms delay).			
-					if (evt.target.className !== 'user_info_popup'
-							&& evt.target.className !== 'username_anchor'
-							&& evt.target.className !== 'popup_link'
-							&& evt.target.className !== 'rep_anchor') {
-						if (!waiting) {
-							debouncer = setTimeout(utils.popup.hide, 250);
-							waiting = true;
-						}
+					// Close popup if user moves mouse outside of popup. Debounce by 250ms to allow for user error
+					if (!popupBoundaryCheck(evt.target) && !waitingForTimer) {
+						debouncerId = setTimeout(utils.popup.hide, 250);
+						waitingForTimer = true;
 					}
-					else {
-						clearTimeout(debouncer);
-						waiting = false;
+					
+					else if (popupBoundaryCheck(evt.target) && waitingForTimer) {			
+						clearTimeout(debouncerId);
+						waitingForTimer = false;
 					}
 				};
 			
@@ -385,7 +401,7 @@
 							url: profileURL
 						}, function(response) {
 								scrapeProfile(response);
-						});						
+						});				
 						
 						var popup = document.getElementById('popup_user');
 						// TODO: construct popup using createElement method
@@ -410,49 +426,53 @@
 					},
 					clickHandler: function(evt) {
 							var user = currentUser.toLowerCase();
-							var messageListExists = false;
 							
 							if (CHROMELL.messageList) {
-								messageListExists = true;
 								var containers = document.getElementsByClassName('message-container');
-							}
-							else if (CHROMELL.topicList) {	
+							}					
+							else {	
 								var trs = document.getElementsByTagName('tr');
-							}							
+							}				
 							
-							var target = currentPost;
-							var type = evt.target.innerHTML;				
-							switch (type) {
-								case "IGNORATE?":
+							switch (evt.target.innerHTML) {
+								
+								case "IGNORATE?":	
 									if (!CHROMELL.config.ignorator_list || CHROMELL.config.ignorator_list == '') {
 										CHROMELL.config.ignorator_list = currentUser;
-									} else {
+									}
+									else {
 										CHROMELL.config.ignorator_list += ", " + currentUser;
 									}
+									
 									chrome.runtime.sendMessage({
 										need : "save",
 										name : "ignorator_list",
 										data : CHROMELL.config.ignorator_list
 									});
-									if (messageListExists) {
+									
+									if (CHROMELL.messageList) {
 										for (var i = 0, len = containers.length; i < len; i++) {
-											var container = containers[i];
-											popupScope.ignorator_messagelist(container);
+											var container = containers[i];											
+											popupScope.DOM.handlePopupClick('ignorator_messagelist', container);
 										}
 									}
 									else {
-										topicList.createArrays();
+										popupScope.buildArraysFromConfig();
 										for (var i = 1, len = trs.length; i < len; i++) {
 											var tr = trs[i];
-											popupScope.ignorator_topiclist(tr, i);
+											popupScope.DOM.handlePopupClick('ignorator_topiclist', tr, i);
 										}
 									}
+									
 									evt.target.innerHTML = "IGNORATE";
+									popupScope.DOM.generateCssRules();
 									this.hide();
 									break;
+									
 								case "IGNORATE":
 									evt.target.innerHTML = "IGNORATE?";
 									break;
+									
 								case "PM":
 									chrome.runtime.sendMessage({
 										need : "opentab",
@@ -460,6 +480,7 @@
 									});
 									this.hide();
 									break;
+									
 								case "GT":
 									chrome.runtime.sendMessage({
 										need : "opentab",
@@ -467,6 +488,7 @@
 									});
 									this.hide();
 									break;
+									
 								case "BT":
 									chrome.runtime.sendMessage({
 										need : "opentab",
@@ -474,48 +496,54 @@
 									});
 									this.hide();
 									break;
+									
 								case "HIGHLIGHT":
+									// Use random hex values for background/text color
 									CHROMELL.config.user_highlight_data[user] = {};
-									CHROMELL.config.user_highlight_data[user].bg = Math.floor(
-											Math.random() * 16777215).toString(16);
-									CHROMELL.config.user_highlight_data[user].color = Math.floor(
-											Math.random() * 16777215).toString(16);
+									CHROMELL.config.user_highlight_data[user].bg = Math.floor(Math.random() * 16777215).toString(16);
+									CHROMELL.config.user_highlight_data[user].color = Math.floor(Math.random() * 16777215).toString(16);
+											
 									chrome.runtime.sendMessage({
 										need : "save",
 										name : "user_highlight_data",
 										data : CHROMELL.config.user_highlight_data
 									});
-									if (messageListExists) {
+									
+									if (CHROMELL.messageList) {
 										var top;
 										for (var i = 0, len = containers.length; i < len; i++) {
-											var container = containers[i];
-											popupScope.userhl_messagelist(container, i);
-											if (CHROMELL.config.foxlinks_quotes) {
-												 popupScope.foxlinks_quote(container);
-											}
+											var container = containers[i];											
+											popupScope.DOM.handlePopupClick('userhl_messagelist', container, i);											
 										}
-									} else {
+									}					
+									else {										
 										for (var i = 1, len = trs.length; i < len; i++) {
-											var tr = trs[i];											
-											popupScope.userhl_topiclist(tr);
-										}
-									}				
+											var tr = trs[i];
+											popupScope.DOM.handlePopupClick('userhl_topiclist', tr);
+										}																				
+									}
+									
+									// We need to regenerate CSS rules
+									popupScope.DOM.generateCssRules();									
 									break;
+									
 								case "UNHIGHLIGHT":
-									delete CHROMELL.config.user_highlight_data[this.currentUser
-											.toLowerCase()];
+								
+									delete CHROMELL.config.user_highlight_data[user];
+											
 									chrome.runtime.sendMessage({
 										need : "save",
 										name : "user_highlight_data",
 										data : CHROMELL.config.user_highlight_data
 									});
-									if (messageListExists) {
+									
+									if (CHROMELL.messageList) {
 										var message_tops = document.getElementsByClassName('message-top');
 										for (var i = 0, len = message_tops.length; i < len; i++) {
 											var top = message_tops[i];
 											if (top.getElementsByTagName('a')[0]) {
 												var userToCheck = top.getElementsByTagName('a')[0].innerHTML;
-												if (userToCheck === this.currentUser) {		
+												if (userToCheck.toLowerCase() === user) {		
 													top.style.background = '';
 													top.style.color = '';
 													var top_atags = top.getElementsByTagName('a');
@@ -525,13 +553,14 @@
 												}
 											}
 										}
-									} else {
+									}								
+									else {
 										for (var i = 1, len = trs.length; i < len; i++) {
 											var tr = trs[i];
 											var tds = tr.getElementsByTagName('td');
 											if (tds[1].getElementsByTagName('a')[0]) {
 												var userToCheck = tds[1].getElementsByTagName('a')[0].innerHTML;
-												if (userToCheck === this.currentUser) {
+												if (userToCheck.toLowerCase() === user) {
 													for (var j = 0, tds_len = tds.length; j < tds_len; j++) {
 														td = tds[j];
 														td.style.background = '';
@@ -544,8 +573,8 @@
 												}
 											}
 										}
-											// topicList.zebra_tables();
 									}
+									
 									this.hide();
 									break;
 							}
