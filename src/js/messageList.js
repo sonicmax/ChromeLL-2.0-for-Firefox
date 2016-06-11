@@ -187,9 +187,14 @@
 			};
 			
 			var generateCss = function() {
-				styleSheet = document.styleSheets[0];
+				var style = document.createElement("style");				
+				document.head.appendChild(style);
+
+				var styleSheet = style.sheet;
 				
-				styleSheet.addRule('.quoted-message[data-foxlinks="true"]', 'border-color: #' + CHROMELL.config.foxlinks_quotes_color);
+				if (CHROMELL.config.foxlinks_quotes) {
+					styleSheet.addRule('.quoted-message', 'border-color: #' + CHROMELL.config.foxlinks_quotes_color);
+				}
 				
 				if (CHROMELL.config.userhl_messagelist) {
 					var highlightData = CHROMELL.config.user_highlight_data;
@@ -199,15 +204,33 @@
 						var color = CHROMELL.config.user_highlight_data[username].color;
 						var datasetAttribute = makeCssDatasetAttribute(username, 'user');
 						
-						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'background: #' + bg);
+						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'background: #' + bg + ' !important');
 						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'color: #' + color);											
 						styleSheet.addRule('.message-top[' + datasetAttribute + '] a', 'color: #' + color);
 						styleSheet.addRule('.message-top[' + datasetAttribute + '] a:hover', 'opacity: 0.8');
 						
-						// We want this to override the default value, if user is highlighted								
-						styleSheet.addRule('.quoted-message[data-foxlinks="true"][' + datasetAttribute + ']',	'border-color: #' + bg);
-					}	
+						// Override the default foxlinks border color when user is highlighted
+						if (CHROMELL.config.foxlinks_quotes) {
+							styleSheet.addRule('.quoted-message[' + datasetAttribute + ']',	'border-color: #' + bg + ' !important');
+						}
+					}
 				}
+
+				if (localStorage['ChromeLL-messageList-CSS'] === undefined) {
+					var cssString = '';
+					
+					for (var rule in styleSheet.cssRules) {					
+						var cssText = styleSheet.cssRules[rule].cssText;
+						console.log(cssText);
+						
+						if (cssText) {
+							cssString += cssText + '\n';						
+						}
+					}
+
+					localStorage['ChromeLL-messageList-CSS'] = cssString;
+				}			
+				
 			};
 			
 			var makeCssDatasetAttribute = function(string, type) {
