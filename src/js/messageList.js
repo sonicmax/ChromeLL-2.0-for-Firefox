@@ -345,9 +345,6 @@
 						containerDiv.appendChild(container);
 						livelinksHandler(container);
 					}
-					else {
-						console.log(container);
-					}
 				}
 				// We can now allow notifications/etc to be passed to user
 				replaying = false;
