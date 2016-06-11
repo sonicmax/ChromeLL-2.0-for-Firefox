@@ -63,7 +63,36 @@ CHROMELL.background = (function() {
 			});
 		}
 		
-	};	
+	};
+	
+	/**
+	 *	For version 2.4 only - use tag/keyword name as object key, and remove match property.	 
+	 */
+	var modifyHighlightStorage = function() {
+		
+		for (var i = CHROMELL.config.tag_highlight_data.length - 1, limit = 0; i >= limit; i--) {
+			var entry = CHROMELL.config.tag_highlight_data[i];
+			var tag = entry.match;
+			delete entry.match;
+			CHROMELL.config.tag_highlight_data[tag] = entry;
+			delete CHROMELL.config.tag_highlight_data[i];				
+		}
+		
+		for (var i = CHROMELL.config.keyword_highlight_data.length - 1, limit = 0; i >= limit; i--) {
+			var entry = CHROMELL.config.keyword_highlight_data[i];
+			var tag = entry.match;
+			delete entry.match;
+			CHROMELL.config.keyword_highlight_data[tag] = entry;
+			delete CHROMELL.config.keyword_highlight_data[i];				
+		}
+
+		// Make backup of current config, just in case I mess everything up
+		if (localStorage['ChromeLL-Config-Oops'] == undefined) {
+			localStorage['ChromeLL-Config-Oops'] = JSON.stringify(CHROMELL.config);
+		}
+		
+		localStorage['ChromeLL-Config'] = JSON.stringify(CHROMELL.config);
+	};
 	
 	var getDefaultConfig = function(callback) {			
 		var request = {
