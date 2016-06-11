@@ -125,7 +125,8 @@ var imagemap = function() {
 		div.style.backgroundColor = 'white';
 		div.style.overFlow = 'scroll';
 		
-		if (searchResults) {
+		// We need to style the image grid slightly differently depending on whether we have search results to display
+		if (searchResults) {			
 			var header = document.createElement('div');
 			var text = document.createTextNode('Displaying results for query "' + query + '" :');
 			header.appendChild(text);
@@ -139,7 +140,7 @@ var imagemap = function() {
 			header.style.width = '100%';
 			header.style.fontSize = '16px';
 			div.appendChild(header);				
-			// Account for header's style properties
+			// Account for size of header when sizing image grid
 			imageGrid.style.maxHeight = ((height * 0.95) / 2) - 51 + 'px';
 			imageGrid.style.maxWidth = (width * 0.95) - 21 + 'px';
 		}
@@ -149,13 +150,16 @@ var imagemap = function() {
 			imageGrid.style.maxHeight = ((height * 0.95) / 2)  - 6 + 'px';
 		}
 		
+		// These style properties are set for all instances of popup
 		imageGrid.style.position = 'relative';
 		imageGrid.style.top = '5px';
 		imageGrid.style.overflow = 'scroll';
 		imageGrid.style.overflowX = 'hidden';
 		
+		// Reduce opacity of background page
 		bodyClass.style.opacity = 0.3;
 		
+		// Decide where we should append image grid
 		if (searchResults) {
 			header.appendChild(imageGrid);
 		}
@@ -163,10 +167,11 @@ var imagemap = function() {
 			div.appendChild(imageGrid);
 		}
 		
+		// Ready to append popup and hide scrollbar of background page
 		document.body.appendChild(div);
 		document.body.style.overflow = 'hidden';
 		
-		// Prevent scrolling in imagemap div from affecting the rest of the page
+		// Prevent scroll events inside imagemap div from scrolling the rest of the page
 		bodyClass.addEventListener('mousewheel', preventScroll);
 		
 		// Add click listeners to close popup/copy img code to clipboard when appropriate
@@ -179,7 +184,6 @@ var imagemap = function() {
 		
 		if (!searchResults) {
 			// Load new page after user has scrolled to bottom of existing page.
-			// Uses debouncing to improve performance.
 			imageGrid.addEventListener('scroll', debouncer);
 		}
 	};
@@ -212,24 +216,27 @@ var imagemap = function() {
 		var canvas = document.createElement('canvas');
 		var context = canvas.getContext('2d');
 		var img = new Image;
-		img.crossOrigin = "Anonymous";
+		
 		img.onload = function() {
 			canvas.height = this.height;
 			canvas.width = this.width;
-			context.drawImage(this, 0, 0);
-			var dataUri = canvas.toDataURL();
+			context.drawImage(this, 0, 0);	
+			
 			var imageData = {
-					'dataUri': dataUri, 
+					'dataUri': canvas.toDataURL(),
 					'src': src, 
 					'href': href
 			};
-			prepareCacheData(imageData);
+			
+			// We are now ready to cache image data
+			cacheImageData(imageData);
 		};
+		
 		// Use cors-anywhere server to deal with CORS restrictions
 		img.src = window.location.protocol + '//cors-for-chromell.herokuapp.com/' + src;
 	};
 	
-	var prepareCacheData = function(imageData) {
+	var cacheImageData = function(imageData) {
 		var cacheData = {};
 		var dataUri = imageData.dataUri;
 		var href = imageData.href;
@@ -256,11 +263,11 @@ var imagemap = function() {
 		}
 	};
 	
-	var debounceTimer = '';
+	var debouncerId = '';
 	
 	var debouncer = function() {
-		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(scrollHandler, 250);
+		clearTimeout(debouncerId);
+		debouncerId = setTimeout(scrollHandler, 250);
 	};
 	
 	var scrollHandler = function(imageGrid) {
@@ -336,10 +343,6 @@ var imagemap = function() {
 		document.body.style.overflow = 'initial';
 		bodyClass.removeEventListener('mousewheel', preventScroll);		
 		currentPage = 1;
-		// Save cache after closing popup - this prevents us from having to continually access the
-		// chrome.storage APIs after encoding each image (which would be terrible for performance)
-		
-		// TODO: Decide whether to copy this behaviour when working with IndexedDB
 	};
 	
 	var preventScroll = function(evt) {
