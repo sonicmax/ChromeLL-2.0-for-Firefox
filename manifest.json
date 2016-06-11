@@ -37,12 +37,14 @@
 	},
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
+		"css": ["src/css/dramalinks.css", "src/css/userinfopopup.css"],
     "js": ["src/js/messageList.js"],
 		"run_at" : "document_start"
   },
   {
     "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php*", "*://*.endoftheinter.net/search.php*"],
-    "js": ["src/js/topicList.js"],
+    "css": ["src/css/dramalinks.css", "src/css/userinfopopup.css"],
+		"js": ["src/js/topicList.js"],
 		"run_at" : "document_start"
   },	
   {
