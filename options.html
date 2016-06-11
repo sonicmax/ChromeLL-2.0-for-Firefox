@@ -80,6 +80,7 @@
 			height: 100px;
 			clear: both;
 			margin: 25px 0;
+			text-align: center;
 		}
 		
 		.tab {
@@ -161,7 +162,7 @@
 			top: 2em;
 			z-index: 99;
 			margin-left: 0;
-			width: 250px;
+			width: 500px;
 		}
 		
 		.tooltip:hover img {
@@ -313,9 +314,7 @@
 												Enabling this option will place the "Transload image" option in a slightly more convenient location.
 												<br><br>
 												You can access the hidden context menu items (options, message history, &amp; bookmarked tags) 
-												via the popup menu that appears when you click the ChromeLL icon on the navigation bar.
-												<br><br>
-												This does not affect menu items that appear when text has been highlighted.
+												via the popup menu that appears when you click on the ChromeLL icon in the navigation bar.
 											</span>
 										</a>													
 										</span>
@@ -339,12 +338,6 @@
 								<label>
 									<input type="checkbox" id="hide_dramalinks_topiclist" />
 									<span>Only show the dramalinks ticker on the topic list</span>
-								</label>
-							</div>
-							<div class="checkbox subbox">
-								<label>
-									<input type="checkbox" id="dramalinks_below_topic" />
-									<span>Put the dramalinks ticker below the topic title</span>
 								</label>
 							</div>
 						</div>
@@ -376,13 +369,11 @@
 								</label>
 							</div>									
 						</div>
-						<!-- ugh. <br> tag. -->
 						<br>						
 						<div class="checkbox">
 							<input type="checkbox" id="zebra_tables" />
 							<span>Zebra tables color <input type="text" id="zebra_tables_color" class="color" style="width: 70px" value="D7DEE8" /></span>
 						</div>
-						<!-- ugh. another <br> tag. -->
 						<br>
 						<div class="checkbox">
 							<input type="checkbox" id="error_check" />
@@ -493,8 +484,8 @@
 					<h3>Ignorator cleaner
 						<a class="tooltip" href="#">(?)
 							<span class="moreinfo">
-								This will check your ignorator list for username changes and replace the original list
-								with an updated version.
+								This will check your ignorator list for username changes using eti-stats and 
+								replace the original list with an updated version.
 							</span>
 						</a>	
 					</h3>
