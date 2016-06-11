@@ -992,28 +992,22 @@
 
 			misc.label_tc = function() {
 				var tcs = utils.tcs.getMessages();
-				if (!tcs) {
-					return;
-				}
-				var color = false;
-				if (CHROMELL.config.tc_label_color 
-						&& CHROMELL.config.tc_label_color != '') {
-					color = true;
-				}
-				for (var i = 0, len = tcs.length; i < len; i++) {
-					var tc = tcs[i];
-					var span = document.createElement('span');
-					var b = document.createElement('b');
-					var text = document.createTextNode('TC');
-					var divider = document.createTextNode(' | ');
-					b.appendChild(text);
-					if (color) {
-						b.style.color = '#' + CHROMELL.config.tc_label_color;
+				if (tcs) {															
+					for (var i = 0, len = tcs.length; i < len; i++) {
+						var tc = tcs[i];
+						var span = document.createElement('span');
+						var b = document.createElement('b');
+						var text = document.createTextNode('TC');
+						var divider = document.createTextNode(' | ');
+						b.appendChild(text);
+						if (CHROMELL.config.tc_label_color && CHROMELL.config.tc_label_color !== '') {
+							b.style.color = '#' + CHROMELL.config.tc_label_color;
+						}
+						span.appendChild(divider);
+						span.appendChild(b);			
+						username = tc.getElementsByTagName('a')[0];
+						username.outerHTML += span.innerHTML;	
 					}
-					span.appendChild(divider);
-					span.appendChild(b);			
-					username = tc.getElementsByTagName('a')[0];
-					username.outerHTML += span.innerHTML;
 				}
 			};
 				
