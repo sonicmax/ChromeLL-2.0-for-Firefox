@@ -67,15 +67,13 @@
 			var quickpostbody = {};
 			var misc = {};
 			
-			// These variables are set by init method
+			// Keep references to frequently used values
 			var infobarElement;
 			var quickpostElement;
-			var userbarElement;
 			var messageTops;
 			var firstTop;
 			var currentUser;
 			var currentID;
-			var styleSheet;
 			
 			var scrolling = false;
 			var replaying = false;
@@ -88,10 +86,7 @@
 			};		
 		
 			var init = function() {
-				var messages = document.getElementsByClassName('message-container');				
-				infobarElement = document.getElementById('u0_2');
-				userbarElement = document.getElementsByClassName('userbar')[0];
-				quickpostElement = document.getElementsByClassName('quickpost-body')[0];				
+				var userbarElement = document.getElementsByClassName('userbar')[0];			
 				var profileAnchor = userbarElement.getElementsByTagName('a')[0];
 				currentUser = getUsername(profileAnchor);
 				currentID = getUserId(profileAnchor);
@@ -102,6 +97,8 @@
 				}
 				
 				// Call methods which modify the infobar element
+				infobarElement = document.getElementById('u0_2');
+				quickpostElement = document.getElementsByClassName('quickpost-body')[0];	
 				for (var k in infobar) {
 					if (CHROMELL.config[k + pm]) {
 							infobar[k]();
@@ -112,6 +109,7 @@
 				utils.quote.addButtons();
 				
 				// Call message-container methods
+				var messages = document.getElementsByClassName('message-container');
 				for (let i = 0, len = messages.length; i < len; i++) {
 					var message = messages[i];
 					setActivePost(message);
@@ -157,6 +155,7 @@
 				addListeners();
 				appendScripts();
 				
+				// Observe message list for changes and pass them to livelinksHandler
 				livelinksObserver.observe(document.getElementById('u0_1'), {
 						subtree: true,
 						childList: true
