@@ -120,7 +120,7 @@
 				var observer = new MutationObserver(function() {
 					// we can assume that all mutations on 
 					// userbar_pms element are relevant
-					if (userbar_pms.style.display == 'none' && config.pms != 0) {
+					if (userbar_pms.style.display == 'none' && config.pms !== 0) {
 						// clear unread message count from config
 						config.pms = 0;
 						chrome.runtime.sendMessage({
