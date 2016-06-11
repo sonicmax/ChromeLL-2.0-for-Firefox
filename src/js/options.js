@@ -1,11 +1,14 @@
-var options = {
-	init: function() {
-		console.log('loading config');
+var options = (function() {
+	
+	var init = function() {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
+		
+		// Iterate over relevant DOM elements and insert config values
 		var checkboxes = $(":checkbox");
-		for ( var i in checkboxes) {
+		for (var i in checkboxes) {
 			checkboxes[i].checked = config[checkboxes[i].id];
 		}
+		
 		var textboxes = $(":text");
 		for (var i in textboxes) {
 			if (textboxes[i].name
@@ -21,55 +24,65 @@ var options = {
 				textboxes[i].value = config[textboxes[i].id];
 			}
 		}
-		for ( var j in config.user_highlight_data) {
+		
+		for (var j in config.user_highlight_data) {
 			document.getElementsByClassName('user_name')[document
 					.getElementsByClassName('user_name').length - 1].value = j;
 			document.getElementsByClassName('header_bg')[document
 					.getElementsByClassName('header_bg').length - 1].value = config.user_highlight_data[j].bg;
 			document.getElementsByClassName('header_color')[document
 					.getElementsByClassName('header_color').length - 1].value = config.user_highlight_data[j].color;
-			options.ui.addDiv.userHighlight();
+			ui.addDiv.userHighlight();
 		}
-		for ( var j in config.bookmark_data) {
+		for (var j in config.bookmark_data) {
 			document.getElementsByClassName('bookmark_name')[document
 					.getElementsByClassName('bookmark_name').length - 1].value = j;
 			document.getElementsByClassName('bookmark_tag')[document
 					.getElementsByClassName('bookmark_tag').length - 1].value = config.bookmark_data[j];
-			options.ui.addDiv.bookmarkName();
+			ui.addDiv.bookmarkName();
 		}
-		for ( var j in config.snippet_data) {
+		for (var j in config.snippet_data) {
 			document.getElementsByClassName('snippet_name')[document
 					.getElementsByClassName('snippet_name').length - 1].value = j;
 			document.getElementsByClassName('snippet')[document
 					.getElementsByClassName('snippet').length - 1].value = config.snippet_data[j];
-			options.ui.addDiv.snippetName();
+			ui.addDiv.snippetName();
 		}
-		for (var j = 0; config.keyword_highlight_data[j]; j++) {
-			document.getElementsByClassName('keyword')[document
-					.getElementsByClassName('keyword').length - 1].value = config.keyword_highlight_data[j].match;
-			document.getElementsByClassName('keyword_bg')[document
-					.getElementsByClassName('keyword_bg').length - 1].value = config.keyword_highlight_data[j].bg;
-			document.getElementsByClassName('keyword_color')[document
-					.getElementsByClassName('keyword_color').length - 1].value = config.keyword_highlight_data[j].color;
-			options.ui.addDiv.keywordHighlight();
+		
+		var keywordElements = document.getElementsByClassName('keyword');
+		var keywordBgElements = document.getElementsByClassName('keyword_bg');
+		var keywordColorElements = document.getElementsByClassName('keyword_color');
+		
+		for (var keyword in config.keyword_highlight_data) {
+			keywordElements[keywordElements.length - 1].value = keyword;
+			keywordBgElements[keywordBgElements.length - 1].value = config.keyword_highlight_data[keyword].bg;
+			keywordColorElements[keywordColorElements.length - 1].value = config.keyword_highlight_data[keyword].color;
+			
+			ui.addDiv.keywordHighlight();
 		}
-		for (var j = 0; config.tag_highlight_data[j]; j++) {
-			document.getElementsByClassName('tag')[document
-					.getElementsByClassName('tag').length - 1].value = config.tag_highlight_data[j].match;
-			document.getElementsByClassName('tag_bg')[document
-					.getElementsByClassName('tag_bg').length - 1].value = config.tag_highlight_data[j].bg;
-			document.getElementsByClassName('tag_color')[document
-					.getElementsByClassName('tag_color').length - 1].value = config.tag_highlight_data[j].color;
-			options.ui.addDiv.tagHighlight();
+		
+		var tagElements = document.getElementsByClassName('tag');
+		var tagBgElements = document.getElementsByClassName('tag_bg');
+		var tagColorElements = document.getElementsByClassName('tag_color');
+		
+		for (var tag in config.tag_highlight_data) {		
+			tagElements[tagElements.length - 1].value = tag;			
+			tagBgElements[tagBgElements.length - 1].value = config.tag_highlight_data[tag].bg;	
+			tagColorElements[tagColorElements.length - 1].value = config.tag_highlight_data[tag].color;
+					
+			ui.addDiv.tagHighlight();
 		}
-		for ( var j in config.post_template_data) {
+		
+		for (var j in config.post_template_data) {
 			document.getElementsByClassName('template_text')[document
 					.getElementsByClassName('template_text').length - 1].value = config.post_template_data[j].text;
 			document.getElementsByClassName('template_title')[document
 					.getElementsByClassName('template_title').length - 1].value = j;
-			options.ui.addDiv.postTemplate();
+			ui.addDiv.postTemplate();
 		}
+		
 		document.getElementById('clear_notify').value = config.clear_notify;
+		
 		document.addEventListener('keyup', function(evt) {
 			if (!evt.target.name)
 				return;
@@ -82,7 +95,7 @@ var options = {
 						empty = true;
 				}
 				if (!empty)
-					options.ui.addDiv.userHighlight();
+					ui.addDiv.userHighlight();
 			}
 
 			if (evt.target.name == "user_book_name") {
@@ -94,7 +107,7 @@ var options = {
 						empty = true;
 				}
 				if (!empty)
-					options.ui.addDiv.bookmarkName();
+					ui.addDiv.bookmarkName();
 			}
 			
 			if (evt.target.name == "user_snippet") {
@@ -106,7 +119,7 @@ var options = {
 						empty = true;
 				}
 				if (!empty)
-					options.ui.addDiv.snippetName();
+					ui.addDiv.snippetName();
 			}
 
 			if (evt.target.name == "post_template_title") {
@@ -118,7 +131,7 @@ var options = {
 						empty = true;
 				}
 				if (!empty)
-					options.ui.addDiv.postTemplate();
+					ui.addDiv.postTemplate();
 			}
 			if (evt.target.name == "keyword_highlight_keyword") {
 				var datas = document.getElementById('keyword_highlight')
@@ -129,7 +142,7 @@ var options = {
 						empty = true;
 				}
 				if (!empty)
-					options.ui.addDiv.keywordHighlight();
+					ui.addDiv.keywordHighlight();
 			}
 			if (evt.target.name == "tag_highlight_keyword") {
 				var datas = document.getElementById('tag_highlight')
@@ -140,7 +153,7 @@ var options = {
 						empty = true;
 				}
 				if (!empty)
-					options.ui.addDiv.tagHighlight();
+					ui.addDiv.tagHighlight();
 			}
 		});
 		
@@ -149,10 +162,10 @@ var options = {
 		document.getElementById('version').innerText = app.version;
 		
 		// Find 'Save config' button and set config blob as href
-		document.getElementById('downloadcfg').href = options.download();
+		document.getElementById('downloadcfg').href = getConfigBlob();
 		
 		// Show size of imagemap cache
-		options.imageCache.open(function() {
+		imageCache.open(function() {
 			
 			chrome.runtime.sendMessage({ need: 'getSizeInBytes' }, function(bytes) {
 				var megabytes = bytes / 1048576;
@@ -171,35 +184,23 @@ var options = {
 		}
 		
 		// Add listeners, populate remaining UI elements, etc
-		if (document.readyState == 'loading') {
-			
-			document.addEventListener('DOMContentLoaded', function() {
-				options.ui.hideUnusedMenus();
-				options.ui.setColorPicker();
-				options.listeners.menuVisibility();
-				options.listeners.click();
-				options.listeners.change();
-				options.listeners.menuButton();
-				options.ui.populateCacheTable();
-				options.ui.displayLBContent();
-				options.save();
-			});
-		} else {
-			options.ui.hideUnusedMenus();
-			options.ui.setColorPicker();
-			options.listeners.menuVisibility();
-			options.listeners.click();
-			options.listeners.change();
-			options.listeners.menuButton();
-			options.ui.populateCacheTable();
-			// disabled for 2.30 release			
-			// options.ui.displayUserscripts();
-			options.ui.displayLBContent();
-			options.save();
-		}		
-	},	
-	functions: {
-		cleanIgnorator: function() {
+		ui.hideUnusedMenus();
+		ui.setColorPicker();
+		
+		listeners.addUnusedOptionListener();
+		listeners.addClickListeners();
+		listeners.addChangeListener();
+		listeners.addLikeMenuListener();
+		
+		ui.populateCacheTable();
+		ui.displayLBContent();
+		
+		saveConfig();	
+	};
+	
+	var ignoratorCleaner = function() {
+		
+		var clean = function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			config.ignorator_backup = config.ignorator_list;
 			var cleanIgnorator = config.clean_ignorator;
@@ -240,195 +241,665 @@ var options = {
 			currentTime = new Date().getTime();
 			config.last_clean = currentTime;
 			localStorage['ChromeLL-Config'] = JSON.stringify(config);	
-		},
-		rateLimiter: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			if (config.ignorator_list == "") {
-				document.getElementById('ignorateinfo').innerText = "no ignorator list found..."
-				return;
-			}
-			var currentTime = new Date().getTime();
-			var timeLeft = currentTime - config.last_clean;
-			if (timeLeft > 86400000) {
-				document.getElementById('ignorateinfo').innerText = "running ignorator cleaner..."
-				options.functions.cleanIgnorator();
-			} else {
-				var totalseconds = ((86400000 - timeLeft) / 1000);
-				var hours = Math.floor(totalseconds / 3600);
-				var totalminutes = Math.floor(totalseconds / 60);
-				var minutes = totalminutes - (hours * 60);
-				var seconds = Math.floor(totalseconds - (totalminutes * 60))
-				if (hours === 1) {
-					hours = hours + " hour, ";
-				} else if (hours !== 1) {
-					hours = hours + " hours, ";
-				}
-				if (minutes === 1) {
-					minutes = minutes + " minute, and ";
-				} else if (minutes !== 1) {
-					minutes = minutes + " minutes, and ";
-				}
-				if (seconds === 1) {
-					seconds = seconds + " second.";
-				} else if (seconds !== 1) {
-					seconds = seconds + " seconds."
-				}	
-				document.getElementById('ignorateinfo').innerText = "try again in " + hours + minutes + seconds;
-			}
-		},
-		restoreIgnorator: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var backup = config.ignorator_backup;
-			if (confirm('Are you sure you want to restore last ignorator backup?')) {
-				if (backup == "") {
-					document.getElementById('ignorateinfo').innerHTML = "no backup found...";
+		};
+		
+		return {
+			rateLimitChecker: function() {
+				var config = JSON.parse(localStorage['ChromeLL-Config']);
+				
+				if (config.ignorator_list == "") {
+					document.getElementById('ignorateinfo').innerText = "no ignorator list found..."
 					return;
-				} else if (backup == config.ignorator_list) {
-					document.getElementById('ignorateinfo').innerHTML = "current list and backup are identical...";
-					return;
-				} else {
-					config.ignorator_list = backup;
-					localStorage['ChromeLL-Config'] = JSON.stringify(config);
-					document.getElementById('ignorateinfo').innerHTML = "backup restored - reloading page in 3 seconds...";
-					setTimeout(function () {
-						location.reload();
-					}, 3000);
 				}
+				
+				var currentTime = new Date().getTime();
+				var timeElapsed = currentTime - config.last_clean;
+				
+				if (timeElapsed > 86400000) {				
+					document.getElementById('ignorateinfo').innerText = "running ignorator cleaner..."
+					clean();	
+				}
+				
+				else {
+					var totalseconds = ((86400000 - timeElapsed) / 1000);
+					var hours = Math.floor(totalseconds / 3600);
+					var totalminutes = Math.floor(totalseconds / 60);
+					var minutes = totalminutes - (hours * 60);
+					var seconds = Math.floor(totalseconds - (totalminutes * 60))
+					
+					if (hours === 1) {
+						hours = hours + " hour, ";
+					} 
+					else if (hours !== 1) {
+						hours = hours + " hours, ";
+					}
+					
+					if (minutes === 1) {
+						minutes = minutes + " minute, and ";
+					} 
+					else if (minutes !== 1) {
+						minutes = minutes + " minutes, and ";
+					}
+					
+					if (seconds === 1) {
+						seconds = seconds + " second.";
+					} 
+					else if (seconds !== 1) {
+						seconds = seconds + " seconds."
+					}
+					
+					document.getElementById('ignorateinfo').innerText = "try again in " + hours + minutes + seconds;
+				}
+			},
+			
+			restoreBackup: function() {
+				var config = JSON.parse(localStorage['ChromeLL-Config']);
+				var backup = config.ignorator_backup;
+				
+				if (confirm('Are you sure you want to restore last ignorator backup?')) {
+					
+					if (backup == "") {
+						document.getElementById('ignorateinfo').innerHTML = "no backup found...";
+						return;
+					} 
+					
+					else if (backup == config.ignorator_list) {
+						document.getElementById('ignorateinfo').innerHTML = "current list and backup are identical...";
+						return;
+					} 
+					
+					else {
+						config.ignorator_list = backup;
+						localStorage['ChromeLL-Config'] = JSON.stringify(config);
+						document.getElementById('ignorateinfo').innerHTML = "backup restored - reloading page in 3 seconds...";
+						setTimeout(function () {
+							location.reload();
+						}, 3000);
+					}
+				}
+			}			
+			
+		};
+		
+	}();
+		
+	var clickHandlers = function() {
+		
+		return {
+			ignorator: function() {
+				var ignorator = document.getElementById('ignorator');
+				document.getElementById('ignorator_messagelist').checked = ignorator.checked;
+				document.getElementById('ignorator_topiclist').checked = ignorator.checked;
+				saveConfig();
+			},
+			
+			userHighlight: function() {
+				var highlight = document.getElementById('enable_user_highlight');
+				document.getElementById('userhl_messagelist').checked = highlight.checked;
+				document.getElementById('userhl_topiclist').checked = highlight.checked;
+				saveConfig();
+			},
+			
+			configDownload: function() {
+				document.getElementById('downloadcfg').click();
+			},
+			
+			configRestore: function() {
+				document.getElementById('restorecfg').click();
+			}			
+		};
+		
+	}();
+	
+	var listeners = function() {
+		
+		return {
+			addClickListeners: function() {
+				// key-value pairs contain element id and method for event listener
+				var elementsToCheck = {
+					'ignorator': clickHandlers.ignorator,
+					'enable_user_highlight': clickHandlers.userHighlight,
+					'loadcfg': restoreConfigFromText,
+					'resetcfg': resetConfig,
+					'forceignorator': ignoratorCleaner.rateLimitChecker,
+					'restoreignorator': ignoratorCleaner.restoreBackup,
+					'downloadbutton': clickHandlers.configDownload,
+					'restorebutton': clickHandlers.configRestore,
+					'old_cfg_options': showConfigInTextarea,
+					'cache_empty': imageCache.clear,
+					'like_new': customLikeMenu.newEntry,
+					'like_save':  customLikeMenu.saveEntry
+				};
+				
+				document.addEventListener('click', function(evt) {
+					var id = evt.target.id;
+					
+					if (elementsToCheck[id]) {
+						var method = elementsToCheck[id];
+						method.call();
+						if (evt.target.tagName !== 'INPUT') {
+							evt.preventDefault();
+						}
+					}
+					
+					if (evt.target.parentNode.id.match(/_list/) && evt.target.className != 'delete') {
+						var parent = evt.target.parentNode.id;
+						var type = evt.target.id.replace(/[0-9]/g, '');
+						var next = evt.target;
+						var last = document.getElementsByClassName('active_' + type)[0];
+						if (last) {
+							last.className = '';
+						}
+						next.className = 'active_' + type;
+						customLikeMenu.switchActive(evt.target.id);
+						evt.preventDefault();
+					}
+					
+					else if (evt.target.id == 'delete_custom') {
+						customLikeMenu.deleteEntry(evt.target.parentNode.id);
+						evt.preventDefault();
+					}
+				});
+			},
+			
+			addChangeListener: function() {
+				var restoreButton = document.getElementById('restorecfg');
+				var cacheTable = document.getElementById('cache_contents');
+				var cacheMenu = document.getElementById('cache_sort');
+				var keyupTimer, cacheTimer, searchTimer;		
+
+				restoreButton.addEventListener('change', function(evt) {
+					restoreFromText(evt);
+				});	
+				
+				cacheTable.addEventListener('keyup', function(evt) {
+					var newFilename = evt.target.value;
+					var id = evt.target.id;
+					
+					if (id !== 'imagemap_search') {
+						
+						if (id && newFilename) {
+							imageCache.data[id] = newFilename;
+						}
+					}
+					
+					clearTimeout(cacheTimer);
+					cacheTimer = setTimeout(imageCache.save, 500);				
+				});
+				
+				cacheMenu.addEventListener('change', function(evt) {
+					if (evt.target.value) {
+						imageCache.sort(evt.target.value);		
+					}
+				});
+				
+				// listen for changes to checkboxes/textareas/etc
+				document.addEventListener('change', saveConfig);
+				
+				// use debouncing to prevent script from calling event handler after each keystroke
+				document.addEventListener('keyup', function(evt) {
+					if (evt.target.id == 'imagemap_search') {
+						clearTimeout(searchTimer);
+						searchTimer = setTimeout(imageCache.search, 500);
+					}
+					else {
+						clearTimeout(keyupTimer);
+						keyupTimer = setTimeout(saveConfig, 500);
+					}
+				});			
+			},
+			
+			addUnusedOptionListener: function() {
+				var hiddenOptions = ['history_menubar', 'context_menu', 'dramalinks', 'user_info_popup'];
+				for (var i = 0, len = hiddenOptions.length; i < len; i++) {
+					// add listener to each checkbox
+					var element = document.getElementById(hiddenOptions[i]);
+					element.addEventListener('change', ui.hideUnusedMenus);
+				}
+			},
+			
+			addLikeMenuListener: function() {
+				var likeMenu = document.getElementById('like_menu');
+
+					likeMenu.addEventListener('click', function(evt) {
+						
+						if (evt.target.id == 'like_menu') {
+							customLikeMenu.open();
+						}
+						
+					});
+					
+					likeMenu.addEventListener('mouseleave', function() {
+						ui.closeMenu();
+					});				
+			}			
+		};
+		
+	}();	
+	
+	var ui = function() {
+
+		var hideUnusedMenus = function() {
+			var hiddenOptions = {'history_menubar' : 'history_options', 
+					'context_menu' : 'context_options', 
+					'dramalinks' : 'dramalinks_options', 
+					'user_info_popup' : 'doubleclick_options'};
+			for (var key in hiddenOptions) {
+				var box = document.getElementById(key);
+				var menu = document.getElementById(hiddenOptions[key]);		
+				// only display hidden menus if checkbox is ticked
+				box.checked ? menu.style.display = 'initial' : menu.style.display = 'none';
 			}
+		};
+		
+		var closeMenu = function() {
+			var menu = document.getElementById('menu_items');
+			if (menu) {
+				menu.remove();
+			}			
+		};
+		
+		var setColorPicker = function() {
+			$('.color').ColorPicker({
+				onChange : function(hsb, hex, rgb, el) {
+					el.value = hex;
+					saveConfig();
+				},
+				onSubmit : function(hsb, hex, rgb, el) {
+					$(el).val(hex);
+					$(el).ColorPickerHide();
+					saveConfig();
+				},
+				livePreview : true,
+				color : "",
+				onBeforeShow : function() {
+					$(this).ColorPickerSetColor(this.value);
+				}
+			});
+		};
+		
+		var populateCacheTable = function(sortedImages) {
+			var table = document.getElementById('cache_contents');
+			var loadingImage = document.getElementById('loading_img');
+						
+			if (sortedImages && sortedImages !== 'default') {
+				
+				// Remove existing table rows
+				var nodes = table.childNodes;
+				for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
+					var child = nodes[i];
+					table.removeChild(child);
+				}
+				
+				// Create new table row for each result
+				for (var i in sortedImages) {
+					ui.createTableRow(sortedImages[i]);					
+				}
+				
+				// Display results and hide spinner
+				loadingImage.style.display = "none";
+				table.style.display = "block";
+			}
+			
 			else {
-				return;
-			}
-		},
-		ignoratorClick: function() {
-			var ignorator = document.getElementById('ignorator');
-			document.getElementById('ignorator_messagelist').checked = ignorator.checked;
-			document.getElementById('ignorator_topiclist').checked = ignorator.checked;
-			options.save();
-		},
-		highlightClick: function() {
-			var highlight = document.getElementById('enable_user_highlight');
-			document.getElementById('userhl_messagelist').checked = highlight.checked;
-			document.getElementById('userhl_topiclist').checked = highlight.checked;
-			options.save();
-		},
-		downloadClick: function() {
-			document.getElementById('downloadcfg').click();
-		},
-		restoreClick: function() {
-			document.getElementById('restorecfg').click();
-		},		
-		showTextarea: function() {
-			document.getElementById('old_cfg_options').style.display = "none";
-			document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
-			options.show();
-		},		
-		processConfig: function(textfile) {
-			var base64;
-			try {
-				if (typeof textfile === 'string') {
-					newCfg = JSON.parse(textfile);
-				}
-				else if (document.getElementById('cfg_ta').value != '') {
-					newCfg = JSON.parse(document.getElementById('cfg_ta').value);
-				}		
-				var myCfg = JSON.parse(localStorage['ChromeLL-Config']);
-				for (var i in newCfg) {
-					myCfg[i] = newCfg[i];				
-				}
-				myCfg.last_saved = new Date().getTime();
-				localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
-			} catch (e) {
-				console.log('This doesnt look like a config', e);
-				base64 = options.functions.decodeBase64(document.getElementById('cfg_ta').value);
-				options.restoreV1(base64);
-			}
-			location.reload();
-		},
-		resetConfig: function() {
-			var reset = confirm("Are you sure you want to reset your settings?");
-			if (reset === true) {
-				options.getDefault(function(defaultCfg) {
-					localStorage['ChromeLL-Config'] = defaultCfg;
-					location.reload();
+				imageCache.open(function() {
+					// TODO: Get all keys, split into pages and display 1 page at a time (with option to show all)
+					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {
+						var table = document.getElementById('cache_contents');
+						var loadingImage = document.getElementById('loading_img');
+						
+						if (!images) {
+							var empty = document.createElement('tr');
+							empty.innerHTML = 'Empty';
+							table.appendChild(empty);
+							return;
+						}
+						
+						else {
+							if (sortedImages == 'default') {
+								table.style.display = "none";
+								loadingImage.style.display = "block";								
+								var table = document.getElementById('cache_contents');							
+								var nodes = table.childNodes;
+								for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
+									var child = nodes[i];
+									table.removeChild(child);
+								}
+							}
+							
+							for (var i in images) {
+								ui.createTableRow(images[i]);
+							}
+							
+							loadingImage.style.display = "none";
+							table.style.display = "block";
+						}
+					});
 				});
 			}
-			else {
-				return;
+		};
+
+		var createTableRow = function(result) {
+			if (result) {
+				var table = document.getElementById('cache_contents');			
+				var tableRow = document.createElement('tr');				
+				var filenameData = document.createElement('td');
+				var urlData = document.createElement('td');								
+				
+				if (result.fullsize.length > 100) {
+					var url = result.fullsize.substring(0, 99) + '...';
+				}
+				else {
+					var url = result.fullsize;
+				}
+				
+				var input = document.createElement('input');
+				input.type = 'text';
+				input.className = 'cache_filenames';
+				input.value = result.filename;
+				input.style.width = '400px';
+				filenameData.appendChild(input);
+						
+				var anchor = document.createElement('a');
+				anchor.className = 'cache_url';
+				anchor.title = result.fullsize;
+				anchor.href = result.data;
+				anchor.innerHTML = url;
+				urlData.appendChild(anchor);
+				
+				table.appendChild(tableRow);
+				tableRow.appendChild(filenameData);
+				tableRow.appendChild(urlData);
 			}
-		},	
-		decodeBase64: function() {
-			var Base64 = {
-				_keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
-				decode: function(input) {
-					var output = "";
-					var chr1, chr2, chr3;
-					var enc1, enc2, enc3, enc4;
-					var i = 0;
-
-					input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-
-					while (i < input.length) {
-
-						enc1 = this._keyStr.indexOf(input.charAt(i++));
-						enc2 = this._keyStr.indexOf(input.charAt(i++));
-						enc3 = this._keyStr.indexOf(input.charAt(i++));
-						enc4 = this._keyStr.indexOf(input.charAt(i++));
-
-						chr1 = (enc1 << 2) | (enc2 >> 4);
-						chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-						chr3 = ((enc3 & 3) << 6) | enc4;
-
-						output = output + String.fromCharCode(chr1);
-
-						if (enc3 != 64) {
-							output = output + String.fromCharCode(chr2);
-						}
-						if (enc4 != 64) {
-							output = output + String.fromCharCode(chr3);
-						}
-
-					}
-
-					output = Base64._utf8_decode(output);
-
-					return output;
-
-				},
-				_utf8_decode: function(utftext) {
-					var string = "";
-					var i = 0;
-					var c = c1 = c2 = 0;
-
-					while (i < utftext.length) {
-
-						c = utftext.charCodeAt(i);
-
-						if (c < 128) {
-							string += String.fromCharCode(c);
-							i++;
-						} else if ((c > 191) && (c < 224)) {
-							c2 = utftext.charCodeAt(i + 1);
-							string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
-							i += 2;
-						} else {
-							c2 = utftext.charCodeAt(i + 1);
-							c3 = utftext.charCodeAt(i + 2);
-							string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
-							i += 3;
-						}
-
-					}
-
-					return string;
+			
+			else {
+				table.appendChild(document.createElement('tr'));
+				tableRow.appendChild(document.createElement('td'));
+				tableRow.appendChild(document.createElement('td'));				
+			}
+		};
+		
+		var displayLBContent = function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var likeData = config.custom_like_data;
+			var textarea = document.getElementById('like_ta');
+			var likeList = document.getElementById('like_list');
+			var mostRecent = {
+					'time': 0,
+					'id': ''
+			};
+			
+			for (var i in likeData) {
+				var like = likeData[i];
+				
+				if (like.last_saved > mostRecent.time) {
+					mostRecent.time = like.last_saved;
+					mostRecent.id = i;
+				}
+				
+				var anchor = document.createElement('a');
+				var close = document.createElement('a');
+				var linebreak = document.createElement('br');		
+				anchor.href = '#';
+				anchor.className = 'inactive_like';
+				anchor.id = i;
+				anchor.innerText = like.name;
+				close.style.cssFloat = "right";
+				close.style.fontSize = "18px";
+				close.href = '#';
+				close.style.textDecoration = "none";
+				close.id = "delete_custom";
+				close.innerHTML = '&#10006;';
+				likeList.appendChild(anchor);
+				anchor.appendChild(close);
+				likeList.appendChild(linebreak);
+			}
+			
+			if (document.getElementById(mostRecent.id)) {			
+				document.getElementById(mostRecent.id).className = 'active_like';
+				textarea.value = config.custom_like_data[mostRecent.id].contents;	
+			}
+			
+		};
+		
+		var addDiv = {
+			userHighlight: function() {
+				var ins = document.getElementById('user_highlight').getElementsByClassName(
+						'user_name')[0].parentNode.parentNode.cloneNode(true);
+				ins.className = "user_highlight_data";
+				ins.style.display = "block";
+				document.getElementById('user_highlight').insertBefore(ins, null);
+				ui.setColorPicker();
+			},
+			
+			bookmarkName: function() {
+				var ins = document.getElementById('bookmarked_tags').getElementsByClassName(
+						'bookmark_name')[0].parentNode.parentNode.cloneNode(true);
+				ins.className = "bookmark_data";
+				ins.style.display = "block";
+				document.getElementById('bookmarked_tags').insertBefore(ins, null);		
+			},
+			
+			snippetName: function() {
+				var ins = document.getElementById('snippets').getElementsByClassName(
+						'snippet_name')[0].parentNode.parentNode.cloneNode(true);
+				ins.className = "snippet_data";
+				ins.style.display = "block";
+				document.getElementById('snippets').insertBefore(ins, null);		
+			},
+			
+			keywordHighlight: function() {
+				var ins = document.getElementById('keyword_highlight')
+						.getElementsByClassName('keyword')[0].parentNode.parentNode
+						.cloneNode(true);
+				ins.className = "keyword_highlight_data";
+				ins.style.display = "block";
+				document.getElementById('keyword_highlight').insertBefore(ins, null);
+				ui.setColorPicker();
+			},
+			
+			tagHighlight: function() {
+				var ins = document.getElementById('tag_highlight').getElementsByClassName(
+						'tag')[0].parentNode.parentNode.cloneNode(true);
+				ins.className = "tag_highlight_data";
+				ins.style.display = "block";
+				document.getElementById('tag_highlight').insertBefore(ins, null);
+				ui.setColorPicker();	
+			},
+			
+			postTemplate: function() {
+				var ins = document.getElementById('post_template').getElementsByClassName(
+						'template_text')[0].parentNode.parentNode.cloneNode(true);
+				ins.className = "post_template_data";
+				ins.style.display = "block";
+				document.getElementById('post_template').insertBefore(ins, null);	
+			}
+		};
+	
+		return {
+			hideUnusedMenus: hideUnusedMenus,
+			closeMenu: closeMenu,
+			setColorPicker: setColorPicker,
+			populateCacheTable: populateCacheTable,
+			createTableRow: createTableRow,
+			displayLBContent: displayLBContent,
+			addDiv: addDiv
+		};
+		
+	}();
+	
+	var customLikeMenu = function() {
+		
+		var newEntry = function() {
+			ui.closeMenu();
+			var textarea = document.getElementById('like_ta');
+			var activeLike = document.getElementsByClassName('active_like')[0];
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var likeData = config.custom_like_data;
+			var oldID = activeLike.id.match(/[0-9]+/)[0];			
+			var highest = 1;
+			for (var i in likeData) {
+				var current = parseInt(i.match(/[0-9]+/)[0], 10);
+				if (current > highest) {
+					highest = current;
 				}
 			}
-			return JSON.parse(Base64.decode(config));
-		},
-		
-		sortCache: function(sortType) {
+			var newNumber = highest + 1;
+			var newID = 'like' + newNumber;
 			
+			config.custom_like_data[newID] = {};
+			config.custom_like_data[newID].name = 'Untitled ' + newNumber;
+			config.custom_like_data[newID].contents = '';			
+			
+			var likeList = document.getElementById('like_list');
+			var anchor = document.createElement('a');
+			var linebreak = document.createElement('br');
+			anchor.href = '#';
+			anchor.id = newID;
+			anchor.className = 'active_like';
+			anchor.innerHTML = 'Untitled ' + newNumber;
+			var close = document.createElement('a');
+			close.style.cssFloat = "right";
+			close.style.fontSize = "18px";
+			close.href = '#';
+			close.style.textDecoration = "none";
+			close.id = "delete_custom";
+			close.innerHTML = '&#10006;';
+			anchor.appendChild(close);
+			likeList.appendChild(anchor);
+			likeList.appendChild(linebreak);
+			activeLike.className = '';
+			textarea.value = '';
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
+		};
+		
+		var openEntry = function() {
+			var button = document.getElementById('like_menu');
+			var menuElement = document.createElement('span');				
+			var items = ['New', 'Save'];
+			menuElement.id = 'menu_items';	
+			menuElement.style.position = 'absolute';
+			menuElement.style.overflow = 'auto';
+			menuElement.style.padding = '3px 3px';
+			menuElement.style.borderStyle = 'solid';
+			menuElement.style.borderWidth = '2px';
+			menuElement.style.borderRadius = '3px';
+			
+			for (var i = 0, len = items.length; i < len; i++) {
+				var item = items[i];
+				populateMenu.call(this, item, i, menuElement);
+			}
+			
+			button.appendChild(menuElement);
+		
+			function populateMenu(item, index, menuElement) {
+				var menuSpan = document.createElement('span');
+				var menuItem = document.createElement('anchor');
+				var lineBreak = document.createElement('br');
+				menuSpan.className = 'unhigh_span';
+				menuItem.innerHTML = '&nbsp' + item + '&nbsp';
+				menuItem.href = '#';
+				menuItem.className = 'like_menu_items';
+				menuItem.id = 'like_' + item.toLowerCase();
+				menuSpan.appendChild(menuItem);
+				menuElement.appendChild(menuSpan);
+				menuElement.appendChild(lineBreak);
+			}
+		};
+		
+		var saveEntry = function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			ui.closeMenu();		
+			var activeLike = document.getElementsByClassName('active_like')[0];
+			var contents = document.getElementById('like_ta').value;			
+			var name = activeLike.firstChild.innerText;
+			var id = activeLike.id;
+			var newName = prompt("Rename?", name);
+			if (!newName) {
+				newName = name;
+			}
+			activeLike.firstChild.nodeValue = newName;
+			config.custom_like_data[id] = {};
+			config.custom_like_data[id].name = newName;
+			config.custom_like_data[id].contents = contents;
+			config.custom_like_data[id].last_saved = Date.now();
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);
+		};		
+		
+		var deleteEntry = function(id) {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var type = id.replace(/[0-9]/g, '');
+			var active = document.getElementsByClassName('active_like').length;
+			var inactive = document.getElementsByClassName('inactive_like').length;
+
+			delete config.custom_like_data[id];
+			cleanup(config.custom_like_data);
+				
+			var nodeToRemove = document.getElementById(id);
+			
+			if (nodeToRemove.className == 'active_like') {
+				var nextActive = document.getElementsByClassName('inactive_like')[0];
+				nextActive.className = 'active_like';
+				nodeToRemove.className = '';
+			}
+			
+			var closeButton = nodeToRemove.childNodes[0];
+			nodeToRemove.remove();
+			closeButton.remove();
+			
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);
+			
+			function cleanup(data) {
+				// rebuild object so that IDs are always in consecutive numeric order
+				// (type1, type2, type3, etc)
+				var newIndex = 1;
+				for (var i in data) {
+					data[type + newIndex] = data[i];
+					if (i !== type + newIndex) {
+						delete data[i];
+					}
+				}
+			}
+		};	
+				
+		var switchActive = function(ID) {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var type = ID.replace(/[0-9]/g, '');
+			var textarea = document.getElementById(type + '_ta');
+			var data;
+
+			if (type == 'like') {
+				data = config.custom_like_data[ID].contents;
+				textarea.value = data;
+			}
+		};
+		
+		return {
+			open: open,
+			deleteEntry: deleteEntry,
+			switchActive: switchActive
+		};
+		
+	}();	
+	
+	var imageCache = function() {
+				
+		var save = function() {
+			// TODO: Get filename changes and replace old db entry
+		};
+		
+		var open = function(callback) {
+			chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);
+		};
+		
+		var clear = function() {
+						
+		};
+		
+		var sort = function(sortType) {
+		
 			if (sortType === 'default') {
-				options.ui.populateCacheTable(sortType);
+				ui.populateCacheTable(sortType);
 			}
 			
 			else {
@@ -495,568 +966,65 @@ var options = {
 									// Check that src hasn't been pushed to results array before - this ensures that
 									// duplicate filenames aren't assigned the same src value
 									results.push(image);
-									duplicateCheck[src] = {"filename": sortedFilename, "index": i};
+									duplicateCheck[src] = { "filename": sortedFilename, "index": i };
 								}
 							}
 						}
 					}
 					
 					// Now we can populate database table using sorted array as a reference
-					options.ui.populateCacheTable(results);
+					ui.populateCacheTable(results);
 					
 				});
 			}
-		},
+		};
 		
-		searchCache: function() {
+		var search = function() {			
+			var table = document.getElementById('cache_contents');
+			var loadingImage = document.getElementById('loading_img');				
 			var query = document.getElementById('imagemap_search').value;
-			var results = [];
-			var duplicateCheck = {};
 			
 			if (/\S/.test(query)) {
+				table.style.display = "none";
+				loadingImage.style.display = "block";				
+				
 				var request = {
 						need: 'searchDatabase',
 						query: query			
 				};
 				
 				chrome.runtime.sendMessage(request, function(results) {
-						options.ui.populateCacheTable(results);			
+						ui.populateCacheTable(results);			
 				});
 			}
 			
 			else {
-				options.ui.populateCacheTable('default');
+				ui.populateCacheTable('default');
 			}
-		},
+		};
 		
-		newLike: function() {
-			options.ui.closeMenu();
-			var textarea = document.getElementById('like_ta');
-			var activeLike = document.getElementsByClassName('active_like')[0];
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var likeData = config.custom_like_data;
-			var oldID = activeLike.id.match(/[0-9]+/)[0];			
-			var highest = 1;
-			for (var i in likeData) {
-				var current = parseInt(i.match(/[0-9]+/)[0], 10);
-				if (current > highest) {
-					highest = current;
-				}
-			}
-			var newNumber = highest + 1;
-			var newID = 'like' + newNumber;
-			
-			config.custom_like_data[newID] = {};
-			config.custom_like_data[newID].name = 'Untitled ' + newNumber;
-			config.custom_like_data[newID].contents = '';			
-			
-			var likeList = document.getElementById('like_list');
-			var anchor = document.createElement('a');
-			var linebreak = document.createElement('br');
-			anchor.href = '#';
-			anchor.id = newID;
-			anchor.className = 'active_like';
-			anchor.innerHTML = 'Untitled ' + newNumber;
-			var close = document.createElement('a');
-			close.style.cssFloat = "right";
-			close.style.fontSize = "18px";
-			close.href = '#';
-			close.style.textDecoration = "none";
-			close.id = "delete_custom";
-			close.innerHTML = '&#10006;';
-			anchor.appendChild(close);
-			likeList.appendChild(anchor);
-			likeList.appendChild(linebreak);
-			activeLike.className = '';
-			textarea.value = '';
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
-		},	
-		saveLike: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			options.ui.closeMenu();		
-			var activeLike = document.getElementsByClassName('active_like')[0];
-			var contents = document.getElementById('like_ta').value;			
-			var name = activeLike.firstChild.innerText;
-			var id = activeLike.id;
-			var newName = prompt("Rename?", name);
-			if (!newName) {
-				newName = name;
-			}
-			activeLike.firstChild.nodeValue = newName;
-			config.custom_like_data[id] = {};
-			config.custom_like_data[id].name = newName;
-			config.custom_like_data[id].contents = contents;
-			config.custom_like_data[id].last_saved = Date.now();
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);
-		},
-		deleteFromConfig: function(ID) {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var type = ID.replace(/[0-9]/g, '');
-			// TODO - refactor this function
-			var lastKeyInObject;
-			var active = document.getElementsByClassName('active_' + type).length;
-			var inactive = document.getElementsByClassName('inactive_' + type).length;
-			if (type == 'like') {
-				delete config.custom_like_data[ID];
-				cleanup(config.custom_like_data);
-			}
-			else if (type == 'script') {
-				delete config.userscript_data[ID];
-				cleanup(config.userscript_data);
-			}
-			var nodeToRemove = document.getElementById(ID);
-			if (nodeToRemove.className == 'active_' + type) {
-				var nextActive = document.getElementsByClassName('inactive_' + type)[0];
-				nextActive.className = 'active_' + type;
-				nodeToRemove.className = '';
-			}
-			var closeButton = nodeToRemove.childNodes[0];
-			nodeToRemove.remove();
-			closeButton.remove();
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);
-			
-			function cleanup(data) {
-				// rebuild object so that IDs are always in consecutive numeric order
-				// (type1, type2, type3, etc)
-				var newIndex = 1;
-				for (var i in data) {
-					data[type + newIndex] = data[i];
-					if (i !== type + newIndex) {
-						delete data[i];
-					}
-				}
-			}
-		}
-	},
-	listeners : {
-		click: function() {
-			// key-value pairs contain element id and function for event handler
-			var elementsToCheck = {
-				'ignorator': 'ignoratorClick',
-				'enable_user_highlight': 'highlightClick',
-				'loadcfg': 'processConfig',
-				'resetcfg': 'resetConfig',
-				'forceignorator': 'cleanIgnorator',
-				'restoreignorator': 'restoreIgnorator',
-				'downloadbutton': 'downloadClick',
-				'restorebutton': 'restoreClick',
-				'old_cfg_options': 'showTextarea',
-				'cache_empty': 'emptyCache',
-				'script_new': 'newScript',
-				'script_save':  'saveScript',
-				'like_new': 'newLike',
-				'like_save':  'saveLike'
-			};
-			
-			document.addEventListener('click', function(evt) {
-				var elementID = evt.target.id;
-				if (elementsToCheck[elementID]) {
-					var functionName = elementsToCheck[elementID];
-					options.functions[functionName]();
-					if (evt.target.tagName !== 'INPUT') {
-						evt.preventDefault();
-					}
-				}
-				
-				if (evt.target.parentNode.id.match(/_list/) && evt.target.className != 'delete') {
-					var parent = evt.target.parentNode.id;
-					var type = evt.target.id.replace(/[0-9]/g, '');
-					var next = evt.target;
-					var last = document.getElementsByClassName('active_' + type)[0];
-					if (last) {
-						last.className = '';
-					}
-					next.className = 'active_' + type;
-					options.ui.switchActive(evt.target.id);
-					evt.preventDefault();
-				}
-				
-				else if (evt.target.id == 'delete_custom') {
-					options.functions.deleteFromConfig(evt.target.parentNode.id);
-					evt.preventDefault();
-				}
-			});
-		},
-		change: function() {
-			var restoreButton = document.getElementById('restorecfg');
-			var cacheTable = document.getElementById('cache_contents');
-			var cacheMenu = document.getElementById('cache_sort');
-			var scriptArea = document.getElementById('script_ta');
-			var keyupTimer, cacheTimer, searchTimer;		
-
-			restoreButton.addEventListener('change', function(evt) {
-				options.restoreFromText(evt);
-			});	
-			
-			cacheTable.addEventListener('keyup', function(evt) {
-				var newFilename = evt.target.value;
-				var src = evt.target.id;
-				if (src && newFilename) {					
-					options.imageCache.data[src] = newFilename;
-				}
-				clearTimeout(cacheTimer);
-				cacheTimer = setTimeout(options.imageCache.save, 500);				
-			});
-			
-			cacheMenu.addEventListener('change', function(evt) {
-				if (evt.target.value) {
-					options.functions.sortCache(evt.target.value);		
-				}
-			});
-			
-			/*scriptArea.addEventListener('keydown', function(evt) {
-				if (evt.keyIdentifier == 'U+0009') {	
-					var caret = options.userscripts.findCaret(scriptArea);
-					options.userscripts.tabHandler(scriptArea.value, caret);
-					evt.preventDefault();
-				}
-			});*/
-			
-			// listen for changes to checkboxes/textareas/etc
-			document.addEventListener('change', options.save);
-			
-			// use debouncing to prevent script from calling event handler after each keystroke
-			document.addEventListener('keyup', function(evt) {
-				if (evt.target.id == 'imagemap_search') {
-					clearTimeout(searchTimer);
-					searchTimer = setTimeout(options.functions.searchCache, 500);
-				}
-				else {
-					clearTimeout(keyupTimer);
-					keyupTimer = setTimeout(options.save, 500);
-				}
-			});			
-		},
-		menuVisibility: function() {
-			var hiddenOptions = ['history_menubar', 'context_menu', 'dramalinks', 'user_info_popup'];
-			for (var i = 0, len = hiddenOptions.length; i < len; i++) {
-				// add listener to each checkbox
-				var element = document.getElementById(hiddenOptions[i]);
-				element.addEventListener('change', options.ui.hideUnusedMenus);
-			}
-		},
-		menuButton: function() {
-			var elements = [];
-			// disabled for 2.30 release			
-			// elements.push(document.getElementById('script_menu'));
-			elements.push(document.getElementById('like_menu'));
-			
-			for (var i = 0, len = elements.length; i < len; i++) {
-				var element = elements[i];
-				
-				element.addEventListener('click', function(evt) {
-					if (evt.target.id == 'script_menu') {
-						options.userscriptsMenu.open();
-					}
-					else if (evt.target.id == 'like_menu') {
-						options.customLikeMenu.open();
-					}
-				});
-				
-				element.addEventListener('mouseleave', function() {
-					options.ui.closeMenu();
-				});
-			}
-		}
-	},
-	ui: {
-		hideUnusedMenus: function() {
-			var hiddenOptions = {'history_menubar' : 'history_options', 
-					'context_menu' : 'context_options', 
-					'dramalinks' : 'dramalinks_options', 
-					'user_info_popup' : 'doubleclick_options'};
-			for (var key in hiddenOptions) {
-				var box = document.getElementById(key);
-				var menu = document.getElementById(hiddenOptions[key]);		
-				// only display hidden menus if checkbox is ticked
-				box.checked ? menu.style.display = 'initial' : menu.style.display = 'none';
-			}
-		},
-		closeMenu: function() {
-			var menu = document.getElementById('menu_items');
-			if (menu) {
-				menu.remove();
-			}			
-		},		
-		setColorPicker: function() {
-			$('.color').ColorPicker({
-				onChange : function(hsb, hex, rgb, el) {
-					el.value = hex;
-					options.save();
-				},
-				onSubmit : function(hsb, hex, rgb, el) {
-					$(el).val(hex);
-					$(el).ColorPickerHide();
-					options.save();
-				},
-				livePreview : true,
-				color : "",
-				onBeforeShow : function() {
-					$(this).ColorPickerSetColor(this.value);
-				}
-			});
-		},
-		populateCacheTable: function(sortedCache) {		
-			var table = document.getElementById('cache_contents');
-			var loadingImage = document.getElementById('loading_img');
-						
-			if (sortedCache && sortedCache !== 'default') {
-				
-				table.style.display = "none";
-				loadingImage.style.display = "block";
-				clearTable();
-				
-				options.imageCache.open(function() {
-					for (let i = 0, len = sortedCache.length; i < len; i++) {						
-						options.ui.createTableRow(sortedCache[i]);					
-					}
-					
-					loadingImage.style.display = "none";
-					table.style.display = "block";
-
-				});
-			}
-			
-			else {
-				options.imageCache.open(function() {
-					// TODO: Get all keys, split into pages and display 1 page at a time (with option to show all)
-					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {
-						if (!images) {
-							var empty = document.createElement('tr');
-							empty.innerHTML = 'Empty';
-							table.appendChild(empty);
-							return;
-						}
-						
-						else {
-							if (sortedCache == 'default') {
-								table.style.display = "none";
-								loadingImage.style.display = "block";								
-								clearTable();
-							}
-							
-							for (var i in images) {
-								options.ui.createTableRow(images[i]);
-							}
-							
-							loadingImage.style.display = "none";
-							table.style.display = "block";
-						}
-					});
-				});
-			}
-		},
+		return {
+			open: open,
+			save: save,
+			clear: clear,
+			search: search,
+			sort: sort		
+		};
 		
-		clearTable: function() {
-			var table = document.getElementById('cache_contents');
-			var nodes = table.childNodes;
-			for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
-				var child = nodes[i];
-				table.removeChild(child);
-			}			
-		},
-		
-		createTableRow: function(result) {
-			if (result) {
-				var table = document.getElementById('cache_contents');			
-				var tableRow = document.createElement('tr');				
-				var filenameData = document.createElement('td');
-				var urlData = document.createElement('td');								
-				
-				if (result.fullsize.length > 100) {
-					var url = result.fullsize.substring(0, 99) + '...';
-				}
-				else {
-					var url = result.fullsize;
-				}
-				
-				var input = document.createElement('input');
-				input.type = 'text';
-				input.className = 'cache_filenames';
-				input.value = result.filename;
-				input.style.width = '400px';
-				filenameData.appendChild(input);
-						
-				var anchor = document.createElement('a');
-				anchor.className = 'cache_url';
-				anchor.title = result.fullsize;
-				anchor.href = result.data;
-				anchor.innerHTML = url;
-				urlData.appendChild(anchor);
-				
-				table.appendChild(tableRow);
-				tableRow.appendChild(filenameData);
-				tableRow.appendChild(urlData);
-			}
-		},
-		
-		displayLBContent: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var likeData = config.custom_like_data;
-			var textarea = document.getElementById('like_ta');
-			var likeList = document.getElementById('like_list');
-			var mostRecent = {
-					'time': 0,
-					'id': ''
-			};
-			for (var i in likeData) {
-				var like = likeData[i];
-				if (like.last_saved > mostRecent.time) {
-					mostRecent.time = like.last_saved;
-					mostRecent.id = i;
-				}
-				var anchor = document.createElement('a');
-				var close = document.createElement('a');
-				var linebreak = document.createElement('br');		
-				anchor.href = '#';
-				anchor.className = 'inactive_like';
-				anchor.id = i;
-				anchor.innerText = like.name;
-				close.style.cssFloat = "right";
-				close.style.fontSize = "18px";
-				close.href = '#';
-				close.style.textDecoration = "none";
-				close.id = "delete_custom";
-				close.innerHTML = '&#10006;';
-				likeList.appendChild(anchor);
-				anchor.appendChild(close);
-				likeList.appendChild(linebreak);
-			}
-			if (document.getElementById(mostRecent.id)) {			
-				document.getElementById(mostRecent.id).className = 'active_like';
-				textarea.value = config.custom_like_data[mostRecent.id].contents;	
-			}
-			
-		},
-		switchActive: function(ID) {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var type = ID.replace(/[0-9]/g, '');
-			var textarea = document.getElementById(type + '_ta');
-			var data;
-			if (type == 'script') {
-				data = config.userscript_data[ID].contents;
-			}
-			else if (type == 'like') {
-				data = config.custom_like_data[ID].contents;
-			}
-			
-			if (script) {
-				textarea.value = data;
-			}
-			else {
-				return;
-			}
-		},
-		addDiv: {
-			userHighlight: function() {
-				var ins = document.getElementById('user_highlight').getElementsByClassName(
-						'user_name')[0].parentNode.parentNode.cloneNode(true);
-				ins.className = "user_highlight_data";
-				ins.style.display = "block";
-				document.getElementById('user_highlight').insertBefore(ins, null);
-				options.ui.setColorPicker();
-			},
-			bookmarkName: function() {
-				var ins = document.getElementById('bookmarked_tags').getElementsByClassName(
-						'bookmark_name')[0].parentNode.parentNode.cloneNode(true);
-				ins.className = "bookmark_data";
-				ins.style.display = "block";
-				document.getElementById('bookmarked_tags').insertBefore(ins, null);		
-			},
-			snippetName: function() {
-				var ins = document.getElementById('snippets').getElementsByClassName(
-						'snippet_name')[0].parentNode.parentNode.cloneNode(true);
-				ins.className = "snippet_data";
-				ins.style.display = "block";
-				document.getElementById('snippets').insertBefore(ins, null);		
-			},
-			keywordHighlight: function() {
-				var ins = document.getElementById('keyword_highlight')
-						.getElementsByClassName('keyword')[0].parentNode.parentNode
-						.cloneNode(true);
-				ins.className = "keyword_highlight_data";
-				ins.style.display = "block";
-				document.getElementById('keyword_highlight').insertBefore(ins, null);
-				options.ui.setColorPicker();
-			},
-			tagHighlight: function() {
-				var ins = document.getElementById('tag_highlight').getElementsByClassName(
-						'tag')[0].parentNode.parentNode.cloneNode(true);
-				ins.className = "tag_highlight_data";
-				ins.style.display = "block";
-				document.getElementById('tag_highlight').insertBefore(ins, null);
-				options.ui.setColorPicker();	
-			},
-			postTemplate: function() {
-				var ins = document.getElementById('post_template').getElementsByClassName(
-						'template_text')[0].parentNode.parentNode.cloneNode(true);
-				ins.className = "post_template_data";
-				ins.style.display = "block";
-				document.getElementById('post_template').insertBefore(ins, null);	
-			}
-		}
-	},
+	}();
 	
-	imageCache: {
+	var getDefaultConfig = function(callback) {
+		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');		
 		
-		save: function() {
-
-		},
+		chrome.runtime.sendMessage({ need: 'xhr' }, function(response) {
+				var temp = JSON.parse(xhr.responseText);
+				var defaultConfig = JSON.stringify(temp);
+				callback(defaultConfig);			
+		});		
 		
-		open: function(callback) {
-			chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);
-		}
-	},
+	};
 	
-	customLikeMenu: {
-		
-		open: function() {
-			var button = document.getElementById('like_menu');
-			var menuElement = document.createElement('span');				
-			var items = ['New', 'Save'];
-			menuElement.id = 'menu_items';	
-			menuElement.style.position = 'absolute';
-			menuElement.style.overflow = 'auto';
-			menuElement.style.padding = '3px 3px';
-			menuElement.style.borderStyle = 'solid';
-			menuElement.style.borderWidth = '2px';
-			menuElement.style.borderRadius = '3px';
-			for (var i = 0, len = items.length; i < len; i++) {
-				var item = items[i];
-				populateMenu.call(this, item, i, menuElement);
-			}
-			button.appendChild(menuElement);
-		
-			function populateMenu(item, index, menuElement) {
-				var menuSpan = document.createElement('span');
-				var menuItem = document.createElement('anchor');
-				var lineBreak = document.createElement('br');
-				menuSpan.className = 'unhigh_span';
-				menuItem.innerHTML = '&nbsp' + item + '&nbsp';
-				menuItem.href = '#';
-				menuItem.className = 'like_menu_items';
-				menuItem.id = 'like_' + item.toLowerCase();
-				menuSpan.appendChild(menuItem);
-				menuElement.appendChild(menuSpan);
-				menuElement.appendChild(lineBreak);
-			}
-		}
-	},
-	getDefault: function(callback) {
-		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
-		var temp, defaultConfig;
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", defaultURL, true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				temp = JSON.parse(xhr.responseText);
-				defaultConfig = JSON.stringify(temp);
-				callback(defaultConfig);
-			}
-		}
-		xhr.send();	
-	},
-	save: function() {
+	var saveConfig = function() {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
 			inputs = $(":checkbox");
 			for (var i in inputs) {
@@ -1079,10 +1047,11 @@ var options = {
 					.getElementsByClassName('user_highlight_data');
 			var name;
 			config.user_highlight_data = {};
+			
 			for (var i = 0; userhlData[i]; i++) {
 				name = userhlData[i].getElementsByClassName('user_name')[0].value
 						.toLowerCase();
-				if (name != '') {
+				if (name != '') {	
 					config.user_highlight_data[name] = {};
 					config.user_highlight_data[name].bg = userhlData[i]
 							.getElementsByClassName('header_bg')[0].value;
@@ -1094,82 +1063,96 @@ var options = {
 							+ config.user_highlight_data[name].color;
 				}
 			}
+			
 			// get bookmark data from option page, save to config
-			var userhlData = document.getElementById('bookmarked_tags')
+			var bookmarkData = document.getElementById('bookmarked_tags')
 					.getElementsByClassName('bookmark_data');
 			config.bookmark_data = {};
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('bookmark_name')[0].value;
+			for (var i = 0; bookmarkData[i]; i++) {
+				name = bookmarkData[i].getElementsByClassName('bookmark_name')[0].value;
 				if (name != '') {
-					config.bookmark_data[name] = userhlData[i]
+					config.bookmark_data[name] = bookmarkData[i]
 							.getElementsByClassName('bookmark_tag')[0].value;
 				}
 			}
+			
 			// get snippet data from option page, save to config
-			userhlData = document.getElementById('snippets')
+			var snippetData = document.getElementById('snippets')
 					.getElementsByClassName('snippet_data');
 			config.snippet_data = {};
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('snippet_name')[0].value;
+			for (var i = 0; snippetData[i]; i++) {
+				name = snippetData[i].getElementsByClassName('snippet_name')[0].value;
 				name = name.trim();
 				if (name != '') {
-					config.snippet_data[name] = userhlData[i]
+					config.snippet_data[name] = snippetData[i]
 							.getElementsByClassName('snippet')[0].value;
 				}
 			}
-			userhlData = document.getElementById('keyword_highlight')
+			
+			var keywordData = document.getElementById('keyword_highlight')
 					.getElementsByClassName('keyword_highlight_data');
+					
 			config.keyword_highlight_data = {};
-			var j = 0;
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('keyword')[0].value
+			
+			for (var i = 0; keywordData[i]; i++) {
+				
+				name = keywordData[i].getElementsByClassName('keyword')[0].value
 						.toLowerCase();
+						
 				if (name != '') {
-					config.keyword_highlight_data[j] = {};
-					config.keyword_highlight_data[j].match = name;
-					config.keyword_highlight_data[j].bg = userhlData[i]
+					config.keyword_highlight_data[name] = {};
+					
+					config.keyword_highlight_data[name].bg = keywordData[i]
 							.getElementsByClassName('keyword_bg')[0].value;
-					userhlData[i].getElementsByClassName('keyword')[0].style.background = '#'
-							+ config.keyword_highlight_data[j].bg;
-					config.keyword_highlight_data[j].color = userhlData[i]
+							
+					keywordData[i].getElementsByClassName('keyword')[0].style.background = '#'
+							+ config.keyword_highlight_data[name].bg;
+							
+					config.keyword_highlight_data[name].color = keywordData[i]
 							.getElementsByClassName('keyword_color')[0].value;
-					userhlData[i].getElementsByClassName('keyword')[0].style.color = '#'
-							+ config.keyword_highlight_data[j].color;
-					j++;
+							
+					keywordData[i].getElementsByClassName('keyword')[0].style.color = '#'
+							+ config.keyword_highlight_data[name].color;
 				}
 			}
-			userhlData = document.getElementById('tag_highlight')
+			
+			var tagData = document.getElementById('tag_highlight')
 					.getElementsByClassName('tag_highlight_data');
 			config.tag_highlight_data = {};
-			var j = 0;
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('tag')[0].value
-						.toLowerCase();
+			
+			for (var i = 0; tagData[i]; i++) {
+				
+				name = tagData[i].getElementsByClassName('tag')[0].value.toLowerCase();
+				
 				if (name != '') {
-					config.tag_highlight_data[j] = {};
-					config.tag_highlight_data[j].match = name;
-					config.tag_highlight_data[j].bg = userhlData[i]
+					config.tag_highlight_data[name] = {};
+					
+					config.tag_highlight_data[name].bg = tagData[i]
 							.getElementsByClassName('tag_bg')[0].value;
-					userhlData[i].getElementsByClassName('tag')[0].style.background = '#'
-							+ config.tag_highlight_data[j].bg;
-					config.tag_highlight_data[j].color = userhlData[i]
+							
+					tagData[i].getElementsByClassName('tag')[0].style.background = '#'
+							+ config.tag_highlight_data[name].bg;
+							
+					config.tag_highlight_data[name].color = tagData[i]
 							.getElementsByClassName('tag_color')[0].value;
-					userhlData[i].getElementsByClassName('tag')[0].style.color = '#'
-							+ config.tag_highlight_data[j].color;
-					j++;
+							
+					tagData[i].getElementsByClassName('tag')[0].style.color = '#'
+							+ config.tag_highlight_data[name].color;
 				}
 			}
-			userhlData = document.getElementById('post_template')
+			
+			var templateData = document.getElementById('post_template')
 					.getElementsByClassName('post_template_data');
 			config.post_template_data = {};
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('template_title')[0].value;
+			for (var i = 0; templateData[i]; i++) {
+				name = templateData[i].getElementsByClassName('template_title')[0].value;
 				if (name != '') {
 					config.post_template_data[name] = {};
-					config.post_template_data[name].text = userhlData[i]
+					config.post_template_data[name].text = templateData[i]
 							.getElementsByClassName('template_text')[0].value;
 				}
 			}
+			
 			config.clear_notify = document.getElementById('clear_notify').value;
 			config.last_saved = new Date().getTime();		
 			localStorage['ChromeLL-Config'] = JSON.stringify(config);	
@@ -1179,9 +1162,9 @@ var options = {
 				need: "config_push",
 				data: config
 			});
-	},
+	};
 	
-	restoreFromText: function(evt) {
+	var restoreConfigFromText = function(evt) {
 		var file = evt.target.files[0];
 		if (!file.type.match('text.*')) {
 			alert("Not a text file...");
@@ -1191,77 +1174,83 @@ var options = {
 			var reader = new FileReader();
 			reader.onload = function(evt) {
 				var textFile = evt.target.result;
-				options.functions.processConfig(textFile);
+				processConfig(textFile);
 			}
 			reader.readAsText(file);
 		}
-	},
-	restoreV1: function(oC) {
-		var config = JSON.parse(localStorage['ChromeLL-Config']);
-		var hls = oC.conf['chromeLL_userhighlight'].split(';');
-		var hl = Array();
-		config.user_highlight_data = {};
-		for (var i = 0; hls[i]; i++) {
-			hl = hls[i].split(':');
-			console.log(hl[0]);
-			config.user_highlight_data[hl[0]] = {};
-			config.user_highlight_data[hl[0]].bg = hl[1];
-			config.user_highlight_data[hl[0]].color = hl[3];
-		}
-		var boolSettings = {
-			"force_https" : "chromeLL_forcehttps",
-			"short_title" : "chromeLL_shorttitle",
-			"float_userbar" : "chromeLL_floatbars",
-			"ignorator" : "chromeLL_ignoretopicsbyon",
-			"ignorator_list" : "chromeLL_ignoretopicsby",
-			"enable_user_highlight" : "chromeLL_userhighlighton",
-			"number_posts" : "chromeLL_numberposts",
-			"enable_user_highlight" : "chromeLL_userhighlighton"
-		}
-		for ( var i in boolSettings) {
-			if (oC.conf[i] == "true")
-				config[i] = true;
-		}
-		config.ignorator_list = oC.conf['chromeLL_ignoretopicsby'];
-		config.ignore_keyword_list = oC.conf['chromeLL_ignoretopics'];
-		config.last_saved = new Date().getTime();
-		console.log(config);
-		localStorage['ChromeLL-Config'] = JSON.stringify(config);	
-	},
-	show: function() {
+	};
+	
+	var showConfigInTextarea = function() {
 		document.getElementById('cfg_ta').value = localStorage['ChromeLL-Config'];
-	},
-	download: function(textfile) {
-		options.save();
+	};
+	
+	var getConfigBlob = function() {
+		saveConfig();
 		var config = localStorage['ChromeLL-Config'];
-		var data = new Blob([config], {type: 'text/plain'})
-		var textfile = window.URL.createObjectURL(data);
-		return textfile;	
-	},
-	debouncer: ''
-};
-
-$(document)
-	.ready(
-		function() {
-			// Restore config settings
-			if (localStorage['ChromeLL-Config'] == '' || localStorage['ChromeLL-Config'] == undefined) {
-				console.log("Blank Config. Rebuilding");
-
-				options.getDefault(function(defaultConfig) {
-					localStorage['ChromeLL-Config'] = defaultConfig;
-				});
-
-				if (localStorage['chromeLL_userhighlight'] && localStorage['chromeLL_userhighlight'] != '') {
-					// Support for people with legacy config
-					// TODO: It seems safe to remove this now, after so many years
-					options.restoreV1();
-				} else {
-					options.init();
-				}
-			} else {
-				options.init();
-			}
-		}
+		var blob = new Blob([config], {type: 'text/plain'})
+		var blobUrl = window.URL.createObjectURL(blob);
+		return blobUrl;	
+	};
+	
+	var showTextarea = function() {
+		document.getElementById('old_cfg_options').style.display = "none";
+		document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
+		showConfigInTextarea();
+	};
 		
-	);
+	var processConfig = function(textfile) {
+		try {
+			if (typeof textfile === 'string') {
+				newCfg = JSON.parse(textfile);
+			}
+			else if (document.getElementById('cfg_ta').value != '') {
+				newCfg = JSON.parse(document.getElementById('cfg_ta').value);
+			}		
+			var myCfg = JSON.parse(localStorage['ChromeLL-Config']);
+			for (var i in newCfg) {
+				myCfg[i] = newCfg[i];				
+			}
+			myCfg.last_saved = new Date().getTime();
+			localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
+		} catch (e) {
+			console.log('This doesnt look like a config', e);
+		}
+		location.reload();
+	};
+	
+	var resetConfig = function() {
+		var reset = confirm("Are you sure you want to reset your settings?");
+		if (reset === true) {
+			getDefault(function(defaultCfg) {
+				localStorage['ChromeLL-Config'] = defaultCfg;
+				location.reload();
+			});
+		}
+		else {
+			return;
+		}
+	};
+	
+	return { 
+		init: init,
+		getDefaultConfig: getDefaultConfig	
+	};
+	
+})();
+
+$(document).ready(function() {
+	
+	if (localStorage['ChromeLL-Config'] == '' || localStorage['ChromeLL-Config'] == undefined) {
+		// It's possible that user clicked options page before background script finished initializing	
+		options.getDefaultConfig(function(config) {
+			localStorage['ChromeLL-Config'] = config;
+		});
+
+		options.init();		
+	} 
+	
+	else {
+		options.init();
+	}
+	
+});
