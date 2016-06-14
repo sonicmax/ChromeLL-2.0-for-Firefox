@@ -36,7 +36,6 @@ CHROMELL.getConfig = function(callback) {
 		chrome.runtime.sendMessage({
 				need: "config"
 			}, function(response) {		
-				// Set config before executing callback function
 				CHROMELL.config = response.data;
 				callback();
 			}	
@@ -48,14 +47,3 @@ CHROMELL.getConfig = function(callback) {
 	}
 	
 };
-
-CHROMELL.configObserver = function() {
-	
-	Object.observe(CHROMELL.config, function(changes) {
-		
-		console.log(changes);
-		localStorage['ChromeL-Config'] = JSON.stringify(CHROMELL.config);
-		
-	});		
-	
-}
