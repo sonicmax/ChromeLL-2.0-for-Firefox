@@ -830,18 +830,16 @@ CHROMELL.background = (function() {
 		const IMAGE_DB = 'images';
 		const READ_WRITE = 'readwrite';	
 		var db;		
-			
+		
 		var getStorageApiCache = function(callback) {
-			chrome.storage.local.get("imagemap", function(cache) {
-				
-				if (!cache || Object.keys(cache.imagemap).length === 0) {
+			chrome.storage.local.get("imagemap", function(cache) {	
+				if (typeof cache === typeof Object && Object.keys(cache.imagemap).length === 0) {
 					callback();
 				}
 				
 				else {
 					callback(cache.imagemap);
-				}
-				
+				}				
 			});
 		};		
 		
@@ -875,8 +873,7 @@ CHROMELL.background = (function() {
 			convertCache: function(callback) {
 				
 				getStorageApiCache(function(imagemap) {		
-				
-					if (Object.keys(imagemap).length > 0) {			
+					if (typeof imagemap === typeof Object && Object.keys(imagemap).length > 0) {		
 						var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
 						
 						for (var src in imagemap) {
