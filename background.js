@@ -834,8 +834,8 @@ CHROMELL.background = (function() {
 		var getStorageApiCache = function(callback) {
 			chrome.storage.local.get("imagemap", function(cache) {
 				
-				if (Object.keys(cache.imagemap).length === 0) {				
-					callback(null);
+				if (!cache || Object.keys(cache.imagemap).length === 0) {
+					callback();
 				}
 				
 				else {
