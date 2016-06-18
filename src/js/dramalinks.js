@@ -8,11 +8,17 @@ var dramalinks = {
 		ticker.id = "dramalinks_ticker";
 		element.parentNode.insertBefore(ticker, element.nextSibling);
 		
-		if (!dramalinks.html) {			
-			Object.observe(dramalinks, function() {
-				dramalinks.update.call(dramalinks);
-			});
+		if (!dramalinks.html) {
+			// Replacement for Object.observe() method
+			var id = setTimeout(() => {				
+				if (dramalinks.html) {
+					// We can update page and cancel timer
+					dramalinks.update(dramalinks);				
+					clearInterval(id);
+				}
+			}, 100);
 		}
+
 		else {
 			this.update();
 		}
