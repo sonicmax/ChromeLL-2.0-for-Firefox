@@ -409,7 +409,7 @@ var options = (function() {
 				var keyupTimer, cacheTimer, searchTimer;		
 
 				restoreButton.addEventListener('change', function(evt) {
-					restoreFromText(evt);
+					restoreConfigFromText(evt);
 				});	
 				
 				cacheTable.addEventListener('keyup', function(evt) {
@@ -1155,13 +1155,7 @@ var options = (function() {
 			
 			config.clear_notify = document.getElementById('clear_notify').value;
 			config.last_saved = new Date().getTime();		
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);	
-			
-			// Make sure that content scripts are using latest version of config
-			chrome.runtime.sendMessage({
-				need: "config_push",
-				data: config
-			});
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);
 	};
 	
 	var restoreConfigFromText = function(evt) {
@@ -1172,10 +1166,12 @@ var options = (function() {
 		}
 		else {
 			var reader = new FileReader();
-			reader.onload = function(evt) {
+			
+			reader.onload = (evt) => {	
 				var textFile = evt.target.result;
-				processConfig(textFile);
+				processConfig(textFile);			
 			}
+			
 			reader.readAsText(file);
 		}
 	};
@@ -1203,19 +1199,16 @@ var options = (function() {
 			if (typeof textfile === 'string') {
 				newCfg = JSON.parse(textfile);
 			}
-			else if (document.getElementById('cfg_ta').value != '') {
-				newCfg = JSON.parse(document.getElementById('cfg_ta').value);
-			}		
 			var myCfg = JSON.parse(localStorage['ChromeLL-Config']);
 			for (var i in newCfg) {
 				myCfg[i] = newCfg[i];				
 			}
 			myCfg.last_saved = new Date().getTime();
 			localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
+			location.reload();
 		} catch (e) {
-			console.log('This doesnt look like a config', e);
+			alert("Couldn't parse config file.");
 		}
-		location.reload();
 	};
 	
 	var resetConfig = function() {
