@@ -662,12 +662,6 @@ CHROMELL.background = (function() {
 					
 					break;
 					
-				case "config_push":	
-					// Updates background config object without saving to localStorage.
-					CHROMELL.config = request.data;
-					CHROMELL.config.last_saved = new Date().getTime();
-					break;
-					
 				case "save":					
 					// page script needs config save.
 					if (request.name === "tcs") {
