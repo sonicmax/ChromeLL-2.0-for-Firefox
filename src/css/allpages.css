@@ -86,9 +86,9 @@
 		}
 	}
 	
-	/* Treat .archivequote spans as anchors */
+	/* Treat .clickable-spans as anchors */
 	
-	.archivequote {
+	.clickable-span {
 		cursor: pointer;
 		text-decoration: underline;		
 	}

@@ -73,7 +73,6 @@
 			var messageTops;
 			var firstTop;
 			var currentUser;
-			var currentID;
 			
 			var scrolling = false;
 			var replaying = false;
@@ -89,7 +88,6 @@
 				var userbarElement = document.getElementsByClassName('userbar')[0];			
 				var profileAnchor = userbarElement.getElementsByTagName('a')[0];
 				currentUser = getUsername(profileAnchor);
-				currentID = getUserId(profileAnchor);
 				
 				var title = document.getElementsByTagName('h2')[0];
 				if (CHROMELL.config.dramalinks && !CHROMELL.config.hide_dramalinks_topiclist) {
@@ -180,10 +178,6 @@
 			
 			var getUsername = function(element) {
 				return element.innerHTML.replace(/ \((\d+)\)$/, "");				
-			};
-			
-			var getUserId = function(element) {
-				return element.href.match(/\?user=([0-9]+)/)[1];				
 			};
 			
 			var generateCss = function() {
@@ -484,29 +478,35 @@
 				if (!CHROMELL.config.usernote_notes) {
 					CHROMELL.config.usernote_notes = {};
 				}
-				if (!firstTop.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
+				
+				if (!profileAnchor.href.match(/user=(\d+)$/i)) {
+					// Anonymous topic - remove method so we only have to check this once
+					delete this.user_notes;
 					return;
 				}
-				var notebook = document.createElement('a');	
-				notebook.className = 'notebook';
+				
+				var notebook = document.createElement("span");	
+				notebook.className = "clickable-span notebook";
 				var divider = document.createTextNode(' | ');
 				firstTop.appendChild(divider);
-				var tempID = firstTop.getElementsByTagName('a')[0].href
-						.match(/user=(\d+)$/i)[1];
-				notebook.innerHTML = (CHROMELL.config.usernote_notes[tempID] != undefined 
-						&& CHROMELL.config.usernote_notes[tempID] != '') 
-								? 'Notes*' : 'Notes';
-				notebook.href = "##note" + tempID;
+				notebook.dataset.userId = profileAnchor.href.match(/user=(\d+)$/i)[1];				
+				if (CHROMELL.config.usernote_notes[notebook.dataset.userId] !== undefined 
+						&& CHROMELL.config.usernote_notes[notebook.dataset.userId] !== '') {
+					notebook.innerHTML = "Notes*"
+				}
+				else {
+					notebook.innerHTML = "Notes";
+				}	
+				
 				firstTop.appendChild(notebook);
 			};
 			
 			messagecontainer.like_button = function(msg, index) {
 					if (!window.location.href.match("archives")) {		
-						var anchor = document.createElement('a');
+						var anchor = document.createElement('span');
 						var divider = document.createTextNode(" | ");
-						anchor.innerText = 'Like';
-						anchor.className = 'like_button';
-						anchor.href = '##like';
+						anchor.className = 'clickable-span like_button';
+						anchor.innerText = 'Like';						
 						firstTop.appendChild(divider);
 						firstTop.appendChild(anchor);
 						anchor.addEventListener('mouseenter', eventHandlers.mouseenter);
@@ -761,69 +761,45 @@
 			};
 			
 			infobar.expand_spoilers = function() {
-				var ains = document.createElement('span');
-				var anchor = document.createElement('a');
+				var clickableSpan = document.createElement('span');
 				var divider = document.createTextNode(' | ');
-				anchor.id = 'chromell_spoilers';
-				anchor.href = '##';
-				anchor.innerText = 'Expand Spoilers';
+				clickableSpan.innerText = 'Expand Spoilers';
 				infobarElement.appendChild(divider);
 				infobarElement.appendChild(anchor);
 				anchor.addEventListener('click', utils.spoilers.find);		
 			};
 			
-			quickpostbody.filter_me = function() {
-				var tops = document.getElementsByClassName('message-top');
-				if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
-					// Anonymous topic - check quickpost-body for human number
-					if (window.location.hostname == 'archives.endoftheinter.net') {
-						// Archived anon topics don't have quickpost-body element
-						return;
-					}
-					else if (quickpostElement.getElementsByTagName('a')) {
-						var human = quickpostElement.getElementsByTagName('a')[0]
-								.innerText.replace('Human #', '');
-						if (isNaN(human)) {
-							// Usually means the first anchor element was pulled from the tag info popups
-							return;
-						}
-						else {
-							var me = '&u=-' + human;
-						}
-					}
+			infobar.filter_me = function() {
+				var clickableSpan = document.createElement('span');				
+				var divider = document.createTextNode(" | ");
+				
+				if (window.location.href.indexOf("&u=") == -1) {
+					clickableSpan.innerHTML = 'Filter Me';
 				}
 				else {
-					// handle non anonymous topics
-					var me = '&u=' + currentID;
+					clickableSpan.innerHTML = 'Unfilter Me';
 				}
-				var topic = window.location.href.match(/topic=([0-9]+)/)[1];
-				var anchor = document.createElement('a');		
-				var divider = document.createTextNode(" | ");		
-				if (window.location.href.indexOf(me) == -1) {
-					anchor.href = window.location.href.split('?')[0] + '?topic=' + topic + me;
-					anchor.innerHTML = 'Filter Me';
-				} else {
-					anchor.href = window.location.href.replace(me, '');
-					anchor.innerHTML = 'Unfilter Me';
-				}
+				
+				clickableSpan.className = "clickable-span";
+				
+				clickableSpan.addEventListener('click', utils.userFilterer);	
+				
 				infobarElement.appendChild(divider);
-				infobarElement.appendChild(anchor);
+				infobarElement.appendChild(clickableSpan);
 			};
 			
 			quickpostbody.quick_imagemap = function() {
-				if (quickpostElement) {
-					var button = document.createElement('button');
-					var divider = document.createTextNode(' ');
-					var search = document.createElement('input');
-					button.textContent = "Browse Imagemap";					
-					button.id = "quick_image";
-					search.placeholder = "Search Imagemap...";
-					search.id = "image_search";
-					quickpostElement.appendChild(divider);
-					quickpostElement.appendChild(button);
-					quickpostElement.appendChild(divider);
-					quickpostElement.appendChild(search);
-				}
+				var button = document.createElement('button');
+				var divider = document.createTextNode(' ');
+				var search = document.createElement('input');
+				button.textContent = "Browse Imagemap";					
+				button.id = "quick_image";
+				search.placeholder = "Search Imagemap...";
+				search.id = "image_search";
+				quickpostElement.appendChild(divider);
+				quickpostElement.appendChild(button);
+				quickpostElement.appendChild(divider);
+				quickpostElement.appendChild(search);
 			};
 			
 			quickpostbody.post_before_preview = function() {
@@ -1011,14 +987,13 @@
 			misc.pm_title = function() {
 				if (window.location.href.indexOf('inboxthread.php') == -1) {
 					return;
-				}
-				var me = userbarElement.getElementsByTagName('a')[0].innerText;
+				}				
 				var other = '';
 				var tops = document.getElementsByClassName('message-top');
 				var top;
 				for (var i = 0, len = tops.length; i < len; i++) {
 					top = tops[i];
-					if (top.getElementsByTagName('a')[0].innerText.indexOf(me) == -1) {
+					if (top.getElementsByTagName('a')[0].innerText.indexOf(currentUser) == -1) {
 						other = top.getElementsByTagName('a')[0].innerText;
 						break;
 					}
@@ -1241,7 +1216,7 @@
 			
 			var mouseclick = function(evt) {
 				if (evt.target.className) {
-					switch (evt.target.className) {
+					switch (evt.target.className.replace("clickable-span ", "")) {
 						case 'expand_post_template':
 							helpers.postTemplateExpand(evt.target);
 							return;
@@ -1265,7 +1240,7 @@
 							return;
 							
 						case 'like_button_custom':
-							var templateNumber = evt.target.id;
+							var templateNumber = evt.target.dataset.templateNumber;
 							for (var i = 0, len = evt.path.length; i < len; i++) {
 								var pathNode = evt.path[i];
 								if (pathNode.className == 'like_button') {
@@ -1293,25 +1268,6 @@
 						case 'archivequote':
 							utils.quote.handler(evt);
 							evt.preventDefault();						
-							return;
-							
-						case 'bash':
-							if (!evt.target.getAttribute('ignore')) {
-								evt.target.className = 'bash_this';			
-								evt.target.style.fontWeight = 'bold';
-								evt.target.innerHTML = '&#9745;';
-								utils.bash.checkSelection(evt.target);
-								utils.bash.showPopup();	
-								evt.preventDefault();								
-							}
-							return;
-							
-						case 'bash_this':
-							evt.target.className = 'bash';
-							evt.target.style.fontWeight = 'initial';
-							evt.target.innerHTML = '&#9744;';
-							utils.bash.checkSelection(evt.target);
-							evt.preventDefault();
 							return;
 							
 						default:						
@@ -1343,10 +1299,6 @@
 					}
 					else if (evt.target.parentNode.className == 'hide') {
 						utils.youtube.hide(evt.target.parentNode);
-						evt.preventDefault();
-					}
-					else if (evt.target.parentNode.id == 'submitbash') {
-						utils.bash.handler();
 						evt.preventDefault();
 					}
 					else if (evt.target.parentNode.className == 'embed_nws_gfy') {
@@ -1957,19 +1909,16 @@
 				
 				return {
 					open: function(el) {
-						var userID = el.href.match(/note(\d+)$/i)[1];
 						if (document.getElementById("notepage")) {
 							var pg = document.getElementById('notepage');
-							userID = pg.parentNode.getElementsByTagName('a')[0].href
-									.match(/user=(\d+)$/i)[1];
-							CHROMELL.config.usernote_notes[userID] = pg.value;
+							CHROMELL.config.usernote_notes[el.dataset.userId] = pg.value;
 							pg.parentNode.removeChild(pg);
 							utils.usernotes.save();
 						} else {
-							var note = CHROMELL.config.usernote_notes[userID];
+							var note = CHROMELL.config.usernote_notes[el.dataset.userId];
 							page = document.createElement('textarea');
 							page.id = 'notepage';
-							page.value = (note == undefined) ? "": note;
+							page.value = (note == undefined) ? "" : note;
 							page.style.width = "100%";
 							page.style.opacity = '.6';
 							el.parentNode.appendChild(page);
@@ -2092,16 +2041,12 @@
 								
 					$("#copied").fadeIn(200);
 					
-					setTimeout(function() {
-						$(node)
-							.find("#copied")
-							.fadeOut(400);
+					setTimeout(() => {
+						$(node).find("#copied").fadeOut(400);
 					}, 1500);
 					
-					setTimeout(function() {
-						$(node)
-							.find("#copied")
-							.remove();
+					setTimeout(() => {
+						$(node).find("#copied").remove();
 					}, 2000);
 					
 				};
@@ -2575,13 +2520,12 @@
 						
 						function populateMenu(item, id, menuElement) {
 							var menuSpan = document.createElement('span');
-							var menuItem = document.createElement('anchor');
+							var menuItem = document.createElement('span');
 							var lineBreak = document.createElement('br');
 							menuSpan.className = 'unhigh_span';
-							menuItem.id = id;
+							menuItem.dataset.templateNumber = id;
 							menuItem.innerHTML = '&nbsp' + item + '&nbsp';
-							menuItem.href = '#like_custom_' + id;
-							menuItem.className = 'like_button_custom';
+							menuItem.className = 'clickable-span like_button_custom';
 							menuSpan.appendChild(menuItem);
 							menuElement.appendChild(menuSpan);
 							menuElement.appendChild(lineBreak);
@@ -2598,7 +2542,49 @@
 					}
 				};
 				
-			}();						
+			}();
+
+			var userFilterer = function() {
+				var topic = window.location.href.match(/topic=([0-9]+)/)[1];
+				var tops = document.getElementsByClassName('message-top');
+				
+				var filterUrl;
+				
+				if (window.location.href.indexOf("&u=") === -1) {			
+				
+					if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
+						// Anonymous topic - check quickpost-body for human number.				
+						if (quickpostElement) {
+							var user = quickpostElement.getElementsByTagName('a')[0];
+							var humanRegex = /Human\s\#/;
+							
+							if (!humanRegex.test(user)) {
+								// User hasn't posted in topic yet
+								return;
+							}
+							
+							filterUrl = '&u=-' + user.innerText.replace('Human #', '');
+							
+						}
+						
+						else {
+							// We can only find human number in non-archived topics
+							return;
+						}
+					}
+					
+					else {
+						// handle non anonymous topics					
+						filterUrl = '&u=' + CHROMELL.config.user_id;
+					}
+					
+					window.location.href = window.location.href.split('?')[0] + '?topic=' + topic + filterUrl;
+				}
+				
+				else {
+					window.location.href = window.location.href.split('?')[0] + '?topic=' + topic;
+				}
+			};			
 			
 			return {
 				embed: embed,
@@ -2613,7 +2599,8 @@
 				spoilers: spoilers,
 				anchors: anchors,
 				tcs: tcs,
-				likeButton: likeButton
+				likeButton: likeButton,
+				userFilterer: userFilterer
 			};
 			
 		}();
