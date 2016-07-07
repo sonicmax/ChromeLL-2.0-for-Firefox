@@ -7,6 +7,7 @@
 		// eg. userhl_topiclist and userhl_topiclist_pm
 		var pm = '';	
 		
+		/** Initialise script after config has been loaded, but before DOMContentLoaded fires */
 		var init = function() {
 			globalPort.onMessage.addListener(eventHandlers.message);
 			buildArraysFromConfig();
@@ -24,23 +25,32 @@
 				});				
 			}
 			
-			else if (window.location.href.match(/inbox.php/)) {
-				pm = "_pm";
-			}
+			cssHandler();
 						
-			if (localStorage['ChromeLL-topicList-CSS'] !== undefined) {				
-				
+			CHROMELL.whenDOMReady(DOM.init);
+		};
+		
+		/**
+		  *  Method to check whether config has changed and regenerate CSS rules if necessary.
+		  *  Otherwise, inserts CSS file from localStorage (or generates rules if undefined)
+		  */
+		var cssHandler = function() {
+			if (CHROMELL.config.last_saved > new Date().getTime()) {
+				CHROMELL.injectCss(DOM.generateCss);
+			}
+			
+			else if (localStorage['ChromeLL-topicList-CSS'] !== undefined) {
 				chrome.runtime.sendMessage({
 						need: 'insertcss',
 						code: localStorage['ChromeLL-topicList-CSS']
-				});
+				});				
 			}
+			
 			else {
-				CHROMELL.injectCss(DOM.generateCssRules);				
+				CHROMELL.injectCss(DOM.generateCss);
 			}
-						
-			CHROMELL.whenDOMReady(DOM.init);
-		};	
+			
+		};		
 		
 		var buildArraysFromConfig = function() {
 			// Convert strings from ignorator config values into arrays of lowercase usernames.
@@ -89,10 +99,6 @@
 				name: "saved_tags",
 				data: ctags
 			});
-		};
-
-		var addListeners = function() {
-			document.addEventListener('click', eventHandlers.clickEvent);	
 		};		
 		
 		var ignore = {
@@ -131,27 +137,31 @@
 							// ignore these elements (found only on main.php)	
 							return;
 						}
-						
-						// Check that anchor tag is located here, so we know it's not an anonymous topic
+												
 						var nodeToCheck = tr.getElementsByTagName('td')[1].getElementsByTagName('a')[0];
+						
 						if (nodeToCheck) {
 							currentUser = nodeToCheck.innerHTML.toLowerCase();
-						} 
+						}
+						
 						else {
 							// Anonymous topic
 							currentUser = false;
 						}
+
 						for (var k in methods) {
 							if (CHROMELL.config[k + pm]) {
 								methods[k](tr, j);
+							}
+							else {
+								// Delete method from object so we don't have to check it again
+								delete methods[k];
 							}
 						}
 					}
 				}
 				
-				if (CHROMELL.config['page_jump_buttons' + pm]) {
-					addListeners();
-				}		
+				document.addEventListener('click', eventHandlers.clickEvent);
 				
 				try {
 					checkTags();
@@ -169,12 +179,8 @@
 				}
 			};			
 			
-			var makeCssDatasetAttribute = function(string, type) {
-				var suffix = type || '';
-				// Remove disallowed chars from string
-				var cleanedString = string.replace(/[^a-zA-Z0-9]/g, '');				
-				var datasetAttribute = "data-" + type + "='" + cleanedString + "'"; // eg. data-user='username'
-				return datasetAttribute;
+			var removeDisallowedCssChars = function(string) {
+				return string.replace(/[^a-zA-Z0-9]/g, '');
 			};
 			
 			var convertHexToRGB = function(hex, alpha) {
@@ -195,7 +201,7 @@
 				return rgb;
 			};
 			
-			var generateCssRules = function() {
+			var generateCss = function() {
 				var style = document.createElement("style");				
 				document.head.appendChild(style);
 
@@ -223,12 +229,12 @@
 						var color = entry.color;							
 						var rgbaStart = convertHexToRGB(bg, 0.4);
 						var rgbaEnd = convertHexToRGB(bg, 0.4);						
-						var keywordDataset = makeCssDatasetAttribute(keyword, 'keyword');
+						var cssKeyword = removeDisallowedCssChars(keyword);
 						
 						// Highlight td element containing tags to be highlighted (can be overridden by tag highlight)
-						styleSheet.addRule('table.grid td.oh[' + keywordDataset + ']', 'background: #' + bg);
-						styleSheet.addRule('table.grid td.oh[' + keywordDataset + ']', 'color: #' + color);
-						styleSheet.addRule('table.grid td.oh[' + keywordDataset + '] a', 'color: #' + color);								
+						styleSheet.addRule('table.grid td.oh.' + cssKeyword, 'background: #' + bg);
+						styleSheet.addRule('table.grid td.oh.' + cssKeyword, 'color: #' + color);
+						styleSheet.addRule('table.grid td.oh.' + cssKeyword + ' a', 'color: #' + color);
 					}
 				}
 
@@ -240,12 +246,12 @@
 						var color = entry.color;
 						var rgbaStart = convertHexToRGB(bg, 0.8);
 						var rgbaEnd = convertHexToRGB(bg, 0);					
-						var tagDataset = makeCssDatasetAttribute(tag, 'tag');
+						var cssTag = removeDisallowedCssChars(tag);
 						
 						// Highlight td element containing tags to be highlighted (can be overridden by username highlight)
-						styleSheet.addRule('table.grid td.oh[' + tagDataset + ']', 'background: #' + bg);
-						styleSheet.addRule('table.grid td.oh[' + tagDataset + ']', 'color: #' + color);
-						styleSheet.addRule('table.grid td.oh[' + tagDataset + '] a', 'color: #' + color);
+						styleSheet.addRule('table.grid td.oh.' + cssTag, 'background: #' + bg);
+						styleSheet.addRule('table.grid td.oh.' + cssTag, 'color: #' + color);
+						styleSheet.addRule('table.grid td.oh.' + cssTag + ' a', 'color: #' + color);
 					}		
 				}		
 			
@@ -255,13 +261,13 @@
 						var entry = CHROMELL.config.user_highlight_data[username];
 						var bg = entry.bg;
 						var color = entry.color;
-						var usernameDataset = makeCssDatasetAttribute(username, 'user');
+						var cssUser = makeCssDatasetAttribute(username);
 						
 						// User highlights are allowed to override any other type of highlight										
-						styleSheet.addRule('table.grid tr[' + usernameDataset + '] td', 'background: #' + bg + ' !important');
-						styleSheet.addRule('table.grid tr[' + usernameDataset + '] td', 'color: #' + color + ' !important');
-						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a', 'background: #' + bg);
-						styleSheet.addRule('table.grid tr[' + usernameDataset + '] a', 'color: #' + color);
+						styleSheet.addRule('table.grid tr.' + cssUser + ' td', 'background: #' + bg + ' !important');
+						styleSheet.addRule('table.grid tr.' + cssUser + ' td', 'color: #' + color + ' !important');
+						styleSheet.addRule('table.grid tr.' + cssUser + ' a', 'background: #' + bg);
+						styleSheet.addRule('table.grid tr.' + cssUser + ' a', 'color: #' + color);
 					}
 				}
 				
@@ -471,7 +477,8 @@
 			
 			return {
 				init: init,
-				generateCssRules: generateCssRules
+				generateCss: generateCss,
+				handlePopupClick: handlePopupClick
 			};
 			
 		}();
@@ -499,13 +506,16 @@
 			};
 			
 			handlers.mouseenter = function(evt) {
-				CHROMELL.allPages.cacheEvent(evt);
-				// Store reference to allPages.utils.popup, as we can't access it from setTimeout
+				// Store reference to allPages.utils.popup to access from popupDebouncer anon function
 				var popupMenu = CHROMELL.allPages.utils.popup;
+				
+				CHROMELL.allPages.cacheEvent(evt);
+				
 				popupDebouncer = setTimeout(function() {
 						popupMenu.init();
 						document.getElementsByClassName('body')[0].style.opacity = 0.7;
 				}, 750);
+				
 			};
 			
 			handlers.mouseleave = function(evt) {
@@ -521,9 +531,7 @@
 							ignoredTopics[i].style.opacity = '.7';	
 						}
 						break;
-					case 'ignorator_update':
-						// Do nothing - handled elsewhere (included here to prevent unnecessary debug logs)
-						break;
+						
 					default:
 						if (CHROMELL.config.debug) {
 							console.log('invalid action', msg);
@@ -534,6 +542,8 @@
 			
 			handlers.pageJump = function(evt) {
 				var a, history, inbox;
+				
+					// Find element containing post count so we can work out last page number
 				if (window.location.href.indexOf('history.php') > -1) {
 					history = true;
 					a = evt.target.parentNode.parentNode.parentNode.parentNode
@@ -569,6 +579,7 @@
 					return evt.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
 							+ '&page=' + pg;
 				}
+				
 				else if (inbox) {
 						if (evt.target.parentNode.parentNode.firstChild.firstChild.href) {
 							return evt.target.parentNode.parentNode.firstChild.firstChild.href 
@@ -579,6 +590,7 @@
 									+ '&page=' + pg;							
 						}
 				}
+				
 				else {
 					return evt.target.parentNode.parentNode.parentNode.parentNode
 							.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
@@ -595,6 +607,7 @@
 		
 		return {
 			DOM: DOM,
+			buildArraysFromConfig: buildArraysFromConfig,
 			eventHandlers: eventHandlers
 		};
 		
