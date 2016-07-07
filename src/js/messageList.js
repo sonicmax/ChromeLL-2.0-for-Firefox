@@ -53,7 +53,7 @@
 		
 		/**
 		  *  Method to check whether config has changed and regenerate CSS rules if necessary.
-		  *  Otherwise, insert CSS file from localStorage
+		  *  Otherwise, inserts CSS file from localStorage (or generates rules if undefined)
 		  */
 		var cssHandler = function() {
 			if (CHROMELL.config.last_saved > new Date().getTime()) {
