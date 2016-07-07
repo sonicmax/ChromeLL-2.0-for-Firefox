@@ -28,17 +28,9 @@
 				});
 			}
 			
-			if (localStorage['ChromeLL-messageList-CSS'] !== undefined) {
-				chrome.runtime.sendMessage({
-						need: 'insertcss',
-						code: localStorage['ChromeLL-messageList-CSS']
-				});				
-			}
+			// Add CSS rules for user highlights/etc
+			cssHandler();
 			
-			else {
-				CHROMELL.injectCss(DOM.generateCss);
-			}										
-
 			// Check whether we need to display dramalinks ticker and fetch HTML
 			if (CHROMELL.config.dramalinks && !CHROMELL.config.hide_dramalinks_topiclist && !pm) {
 				
@@ -57,7 +49,29 @@
 
 			CHROMELL.whenDOMReady(DOM.init);
 			
-		};	
+		};
+		
+		/**
+		  *  Method to check whether config has changed and regenerate CSS rules if necessary.
+		  *  Otherwise, insert CSS file from localStorage
+		  */
+		var cssHandler = function() {
+			if (CHROMELL.config.last_saved > new Date().getTime()) {
+				CHROMELL.injectCss(DOM.generateCss);
+			}
+			
+			else if (localStorage['ChromeLL-messageList-CSS'] !== undefined) {
+				chrome.runtime.sendMessage({
+						need: 'insertcss',
+						code: localStorage['ChromeLL-messageList-CSS']
+				});				
+			}
+			
+			else {
+				CHROMELL.injectCss(DOM.generateCss);
+			}
+			
+		};
 		
 		var DOM = function() {
 			// Containers for DOM methods
@@ -196,43 +210,36 @@
 					for (var username in CHROMELL.config.user_highlight_data) {
 						var bg = CHROMELL.config.user_highlight_data[username].bg;
 						var color = CHROMELL.config.user_highlight_data[username].color;
-						var datasetAttribute = makeCssDatasetAttribute(username, 'user');
+						var userCss = removeDisallowedCssChars(username);
 						
-						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'background: #' + bg + ' !important');
-						styleSheet.addRule('.message-top[' + datasetAttribute + ']', 'color: #' + color);											
-						styleSheet.addRule('.message-top[' + datasetAttribute + '] a', 'color: #' + color);
-						styleSheet.addRule('.message-top[' + datasetAttribute + '] a:hover', 'opacity: 0.8');
+						styleSheet.addRule('.message-top.' + userCss, 'background: #' + bg + ' !important');
+						styleSheet.addRule('.message-top.' + userCss, 'color: #' + color);											
+						styleSheet.addRule('.message-top.' + userCss + ' a', 'color: #' + color);
+						styleSheet.addRule('.message-top.' + userCss + ' a:hover', 'opacity: 0.8');
 						
 						// Override the default foxlinks border color when user is highlighted
 						if (CHROMELL.config.foxlinks_quotes) {
-							styleSheet.addRule('.quoted-message[' + datasetAttribute + ']',	'border-color: #' + bg + ' !important');
+							styleSheet.addRule('.quoted-message.' + userCss,	'border-color: #' + bg + ' !important');
 						}
 					}
 				}
-
-				if (localStorage['ChromeLL-messageList-CSS'] === undefined) {
-					var cssString = '';
-					
-					for (var rule in styleSheet.cssRules) {					
-						var cssText = styleSheet.cssRules[rule].cssText;
-						console.log(cssText);
-						
-						if (cssText) {
-							cssString += cssText + '\n';						
-						}
-					}
-
-					localStorage['ChromeLL-messageList-CSS'] = cssString;
-				}			
+												
+				var cssString = '';
 				
+				for (var rule in styleSheet.cssRules) {					
+					var cssText = styleSheet.cssRules[rule].cssText;
+					
+					if (cssText) {
+						cssString += cssText + '\n';						
+					}
+				}
+
+				localStorage['ChromeLL-messageList-CSS'] = cssString;				
 			};
 			
-			var makeCssDatasetAttribute = function(string, type) {
-				var suffix = type || '';
+			var removeDisallowedCssChars = function(string) {		
 				// Remove disallowed chars from string
-				var cleanedString = string.replace(/[^a-zA-Z0-9]/g, '');				
-				var datasetAttribute = "data-" + type + "='" + cleanedString + "'"; // eg. data-user='username'
-				return datasetAttribute;
+				return string.replace(/[^a-zA-Z0-9]/g, '');
 			};			
 			
 			var appendScripts = function() {
@@ -448,8 +455,9 @@
 						var currentUser = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
 						for (var f = 0, len = ignores.length; f < len; f++) {
 							var userToCheck = ignores[f];
-							if (currentUser == userToCheck) {				
-								top.parentNode.setAttribute('ignored', true);
+							if (currentUser == userToCheck) {
+								
+								top.parentNode.classList.add("ignored");
 								ignorated.total_ignored++;
 								
 								if (!ignorated.data.users[userToCheck]) {
@@ -573,12 +581,10 @@
 						
 						if (CHROMELL.config.user_highlight_data[user]) {
 							
-							var userAttribute = user.replace(/\s|\)|:/g, '');			
-							msg.dataset.user = userAttribute;
-							top.dataset.user = userAttribute;
-							top.dataset.highlighted = true;							
+							top.classList.add('highlighted');
+							top.classList.add(removeDisallowedCssChars(user));											
 														
-							if (CHROMELL.config.notify_userhl_post && live && k === 0 && user !== currentUser) {
+							if (CHROMELL.config.notify_userhl_post && live && k === 0 && user !== currentUser.toLowerCase()) {
 							
 								chrome.runtime.sendMessage({
 									
@@ -1195,8 +1201,8 @@
 			
 			var ignoratorUpdate = function(msg) {
 					switch (msg.action) {		
-						case "showIgnorated":				
-							var ignoredMessages = document.querySelectorAll('[ignored]');
+						case "showIgnorated":	
+							var ignoredMessages = document.getElementsByClassName("ignored");
 							for (var i = 0, len = ignoredMessages.length; i < len; i++) {
 								ignoredMessages[i].style.display = '';
 								ignoredMessages[i].style.opacity = '.7';	
