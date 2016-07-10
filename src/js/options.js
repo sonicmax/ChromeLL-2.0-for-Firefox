@@ -359,13 +359,13 @@ var options = (function() {
 				var elementsToCheck = {
 					'ignorator': clickHandlers.ignorator,
 					'enable_user_highlight': clickHandlers.userHighlight,
-					'loadcfg': restoreConfigFromText,
-					'resetcfg': resetConfig,
+					'load_cfg_from_ta': restoreConfigFromFile,
+					'reset_cfg': resetConfig,
 					'forceignorator': ignoratorCleaner.rateLimitChecker,
 					'restoreignorator': ignoratorCleaner.restoreBackup,
-					'downloadbutton': clickHandlers.configDownload,
-					'restorebutton': clickHandlers.configRestore,
-					'old_cfg_options': showTextarea,
+					'download_cfg': clickHandlers.configDownload,
+					'restore_cfg_from_file': clickHandlers.configRestore,
+					'show_old_cfg_options': showTextarea,
 					'cache_empty': imageCache.clear,
 					'like_new': customLikeMenu.newEntry,
 					'like_save':  customLikeMenu.saveEntry
@@ -1190,7 +1190,7 @@ var options = (function() {
 	};
 	
 	var showTextarea = function() {
-		document.getElementById('old_cfg_options').style.display = "none";
+		document.getElementById('show_old_cfg_options').style.display = "none";
 		document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
 		showConfigInTextarea();
 	};
