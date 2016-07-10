@@ -177,7 +177,6 @@ var options = (function() {
 			
 		});
 		
-		// Secret CSS feature
 		var cssBox = document.getElementById('fun_css_div');
 		if (config.user_id == 13547 || config.user_id == 5599) {
 			cssBox.style.display = 'block';			
@@ -339,8 +338,9 @@ var options = (function() {
 				document.getElementById('userhl_topiclist').checked = highlight.checked;
 				saveConfig();
 			},
-			
+						
 			configDownload: function() {
+				// TODO: maybe it would be better to store config blob as data- attribute of button, 
 				document.getElementById('downloadcfg').click();
 			},
 			
@@ -365,7 +365,7 @@ var options = (function() {
 					'restoreignorator': ignoratorCleaner.restoreBackup,
 					'downloadbutton': clickHandlers.configDownload,
 					'restorebutton': clickHandlers.configRestore,
-					'old_cfg_options': showConfigInTextarea,
+					'old_cfg_options': showTextarea,
 					'cache_empty': imageCache.clear,
 					'like_new': customLikeMenu.newEntry,
 					'like_save':  customLikeMenu.saveEntry
@@ -409,7 +409,7 @@ var options = (function() {
 				var keyupTimer, cacheTimer, searchTimer;		
 
 				restoreButton.addEventListener('change', function(evt) {
-					restoreConfigFromText(evt);
+					restoreConfigFromFile(evt);
 				});	
 				
 				cacheTable.addEventListener('keyup', function(evt) {
@@ -1158,7 +1158,7 @@ var options = (function() {
 			localStorage['ChromeLL-Config'] = JSON.stringify(config);
 	};
 	
-	var restoreConfigFromText = function(evt) {
+	var restoreConfigFromFile = function(evt) {
 		var file = evt.target.files[0];
 		if (!file.type.match('text.*')) {
 			alert("Not a text file...");
@@ -1176,10 +1176,6 @@ var options = (function() {
 		}
 	};
 	
-	var showConfigInTextarea = function() {
-		document.getElementById('cfg_ta').value = localStorage['ChromeLL-Config'];
-	};
-	
 	var getConfigBlob = function() {
 		saveConfig();
 		var config = localStorage['ChromeLL-Config'];
@@ -1192,6 +1188,10 @@ var options = (function() {
 		document.getElementById('old_cfg_options').style.display = "none";
 		document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
 		showConfigInTextarea();
+	};
+	
+	var showConfigInTextarea = function() {
+		document.getElementById('cfg_ta').value = localStorage['ChromeLL-Config'];
 	};
 		
 	var processConfig = function(textfile) {
