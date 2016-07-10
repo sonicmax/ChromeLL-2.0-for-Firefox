@@ -433,8 +433,13 @@ var options = (function() {
 					}
 				});
 				
-				// listen for changes to checkboxes/textareas/etc
-				document.addEventListener('change', saveConfig);
+				// Save after detecting any changes to checkboxes/etc
+				document.addEventListener('change', function(evt) {					
+					if (evt.target.className !== 'tab-radio') {					
+						saveConfig();
+					}
+					
+				});
 				
 				// use debouncing to prevent script from calling event handler after each keystroke
 				document.addEventListener('keyup', function(evt) {
