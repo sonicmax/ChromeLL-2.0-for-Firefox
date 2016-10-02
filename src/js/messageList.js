@@ -1436,7 +1436,7 @@ var messageList = {
 									+ "<br><div class='youtube'>" 
 									+ "<iframe id='" + "yt" + anchor.id + "' type='text/html' width='640' height='390'" 
 									+ "src='https://www.youtube.com/embed/" + videoCode 
-									+ "'?autoplay='0' frameborder='0'/>" 
+									+ "'?autoplay='0' frameborder='0' allowfullscreen='allowfullscreen'/>" 
 									+ "</div>";
 				$(toEmbed).find("span:last").remove();
 				toEmbed.className = "hideme";
