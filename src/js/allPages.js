@@ -176,34 +176,41 @@ var allPages = {
 				need : "insertcss",
 				file : "src/css/arrowbox.css"
 			}, function() {
-				var links = [ "PM", "GT", "BT", "HIGHLIGHT",
-						"UNHIGHLIGHT", "IGNORATE" ];
-
-				var popup = document.createElement('div');
-				popup.id = "user-popup-div";
-				var info = document.createElement('div');
-				info.id = 'popup_info';
-				var user = document.createElement('div');
-				user.id = 'popup_user';
-
-				for (var i = 0, len = links.length; i < len; i++) {
-					var span = document.createElement('span');
-					span.className = 'popup_link';
-					span.innerHTML = links[i];
-					span.addEventListener('click', allPages.popup.clickHandler.bind(allPages.popup));
-					info.appendChild(span);
-				}
-
-				popup.appendChild(user);
-				popup.appendChild(info);
-				document.body.appendChild(popup);
-				allPages.popup.hide();
-
-				document.addEventListener('click', function(evt) {
-					if (evt.target.className != 'popup_link') {
-						allPages.popup.hide.call(allPages.popup);
+					
+					if (window.location.href.indexOf('//endoftheinter.net/profile.php?') > -1) {
+						return;
 					}
-				});
+					
+					// Create placeholder popup that we can populate later.
+					var links = ["PM", "GT", "BT", "HIGHLIGHT", "UNHIGHLIGHT", "IGNORATE"];					
+					var popupElement = document.createElement('div');			
+					popupElement.className = 'user_info_popup';
+					popupElement.id = 'user-popup-div';
+					var info = document.createElement('div');
+					info.className = 'user_info_popup';
+					info.id = 'popup_info';
+					var user = document.createElement('div');
+					user.className = 'user_info_popup';
+					user.id = 'popup_user';
+
+					for (var i = 0, len = links.length; i < len; i++) {
+						var span = document.createElement('span');
+						span.className = 'popup_link';
+						span.innerHTML = links[i];
+						span.addEventListener('click', allPages.popup.clickHandler);
+						info.appendChild(span);
+					}
+					
+					popupElement.appendChild(user);
+					popupElement.appendChild(info);
+					document.body.appendChild(popupElement);				
+					
+					document.addEventListener('click', function(evt) {
+						if (evt.target.className != 'popup_link') {
+							allPages.popup.hide();
+						}
+					});
+					
 			});
 		}
 	},
@@ -248,6 +255,7 @@ var allPages = {
 			// Add mousemove listener to detect when popup should be closed		
 			document.addEventListener('mousemove', this.mousemoveHandler.bind(this));			
 		},
+		
 		scrapeProfile: function(responseText) {
 			var html = document.createElement('html');
 			html.innerHTML = responseText;
@@ -267,6 +275,7 @@ var allPages = {
 			}
 			this.update(html, status, aliases, rep);
 		},
+		
 		update: function(html, status, aliases, rep) {
 			var placeholderElement = document.getElementById("popup_loading");			
 			var aliasesElement = document.getElementById("namechange");
@@ -292,6 +301,7 @@ var allPages = {
 				}
 			}		
 		},
+		
 		checkAccountAge: function(userID) {
 			// Returns appropriate "GS" value for account age. Otherwise, returns empty string
 			if (!allPages.config.hide_gs) {
@@ -316,17 +326,15 @@ var allPages = {
 				return '';
 			}
 		},
+		
 		hide: function() {
 			document.getElementById('user-popup-div').style.display = 'none';
 			document.removeEventListener('mousemove', this.mousemoveHandler);
 		},
+		
 		mousemoveHandler: function(evt) {
 			// Close popup if user moves mouse outside of popup (triggered after 250ms delay)
-			if (evt.target.className == 'message'
-					|| evt.target.className == 'message-container'
-					|| evt.target.className == 'message-top'
-					|| evt.target.className.match(/bar/)
-					|| evt.target.className == 'body') {
+			if (!this.popupBoundaryCheck(evt.target)) {
 				if (!this.waiting) {
 					this.debouncer = setTimeout(this.hide, 250);
 					this.waiting = true;
@@ -337,6 +345,21 @@ var allPages = {
 				this.waiting = false;
 			}
 		},
+		
+		popupBoundaryCheck: function(target) {
+			switch (target.className) {
+				case 'user_info_popup':
+				case 'username_anchor':
+				case 'popup_link':
+				case 'popup_user':
+				case 'rep_anchor':
+					return true;
+
+				default:
+					return false;
+			}
+		},
+		
 		clickHandler: function(evt) {
 				var user = this.currentUser.toLowerCase();
 				var messageListExists = false;
@@ -354,8 +377,9 @@ var allPages = {
 				}
 				
 				var target = this.currentPost;
-				var type = evt.target.innerHTML;				
-				switch (type) {
+				var type = evt.target.innerHTML;
+				
+				switch (type) {			
 					case "IGNORATE?":
 						if (!allPages.config.ignorator_list || allPages.config.ignorator_list == '') {
 							allPages.config.ignorator_list = this.currentUser;
@@ -385,9 +409,11 @@ var allPages = {
 						evt.target.innerHTML = "IGNORATE";
 						this.hidePopup();
 						break;
+						
 					case "IGNORATE":
 						evt.target.innerHTML = "IGNORATE?";
 						break;
+						
 					case "PM":
 						chrome.runtime.sendMessage({
 							need : "opentab",
@@ -395,6 +421,7 @@ var allPages = {
 						});
 						this.hidePopup();
 						break;
+						
 					case "GT":
 						chrome.runtime.sendMessage({
 							need : "opentab",
@@ -402,6 +429,7 @@ var allPages = {
 						});
 						this.hidePopup();
 						break;
+						
 					case "BT":
 						chrome.runtime.sendMessage({
 							need : "opentab",
@@ -409,6 +437,7 @@ var allPages = {
 						});
 						this.hidePopup();
 						break;
+						
 					case "HIGHLIGHT":
 						allPages.config.user_highlight_data[user] = {};
 						allPages.config.user_highlight_data[user].bg = Math.floor(
@@ -440,6 +469,7 @@ var allPages = {
 							}
 						}				
 						break;
+						
 					case "UNHIGHLIGHT":
 						delete allPages.config.user_highlight_data[this.currentUser
 								.toLowerCase()];
@@ -611,6 +641,7 @@ var allPages = {
 	},
 	init: function(config) {
 		this.config = config;
+		
 		try {
 			for (var i in this.commonFunctions) {
 				if (config[i]) {
@@ -620,6 +651,9 @@ var allPages = {
 		} catch (err) {
 			console.log("error in " + i + ":", err);
 		}
+		
+		addCSSRules();
+		
 		chrome.runtime.onMessage.addListener(function(msg) {
 			if (msg.action == 'showOptions') {
 				allPages.optionsMenu.show();
@@ -633,3 +667,38 @@ chrome.runtime.sendMessage({
 }, function(response) {
 	allPages.init.call(allPages, response.data);
 });
+
+var getCustomColors = function() {	
+	// (first 'h1' element is either tag name (in topic list), or topic title (in message list)
+	var titleText = document.getElementsByTagName('h1')[0];
+	var anchor = document.getElementsByTagName('a')[0];
+	var userbar = document.getElementsByClassName('userbar')[0];
+	var infobar = document.getElementsByClassName('infobar')[0];
+	var message = document.getElementsByClassName('message')[0] || document.getElementsByTagName('th')[0];			
+
+	var customColors = {};
+	customColors.text = window.getComputedStyle(titleText).getPropertyValue('color');			
+	customColors.anchor = window.getComputedStyle(anchor).getPropertyValue('color');				
+	customColors.body = window.getComputedStyle(document.body).getPropertyValue('background-color');
+	customColors.message = window.getComputedStyle(message).getPropertyValue('background-color');
+	customColors.userbar = window.getComputedStyle(userbar).getPropertyValue('background-color');
+	customColors.infobar = window.getComputedStyle(infobar).getPropertyValue('background-color');
+	
+	return customColors;
+};
+
+var addCSSRules = function() {
+	var styleSheet = document.styleSheets[0];
+	var customColors = getCustomColors();
+	// Dynamically create rules for user info popup using ETI colour scheme (to make sure that content is readable)
+	styleSheet.addRule('#user-popup-div',  'color: ' + customColors.text);			
+	styleSheet.addRule('#user-popup-div',  'background: ' + customColors.message);
+	styleSheet.addRule('#user-popup-div',  'border-color: ' + customColors.body);		
+	styleSheet.addRule('.popup_link', 'color: ' + customColors.anchor);
+	styleSheet.addRule('.popup_link', 'background: ' + customColors.userbar);	
+	styleSheet.addRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading, #rep', 'color: ' + customColors.text);
+	// #user-popup-div:before should be same colour as #user-popup-div background
+	styleSheet.addRule('#user-popup-div:before', 'border-bottom-color: ' + customColors.body);	
+	// #user-popup-div:after should be same colour as #user-popup-div border
+	styleSheet.addRule('#user-popup-div:after', 'border-bottom-color: ' +   customColors.infobar);
+};
