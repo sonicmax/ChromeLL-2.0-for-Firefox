@@ -1,19 +1,19 @@
-(function(CHROMELL) {
-	
-	var init = function() {
-		if (CHROMELL.config.user_id == 13547 || CHROMELL.config.user_id == 5599) {
-			if (CHROMELL.config.fun_css) {
+var lovelinks = {
+	init: function(config) {
+		if (config.user_id == 13547 || config.user_id == 5599) {
+			if (config.fun_css) {
 				if (document.readyState == 'loading') {
-					CHROMELL.injectCss(generateCss);
+					document.addEventListener('DOMContentLoaded', function() {
+						lovelinks.addCSSRules();
+					});
 				}
 				else {
-					addCSSRules();
+					lovelinks.addCSSRules();
 				}
 			}
 		}
-	};
-	
-	var generateCss = function() {
+	},
+	addCSSRules: function() {
 		var sheet = document.styleSheets[0];
 		var cssSelectors = ['.message-top', '.infobar', '.userbar', 'tr', 'td', 'th'];
 		for (var i = 0, len = cssSelectors.length; i < len; i++) {
@@ -101,8 +101,11 @@
 		}			
 		title.innerHTML = donger + '&nbsp' + title.innerHTML + '~';				
 		document.title = '♥ ' + document.title + ' ♥';
-	};
-	
-	CHROMELL.getConfig(init);
-	
-})( CHROMELL || {} );
+	}
+};
+
+chrome.runtime.sendMessage({
+	need: "config"
+}, function(config) {
+	lovelinks.init(config.data);
+});
