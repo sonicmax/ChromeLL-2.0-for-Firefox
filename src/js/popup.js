@@ -12,9 +12,7 @@ function openControl(evt) {
 }
 
 function openOptions() {
-	chrome.runtime.sendMessage({
-		need : "options"
-	});
+	chrome.runtime.openOptionsPage();
 	window.close();
 }
 
