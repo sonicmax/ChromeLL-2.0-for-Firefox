@@ -452,7 +452,9 @@ var background = {
 		
 		chrome.runtime.onMessage.addListener(
 			function(request, sender, sendResponse) {
+				
 				switch(request.need) {
+					
 					case "config":
 						// page script needs extension config.
 						background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
@@ -465,6 +467,7 @@ var background = {
 							sendResponse({"data": background.cfg});
 						}
 						break;
+						
 					case "save":
 						// page script needs config save.
 						if (request.name === "tcs") {
@@ -478,6 +481,7 @@ var background = {
 							console.log('saving ', request.name, request.data);
 						}
 						break;
+						
 					case "notify":
 						chrome.notifications.create('popup', {
 							type: "basic",
@@ -497,6 +501,7 @@ var background = {
 							}, parseInt(background.cfg.clear_notify, 10) * 1000);
 						});
 						break;	
+						
 					case "dramalinks":
 						var time = parseInt(new Date().getTime());
 						if (background.drama.time && (time < background.drama.time)){
@@ -509,26 +514,27 @@ var background = {
 							background.getDrama();
 						}
 						break;
+						
 					case "insertcss":
 						if (background.cfg.debug) {
 							console.log('inserting css ', request.file);
 						}
 						chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
-						sendResponse({
-							// no response needed
-						});
 						break;
+						
 					case "opentab":
 						if (background.cfg.debug) {
 							console.log('opening tab ', request.url);
 						}
 						chrome.tabs.create({url: request.url});
 						break;
+						
 					case "noIgnores":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								sendResponse({"noignores": background.noIgnores});										
 						});
-						return true;								
+						return true;
+						
 					case "getIgnored":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								sendResponse({
@@ -536,7 +542,8 @@ var background = {
 										"scope": background.scopeInfo[tabs[0].id]}
 								);
 						});		
-						return true;									
+						return true;
+						
 					case "showIgnorated":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								background.tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', ids: request.ids});									
@@ -545,6 +552,7 @@ var background = {
 							console.log('showing hidden data', request);
 						}
 						return true;
+						
 					case "options":
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								// check whether bg script can send messages to current tab
@@ -562,6 +570,7 @@ var background = {
 								
 						});
 						break;
+						
 					default:
 						if (background.cfg.debug) {
 							console.log("Error in request listener - undefined parameter?", request);
