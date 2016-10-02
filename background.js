@@ -549,20 +549,18 @@ var background = {
 						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 								// check whether bg script can send messages to current tab
 								if (background.tabPorts[tabs[0].id] && !background.cfg.options_window) {
-									// open options in same tab
+									// Open options page in iframe
 									chrome.tabs.sendMessage(tabs[0].id, {
 										action: "showOptions"
-									}, function(response) {
-										// empty callback
-									});
+									}, null);
 								}
+								
 								else {
-									// open options in new tab
-									chrome.tabs.create({
-											url: chrome.extension.getURL('options.html')
-									});							
+									// Create new tab
+									chrome.runtime.openOptionsPage();						
 								}
-						});	
+								
+						});
 						break;
 					default:
 						if (background.cfg.debug) {
