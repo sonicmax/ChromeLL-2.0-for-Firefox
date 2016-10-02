@@ -269,28 +269,6 @@ var messageList = {
 					}
 				}
 			},
-			userpics: function(msg) {		
-				var userAnchor = msg.getElementsByClassName('message-top')[0].getElementsByTagName('a')[0];
-				if (userAnchor.href.indexOf('endoftheinter.net/profile.php?user=') > -1) {
-					var messageElement = msg.getElementsByClassName('message')[0];
-					var username = userAnchor.innerHTML;
-					var userpic = {						
-						fullsize: 'http://pix.tiko.be/pic.php?u=' + username,
-						thumbnail: 'http://pix.tiko.be/pic.php?u=' + username + '&t'
-					};
-					var image = document.createElement('img');
-					image.className = 'userpic_addon';
-					image.src = userpic.thumbnail;
-					image.href = userpic.fullsize;
-					image.title = username;
-					messageElement.insertBefore(image, messageElement.firstChild);
-					image.onload = function() {
-						if (this.height === 1) {
-							this.remove();
-						}						
-					}
-				}
-			},
 			foxlinks_quotes: function(msg) {
 				var color = "#" + messageList.config['foxlinks_quotes_color'];
 				var quotes = msg.getElementsByClassName('quoted-message');
