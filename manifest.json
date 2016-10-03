@@ -37,7 +37,7 @@
   },	
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
-    "js": ["lib/jquery.js", "src/js/messageList.js", "src/js/imagemap.js", "src/js/bash.js"],
+    "js": ["lib/jquery.js", "src/js/messageList.js", "src/js/imagemap.js"],
 		"run_at" : "document_start"
   },
   {
