@@ -224,36 +224,36 @@ var allPages = {
 			var x = (boundingRect.left + (boundingRect.width / 2)) - document.body.scrollLeft + usernameAnchor.clientLeft;
 			var y = boundingRect.top + document.body.scrollTop + usernameAnchor.clientTop;
 			var profileURL = usernameAnchor.href;
-			this.currentUser = usernameAnchor.innerHTML;
+			this.username = usernameAnchor.innerHTML;
 			this.currentPost = usernameAnchor.parentNode;
-			var userID = profileURL.match(/user=(\d+)/)[1];
-			var gs = this.checkAccountAge(userID);
+			this.userId = profileURL.match(/user=(\d+)/)[1];
+			var gs = this.checkAccountAge(this.userId);
 			
-			var that = this;
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", profileURL, true);
 			xhr.onload = function() {
 				if (this.status == 200) {
-					that.scrapeProfile(this.responseText);
+					allPages.popup.scrapeProfile(this.responseText);
 				}
 			};		
 			xhr.send();
 			
 			var popup = document.getElementById('popup_user');
-			// TODO: construct popup using createElement method
-			popup.innerHTML = '<div id="username">' + this.currentUser + " " + gs 
-					+ ' <span id="popup_uid">' + userID + '</span></div>'					
-					+ '<div id="namechange"></div>'					
-					+ '<div id="rep"><span id="popup_loading">loading...</span></div>'
-					+ '<div id="online"></div>' 
-					+ '<div id="punish"></div>';
+
+			popup.innerHTML = '<div id="username" class="user_info_popup">' + this.username + " " + gs 
+					+ ' <span id="popup_uid" class="user_info_popup">' + this.userId + '</span></div>'					
+					+ '<div id="namechange" class="user_info_popup"></div>'					
+					+ '<div id="rep" class="user_info_popup"><span id="popup_loading" class="user_info_popup">loading...</span></div>'
+					+ '<div id="online" class="user_info_popup"></div>' 
+					+ '<div id="punish" class="user_info_popup"></div>';
+					
 			var popupContainer = document.getElementById('user-popup-div');
-			// Modify coordinates so that arrow in popup points to anchor
+			// Modify coordinates so that arrow in popup points to selected username element
 			popupContainer.style.left = (x - 35) + "px";
 			popupContainer.style.top = (y + 25) + "px";
-			popupContainer.style.display = 'block';	
+			popupContainer.style.display = 'block';
 			// Add mousemove listener to detect when popup should be closed		
-			document.addEventListener('mousemove', this.mousemoveHandler.bind(this));			
+			document.addEventListener('mousemove', this.mousemoveHandler);			
 		},
 		
 		scrapeProfile: function(responseText) {
@@ -289,7 +289,7 @@ var allPages = {
 					aliasesElement.innerHTML = "<br>Formerly known as: <b>" + aliases + '</b>';
 				}
 			}	
-			if (html.innerHTML.indexOf('online now') > -1) {
+			if (html.innerHTML.indexOf('(online now)') > -1) {
 					onlineElement.innerHTML = '(online now)';
 			}	
 			if (status) {
@@ -329,20 +329,20 @@ var allPages = {
 		
 		hide: function() {
 			document.getElementById('user-popup-div').style.display = 'none';
-			document.removeEventListener('mousemove', this.mousemoveHandler);
+			document.removeEventListener('mousemove', allPages.popup.mousemoveHandler);
 		},
 		
-		mousemoveHandler: function(evt) {
+		mousemoveHandler: function(evt) {			
 			// Close popup if user moves mouse outside of popup (triggered after 250ms delay)
-			if (!this.popupBoundaryCheck(evt.target)) {
-				if (!this.waiting) {
-					this.debouncer = setTimeout(this.hide, 250);
-					this.waiting = true;
+			if (!allPages.popup.popupBoundaryCheck(evt.target)) {
+				if (!allPages.popup.waiting) {
+					allPages.popup.debouncerId = setTimeout(allPages.popup.hide, 250);
+					allPages.popup.waiting = true;
 				}
 			}
 			else {
-				clearTimeout(this.debouncer);
-				this.waiting = false;
+				clearTimeout(allPages.popup.debouncerId);
+				allPages.popup.waiting = false;
 			}
 		},
 		
@@ -361,37 +361,36 @@ var allPages = {
 		},
 		
 		clickHandler: function(evt) {
-				var user = this.currentUser.toLowerCase();
-				var messageListExists = false;
+				var user = allPages.popup.username.toLowerCase();
 				
-				if (window.messageList) {	
-					messageListExists = true;
+				if (window.messageList) {
 					var containers = document.getElementsByClassName('message-container');
 					var container;
 					var functions = messageList.functions.messagecontainer;
 				}
+				
 				else if (window.topicList) {	
 					var trs = document.getElementsByTagName('tr');
 					var tr;
 					var functions = topicList.functions;
 				}
 				
-				var target = this.currentPost;
+				var target = allPages.popup.currentPost;
 				var type = evt.target.innerHTML;
 				
 				switch (type) {			
 					case "IGNORATE?":
 						if (!allPages.config.ignorator_list || allPages.config.ignorator_list == '') {
-							allPages.config.ignorator_list = this.currentUser;
+							allPages.config.ignorator_list = allPages.popup.username;
 						} else {
-							allPages.ignorator_list += ", " + this.currentUser;
+							allPages.ignorator_list += ", " + allPages.popup.username;
 						}
 						chrome.runtime.sendMessage({
 							need : "save",
 							name : "ignorator_list",
 							data : allPages.config.ignorator_list
 						});
-						if (messageListExists) {
+						if (window.messageList) {
 							messageList.config.ignorator_list = allPages.config.ignorator_list;
 							for (var i = 0, len = containers.length; i < len; i++) {
 								container = containers[i];
@@ -407,7 +406,7 @@ var allPages = {
 							}
 						}
 						evt.target.innerHTML = "IGNORATE";
-						this.hidePopup();
+						allPages.popup.hide();
 						break;
 						
 					case "IGNORATE":
@@ -417,25 +416,25 @@ var allPages = {
 					case "PM":
 						chrome.runtime.sendMessage({
 							need : "opentab",
-							url : "http://endoftheinter.net/postmsg.php?puser=" + this.currentID
+							url : "http://endoftheinter.net/postmsg.php?puser=" + allPages.popup.userId
 						});
-						this.hidePopup();
+						allPages.popup.hide();
 						break;
 						
 					case "GT":
 						chrome.runtime.sendMessage({
 							need : "opentab",
-							url : "http://endoftheinter.net/token.php?type=2&user=" + this.currentID
+							url : "http://endoftheinter.net/token.php?type=2&user=" + allPages.popup.userId
 						});
-						this.hidePopup();
+						allPages.popup.hide();
 						break;
 						
 					case "BT":
 						chrome.runtime.sendMessage({
 							need : "opentab",
-							url : "http://endoftheinter.net/token.php?type=1&user=" + this.currentID
+							url : "http://endoftheinter.net/token.php?type=1&user=" + allPages.popup.userId
 						});
-						this.hidePopup();
+						allPages.popup.hide();
 						break;
 						
 					case "HIGHLIGHT":
@@ -449,7 +448,7 @@ var allPages = {
 							name : "user_highlight_data",
 							data : allPages.config.user_highlight_data
 						});
-						if (messageListExists) {
+						if (window.messageList) {
 							// update config object in messageList script
 							messageList.config.user_highlight_data = allPages.config.user_highlight_data;
 							var top;
@@ -471,14 +470,14 @@ var allPages = {
 						break;
 						
 					case "UNHIGHLIGHT":
-						delete allPages.config.user_highlight_data[this.currentUser
+						delete allPages.config.user_highlight_data[allPages.popup.username
 								.toLowerCase()];
 						chrome.runtime.sendMessage({
 							need : "save",
 							name : "user_highlight_data",
 							data : allPages.config.user_highlight_data
 						});
-						if (messageListExists) {
+						if (window.messageList) {
 							// update config object in messageList scripts
 							messageList.config.user_highlight_data = allPages.config.user_highlight_data;
 							var message_tops = document.getElementsByClassName('message-top');
@@ -486,7 +485,7 @@ var allPages = {
 								var top = message_tops[i];
 								if (top.getElementsByTagName('a')[0]) {
 									var userToCheck = top.getElementsByTagName('a')[0].innerHTML;
-									if (userToCheck === this.currentUser) {		
+									if (userToCheck === allPages.popup.username) {		
 										top.style.background = '';
 										top.style.color = '';
 										var top_atags = top.getElementsByTagName('a');
@@ -505,7 +504,7 @@ var allPages = {
 								tds = tr.getElementsByTagName('td');
 								if (tds[1].getElementsByTagName('a')[0]) {
 									var userToCheck = tds[1].getElementsByTagName('a')[0].innerHTML;
-									if (userToCheck === this.currentUser) {
+									if (userToCheck === allPages.popup.username) {
 										for (var j = 0, tds_len = tds.length; j < tds_len; j++) {
 											td = tds[j];
 											td.style.background = '';
@@ -518,9 +517,8 @@ var allPages = {
 									}
 								}
 							}
-								// topicList.zebra_tables();
 						}
-						this.hide();
+						allPages.popup.hide();
 						break;
 				}
 		}
