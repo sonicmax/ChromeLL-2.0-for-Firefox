@@ -1133,41 +1133,32 @@ var messageList = {
 		checkAPI: function (url, callback) {
 			var splitURL = url.split('/').slice(-1);
 			var code = splitURL.join('/');
-			var xhrURL = 'http://gfycat.com/cajax/get/' + code;
-			var https;
-			if (window.location.protocol == 'https:') {
-				https = true;
-				xhrURL = xhrURL.replace('http', 'https');
-			}
 			var xhr = new XMLHttpRequest();
-			xhr.open("GET", xhrURL, true);
+			xhr.open("GET", window.location.protocol + '//gfycat.com/cajax/get/' + code, true);
 			xhr.onreadystatechange = function() {
 				if (xhr.readyState == 4 && xhr.status == 200) {
 					var apiData = {};
 					// gfycat api provides width, height, & webm url
 					var response = JSON.parse(xhr.responseText);
+					
 					if (!response.gfyItem) {
 						callback("error");
 					}
+					
 					var width = response.gfyItem.width;
 					var height = response.gfyItem.height;
+					
 					if (messageList.config.resize_gfys 
 							&& width > messageList.config.gfy_max_width) {
 						// scale video size to match gfy_max_width value
 						height = (height / (width / messageList.config.gfy_max_width));
 						width = messageList.config.gfy_max_width;
 					}
-					var webm;
-					if (https) {
-						webm = response.gfyItem.webmUrl.replace('http', 'https');
-					}
-					else {
-						webm = response.gfyItem.webmUrl;
-					}
+
 					apiData.nsfw = response.gfyItem.nsfw;
 					apiData.height = height;
 					apiData.width = width;
-					apiData.webm = webm;
+					apiData.webm = response.gfyItem.webmUrl;
 					callback(apiData);
 				}
 			};
