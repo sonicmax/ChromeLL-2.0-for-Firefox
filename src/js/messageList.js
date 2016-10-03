@@ -1008,12 +1008,14 @@ var messageList = {
 				}
 				evt.preventDefault();	
 			}
+			// Fix for relative URLs for LUEpedia (note that index === 0)
 			else if (evt.target.title.indexOf("/index.php") === 0) {
-				this.links.fix(evt.target, "wiki");
+				this.links.fixRelativeUrls(evt.target, "wiki");
 				evt.preventDefault();
 			}
+			// Fix relative URLs for imagemap
 			else if (evt.target.title.indexOf("/imap/") === 0) {
-				this.links.fix(evt.target, "imagemap");					
+				this.links.fixRelativeUrls(evt.target, "imagemap");					
 				evt.preventDefault();
 			}
 			else if (evt.target.className.match(/youtube|gfycat/)
@@ -2180,7 +2182,7 @@ var messageList = {
 				document.addEventListener('visibilitychange', messageList.gfycat.pause);
 			}
 		},
-		fix: function(anchor, type) {
+		fixRelativeUrls: function(anchor, type) {
 			// fixes problem where wiki/imagemap links redirect incorrectly
 			if (type === "wiki") {
 				window.open(anchor.href.replace("boards", "wiki"));
