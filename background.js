@@ -103,7 +103,7 @@ var background = {
 						}
 					});
 					setTimeout(function() {
-						background.clearNotification(id);
+						chrome.notifications.clear(ID, null);
 					}, 5000);
 				}
 			);
@@ -497,7 +497,7 @@ var background = {
 								return;
 							}
 							setTimeout(function() {
-								background.clearNotification(id);
+								chrome.notifications.clear(ID, null);
 							}, parseInt(background.cfg.clear_notify, 10) * 1000);
 						});
 						break;	
@@ -675,14 +675,6 @@ var background = {
 			}
 		}
 		xhr.send();
-	},
-	clearNotification: function(ID) {
-		chrome.notifications.clear(ID,
-			function() {
-				// empty callback - method requires function to be passed as 2nd parameter,
-				// but we just want to clear the notification
-			}
-		);
 	},
 	omniboxSearch: function() {
 		var arrayForSearch = [];
