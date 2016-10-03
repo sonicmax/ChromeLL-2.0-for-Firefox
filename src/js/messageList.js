@@ -1101,19 +1101,23 @@ var messageList = {
 		loader: function() {
 			var gfycats = document.getElementsByClassName('gfycat');
 			var height = window.innerHeight;
+						
 			for (var i = 0, len = gfycats.length; i < len; i++) {
 				var gfycat = gfycats[i];			
 				var position = gfycat.getBoundingClientRect();
 				// use window height + 200 to increase visibility of gfycatLoader
-				if (position.top > height + 200 
-						|| position.bottom < 0) {
+				if (position.top > height + 200 || position.bottom < 0) {
+							
 					if (gfycat.getAttribute('name') == 'embedded'
-						|| gfycat.getAttribute('name') == 'embedded_thumb')
+						|| gfycat.getAttribute('name') == 'embedded_thumb') {
+							
 						if (!gfycat.getElementsByTagName('video')[0].paused) {
-						// pause hidden video elements to reduce CPU load
-						gfycat.getElementsByTagName('video')[0].pause();
+							// pause hidden video elements to reduce CPU load
+							gfycat.getElementsByTagName('video')[0].pause();	
+						}
 					}
 				}
+				
 				else if (gfycat.tagName == 'A') {
 					if (gfycat.getAttribute('name') == 'gfycat_thumb') {
 						messageList.gfycat.thumbnail(gfycat);
@@ -1121,9 +1125,11 @@ var messageList = {
 						messageList.gfycat.placeholder(gfycat);
 					}
 				}
+				
 				else if (gfycat.getAttribute('name') == 'placeholder') {
 					messageList.gfycat.embed(gfycat);
 				}
+				
 				else if (gfycat.getAttribute('name') == 'embedded'
 						&& gfycat.getElementsByTagName('video')[0].paused) {
 					gfycat.getElementsByTagName('video')[0].play();
@@ -1166,21 +1172,27 @@ var messageList = {
 		},
 		placeholder: function(gfycatLink) {
 			var url = gfycatLink.getAttribute('href');
+			
 			this.checkAPI(url, function(data) {
+				
 				if (data === "error") {
 					// revert class name to stop gfycat loader from detecting link
 					gfycatLink.className = 'l';
 					return;
 				}
+				
 				else if (messageList.config.hide_nws_gfycat) {
 					if (document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {						
 						gfycatLink.className = "l";
 						return;
 					}
 				}
+				
 				else {
 					messageList.gfycat.workSafe(gfycatLink, data.nsfw, function(safe) {
+						
 						if (!safe) {
+							
 							if (messageList.config.hide_nws_gfycat) {
 								gfycatLink.className = "l";
 								return;
@@ -1190,6 +1202,7 @@ var messageList = {
 								return;
 							}
 						}
+						
 						else {
 							// create placeholder
 							var placeholder = document.createElement('div');
@@ -1199,14 +1212,19 @@ var messageList = {
 							placeholder.innerHTML = '<video width="' + data.width + '" height="' + data.height + '" loop >'
 									+ '</video>'
 									+ '<span style="display:none"><br><br>' + url + '</span>';
+									
 							// prevent "Cannot read property 'replaceChild' of null" error
 							if (gfycatLink.parentNode) {
+								
 								gfycatLink.parentNode.replaceChild(placeholder, gfycatLink);
 								// check if placeholder is visible (some placeholders will be off screen)
 								var position = placeholder.getBoundingClientRect();
+								
 								if (position.top > window.innerHeight) {
 									return;
-								} else {
+								} 
+								
+								else {
 									// pass placeholder video element to embed function
 									messageList.gfycat.embed(placeholder);
 								}
