@@ -221,8 +221,6 @@ var options = {
 				options.listeners.change();
 				options.listeners.menuButton();
 				options.ui.populateCacheTable();
-				// disabled for 2.30 release
-				// options.ui.displayUserscripts();
 				options.ui.displayLBContent();
 				options.save();
 			});
@@ -234,13 +232,11 @@ var options = {
 			options.listeners.change();
 			options.listeners.menuButton();
 			options.ui.populateCacheTable();
-			// disabled for 2.30 release			
-			// options.ui.displayUserscripts();
 			options.ui.displayLBContent();
 			options.save();
 		}		
 	},	
-	functions: {
+	utils: {
 		cleanIgnorator: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			config.ignorator_backup = config.ignorator_list;
@@ -293,7 +289,7 @@ var options = {
 			var timeLeft = currentTime - config.last_clean;
 			if (timeLeft > 86400000) {
 				document.getElementById('ignorateinfo').innerText = "running ignorator cleaner..."
-				options.functions.cleanIgnorator();
+				options.utils.cleanIgnorator();
 			} else {
 				var totalseconds = ((86400000 - timeLeft) / 1000);
 				var hours = Math.floor(totalseconds / 3600);
@@ -381,7 +377,7 @@ var options = {
 				localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
 			} catch (e) {
 				console.log('This doesnt look like a config', e);
-				base64 = options.functions.decodeBase64(document.getElementById('cfg_ta').value);
+				base64 = options.utils.decodeBase64(document.getElementById('cfg_ta').value);
 				options.restoreV1(base64);
 			}
 			location.reload();
@@ -749,7 +745,7 @@ var options = {
 				var elementID = evt.target.id;
 				if (elementsToCheck[elementID]) {
 					var functionName = elementsToCheck[elementID];
-					options.functions[functionName]();
+					options.utils[functionName]();
 					if (evt.target.tagName !== 'INPUT') {
 						evt.preventDefault();
 					}
@@ -769,7 +765,7 @@ var options = {
 				}
 				
 				else if (evt.target.id == 'delete_custom') {
-					options.functions.deleteFromConfig(evt.target.parentNode.id);
+					options.utils.deleteFromConfig(evt.target.parentNode.id);
 					evt.preventDefault();
 				}
 			});
