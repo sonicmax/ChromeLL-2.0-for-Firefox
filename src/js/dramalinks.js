@@ -8,10 +8,24 @@ var dramalinks = {
 		ticker.id = "dramalinks_ticker";
 		element.parentNode.insertBefore(ticker, element.nextSibling);
 		
-		if (!dramalinks.html) {			
-			Object.observe(dramalinks, function() {
-				dramalinks.update.call(dramalinks);
-			});
+		if (!dramalinks.html) {
+			var counter = 0;
+			var timerId;
+			
+			timerId = setTimeout(() => {
+				
+				if (dramalinks.html) {
+					dramalinks.update.call(dramalinks);
+				}
+				
+				counter += 100;
+				
+				if (counter >= 1000) {
+					clearTimeout(timerId);
+				}
+				
+			}, 100);
+			
 		}
 		else {
 			this.update();
