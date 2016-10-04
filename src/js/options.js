@@ -1,7 +1,7 @@
 $(document).ready(() => {					
 		// It's possible (but unlikely) that user opened options before background page finished loading config
 		if (localStorage['ChromeLL-Config'] == ''
-				|| localStorage['ChromeLL-Config'] == undefined) {					
+				|| localStorage['ChromeLL-Config'] == undefined) {				
 			console.log("Blank Config. Rebuilding");
 			
 			options.getDefault(function(defaultConfig) {				
@@ -11,7 +11,7 @@ $(document).ready(() => {
 		}
 		
 		else if (localStorage['chromeLL_userhighlight'] && 
-				localStorage['chromeLL_userhighlight'] != '') {					
+				localStorage['chromeLL_userhighlight'] != '') {		
 			options.restoreV1();
 		}
 		else {
@@ -90,115 +90,48 @@ var options = {
 					.getElementsByClassName('template_title').length - 1].value = j;
 			options.ui.addDiv.postTemplate();
 		}
-		document.getElementById('clear_notify').value = config.clear_notify;
-		document.addEventListener('keyup', function(evt) {
-			if (!evt.target.name)
-				return;
-			if (evt.target.name == "user_highlight_username") {
-				var datas = document.getElementById('user_highlight')
-						.getElementsByClassName('user_name');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					options.ui.addDiv.userHighlight();
-			}
-
-			if (evt.target.name == "user_book_name") {
-				var datas = document.getElementById('bookmarked_tags')
-						.getElementsByClassName('bookmark_name');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					options.ui.addDiv.bookmarkName();
-			}
-			
-			if (evt.target.name == "user_snippet") {
-				var datas = document.getElementById('snippets')
-						.getElementsByClassName('snippet_name');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					options.ui.addDiv.snippetName();
-			}
-
-			if (evt.target.name == "post_template_title") {
-				var datas = document.getElementById('post_template')
-						.getElementsByClassName('template_title');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					options.ui.addDiv.postTemplate();
-			}
-			if (evt.target.name == "keyword_highlight_keyword") {
-				var datas = document.getElementById('keyword_highlight')
-						.getElementsByClassName('keyword');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					options.ui.addDiv.keywordHighlight();
-			}
-			if (evt.target.name == "tag_highlight_keyword") {
-				var datas = document.getElementById('tag_highlight')
-						.getElementsByClassName('tag');
-				var empty = false;
-				for (var i = 1; datas[i]; i++) {
-					if (datas[i].value == '')
-						empty = true;
-				}
-				if (!empty)
-					options.ui.addDiv.tagHighlight();
-			}
-		});
+		document.getElementById('clear_notify').value = config.clear_notify;		
 		// show version
 		var app = chrome.app.getDetails();
 		document.getElementById('version').innerText = app.version;
 		document.getElementById('downloadcfg').href = options.download();
-		// show size on disk of imagemap cache
-		chrome.storage.local.getBytesInUse("imagemap", function(bytes) {
-			var megabytes = bytes / 1048576;
-			// round to 2 decimal places
-			document.getElementById('cache_size').innerHTML = Math.round(megabytes * 100) / 100;
-		});
+
 		var cssBox = document.getElementById('fun_css_div');
 		if (config.user_id == 13547 || config.user_id == 5599) {
 			cssBox.style.display = 'block';			
 		}		
 		if (document.readyState == 'loading') {
+			
 			document.addEventListener('DOMContentLoaded', function() {
 				options.ui.hideUnusedMenus();
 				options.ui.setColorPicker();
-				options.listeners.menuVisibility();
-				options.listeners.click();
-				options.listeners.change();
-				options.listeners.menuButton();
+				
+				options.addListeners.menuVisibility();
+				options.addListeners.click();
+				options.addListeners.change();
+				options.addListeners.menuButton();
+				options.addListeners.keyup();
+				
 				options.ui.populateCacheTable();
 				options.ui.displayLBContent();
 				options.save();
 			});
-		} else {
+		} 
+		
+		else {
 			options.ui.hideUnusedMenus();
 			options.ui.setColorPicker();
-			options.listeners.menuVisibility();
-			options.listeners.click();
-			options.listeners.change();
-			options.listeners.menuButton();
+			
+			options.addListeners.menuVisibility();
+			options.addListeners.click();
+			options.addListeners.change();
+			options.addListeners.menuButton();
+			options.addListeners.keyup();			
+			
+			options.ui.populateCacheSize();
 			options.ui.populateCacheTable();
 			options.ui.displayLBContent();
+			
 			options.save();
 		}		
 	},	
@@ -428,166 +361,13 @@ var options = {
 			}
 			return JSON.parse(Base64.decode(config));
 		},
-		sortCache: function(sortType) {
-			if (sortType === 'default') {
-				options.ui.populateCacheTable(sortType);
-			}
-			else {
-				var filenames = [];
-				var results = [];
-				var duplicateCheck = {};
-				var filetypes = {};
-				options.cache.restore(function(cached) {
-					var cache = cached.imagemap;
-					if (sortType === 'filetype') {						
-						filetypes["none"] = [];
-						filetypes[".gif"] = [];
-						filetypes[".jpg"] = [];
-						filetypes[".png"] = [];
-						for (var src in cache) {
-							var filename = cache[src].filename;
-							var extension = filename.match(/\.(gif|jpg|png)$/i);
-							if (extension) {
-								filetypes[extension[0]].push(filename);
-							} else {		
-								filetypes["none"].push(filename);
-							}
-						}
-						for (var filetype in filetypes) {
-							if (filetypes[filetype] === []) {
-								return;
-							}
-							else {
-								filenames = filenames.concat(filetypes[filetype]);
-							}
-						}
-					}
-					else {
-						// sort by filename
-						for (var src in cache) {
-							var filename = cache[src].filename;
-							filenames.push(filename);
-						}
-						filenames.sort();
-						if (sortType === 'z_a') {
-							filenames.reverse();
-						}
-					}
-					// iterate over filenames array and match with their respective src values from cache
-					for (var i = 0, len = filenames.length; i < len; i++) {
-						var sortedFilename = filenames[i];
-						for (var src in cache) {
-							var cacheFilename = cache[src].filename;
-							if (cacheFilename == sortedFilename) {
-								if (!duplicateCheck[src]) {
-									// check that src hasn't been pushed to results array before - this ensures that
-									// duplicate filenames aren't assigned the same src value
-									results.push(src);						
-									duplicateCheck[src] = {"filename": sortedFilename, "index": i};
-								}
-							}
-						}
-					}
-					options.ui.populateCacheTable(results);				
-				});
-			}
-		},
-		searchCache: function() {
-			var query = document.getElementById('imagemap_search').value;
-			var results = [];
-			var duplicateCheck = {};
-			if (/\S/.test(query)) {
-				options.cache.restore(function(cached) {
-					var cache = cached.imagemap;
-					for (var src in cache) {
-						var filename = cache[src].filename;
-						if (!duplicateCheck[src]) {
-							if (filename.indexOf(query) > -1) {
-								results.push(src);
-								duplicateCheck[src] = filename;
-							}
-						}
-					}
-					options.ui.populateCacheTable(results);
-				});
-			}
-			else {
-				options.ui.populateCacheTable('default');
-			}
-		},
 		emptyCache: function() {
-			chrome.storage.local.remove('imagemap', function() {
-				console.log('Cleared imagemap cache.');
-				location.reload();
+			chrome.runtime.sendMessage({ need: 'clearDatabase' }, function() {
+				// Update UI
+				options.ui.populateCacheSize();
+				options.ui.populateCacheTable();			
 			});
-		},
-		/*newScript: function() {
-			options.ui.closeMenu();
-			var textarea = document.getElementById('script_ta');
-			var activeScript = document.getElementsByClassName('active_script')[0];
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var scriptData = config.userscript_data;
-			var oldID = activeScript.id.match(/[0-9]+/)[0];			
-			var highest = 1;
-			for (var i in scriptData) {
-				var current = parseInt(i.match(/[0-9]+/)[0], 10);
-				if (current > highest) {
-					highest = current;
-				}
-			}
-			var newNumber = highest + 1;
-			var newID = 'script' + newNumber;
-			
-			config.userscript_data[newID] = {};
-			config.userscript_data[newID].name = 'Untitled script ' + newNumber;
-			config.userscript_data[newID].contents = '';			
-			
-			var scriptList = document.getElementById('script_list');
-			var anchor = document.createElement('a');
-			var linebreak = document.createElement('br');
-			anchor.href = '#';
-			anchor.id = newID;
-			anchor.className = 'active_script';
-			anchor.innerHTML = 'Untitled ' + newNumber;
-			var close = document.createElement('a');
-			close.style.cssFloat = "right";
-			close.style.fontSize = "18px";
-			close.href = '#';
-			close.style.textDecoration = "none";
-			close.id = "delete_custom";
-			close.innerHTML = '&#10006;';
-			anchor.appendChild(close);
-			scriptList.appendChild(anchor);
-			scriptList.appendChild(linebreak);
-			activeScript.className = '';
-			textarea.value = '';
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
-		},	
-		saveScript: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			options.ui.closeMenu();		
-			var activeScript = document.getElementsByClassName('active_script')[0];
-			var contents = document.getElementById('script_ta').value;
-			var name = activeScript.innerHTML;
-			var id = activeScript.id;
-			
-			if (config.userscript_data[id]) {
-				config.userscript_data[id].name = name;
-				config.userscript_data[id].contents = contents;
-				config.userscript_data[id].last_saved = Date.now();
-				localStorage['ChromeLL-Config'] = JSON.stringify(config);
-			}
-			else {
-				// first time saving - choose filename, choose injection context, etc
-				var newName = prompt("Rename script?", "Untitled script");
-				activeScript.innerHTML = newName;
-				config.userscript_data[id] = {};
-				config.userscript_data[id].name = newName;
-				config.userscript_data[id].contents = contents;
-				config.userscript_data[id].last_saved = Date.now();
-				localStorage['ChromeLL-Config'] = JSON.stringify(config);
-			}
-		},*/
+		},		
 		newLike: function() {
 			options.ui.closeMenu();
 			var textarea = document.getElementById('like_ta');
@@ -687,7 +467,82 @@ var options = {
 			}
 		}
 	},
-	listeners : {
+	addListeners: {
+		keyup: function() {	
+			document.addEventListener('keyup', function(evt) {
+				if (!evt.target.name)
+					return;
+				if (evt.target.name == "user_highlight_username") {
+					var datas = document.getElementById('user_highlight')
+							.getElementsByClassName('user_name');
+					var empty = false;
+					for (var i = 1; datas[i]; i++) {
+						if (datas[i].value == '')
+							empty = true;
+					}
+					if (!empty)
+						options.ui.addDiv.userHighlight();
+				}
+
+				if (evt.target.name == "user_book_name") {
+					var datas = document.getElementById('bookmarked_tags')
+							.getElementsByClassName('bookmark_name');
+					var empty = false;
+					for (var i = 1; datas[i]; i++) {
+						if (datas[i].value == '')
+							empty = true;
+					}
+					if (!empty)
+						options.ui.addDiv.bookmarkName();
+				}
+				
+				if (evt.target.name == "user_snippet") {
+					var datas = document.getElementById('snippets')
+							.getElementsByClassName('snippet_name');
+					var empty = false;
+					for (var i = 1; datas[i]; i++) {
+						if (datas[i].value == '')
+							empty = true;
+					}
+					if (!empty)
+						options.ui.addDiv.snippetName();
+				}
+
+				if (evt.target.name == "post_template_title") {
+					var datas = document.getElementById('post_template')
+							.getElementsByClassName('template_title');
+					var empty = false;
+					for (var i = 1; datas[i]; i++) {
+						if (datas[i].value == '')
+							empty = true;
+					}
+					if (!empty)
+						options.ui.addDiv.postTemplate();
+				}
+				if (evt.target.name == "keyword_highlight_keyword") {
+					var datas = document.getElementById('keyword_highlight')
+							.getElementsByClassName('keyword');
+					var empty = false;
+					for (var i = 1; datas[i]; i++) {
+						if (datas[i].value == '')
+							empty = true;
+					}
+					if (!empty)
+						options.ui.addDiv.keywordHighlight();
+				}
+				if (evt.target.name == "tag_highlight_keyword") {
+					var datas = document.getElementById('tag_highlight')
+							.getElementsByClassName('tag');
+					var empty = false;
+					for (var i = 1; datas[i]; i++) {
+						if (datas[i].value == '')
+							empty = true;
+					}
+					if (!empty)
+						options.ui.addDiv.tagHighlight();
+				}
+			});
+		},
 		click: function() {
 			// key-value pairs contain element id and function for event handler
 			var elementsToCheck = {
@@ -748,28 +603,20 @@ var options = {
 			});	
 			
 			cacheTable.addEventListener('keyup', function(evt) {
-				var newFilename = evt.target.value;
+				/*var newFilename = evt.target.value;
 				var src = evt.target.id;
 				if (src && newFilename) {					
-					options.cache.data[src] = newFilename;
+					options.imageCache.data[src] = newFilename;
 				}
 				clearTimeout(cacheTimer);
-				cacheTimer = setTimeout(options.cache.save, 500);				
+				cacheTimer = setTimeout(options.imageCache.save, 500);	*/			
 			});
 			
 			cacheMenu.addEventListener('change', function(evt) {
 				if (evt.target.value) {
-					options.functions.sortCache(evt.target.value);		
+					options.imageCache.sort(evt.target.value);		
 				}
 			});
-			
-			/*scriptArea.addEventListener('keydown', function(evt) {
-				if (evt.keyIdentifier == 'U+0009') {	
-					var caret = options.userscripts.findCaret(scriptArea);
-					options.userscripts.tabHandler(scriptArea.value, caret);
-					evt.preventDefault();
-				}
-			});*/
 			
 			// listen for changes to checkboxes/textareas/etc
 			document.addEventListener('change', options.save);
@@ -778,7 +625,7 @@ var options = {
 			document.addEventListener('keyup', function(evt) {
 				if (evt.target.id == 'imagemap_search') {
 					clearTimeout(searchTimer);
-					searchTimer = setTimeout(options.functions.searchCache, 500);
+					searchTimer = setTimeout(options.imageCache.search, 500);
 				}
 				else {
 					clearTimeout(keyupTimer);
@@ -796,8 +643,7 @@ var options = {
 		},
 		menuButton: function() {
 			var elements = [];
-			// disabled for 2.30 release			
-			// elements.push(document.getElementById('script_menu'));
+
 			elements.push(document.getElementById('like_menu'));
 			
 			for (var i = 0, len = elements.length; i < len; i++) {
@@ -855,98 +701,142 @@ var options = {
 				}
 			});
 		},
-		populateCacheTable: function(sortedCache) {
+		
+		populateCacheSize: function() {
+			
+			options.imageCache.open(function() {
+			
+				chrome.runtime.sendMessage({ need: 'getSizeInBytes' }, (bytes) => {
+					console.log(bytes);
+					// Convert bytes to MB and round to 2 decimal places							
+					var megabytes = Math.round(bytes / 1048576 * 100) / 100;
+					document.getElementById('cache_size').innerHTML =	megabytes;
+				});
+			
+			});
+				
+		},
+		
+		populateCacheTable: function(sortedImages) {
 			var table = document.getElementById('cache_contents');
 			var loadingImage = document.getElementById('loading_img');
-			if (sortedCache && sortedCache !== 'default') {
-				table.style.display = "none";
-				loadingImage.style.display = "block";
-				// remove cache data from table
-				var nodes = table.childNodes;
-				for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
-					var child = nodes[i];
-					table.removeChild(child);
+						
+			if (sortedImages && sortedImages !== 'default') {	
+			
+				// Remove existing table rows
+				options.ui.clearCacheTable();
+				
+				if (!sortedImages || sortedImages.length === 0) {					
+					var empty = document.createElement('tr');
+					empty.innerHTML = 'Empty';
+					table.appendChild(empty);					
 				}
-				options.cache.restore(function(cached) {
-					var cache = cached.imagemap;
-					for (var i = 0, len = sortedCache.length; i < len; i++) {
-						var srcFromArray = sortedCache[i];
-						var image = cache[srcFromArray];
-						var tableRow = document.createElement('tr');				
-						var filenameData = document.createElement('td');
-						var urlData = document.createElement('td');								
-						var filename = image.filename;
-						var fullsize = image.fullsize;
-						if (fullsize.length > 100) {
-							var url = fullsize.substring(0, 99) + '...';
-						}
-						else {
-							var url = fullsize;
-						}
-						var data = image.data;
-						tableRow.id = i;
-						// filename table row contains input field						
-						filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
-								+ '" value="' + filename +'" style="width:400px;">';
-						urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
-						table.appendChild(tableRow);
-						tableRow.appendChild(filenameData);
-						tableRow.appendChild(urlData);
+				
+				else {				
+					// Create new table row for each result
+					for (var i in sortedImages) {
+						options.ui.createTableRow(sortedImages[i]);					
 					}
-					loadingImage.style.display = "none";
-					table.style.display = "block";
-				});
+				}
+				
+				// Display results and hide spinner
+				loadingImage.style.display = "none";
+				table.style.display = "block";
 			}
+			
 			else {
-				// display table of imagemap cache contents
-				options.cache.restore(function(cached) {
-					var cachedImagemap = cached.imagemap;
-					if (!cachedImagemap) {
-						var empty = document.createElement('tr');
-						empty.innerHTML = 'Empty';
-						table.appendChild(empty);
-						return;
-					}
-					else {
-						if (sortedCache == 'default') {
-							table.style.display = "none";
-							loadingImage.style.display = "block";
-							// remove existing cache data from table							
-							var nodes = table.childNodes;
-							for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
-								var child = nodes[i];
-								table.removeChild(child);
-							}
+				options.imageCache.open(function() {
+					// TODO: Get all keys, split into pages and display 1 page at a time (with option to show all)
+					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {
+						
+						console.log(images);
+						
+						var table = document.getElementById('cache_contents');
+						var loadingImage = document.getElementById('loading_img');
+						
+						if (!images || images.length === 0) {
+							// There was a problem loading database, or it was empty
+							options.ui.clearCacheTable();
+							
+							var empty = document.createElement('tr');
+							empty.innerHTML = 'Empty';
+							table.appendChild(empty);
+							
+							loadingImage.style.display = "none";
+							table.style.display = "block";							
+							
+							return;
 						}
-						for (var i in cachedImagemap) {
-							var image = cachedImagemap[i];
-							var tableRow = document.createElement('tr');				
-							var filenameData = document.createElement('td');
-							var urlData = document.createElement('td');								
-							var filename = image.filename;
-							var fullsize = image.fullsize;
-							if (fullsize.length > 80) {
-								var url = fullsize.substring(0, 80) + '...';
+						
+						else {
+							if (sortedImages == 'default') {
+								table.style.display = "none";
+								loadingImage.style.display = "block";								
+								options.ui.clearCacheTable();
 							}
-							else {
-								var url = fullsize;
+							
+							for (var i in images) {
+								options.ui.createTableRow(images[i]);
 							}
-							var data = image.data;
-							tableRow.id = i;
-							// filename table row contains input field
-							filenameData.innerHTML = '<input type="text" class="cache_filenames" id="' + i 
-									+ '" value="' + filename +'" style="width:400px;">';
-							urlData.innerHTML = '<a class="cache_url" title="' + fullsize + '" href="' + data + '">' + url + '</a>';
-							table.appendChild(tableRow);
-							tableRow.appendChild(filenameData);
-							tableRow.appendChild(urlData);
+							
+							loadingImage.style.display = "none";
+							table.style.display = "block";
 						}
-						loadingImage.style.display = "none";
-						table.style.display = "block";				
-					}
+					});
 				});
 			}
 		},
+		
+		createTableRow: function(result) {
+			
+			if (result) {
+				var table = document.getElementById('cache_contents');			
+				var tableRow = document.createElement('tr');				
+				var filenameData = document.createElement('td');
+				var urlData = document.createElement('td');								
+				
+				if (result.fullsize.length > 100) {
+					var url = result.fullsize.substring(0, 99) + '...';
+				}
+				else {
+					var url = result.fullsize;
+				}
+				
+				var input = document.createElement('input');
+				input.type = 'text';
+				input.className = 'cache_filenames';
+				input.value = result.filename;
+				input.style.width = '400px';
+				filenameData.appendChild(input);
+						
+				var anchor = document.createElement('a');
+				anchor.className = 'cache_url';
+				anchor.title = result.fullsize;
+				anchor.href = result.data;
+				anchor.innerHTML = url;
+				urlData.appendChild(anchor);
+				
+				table.appendChild(tableRow);
+				tableRow.appendChild(filenameData);
+				tableRow.appendChild(urlData);
+			}
+			
+			else {
+				table.appendChild(document.createElement('tr'));
+				tableRow.appendChild(document.createElement('td'));
+				tableRow.appendChild(document.createElement('td'));				
+			}
+		},
+		
+		clearCacheTable: function() {
+			var table = document.getElementById('cache_contents');							
+			var nodes = table.childNodes;
+			for (var i = nodes.length - 1, limit = 1; i > limit; i--) {
+				var child = nodes[i];
+				table.removeChild(child);
+			}			
+		},
+		
 		displayLBContent: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var likeData = config.custom_like_data;
@@ -982,58 +872,17 @@ var options = {
 			document.getElementById(mostRecent.id).className = 'active_like';
 			textarea.value = config.custom_like_data[mostRecent.id].contents;	
 		},
-		/*displayUserscripts: function() {
+		switchActive: function(id) {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var scriptData = config.userscript_data;
-			var textarea = document.getElementById('script_ta');
-			var activeScript = document.getElementsByClassName('active_script')[0];
-			var scriptList = document.getElementById('script_list');
-			var mostRecent = {
-					'time': 0,
-					'id': ''
-			};
-			for (var i in scriptData) {
-				var script = scriptData[i];
-				console.log(script);
-				if (script.last_saved > mostRecent.time) {
-					mostRecent.time = script.last_saved;
-					mostRecent.id = i;
-				}
-				var anchor = document.createElement('a');
-				var close = document.createElement('a');
-				var linebreak = document.createElement('br');	
-				anchor.href = '#';
-				anchor.id = i;
-				anchor.className = 'inactive_script';
-				anchor.innerHTML = script.name;				
-				close.style.cssFloat = "right";
-				close.style.fontSize = "18px";
-				close.href = '#';
-				close.style.textDecoration = "none";
-				close.id = "delete_custom";
-				close.innerHTML = '&#10006;';		
-				scriptList.appendChild(anchor);
-				anchor.appendChild(close);
-				scriptList.appendChild(linebreak);
-			}
-			document.getElementById(mostRecent.id).className = 'active_script';
-			textarea.value = config.userscript_data[mostRecent.id].contents;			
-		},*/
-		switchActive: function(ID) {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var type = ID.replace(/[0-9]/g, '');
+			var type = id.replace(/[0-9]/g, '');
 			var textarea = document.getElementById(type + '_ta');
 			var data;
-			if (type == 'script') {
-				data = config.userscript_data[ID].contents;
-			}
-			else if (type == 'like') {
-				data = config.custom_like_data[ID].contents;
-			}
 			
-			if (script) {
+			if (type == 'like') {
+				data = config.custom_like_data[id].contents;
 				textarea.value = data;
 			}
+
 			else {
 				return;
 			}
@@ -1087,7 +936,9 @@ var options = {
 			}
 		}
 	},
-	cache: {
+	imageCache: {
+		data: {},
+		
 		save: function() {
 			var cacheData = options.cache.data;
 			options.cache.restore(function(cached) {
@@ -1101,6 +952,7 @@ var options = {
 				});
 			});
 		},
+		
 		restore: function(callback) {
 			chrome.storage.local.get("imagemap", function(cache) {
 				if (cache) {
@@ -1111,56 +963,120 @@ var options = {
 				}
 			});	
 		},
-		data: {}
-	},
-	/*userscriptsMenu: {
-		open: function() {
-			var button = document.getElementById('script_menu');
-			var menuElement = document.createElement('span');				
-			var items = ['New', 'Save'];
-			menuElement.id = 'menu_items';	
-			menuElement.style.position = 'absolute';
-			menuElement.style.overflow = 'auto';
-			menuElement.style.padding = '3px 3px';
-			menuElement.style.borderStyle = 'solid';
-			menuElement.style.borderWidth = '2px';
-			menuElement.style.borderRadius = '3px';
-			for (var i = 0, len = items.length; i < len; i++) {
-				var item = items[i];
-				populateMenu.call(this, item, i, menuElement);
-			}
-			button.appendChild(menuElement);
+
+		open: function(callback) {
+			
+			chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);			
+			
+		},
 		
-			function populateMenu(item, index, menuElement) {
-				var menuSpan = document.createElement('span');
-				var menuItem = document.createElement('anchor');
-				var lineBreak = document.createElement('br');
-				menuSpan.className = 'unhigh_span';
-				menuItem.innerHTML = '&nbsp' + item + '&nbsp';
-				menuItem.href = '#';
-				menuItem.className = 'script_menu_items';
-				menuItem.id = 'script_' + item.toLowerCase();
-				menuSpan.appendChild(menuItem);
-				menuElement.appendChild(menuSpan);
-				menuElement.appendChild(lineBreak);
+		sort: function(sortType) {
+		
+			if (sortType === 'default') {
+				options.ui.populateCacheTable(sortType);
+			}
+			
+			else {
+				var filenames = [];
+				var results = [];
+				var duplicateCheck = {};
+				var filetypes = {};
+				
+				chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {					
+				
+					if (sortType === 'filetype') {						
+						filetypes["none"] = [];
+						filetypes[".gif"] = [];
+						filetypes[".jpg"] = [];
+						filetypes[".png"] = [];
+						
+						// Iterate over images and push filenames to appropriate array
+						for (var i in images) {
+							var filename = images[i].filename;
+							var extension = filename.match(/\.(gif|jpg|png)$/i);
+							if (extension) {
+								filetypes[extension[0]].push(filename);
+							} else {		
+								filetypes["none"].push(filename);
+							}
+						}
+												
+						for (var filetype in filetypes) {
+							if (filetypes[filetype] === []) {
+								return;
+							}
+							else {
+								filenames = filenames.concat(filetypes[filetype]);
+							}
+						}
+					}
+					
+					else {
+						// Sort by filename
+						for (var i in images) {
+							var filename = images[i].filename;
+							filenames.push(filename);
+						}
+						
+						filenames.sort();
+						
+						if (sortType === 'z_a') {
+							filenames.reverse();
+						}
+					}
+					
+					// Iterate over filenames array and match with their respective src values from cache
+					for (var i = 0, len = filenames.length; i < len; i++) {
+						var sortedFilename = filenames[i];
+						
+						for (var j in images) {
+							var image = images[j];
+							var cacheFilename = image.filename
+							var src = image.src;
+							
+							if (cacheFilename == sortedFilename) {
+								
+								if (!duplicateCheck[src]) {
+									// Check that src hasn't been pushed to results array before - this ensures that
+									// duplicate filenames aren't assigned the same src value
+									results.push(image);
+									duplicateCheck[src] = { "filename": sortedFilename, "index": i };
+								}
+							}
+						}
+					}
+					
+					// Now we can populate database table using sorted array as a reference
+					options.ui.populateCacheTable(results);
+					
+				});
 			}
 		},
-		findCaret: function(ta) {
-			var caret = 0;
-			if (ta.selectionStart || ta.selectionStart == '0') {
-				caret = ta.selectionStart; 
+		
+		search: function() {
+			var table = document.getElementById('cache_contents');
+			var loadingImage = document.getElementById('loading_img');				
+			var query = document.getElementById('imagemap_search').value;
+			
+			if (/\S/.test(query)) {
+				table.style.display = "none";
+				loadingImage.style.display = "block";				
+				
+				var request = {
+						need: 'searchDatabase',
+						query: query			
+				};
+				
+				chrome.runtime.sendMessage(request, (results) => {
+					options.ui.populateCacheTable(results);			
+				});
 			}
-			return caret;
-		},
-		tabHandler: function(contents, caretPosition) {
-			var scriptInput = document.getElementById('script_ta');
-			var text = contents.substring(0, caret);
-			contents = contents.replace(text, text + '\t');						
-			var newCaret = contents.lastIndexOf(text + '\t');
-			scriptInput.value = contents;		
-			scriptInput.setSelectionRange(newCaret, newCaret);
+			
+			else {
+				options.ui.populateCacheTable('default');
+			}
 		}
-	},*/
+	},
 	customLikeMenu: {
 		open: function() {
 			var button = document.getElementById('like_menu');
@@ -1337,7 +1253,7 @@ var options = {
 			var reader = new FileReader();
 			reader.onload = function(evt) {
 				var textFile = evt.target.result;
-				options.functions.processConfig(textFile);
+				options.utils.processConfig(textFile);
 			}
 			reader.readAsText(file);
 		}

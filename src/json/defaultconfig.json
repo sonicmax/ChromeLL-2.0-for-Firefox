@@ -112,6 +112,7 @@
   "ignorator_backup":"",
 	"user_id":"",
 	"tag_admin":[],
+	"image_cache_version": 1,
 	"last_clean":0,
 	"last_saved":0
 }

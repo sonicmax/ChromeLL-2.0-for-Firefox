@@ -9,6 +9,7 @@ var background = {
 	imagemapCache: {},
 	// currentTab: '',
 	noIgnores: true,
+	
 	init: function(defaultConfig) {
 		this.updateConfig(defaultConfig);
 		if (this.config.history_menubar_classic) {
@@ -37,48 +38,63 @@ var background = {
 		this.clipboardHandler();	
 		this.getUserID();
 		this.getDrama();
-		/*if (this.config.sync_cfg) {
-			this.checkSync();
-		}*/
 	},
+	
 	getDefaultConfig: function(callback) {
 		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", defaultURL, true);
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var temp = JSON.parse(xhr.responseText);
-				var defaultConfig = JSON.stringify(temp);
-				callback(defaultConfig);
+		xhr.onload = function() {
+			if (this.status == 200) {
+				callback(JSON.parse(this.responseText));
 			}
-		}
-		xhr.send();	
+		};
+		xhr.send();
 	},
 	updateConfig: function(defaultConfig) {
-		if (localStorage['ChromeLL-Config'] == undefined) {
-			localStorage['ChromeLL-Config'] = defaultConfig;
+		if (localStorage['ChromeLL-Config'] === undefined) {
+			localStorage['ChromeLL-Config'] = JSON.stringify(defaultConfig);
 			background.config = defaultConfig;
 		}
+		
+		else {
+			background.config = JSON.parse(localStorage['ChromeLL-Config']);
+			
+			for (var i in defaultConfig) {
+				// if this variable does not exist, set it to the default
+				if (background.config[i] === undefined) {
+					background.config[i] = defaultConfig[i];
+					if (background.config.debug) {
+						console.log("upgrade diff!", i, background.config[i]);
+					}
+				}
+			}		
+		}		
+		
 		if (localStorage['ChromeLL-TCs'] == undefined) {
 			localStorage['ChromeLL-TCs'] = "{}";
 		}
-		var configJS = JSON.parse(defaultConfig);
-		background.config = JSON.parse(localStorage['ChromeLL-Config']);
-		for (var i in configJS) {
-			// if this variable does not exist, set it to the default
-			if (background.config[i] === undefined) {
-				background.config[i] = configJS[i];
-				if (background.config.debug) {
-					console.log("upgrade diff!", i, background.config[i]);
-				}
-			}
-		}
+		
 		// beta versions stored TC cache in the global config. Delete if found
 		if (background.config.tcs) {
 			delete background.config.tcs;
+		}				
+		
+		if (this.config.image_cache_version === 1) {
+			// Move image cache from chrome.storage API to indexedDB.
+			database.open(database.convertCache);
+			
+			// Save the config, in case it was updated.
+			console.log('old version:', background.config.image_cache_version);
+			background.config.image_cache_version = 2;
+			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
+			console.log('new version:', JSON.parse(localStorage['ChromeLL-Config']).image_cache_version);			
 		}
-		// save the config, just in case it was updated
-		localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
+		
+		else {		
+			// save the config, in case it was updated
+			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
+		}
 	},
 	checkVersion: function() {
 		var app = chrome.app.getDetails();
@@ -86,7 +102,9 @@ var background = {
 		if (localStorage['ChromeLL-Version'] != app.version 
 				&& localStorage['ChromeLL-Version'] != undefined 
 				&& this.config.sys_notifications) {
+					
 			chrome.notifications.create('popup', {
+				
 					type: "basic",
 					title: "ChromeLL has been updated",
 					message: "Old v: " + localStorage['ChromeLL-Version'] 
@@ -95,18 +113,22 @@ var background = {
 						title: "Click for more info",
 					}],
 					iconUrl: "src/images/lueshi_48.png"
+					
 				}, function(id) {
+					
 					chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
 						if (notifId === id && btnIdx === 0) {
 							// link user to topic containing patch notes & other info
 							window.open("http://boards.endoftheinter.net/showmessages.php?topic=8887077");	
 						}
 					});
+					
 					setTimeout(function() {
 						chrome.notifications.clear(ID, null);
 					}, 5000);
 				}
 			);
+			
 			localStorage['ChromeLL-Version'] = app.version;
 		}
 
@@ -421,6 +443,12 @@ var background = {
 				
 				switch(request.need) {
 					
+					case "xhr":		
+						ajax(request, sendResponse);
+						// Return true so that we can use sendResponse asynchronously 
+						// (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
+						return true;
+					
 					case "config":
 						// page script needs extension config.
 						background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
@@ -536,6 +564,42 @@ var background = {
 								
 						});
 						break;
+						
+					case "openDatabase":
+						database.open(sendResponse);					
+						return true;
+						
+					case "convertCacheToDb":
+						database.convertCache(sendResponse);					
+						return true;
+						
+					case "queryDb":
+						database.query(request.src, sendResponse);
+						return true;
+						
+					case "clearDatabase":
+						database.clear(sendResponse);
+						return true;
+						
+					case "updateDatabase":
+						database.update(request.data, sendResponse);
+						return true;
+						
+					case "searchDatabase":
+						database.search(request.query, sendResponse);
+						return true;
+						
+					case "getAllFromDb":
+						database.getAll(sendResponse);
+						return true;
+						
+					case "getDbSize":
+						database.getSize(sendResponse);
+						return true;
+					
+					case "getSizeInBytes":
+						database.getSizeInBytes(sendResponse);
+						return true;						
 						
 					default:
 						if (background.cfg.debug) {
@@ -685,3 +749,275 @@ var background = {
 background.getDefaultConfig(function(config) {
 	background.init.call(background, config);
 });
+
+var database = (function() {
+	const DB_NAME = 'ChromeLL-Imagemap';
+	const DB_VERSION = 1;
+	const IMAGE_DB = 'images';
+	const READ_WRITE = 'readwrite';
+	var debouncerId;
+	var db;	
+	
+	var getStorageApiCache = function(callback) {
+		chrome.storage.local.get("imagemap", function(cache) {
+			console.log(cache);
+			if (typeof cache !== "object" && Object.keys(cache.imagemap).length === 0) {
+				callback();
+			}
+			
+			else {
+				callback(cache.imagemap);
+			}				
+		});
+	};		
+	
+	return {
+		open: function(callback) {
+			var request = window.indexedDB.open(DB_NAME, DB_VERSION);
+			
+			request.onsuccess = function(event) {
+				db = event.target.result;
+				callback();
+			};
+			
+			request.onupgradeneeded = function(event) {
+				var db = event.target.result;
+				
+				// Use src for keyPath
+				var objectStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
+
+				// Create an index to search by filename.
+				objectStore.createIndex("filename", "filename", { unique: false, multiEntry: true });	
+			};						
+		},
+		
+		clear: function(callback) {
+		
+			this.open(() => {
+				
+				var request = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB).clear();
+				callback();
+				
+			});
+			
+		},
+		
+		/**
+		 *	Adds objects from chrome.storage cache to current database.
+		 */
+		convertCache: function(callback) {
+			
+			getStorageApiCache(function(imagemap) {
+				console.log(imagemap);
+				if (imagemap && Object.keys(imagemap).length > 0) {
+					var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
+					
+					for (var src in imagemap) {
+						var record = imagemap[src];
+						
+						// We need to manually add src property to object before adding to database
+						record.src = src;
+						imageObjectStore.add(record);
+					}
+																
+					// At this point we can safely clear chrome.storage
+					chrome.storage.local.clear();						
+				}
+				
+			});
+		},	
+		
+		query: function(src, callback) {
+			var request = db.transaction(IMAGE_DB)
+					.objectStore(IMAGE_DB)
+					.get(src);		
+						
+			request.onsuccess = function(event) {
+				if (event.target.result) {
+					callback(event.target.result);
+				}
+				else {				
+					callback(false);
+				}
+			};
+			
+			request.onerror = function(event) {
+				// Couldn't find src in database.
+				callback(false);
+			};
+		},
+		
+		update: function(cacheData) {
+			var transaction = db.transaction([IMAGE_DB], READ_WRITE);
+
+			transaction.onerror = function(event) {
+				// Can't use add() method if src already exists in databse. 
+				console.log(event.target.error.message);
+			};
+
+			var objectStore = transaction.objectStore(IMAGE_DB);
+			
+			for (var src in cacheData) {
+				var request = objectStore.add(cacheData[src]);
+			}
+		},
+		
+		search: function(query, callback) {
+			var results = [];
+			var transaction = db.transaction(IMAGE_DB);
+			var objectStore = transaction.objectStore(IMAGE_DB);							
+			
+			// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
+			var request = objectStore.openCursor();
+			
+			request.onsuccess = function(event) {
+					var cursor = event.target.result;
+					
+					if (cursor) {							
+							if (cursor.key.indexOf(query) !== -1) {
+									results.push(cursor.value);
+							}
+
+							cursor.continue();          
+					}
+					
+					else {
+						// TODO: We should probably return results as we find them
+						// Reached end of db
+						callback(results, query);
+					}
+			};
+		},
+		
+		getAll: function(callback) {
+			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
+			// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
+			if (objectStore.getAll != null) {
+				var request = objectStore.getAll();
+				
+				request.onsuccess = function(event) {
+					// TODO: Need to test what happens if database exists but is empty
+					callback(event.target.result);
+				};
+				
+				request.onerror = function(event) {
+					callback(false);
+				};
+			}
+			
+			else {				
+				var cache = [];
+				objectStore.openCursor().onsuccess = function(event) {
+					var cursor = event.target.result;
+					if (cursor) {
+						cache.push(cursor.value);
+						cursor.continue();
+					}
+					else {
+						callback(cache);
+					}
+				};								
+			}
+		},
+		
+		getSize: function(callback) {
+			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
+			var size = 0;
+			// TODO: Maybe it would be faster to use a key cursor here
+			objectStore.openCursor().onsuccess = function(event) {
+				var cursor = event.target.result;
+				if (cursor) {					
+					size++;
+					cursor.continue();
+				}
+				else {
+					callback(cache);
+				}
+			};			
+		},
+		
+		getSizeInBytes: function(callback) {
+			var size = 0;
+
+			var transaction = db.transaction([IMAGE_DB])
+					.objectStore(IMAGE_DB)
+					.openCursor();
+
+			transaction.onsuccess = function(event) {
+				var cursor = event.target.result;
+				if (cursor) {
+					var storedObject = cursor.value;
+					var json = JSON.stringify(storedObject);
+					size += json.length;
+					cursor.continue();
+				}
+				else {
+					callback(size);
+				}
+			};
+			
+			transaction.onerror = function(err) {
+				callback(-1048576);
+			};
+		},
+		
+		db: db
+	
+	};
+	
+})();
+
+var ajaxCache = {};
+
+var ajax = function(request, callback) {
+	// Check xhrCache before creating new XHR.
+	var url = request.url;
+	var currentTime = new Date().getTime();
+	
+	if (!request.ignoreCache && ajaxCache[url]
+			&& currentTime < ajaxCache[url].refreshTime ) {
+				
+		// Return cached response
+		callback(ajaxCache[url].data);
+	}
+	
+	else {
+		var TWENTY_FOUR_HOURS = 86400000; // 24 hours in milliseconds
+		var type = request.type || 'GET';
+		var xhr = new XMLHttpRequest();
+		xhr.requestURL = url;
+		xhr.open(type, request.url, true);
+		
+		if (request.noCache) {
+			xhr.setRequestHeader('Cache-Control', 'no-cache');
+		}
+		if (request.auth) {
+			xhr.setRequestHeader('Authorization', request.auth);
+		}
+		if (request.withCredentials) {
+			xhr.withCredentials = "true";
+		}
+		
+		xhr.onload = function() {
+			if (this.status === 200) {
+				if (!request.ignoreCache) {
+					// Cache response and check again after 24 hours
+					ajaxCache[this.requestURL] = {
+						data: this.responseText,
+						refreshTime: currentTime + TWENTY_FOUR_HOURS
+					};
+				}
+				
+				callback(this.responseText);
+			}
+			
+			else {
+				// Callback with false value so we know that request failed
+				callback(false, this.status);
+			}
+			
+		};
+		
+		xhr.send();		
+	}
+};
