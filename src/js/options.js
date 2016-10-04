@@ -1,57 +1,23 @@
-$(document)
-		.ready(
-				function() {
-					$('.options_navigation_link').click(
-							function() {
-								toLink = $(this).attr('id').split('_link')[0];
-
-								selectedPage = $('.navbar-item-selected').attr(
-										"id").split('_link')[0];
-
-								if (toLink == selectedPage) {
-									// Already on the page, clicking does not
-									// refresh the page!
-									return true;
-								}
-
-								$('#' + selectedPage + '_link').removeClass(
-										"navbar-item-selected");
-								$('#' + toLink + '_link').addClass(
-										"navbar-item-selected");
-
-								$('#' + selectedPage + '_page').removeClass(
-										"shown").addClass("hidden");
-								$('#' + toLink + '_page').removeClass("hidden")
-										.addClass("shown");
-
-								if (toLink == "supersecretabout") {
-									$('body').css("background-color", "#000");
-								} else {
-									$('body').css("background-color",
-											"transparent");
-								}
-							});				
-					// restore config settings
-					if (localStorage['ChromeLL-Config'] == ''
-							|| localStorage['ChromeLL-Config'] == undefined) {
-						console.log("Blank Config. Rebuilding");
-						
-						options.getDefault(function(defaultConfig) {
-							localStorage['ChromeLL-Config'] = defaultConfig;
-						});
-						
-						if (localStorage['chromeLL_userhighlight']
-								&& localStorage['chromeLL_userhighlight'] != '') {
-							options.restoreV1();
-						}
-						else {
-							options.init();
-						}				
-					}
-					else {
-						options.init();
-					}
-				});
+$(document).ready(() => {					
+		// It's possible (but unlikely) that user opened options before background page finished loading config
+		if (localStorage['ChromeLL-Config'] == ''
+				|| localStorage['ChromeLL-Config'] == undefined) {					
+			console.log("Blank Config. Rebuilding");
+			
+			options.getDefault(function(defaultConfig) {				
+				localStorage['ChromeLL-Config'] = defaultConfig;
+				options.init();
+			});					
+		}
+		
+		else if (localStorage['chromeLL_userhighlight'] && 
+				localStorage['chromeLL_userhighlight'] != '') {					
+			options.restoreV1();
+		}
+		else {
+			options.init();
+		}					
+});
 
 var options = {
 	init: function() {
