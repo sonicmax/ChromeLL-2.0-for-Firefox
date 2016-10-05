@@ -650,7 +650,9 @@ var allPages = {
 			console.log("error in " + i + ":", err);
 		}
 		
-		addCSSRules();
+		if (window.location.pathname !== "/main.php") {
+			addCSSRules();
+		}
 		
 		chrome.runtime.onMessage.addListener(function(msg) {
 			if (msg.action == 'showOptions') {

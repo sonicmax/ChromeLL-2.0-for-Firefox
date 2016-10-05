@@ -486,20 +486,48 @@ var topicList = {
 				scope: "topicList"
 			});
 		}
-	},	
+	},
+	
+	waitForAsyncContent: function() {
+		// We need to wait for async stuff on page to load before we can call topic list functions						
+		var melonwolfObserver = new MutationObserver(function(mutations) {
+			topicList.callFunctions(topicList.pm);
+			melonwolfObserver.disconnect();
+		});
+		
+		if (document.getElementsByClassName('oh').length === 0) {		
+			var table = document.getElementsByTagName('table')[0];
+			
+			melonwolfObserver.observe(table, {
+				childList: true,
+				subtree: true
+			});
+		}
+		
+		else {
+			topicList.callFunctions(topicList.pm);
+		}
+	},
+	
 	init: function(config) {
 		this.config = config.data;	
 		this.prepareArrays();
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
 		
-		if (window.location.href.match(/topics/)) {
-			if (this.config.dramalinks) {
+		if (window.location.href.match(/topics|history/)) {
+			
+			if (this.config.dramalinks) {		
+				
 				chrome.runtime.sendMessage({
 						need : "dramalinks"
-				}, function(response) {
+				}, 
+				
+				function(response) {
+					
 					dramalinks.html = response.data;
 					dramalinks.config = topicList.config;
+					
 				});
 			}
 		}
@@ -509,12 +537,27 @@ var topicList = {
 		
 		if (document.readyState == 'loading') {
 			document.addEventListener('DOMContentLoaded', function() {
-				topicList.callFunctions(topicList.pm);
+				
+				if (window.location.pathname === "/main.php") {
+					topicList.waitForAsyncContent();
+				}
+				
+				else {					
+					topicList.callFunctions(topicList.pm);
+				}
+				
 			});
 		}
+		
 		else {
-			// DOM was already loaded			
-			this.callFunctions(this.pm);
+			// DOM was already loaded
+			if (window.location.pathname === "/main.php") {
+				this.waitForAsyncContent();
+			}
+			
+			else {					
+				this.callFunctions(this.pm);
+			}
 		}
 	}
 };
@@ -522,5 +565,6 @@ var topicList = {
 chrome.runtime.sendMessage({
 	need: "config"
 }, function(config) {
+	
 	topicList.init.call(topicList, config);
 });
