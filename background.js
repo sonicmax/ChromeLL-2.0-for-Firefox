@@ -491,7 +491,7 @@ var background = {
 								return;
 							}
 							setTimeout(function() {
-								chrome.notifications.clear(ID, null);
+								chrome.notifications.clear(id, null);
 							}, parseInt(background.cfg.clear_notify, 10) * 1000);
 						});
 						break;	
