@@ -2295,6 +2295,10 @@ var messageList = {
 		var element = document.getElementsByTagName('h2')[0];
 		if (config.dramalinks && !config.hide_dramalinks_topiclist) {
 			dramalinks.appendTo(element);
+			
+			// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
+			var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
+			document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);			
 		}
 		
 		// page will appear to have been fully loaded by this point

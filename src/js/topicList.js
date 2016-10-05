@@ -462,6 +462,10 @@ var topicList = {
 		if (this.config.dramalinks && !window.location.href.match(/[inbox|main].php/)) {
 			var element = document.getElementsByTagName('h1')[0];
 			dramalinks.appendTo(element);
+			
+			// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
+			var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
+			document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);
 		}
 		
 		if (this.config['page_jump_buttons' + this.pm]) {
