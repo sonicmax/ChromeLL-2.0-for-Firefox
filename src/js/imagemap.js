@@ -352,10 +352,10 @@ var imagemap = function() {
 			// Check that query contains characters other than whitespace
 			if (/\S/.test(query)) {
 				
-				lookup(query, function(results, query) {
+				lookupInDb(query, function(results) {
 					
 					if (!document.getElementById('search_results')) {
-						createPopup(query);
+						createPopup(query);						
 					}
 					
 					else {
@@ -378,15 +378,6 @@ var imagemap = function() {
 			}
 			
 		};
-	
-		
-		var lookup = function(query, callback) {
-			
-			openDatabase(function() {
-					lookupInDb(query, callback);	
-			});
-			
-		};
 		
 		var lookupInDb = function(query, callback) {
 			var request = {
@@ -394,7 +385,9 @@ var imagemap = function() {
 					query: query			
 			};
 			
-			chrome.runtime.sendMessage(request, callback);			
+			openDatabase(function() {
+				chrome.runtime.sendMessage(request, callback);
+			});									
 		};
 		
 		var checkMatches = function(results, query) {
@@ -404,7 +397,7 @@ var imagemap = function() {
 			}
 			else {
 				// Format search results to be displayed in popup
-				formatResults(results);
+				formatResults(results, query);
 			}
 		};
 		
