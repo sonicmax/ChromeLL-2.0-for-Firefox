@@ -112,8 +112,12 @@ var options = {
 				options.addListeners.menuButton();
 				options.addListeners.keyup();
 				
+				options.ui.populateCacheSize();
 				options.ui.populateCacheTable();
+				window.onbeforeunload = chrome.runtime.sendMessage({ need: 'closeDatabase' });
+				
 				options.ui.displayLBContent();
+				
 				options.save();
 			});
 		} 
@@ -130,6 +134,8 @@ var options = {
 			
 			options.ui.populateCacheSize();
 			options.ui.populateCacheTable();
+			window.onbeforeunload = chrome.runtime.sendMessage({ need: 'closeDatabase' });
+			
 			options.ui.displayLBContent();
 			
 			options.save();

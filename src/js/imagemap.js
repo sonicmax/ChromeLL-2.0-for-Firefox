@@ -322,13 +322,12 @@ var imagemap = function() {
 			chrome.runtime.sendMessage(request);
 		}
 		// Always close popup after click event, even if user didn't click on an image
-		closePopup();
-		document.removeEventListener('click', clickHandler);
+		closePopup();				
+		
 		evt.preventDefault();
 	};
 	
-	var closePopup = function() {
-		// Remove popup div, style changes and event listeners
+	var closePopup = function() {		
 		var div = document.getElementById('map_div') || document.getElementById('search_results');
 		var bodyClass = document.getElementsByClassName('body')[0];
 		if (div) {
@@ -338,6 +337,14 @@ var imagemap = function() {
 		document.body.style.overflow = 'initial';
 		bodyClass.removeEventListener('mousewheel', preventScroll);		
 		currentPage = 1;
+		
+		// Remove event listeners
+		document.removeEventListener('click', clickHandler);
+		document.removeEventListener('mousewheel', preventScroll);
+				
+		// Close database connection
+		chrome.runtime.sendMessage({ need: 'closeDatabase' });		
+		
 	};
 	
 	var preventScroll = function(evt) {

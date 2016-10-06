@@ -576,6 +576,10 @@ var background = {
 						database.open(sendResponse);					
 						return true;
 						
+					case "closeDatabase":
+						database.close();
+						break;						
+						
 					case "convertCacheToDb":
 						database.convertCache(sendResponse);					
 						return true;
@@ -798,6 +802,12 @@ var database = (function() {
 			};						
 		},
 		
+		close: function() {
+			if (db) {
+				db.close();
+			}		
+		},
+		
 		clear: function(callback) {
 		
 			this.open(() => {
@@ -828,7 +838,9 @@ var database = (function() {
 					}
 																
 					// At this point we can safely clear chrome.storage
-					chrome.storage.local.clear();						
+					chrome.storage.local.clear();
+
+					db.close();
 				}
 				
 			});
