@@ -954,7 +954,7 @@ var messageList = {
 				this.functions.misc.click_expand_thumbnail(container);
 			}
 			
-			var usernameElement = container.getElementsByClassName('message-top').getElementsByTagName('a')[0];			
+			var usernameElement = container.getElementsByClassName('message-top')[0].getElementsByTagName('a')[0];			
 			if (usernameElement.innerHTML != 'Filter') {
 				usernameElement.className = 'username_anchor';
 			}
