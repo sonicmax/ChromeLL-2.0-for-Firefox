@@ -494,7 +494,14 @@ var background = {
 								chrome.notifications.clear(id, null);
 							}, parseInt(background.cfg.clear_notify, 10) * 1000);
 						});
-						break;	
+						break;
+
+					case "copy":
+						var clipboard = document.getElementById('clipboard');
+						clipboard.value = request.data;
+						clipboard.select();
+						document.execCommand("copy");
+						break;
 						
 					case "dramalinks":
 						var time = parseInt(new Date().getTime());

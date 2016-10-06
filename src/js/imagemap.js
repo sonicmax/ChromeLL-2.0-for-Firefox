@@ -301,30 +301,23 @@ var imagemap = function() {
 			return;
 		}
 		else if (evt.target.tagName === 'IMG') {
-			var clipboard = {};	
-			if (evt.target.getAttribute('searchresult')) {
-				// Use oldsrc attribute as src attribute is data URI
-				var src = evt.target.getAttribute('oldsrc'); 
-			}
-			else {
-				if (evt.target.getAttribute('oldsrc')) {
-					var src = evt.target.getAttribute('oldsrc'); 
-				}
-				else {
-					var src = evt.target.src;
-				}
-				var href = evt.target.parentNode.href;
-				var regex = /\.(gif|jpg|png)$/i;
-				// Make sure that we're using the href extension, not the thumbnail extension
-				var extension = href.match(regex);
-				var extensionToReplace = src.match(regex);
-				src = src.replace(extensionToReplace[0], extension[0]);
-			}
-			// Create LLML img code string
+			var clipboard = {};				
+								
+			src = evt.target.dataset.oldsrc || evt.target.src;			
+
+			var regex = /\.(gif|jpg|png)$/i;
+			
+			// Replace the thumbnail extension with the one from href
+			var extension = evt.target.parentNode.href.match(regex);
+			var extensionToReplace = src.match(regex);
+			src = src.replace(extensionToReplace[0], extension[0]);
+			
+			// Formulate request with LLML img code string
 			var request = {
 				need: 'copy',
 				data:  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />'
 			};
+			
 			// Pass data to background page so we can copy it to clipboard
 			chrome.runtime.sendMessage(request);
 		}
