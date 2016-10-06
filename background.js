@@ -770,7 +770,7 @@ var database = (function() {
 	var db;	
 	
 	var getStorageApiCache = function(callback) {
-		chrome.storage.local.get("imagemap", function(cache) {
+		chrome.storage.local.get("imagemap", (cache) => {
 			console.log(cache);
 			if (typeof cache !== "object" && Object.keys(cache.imagemap).length === 0) {
 				callback();
@@ -786,12 +786,12 @@ var database = (function() {
 		open: function(callback) {
 			var request = window.indexedDB.open(DB_NAME, DB_VERSION);
 			
-			request.onsuccess = function(event) {
+			request.onsuccess = (event) => {
 				db = event.target.result;
 				callback();
 			};
 			
-			request.onupgradeneeded = function(event) {
+			request.onupgradeneeded = (event) => {
 				var db = event.target.result;
 				
 				// Use src for keyPath
@@ -824,8 +824,8 @@ var database = (function() {
 		 */
 		convertCache: function(callback) {
 			
-			getStorageApiCache(function(imagemap) {
-				console.log(imagemap);
+			getStorageApiCache((imagemap) => {
+				
 				if (imagemap && Object.keys(imagemap).length > 0) {
 					var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
 					
@@ -837,9 +837,8 @@ var database = (function() {
 						imageObjectStore.add(record);
 					}
 																
-					// At this point we can safely clear chrome.storage
+					// At this point we can safely clear chrome.storage and close database
 					chrome.storage.local.clear();
-
 					db.close();
 				}
 				
@@ -851,7 +850,7 @@ var database = (function() {
 					.objectStore(IMAGE_DB)
 					.get(src);		
 						
-			request.onsuccess = function(event) {
+			request.onsuccess = (event) => {
 				if (event.target.result) {
 					callback(event.target.result);
 				}
@@ -860,7 +859,7 @@ var database = (function() {
 				}
 			};
 			
-			request.onerror = function(event) {
+			request.onerror = (event) => {
 				// Couldn't find src in database.
 				callback(false);
 			};
@@ -869,7 +868,7 @@ var database = (function() {
 		update: function(cacheData) {
 			var transaction = db.transaction([IMAGE_DB], READ_WRITE);
 
-			transaction.onerror = function(event) {
+			transaction.onerror = (event) => {
 				// Can't use add() method if src already exists in databse. 
 				console.log(event.target.error.message);
 			};
@@ -889,7 +888,7 @@ var database = (function() {
 			// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
 			var request = objectStore.openCursor();
 			
-			request.onsuccess = function(event) {
+			request.onsuccess = (event) => {
 					var cursor = event.target.result;
 					
 					if (cursor) {							
@@ -901,7 +900,6 @@ var database = (function() {
 					}
 					
 					else {
-						// TODO: We should probably return results as we find them
 						// Reached end of db
 						callback(results, query);
 					}
@@ -914,19 +912,19 @@ var database = (function() {
 			if (objectStore.getAll != null) {
 				var request = objectStore.getAll();
 				
-				request.onsuccess = function(event) {
+				request.onsuccess = (event) => {
 					// TODO: Need to test what happens if database exists but is empty
 					callback(event.target.result);
 				};
 				
-				request.onerror = function(event) {
+				request.onerror = (event) => {
 					callback(false);
 				};
 			}
 			
 			else {				
 				var cache = [];
-				objectStore.openCursor().onsuccess = function(event) {
+				objectStore.openCursor().onsuccess = (event) => {
 					var cursor = event.target.result;
 					if (cursor) {
 						cache.push(cursor.value);
@@ -943,7 +941,7 @@ var database = (function() {
 			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
 			var size = 0;
 			// TODO: Maybe it would be faster to use a key cursor here
-			objectStore.openCursor().onsuccess = function(event) {
+			objectStore.openCursor().onsuccess = (event) => {
 				var cursor = event.target.result;
 				if (cursor) {					
 					size++;
@@ -962,7 +960,7 @@ var database = (function() {
 					.objectStore(IMAGE_DB)
 					.openCursor();
 
-			transaction.onsuccess = function(event) {
+			transaction.onsuccess = (event) => {
 				var cursor = event.target.result;
 				if (cursor) {
 					var storedObject = cursor.value;
@@ -975,7 +973,7 @@ var database = (function() {
 				}
 			};
 			
-			transaction.onerror = function(err) {
+			transaction.onerror = (err) => {
 				callback(-1048576);
 			};
 		},
