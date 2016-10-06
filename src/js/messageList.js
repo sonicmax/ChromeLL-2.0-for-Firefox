@@ -641,14 +641,14 @@ var messageList = {
 						function(event) {
 							if (messageList.config.snippet_alt_key) {
 								if (event.shiftKey == true
-										&& event.keyIdentifier == 'U+0009') {
+										&& event.key == 'Tab') {
 									event.preventDefault();
 									caret = messageList.snippet.findCaret(ta);
 									messageList.snippet.handler(ta.value, caret);				
 								}
 							}
-							else if (!messageList.config.snippet_alt_key) {
-								if (event.keyIdentifier == 'U+0009') {
+							else {
+								if (event.key == 'Tab') {
 									event.preventDefault();
 									caret = messageList.snippet.findCaret(ta);
 									messageList.snippet.handler(ta.value, caret);
