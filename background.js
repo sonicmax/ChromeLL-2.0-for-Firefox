@@ -888,22 +888,46 @@ var database = (function() {
 			// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
 			var request = objectStore.openCursor();
 			
-			request.onsuccess = (event) => {
-					var cursor = event.target.result;
-					
-					if (cursor) {							
-							if (cursor.key.indexOf(query) !== -1) {
-									results.push(cursor.value);
-							}
+			// Check first characters if query length < 3, otherwise look for matches anywhere
+			if (query.length < 3) {
+				
+				request.onsuccess = (event) => {
+						var cursor = event.target.result;
+						
+						if (cursor) {
+								// Only check first character
+								if (cursor.value.filename.indexOf(query) === 0) {
+										results.push(cursor.value);
+								}
 
-							cursor.continue();          
-					}
-					
-					else {
-						// Reached end of db
-						callback(results, query);
-					}
-			};
+								cursor.continue();          
+						}
+						
+						else {
+							// Reached end of db
+							callback(results, query);
+						}
+				};								
+			}
+			
+			else {			
+				request.onsuccess = (event) => {
+						var cursor = event.target.result;
+						
+						if (cursor) {			
+								if (cursor.value.filename.indexOf(query) !== -1) {
+										results.push(cursor.value);
+								}
+
+								cursor.continue();          
+						}
+						
+						else {
+							// Reached end of db
+							callback(results, query);
+						}
+				};			
+			}
 		},
 		
 		getAll: function(callback) {
