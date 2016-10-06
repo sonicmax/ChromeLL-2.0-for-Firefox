@@ -14,25 +14,14 @@ var messageList = {
 		
 		// check whether we need to display dramalinks ticker
 		if (this.config.dramalinks && !this.pm) {
+			
 			chrome.runtime.sendMessage({
 					need : "dramalinks"
 			}, function(response) {
 				dramalinks.html = response.data;					
 				dramalinks.config = messageList.config;
 			});
-		}	
-		
-		// NOTE: this was causing problems for some users
-		
-		/*if (document.readyState == 'loading') {
-			// pass elements to functions as they are parsed by browser			
-			this.parseObserver.observe(document, {
-					childList: true,
-					subtree: true
-			});
-			// after DOMContentLoaded fires, listen for new posts
-			document.addEventListener('DOMContentLoaded', this.handleEvent.load.call(this));
-		}*/
+		}
 		
 		if (document.readyState == 'loading') {
 			// wait for DOMContentLoaded to fire before attempting to modify DOM
@@ -2226,31 +2215,6 @@ var messageList = {
 			}
 		}
 	}),
-	/*parseObserver: new MutationObserver(function(mutations) {
-		for (var i = 0, len = mutations.length; i < len; i++) {
-			var mutation = mutations[i];
-			if (mutation.addedNodes.length > 0) {
-				if (mutation.addedNodes[0].className == 'message-container') {
-					messageList.passToFunctions(mutation.addedNodes[0]);
-					messageList.links.check(mutation.addedNodes[0]);
-				}
-				else if (mutation.addedNodes[0].tagName
-						&& mutation.addedNodes[0].tagName.match('H2')
-						&& messageList.config.dramalinks
-						&& !messageList.config.hide_dramalinks_topiclist
-						&& !this.pm) {
-					dramalinks.appendTo(mutation.addedNodes[0]);	
-				}
-				else if (mutation.target.className == 'infobar'
-					&& mutation.addedNodes[0].textContent.match('There')) {					
-					messageList.passToFunctions(mutation.target);					
-				}
-				else if (mutation.addedNodes[0].value == 'Upload Image') {
-					messageList.passToFunctions(mutation.target);
-				}
-			}
-		}	
-	}),*/
 	callFunctions: function(pm) {
 		var msgs = document.getElementsByClassName('message-container');
 		var pageFunctions = this.functions.infobar;

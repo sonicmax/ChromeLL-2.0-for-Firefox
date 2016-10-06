@@ -43,26 +43,16 @@ var allPages = {
 				return;
 			}
 		},
-		userscripts: function() {
-			// var location = window.location;
-			var head = document.getElementsByTagName('head')[0];
-			var data = allPages.config.userscript_data;
-			for (var script in data) {
-				var scriptElement = document.createElement('script');
-				var contents = data[script].contents;
-				scriptElement.type = 'text/javascript';
-				scriptElement.innerHTML = contents;
-				head.appendChild(scriptElement);
-			}
-		},
 		notify_pm : function() {
 			var userbar_pms = document.getElementById('userbar_pms');
 			if (!userbar_pms) {
 				return;
 			}
+						
 			var observer = new MutationObserver(function() {
-				// we can assume that all mutations on
-				// userbar_pms element are relevant
+				
+				// If there was a mutation to userbar_pms element, we can be sure that user received a new PM
+				
 				if (userbar_pms.style.display == 'none' && config.pms != 0) {
 					// clear unread message count from config
 					config.pms = 0;
@@ -88,15 +78,16 @@ var allPages = {
 							notify_msg = 'You have ' + pm_number
 									+ ' unread private messages.';
 						}
+						
 						// notify user and save current pm_number
 						chrome.runtime.sendMessage({
 								need: "notify",
 								title: notify_title,
 								message: notify_msg
-						}, function(data) {
-							console.log(data);
-						});
+						}, null);
+						
 						config.pms = pm_number;
+						
 						chrome.runtime.sendMessage({
 								need : "save",
 								name : "pms",
@@ -109,6 +100,7 @@ var allPages = {
 					}
 				}
 			});
+			
 			observer.observe(userbar_pms, {
 					attributes: true,
 					childList: true
