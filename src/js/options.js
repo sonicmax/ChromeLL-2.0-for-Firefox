@@ -112,8 +112,7 @@ var options = {
 				options.addListeners.menuButton();
 				options.addListeners.keyup();
 				
-				options.ui.populateCacheSize();
-				options.ui.populateCacheTable();
+				options.ui.populateCacheSize();				
 				window.onbeforeunload = chrome.runtime.sendMessage({ need: 'closeDatabase' });
 				
 				options.ui.displayLBContent();
@@ -132,8 +131,7 @@ var options = {
 			options.addListeners.menuButton();
 			options.addListeners.keyup();			
 			
-			options.ui.populateCacheSize();
-			options.ui.populateCacheTable();
+			options.ui.populateCacheSize();			
 			window.onbeforeunload = chrome.runtime.sendMessage({ need: 'closeDatabase' });
 			
 			options.ui.displayLBContent();
@@ -577,6 +575,14 @@ var options = {
 						evt.preventDefault();
 					}
 				}
+				
+				if (elementID === 'open_cache') {
+					
+					document.getElementById('open_cache').style.display = 'none';
+					document.getElementById('cache_table').style.display = 'block';
+					options.ui.populateCacheTable();										
+					
+				};
 				
 				if (evt.target.parentNode.id.match(/_list/) && evt.target.className != 'delete') {
 					var parent = evt.target.parentNode.id;

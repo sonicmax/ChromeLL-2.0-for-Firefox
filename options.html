@@ -1311,19 +1311,22 @@
 							<option value="a_z">A-Z</option>
 							<option value="z_a">Z-A</option>
 							<option value="filetype">Filetype</option>
-							<option value="default">Undo</option>
+							<option value="default">Default</option>
 						</select>							
 					</h3>
-					<img class="loading" id="loading_img" src='/src/images/loading.png' width="50px" height="50px"/>
-					<table id="cache_contents" border="1px" style="display:none;">
-						<tr>
-							<td><b>Filename:</b>
-							<input type="text" id="imagemap_search" placeholder="Search imagemap..." style="float:right;">
-							</td>
-							<td><b>URL:</b>
-							</td>							
-						</tr>
-					</table>				
+					<input type="button" id="open_cache" value="View cache" />
+					<div id="cache_table" style="display: none;">
+						<img class="loading" id="loading_img" src='/src/images/loading.png' width="50px" height="50px"/>					
+						<table id="cache_contents" border="1px" style="display:none;">
+							<tr>
+								<td><b>Filename:</b>
+								<input type="text" id="imagemap_search" placeholder="Search imagemap..." style="float:right;">
+								</td>
+								<td><b>URL:</b>
+								</td>							
+							</tr>
+						</table>
+					</div>
 				</section>
 			</div>
 		</div>
