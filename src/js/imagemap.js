@@ -359,21 +359,18 @@ var imagemap = function() {
 			// Check that query contains characters other than whitespace
 			if (/\S/.test(query)) {
 				
+				if (!document.getElementById('search_results')) {
+					createPopup(query);						
+				}
+
+				else {
+					var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');								
+					oldGrid.remove();					
+					document.getElementById('loading_image').style.display = 'block';							
+				}
+				
 				lookupInDb(query, function(results) {
-					
-					if (!document.getElementById('search_results')) {
-						createPopup(query);						
-					}
-					
-					else {
-						var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');								
-						oldGrid.remove();
-						// display loading_image element while waiting for results div to update
-						document.getElementById('loading_image').style.display = 'block';				
-					}
-					
-					checkMatches(results, query);
-					
+					processResults(results, query);				
 				});
 			}
 			
@@ -397,7 +394,7 @@ var imagemap = function() {
 			});									
 		};
 		
-		var checkMatches = function(results, query) {
+		var processResults = function(results, query) {
 			if (results.length === 0) {
 				// No matches - call updatePopup with false value
 				updatePopup(false, query);
