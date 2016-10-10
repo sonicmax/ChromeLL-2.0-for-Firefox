@@ -1042,17 +1042,19 @@ var messageList = {
 		},
 		keydown: function(evt) {
 			if (evt.keyCode === 13 && document.activeElement.id === 'image_search') {
-				// prevent bug where pressing enter while focused on image_search element 
-				// would trigger Post/Preview Message button
+				imagemap.search.init.call(imagemap.search);
 				evt.preventDefault();
 			}
 		},
 		search: function() {
-			// perform search after 250ms of no keyboard activity to improve performance
 			clearTimeout(this.imagemapDebouncer);
-			this.imagemapDebouncer = setTimeout(function() {
-				// imagemap object located in imagemap.js
-				imagemap.search.init.call(imagemap.search);
+			
+			this.imagemapDebouncer = setTimeout(() => {
+				
+				if (document.getElementById('search_results')) {			
+					imagemap.search.init.call(imagemap.search);
+				}
+				
 			}, 250);
 		}
 	},
