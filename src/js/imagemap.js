@@ -34,7 +34,7 @@ var imagemap = function() {
 		
 		chrome.runtime.sendMessage({
 				need: "xhr",
-				url: url,
+				url: url
 		}, function(response) {
 				var html = document.createElement('html');
 				html.innerHTML = response;		
