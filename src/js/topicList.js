@@ -376,41 +376,59 @@ var topicList = {
 			}
 		},
 		pageJump: function(evt) {
-			var a, history, inbox;
+			var td, history, inbox;
+			
 			if (window.location.href.indexOf('history.php') > -1) {
 				history = true;
-				a = evt.target.parentNode.parentNode.parentNode.parentNode
+				td = evt.target.parentNode.parentNode.parentNode.parentNode
 						.parentNode.getElementsByTagName('td')[2];
 			}
+			
 			else if (window.location.href.indexOf('inbox.php') > -1) {
 				inbox = true;
-				a = evt.target.parentNode.parentNode.nextSibling.nextSibling;
+				td = evt.target.parentNode.parentNode.nextSibling.nextSibling;
 			}
+			
 			else {
-				a = evt.target.parentNode.parentNode.parentNode.parentNode
+				td = evt.target.parentNode.parentNode.parentNode.parentNode
 						.getElementsByTagName('td')[2];
 			}
-			var last = Math.ceil(a.innerHTML.split('<')[0] / 50);
+			
+			// Remove unread messages count and work out position of last page
+			var postCount = td.innerHTML.split('(')[0];
+			postCount = postCount.split('<')[0];
+			var lastPage = Math.ceil(postCount / 50);
+			
+			
 			if (evt.target.id == 'jumpWindow') {
-				pg = prompt("Page Number (" + last + " total)", "Page");
-				if (pg == undefined || pg == "Page") {
+				page = prompt("Page Number (" + lastPage + " total)", "Page");
+				if (page == undefined || page == "Page") {
 					return 0;
 				}
 			} else {
-				pg = last;
+				page = lastPage;
 			}
+			
+			
 			if (history) {
-				return evt.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0].href
-						+ '&page=' + pg;
+				var topic = evt.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0];
+				return topic.href + '&page=' + page;
 			}
-			else if (inbox) {
-				return evt.target.parentNode.parentNode.firstChild.href 
-						+ '&page=' + pg;
+			
+			else if (inbox) {						
+				var thread = evt.target.parentNode.parentNode.firstChild;
+				
+				// Threads with new posts are wrapped in b tags
+				if (thread.tagName === 'B') {
+					thread = thread.firstChild;
+				}
+								
+				return thread.href + '&page=' + page;
 			}
+			
 			else {
-				return evt.target.parentNode.parentNode.parentNode.parentNode
-						.getElementsByTagName('td')[0].getElementsByTagName('a')[0].href
-						+ '&page=' + pg;
+				var topic = evt.target.parentNode.parentNode.parentNode.parentNode.getElementsByTagName('td')[0].getElementsByTagName('a')[0];
+				return topic.href + '&page=' + page;
 			}
 		}
 	},
