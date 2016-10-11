@@ -10,7 +10,7 @@ BUILD_SRC=$(BUILD_DIR)/src
 BUILD_JS=$(BUILD_SRC)/js
 SRC_JS=src/js
 
-all: copy_files allBg.js allPages.js boardList.js messageList.js options.js popup.js postMsg.js profile.js search.js topicList.js topicPostTemplate.js transloader.js dramalinks.js wiki.js love.js imagemap.js
+all: copy_files allBg.js allPages.js backtotopic.js boardList.js dramalinks.js imagemap.js love.js messageList.js options.js popup.js postMsg.js profile.js search.js tokenhelper.js topicList.js topicPostTemplate.js transloader.js wiki.js 
 	
 copy_files:
 	-mkdir build
@@ -34,8 +34,17 @@ allBg.js:
 allPages.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/allPages.js $(SRC_JS)/allPages.js
 	
+backtotopic.js:
+	$(CC) $(CFLAGS) $(BUILD_JS)/backtotopic.js $(SRC_JS)/backtotopic.js	
+	
 boardList.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/boardList.js $(SRC_JS)/boardList.js
+
+imagemap.js:
+	$(CC) $(CFLAGS) $(BUILD_JS)/imagemap.js $(SRC_JS)/imagemap.js
+	
+love.js:
+	$(CC) $(CFLAGS) $(BUILD_JS)/love.js $(SRC_JS)/love.js		
 	
 messageList.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/messageList.js $(SRC_JS)/messageList.js
@@ -54,6 +63,9 @@ profile.js:
 	
 search.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/search.js $(SRC_JS)/search.js
+
+tokenhelper.js:
+	$(CC) $(CFLAGS) $(BUILD_JS)/tokenhelper.js $(SRC_JS)/tokenhelper.js
 	
 topicList.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/topicList.js $(SRC_JS)/topicList.js
@@ -69,12 +81,7 @@ dramalinks.js:
 
 wiki.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/wiki.js $(SRC_JS)/wiki.js
-	
-love.js:
-	$(CC) $(CFLAGS) $(BUILD_JS)/love.js $(SRC_JS)/love.js	
 
-imagemap.js:
-	$(CC) $(CFLAGS) $(BUILD_JS)/imagemap.js $(SRC_JS)/imagemap.js		
 	
 # clear the build directory
 clean:
