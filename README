@@ -24,10 +24,6 @@ The Cygwin, gnuwin32, and MinGW versions of these programs have been successfull
 
 Don't forget to add new targets to the Makefile if you add a new file to the extension.
 
-Multiple untested pull requests will result in you being blacklisted from working on the extension.
-
-Seriously, test.
-
 SUMMARY:
   1) to build run
 		make
