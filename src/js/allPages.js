@@ -689,8 +689,8 @@ var addPopupCSS = function() {
 	styleSheet.addRule('#user-popup-div',  'background: ' + customColors.message);
 	styleSheet.addRule('#user-popup-div',  'border-color: ' + customColors.body);		
 	styleSheet.addRule('.popup_link', 'color: ' + customColors.anchor);
-	styleSheet.addRule('.popup_link', 'background: ' + customColors.userbar);	
-	styleSheet.addRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading, #rep', 'color: ' + customColors.text);
+	styleSheet.addRule('.popup_link', 'background: ' + customColors.userbar);
+	styleSheet.addRule('#username, #popup_uid, #namechange, #online, #punish, #popup_loading, #rep, #rep a', 'color: ' + customColors.text);
 	// #user-popup-div:before should be same colour as #user-popup-div background
 	styleSheet.addRule('#user-popup-div:before', 'border-bottom-color: ' + customColors.body);	
 	// #user-popup-div:after should be same colour as #user-popup-div border
