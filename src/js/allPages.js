@@ -522,35 +522,32 @@ var allPages = {
 			var iframe = document.createElement('iframe');
 			var width = window.innerWidth;
 			var height = window.innerHeight;
-			var close = document.createElement('a');
+			var close = document.createElement('div');
 			var bodyClass = document.getElementsByClassName('body')[0];
 			var anchorHeight;
+			
 			div.id = "options_div";
-			div.style.position = "fixed";
 			div.style.width = (width * 0.95) + 'px';
 			div.style.height = (height * 0.95) + 'px';
 			div.style.left = (width - (width * 0.975)) + 'px';
 			div.style.top = (height - (height * 0.975)) + 'px';
-			div.style.boxShadow = "5px 5px 7px black";
-			div.style.borderRadius = '6px';
-			div.style.opacity = 1;
-			div.style.backgroundColor = 'white';
-			close.style.cssFloat = "right";
-			close.style.fontSize = "18px";
-			close.href = '#';
-			close.style.textDecoration = "none";
+			
 			close.id = "close_options";
-			close.innerHTML = '&#10006;';
+
 			iframe.style.width = "inherit";
 			iframe.src = url;
 			iframe.style.backgroundColor = "white";
 			iframe.style.border = "none";
+			
 			bodyClass.style.opacity = 0.3;
+			
 			div.appendChild(close);
 			div.appendChild(iframe);
 			document.body.appendChild(div);
+			
 			anchorHeight = close.getBoundingClientRect().height * 2;
 			iframe.style.height = ((height * 0.95) - anchorHeight) + 'px';
+			
 			bodyClass.addEventListener('click', this.hide);
 			document.getElementById('close_options').addEventListener('click', this.hide);
 			document.body.addEventListener('mousewheel', this.preventScroll);
@@ -642,8 +639,13 @@ var allPages = {
 			console.log("error in " + i + ":", err);
 		}
 		
+		chrome.runtime.sendMessage({
+			need: "insertcss",
+			file: "src/css/allpages.css"
+		});
+		
 		if (window.location.pathname !== "/main.php") {
-			addCSSRules();
+			addPopupCSS();
 		}
 		
 		chrome.runtime.onMessage.addListener(function(msg) {
@@ -679,7 +681,7 @@ var getCustomColors = function() {
 	return customColors;
 };
 
-var addCSSRules = function() {
+var addPopupCSS = function() {
 	var styleSheet = document.styleSheets[0];
 	var customColors = getCustomColors();
 	// Dynamically create rules for user info popup using ETI colour scheme (to make sure that content is readable)
