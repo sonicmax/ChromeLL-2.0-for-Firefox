@@ -163,46 +163,39 @@ var allPages = {
 		short_title : function() {
 			document.title = document.title.replace(/End of the Internet - /i, '');
 		},
-		user_info_popup : function() {
-			chrome.runtime.sendMessage({
-				need : "insertcss",
-				file : "src/css/arrowbox.css"
-			}, function() {
-					
-					if (window.location.href.indexOf('//endoftheinter.net/profile.php?') > -1) {
-						return;
-					}
-					
-					// Create placeholder popup that we can populate later.
-					var links = ["PM", "GT", "BT", "HIGHLIGHT", "UNHIGHLIGHT", "IGNORATE"];					
-					var popupElement = document.createElement('div');			
-					popupElement.className = 'user_info_popup';
-					popupElement.id = 'user-popup-div';
-					var info = document.createElement('div');
-					info.className = 'user_info_popup';
-					info.id = 'popup_info';
-					var user = document.createElement('div');
-					user.className = 'user_info_popup';
-					user.id = 'popup_user';
+		user_info_popup : function() {	
+			if (window.location.href.indexOf('//endoftheinter.net/profile.php?') > -1) {
+				return;
+			}
+			
+			// Create placeholder popup that we can populate later.
+			var links = ["PM", "GT", "BT", "HIGHLIGHT", "UNHIGHLIGHT", "IGNORATE"];					
+			var popupElement = document.createElement('div');			
+			popupElement.className = 'user_info_popup';
+			popupElement.id = 'user-popup-div';
+			var info = document.createElement('div');
+			info.className = 'user_info_popup';
+			info.id = 'popup_info';
+			var user = document.createElement('div');
+			user.className = 'user_info_popup';
+			user.id = 'popup_user';
 
-					for (var i = 0, len = links.length; i < len; i++) {
-						var span = document.createElement('span');
-						span.className = 'popup_link';
-						span.innerHTML = links[i];
-						span.addEventListener('click', allPages.popup.clickHandler);
-						info.appendChild(span);
-					}
-					
-					popupElement.appendChild(user);
-					popupElement.appendChild(info);
-					document.body.appendChild(popupElement);				
-					
-					document.addEventListener('click', function(evt) {
-						if (evt.target.className != 'popup_link') {
-							allPages.popup.hide();
-						}
-					});
-					
+			for (var i = 0, len = links.length; i < len; i++) {
+				var span = document.createElement('span');
+				span.className = 'popup_link';
+				span.innerHTML = links[i];
+				span.addEventListener('click', allPages.popup.clickHandler);
+				info.appendChild(span);
+			}
+			
+			popupElement.appendChild(user);
+			popupElement.appendChild(info);
+			document.body.appendChild(popupElement);				
+			
+			document.addEventListener('click', function(evt) {
+				if (evt.target.className != 'popup_link') {
+					allPages.popup.hide();
+				}
 			});
 		}
 	},
