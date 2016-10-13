@@ -53,13 +53,13 @@ var allPages = {
 				
 				// If there was a mutation to userbar_pms element, we can be sure that user received a new PM
 				
-				if (userbar_pms.style.display == 'none' && config.pms != 0) {
+				if (userbar_pms.style.display == 'none' && allPages.config.pms != 0) {
 					// clear unread message count from config
-					config.pms = 0;
+					allPages.config.pms = 0;
 					chrome.runtime.sendMessage({
 							need : "save",
 							name : "pms",
-							data : config.pms
+							data : allPages.config.pms
 					});
 				}
 				else if (userbar_pms.style.display != 'none') {
@@ -67,7 +67,7 @@ var allPages = {
 					var pm_number = parseInt(pms_text.match(/\((\d+)\)/)[1]);
 					var notify_title, notify_msg;
 					// compare pm_number to last known value for pm_number
-					if (pm_number > config.pms) {
+					if (pm_number > allPages.config.pms) {
 						// you have mail
 						if (pm_number == 1) {
 							notify_title = 'New PM';
@@ -86,12 +86,12 @@ var allPages = {
 								message: notify_msg
 						}, null);
 						
-						config.pms = pm_number;
+						allPages.config.pms = pm_number;
 						
 						chrome.runtime.sendMessage({
 								need : "save",
 								name : "pms",
-								data : config.pms
+								data : allPages.config.pms
 						});
 					}
 					else {
@@ -109,7 +109,7 @@ var allPages = {
 		history_menubar : function() {
 			var link = document.createElement('a');
 			link.innerHTML = 'Message History';
-			if (config.history_menubar_classic)
+			if (allPages.config.history_menubar_classic)
 				link.href = '//boards.endoftheinter.net/history.php';
 			else
 				link.href = '//boards.endoftheinter.net/topics/Posted';
@@ -141,7 +141,7 @@ var allPages = {
 			userbar.style.marginTop = '-2px';
 			userbar.style.borderBottomLeftRadius = '5px';
 			userbar.style.borderBottomRightRadius = '5px';
-			config.remove_links ? document.getElementsByTagName('h1')[0].style.paddingTop = '20px'
+			allPages.config.remove_links ? document.getElementsByTagName('h1')[0].style.paddingTop = '20px'
 					: document.getElementsByTagName('h1')[0].style.paddingTop = '40px';
 			document.getElementsByClassName('body')[0].insertBefore(id, null);
 		},
