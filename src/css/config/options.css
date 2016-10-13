@@ -1,0 +1,444 @@
+body {
+	cursor: default;
+	font-family: 'Open Sans', sans-serif;
+	font-size: 12px;
+	width: 1100px;
+	height: 720px;
+}
+
+p {
+	line-height: 22px;
+}
+
+h1 {
+	-webkit-user-select: none;
+	color: rgb(48, 57, 66);
+	font-size: 18px;
+	font-weight: normal;
+	margin-top: 1em;
+}
+
+a {
+	color: #1155cc;
+	text-decoration: underline;
+}
+
+a:active {
+	color: #052577;
+}
+
+/* TEXT */
+input {
+	border: 1px solid #aaa;
+	border-radius: 2px;
+	font-size: inherit;
+	padding: 3px;
+}
+
+input[type='text']:disabled {
+	color: #888;
+}
+ 
+.footer {
+	height:24px;
+}
+ 
+a:link {
+	color: rgb(63, 110, 194);
+}
+ 
+a:active {
+	color: rgb(37, 64, 113);
+}
+h1 {
+	-webkit-user-select: none;
+	color: rgb(48, 57, 66);
+	font-size: 18px;
+	font-weight: normal;
+	margin-top: 1em;
+}
+ 
+.title {
+	-webkit-margin-before: 18px;
+	-webkit-margin-start: 23px;
+	color: rgb(92, 97, 102);
+}
+ 
+#navbar {
+	margin: 0;
+}
+ 
+#navbar-container {
+	background: #fff;
+	position: fixed;
+	bottom: 0;
+	/* We set both left and right for the sake of RTL. */
+	left: 0;
+	right: 0;
+	top: 0;
+	width: 150px;
+	z-index: 2;
+}
+ 
+html.hide-menu #navbar-container {
+	display: none;
+}
+ 
+#navbar-container > ul {
+	-webkit-user-select: none;
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+ 
+li.navbar-item {
+	-webkit-border-start: 6px solid white;
+	-webkit-padding-start: 18px;
+	color: #999;
+	cursor: pointer;
+	line-height: 17px;
+	margin: 5px 0;
+	text-transform: uppercase;
+}
+li.navbar-item:hover {
+	color: #777;
+}
+ 
+.navbar-item:focus {
+	border-bottom: 1px solid #8faad9;
+	border-top: 1px solid #8faad9;
+}
+ 
+li.navbar-item-selected {
+	-webkit-border-start-color: rgb(78, 87, 100);
+	color: rgb(70, 78, 90);
+}
+ 
+.subpage-sheet .page h1 {
+	margin-bottom: 10px;
+}
+div.page section:last-child {
+	border-bottom: none;
+}
+ 
+div.page > h3 {
+	font-size: 105%;
+	font-weight: bold;
+	margin: 20px 0 10px 0;
+}
+.page list {
+	/* Min height is a multiple of the list item height (32) */
+	min-height: 192px;
+}
+ 
+section {
+	-webkit-box-orient: horizontal;
+	border-bottom: 1px solid #eeeeee;
+	display: -webkit-box;
+	margin-top: 17px;
+	padding-bottom: 20px;
+}
+ 
+div.page section:last-child {
+	border-bottom: none;
+}
+ 
+div.page > h3 {
+	font-size: 105%;
+	font-weight: bold;
+	margin: 20px 0 10px 0;
+}
+ 
+section > h3 {
+	font-size: 105%;
+	font-weight: bold;
+	margin: 0;
+	vertical-align: middle;
+	width: 140px;
+}
+ 
+section > div:only-of-type {
+	-webkit-box-flex: 1;
+}
+ 
+.overlay .page h1 {
+	background: -webkit-linear-gradient(white, #F8F8F8);
+	border-bottom: 1px solid rgba(188, 193, 208, .5);
+	font-size: 105%;
+	font-weight: bold;
+	padding: 10px 15px 8px 15px;
+}
+#mainview {
+	-webkit-box-align: stretch;
+	-webkit-padding-start: 150px;
+	margin: 0;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	z-index: 1;
+}
+#toplevel-page-container {
+	box-sizing: border-box;
+	max-width: 888px;
+	min-width: 600px;
+	padding: 0 24px;
+}
+/* This will 'disable' the label associated with any input whose next sibling is
+ * the span containing the label (usually a checkbox or radio).
+ */
+label > input[disabled] ~ span {
+	color: #888;
+}
+label > input[type="checkbox"]:hover, label {
+	cursor: hand;
+}
+div.checkbox,
+div.radio {
+	margin: 5px 0;
+}
+input[type=radio] ~ span,
+input[type=checkbox] ~ span {
+	color: #444;
+}
+li.note {
+	font-size: 12px;
+	padding: 10px;
+	bottom: 0px;
+	position: absolute;
+	text-align: right;
+	
+}
+div.hidden {
+	display: none;
+}
+ul.boardlist {
+	list-style: none;
+	margin: 0px;
+	padding: 0px;
+	
+	overflow: hidden;
+	
+	width: 80%;
+	
+	border-bottom: 1px solid #ddd;
+}
+ul.boardlist:hover {
+	cursor: hand;
+	
+	background-color: #bbcee9;
+	
+	border-bottom: 1px solid #8faad9;
+	border-top: 1px solid #8faad9;
+	
+	margin-top: -1px;
+}
+ul.boardlist:last-child {
+	border-bottom: none;
+}
+ul.boardlist:first-child {
+	border-top: none;
+}
+ul.boardlist:nth-of-type(even)
+{
+}
+ul.boardlist > li {
+	float: left;
+	
+	padding: 6px;
+	
+}
+ul.boardlist > li:nth-child(2) {
+	padding-left: 10px;
+}
+ul.boardlist:nth-child(odd) {
+	
+}
+ul.boardlist > li:first-child {
+	min-width: 40px;
+		
+	text-align: center;
+	
+	cursor: default!important;
+	width: 50px;
+	
+	background-color: #efefef;
+}
+ul.boardlist > li:last-child {
+	width: 50px;
+	
+	background-color: #efefef;
+	
+	float: right;
+	
+	text-align: center;
+}
+ul.boardlist:hover > li {
+	background-color: #bbcee9;
+}
+ul.boardlist:hover > li:nth-child(2) {
+	font-weight: bold;
+}
+ul.info {
+	font-weight: bold;
+	
+	background-color: #fff!important;
+}
+ul.info > li {
+	background-color: #fff!important;
+}
+ul.info:hover {
+	border-bottom: 1px solid #ddd;
+	cursor: default!important;
+}
+li.Yes {
+	font-weight: bold!important;
+	background-color: #c3f2c3!important;
+}
+ul.boardlist:hover > li.Yes {
+	background-color: #bbcee9!important;
+}
+span.desc {
+	font-style: italic;
+	font-size: x-small;
+}
+.user_highlight{
+		padding-top:10px;
+}
+.color-input{
+		width: 50px;
+		border: none !important;
+		border-bottom: 1px solid #333 !important;
+}
+.subbox{
+		padding-left: 20px;
+}
+.beta_info{
+		//background: #ff7878;
+		text-align: center;
+		border: 1px solid #ff0000;
+		border-radius: 4px;
+		padding-left: 20px;
+		padding-right: 20px;
+}
+
+
+/* tooltips */
+
+.tooltip {
+	border-bottom: 1px dotted #000000;
+	color: #000000; outline: none;
+	cursor: help; text-decoration: none;
+	position: relative;
+	color: #0000FF;
+}
+
+.tooltip span {
+	margin-left: -999em;
+	position: absolute;
+}
+
+.tooltip:hover span {
+	font-family: Calibri, Tahoma, Geneva, sans-serif;
+	font-size: 16px;
+	color: #000000;
+	font-weight: normal;
+	position: absolute;
+	left: 1em;
+	top: 2em;
+	z-index: 99;
+	margin-left: 0;
+	width: 250px;
+}
+
+.tooltip:hover img {
+	border: 0;
+	margin: -10px 0 0 -55px;
+	float: left;
+	position: absolute;
+}
+
+.tooltip:hover em {
+	font-family: Candara, Tahoma, Geneva, sans-serif;
+	font-size: 1.2em;
+	font-weight: bold;
+	display: block;
+	padding: 0.2em 0 0.6em 0;
+}
+
+.moreinfo {
+	padding: 0.8em 1em;
+	background: #FFFFAA;
+	solid #FFAD33;
+	border: 1px;
+	border-radius: 5px 5px;
+	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);	
+}
+
+
+/* loading spinner */
+
+.loading {
+	-webkit-animation:spin 2s linear infinite;
+}
+@-webkit-keyframes spin { 100% {
+	-webkit-transform:rotate(360deg); 
+	}
+}
+
+
+/* custom like button menu */
+
+#menu_items {
+	background-color: white;
+}
+
+#like_input {
+	width:80%;
+	height:90%;
+	float:left;
+	
+}
+#like_list {
+	background-color: silver;
+	line-height:30px;
+	height:90%;
+	width:20%;
+	float:left;
+}
+
+.like_menu_items:hover {
+	background-color: #509099; 
+}
+
+#like_menu {
+	border-top: 1px solid #8faad9;
+	color: black;
+	background-color: silver;
+}
+
+#like_menu:hover {
+	background-color: #509099; 
+}
+
+#like_menubar {
+	border-top: 1px solid #8faad9;
+	background-color: silver; 
+}
+
+.active_like {
+	background-color: #509099; 
+	color: white;
+}
+
+/* imagemap cache table */
+
+tr {
+	border: 1px;
+	border-color: gray;
+}
+
+.cache_filenames {
+	width: 400px;
+}

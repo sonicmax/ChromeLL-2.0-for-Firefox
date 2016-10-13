@@ -1,22 +1,60 @@
-$(document).ready(() => {					
-		// It's possible (but unlikely) that user opened options before background page finished loading config
-		if (localStorage['ChromeLL-Config'] == ''
-				|| localStorage['ChromeLL-Config'] == undefined) {				
-			console.log("Blank Config. Rebuilding");
+$(document).ready(() => {
+	
+	$('.options_navigation_link')
+		.click(function() {
 			
-			options.getDefault(function(defaultConfig) {				
-				localStorage['ChromeLL-Config'] = defaultConfig;
-				options.init();
-			});					
+			toLink = $(this)
+					.attr('id')
+					.split('_link')[0];
+
+			selectedPage = $('.navbar-item-selected')
+					.attr("id")
+					.split('_link')[0];
+
+			if (toLink == selectedPage) {
+				return true;
+			}
+
+			$('#' + selectedPage + '_link')
+					.removeClass("navbar-item-selected");
+					
+			$('#' + toLink + '_link')
+					.addClass("navbar-item-selected");
+
+			$('#' + selectedPage + '_page')
+					.removeClass("shown")
+					.addClass("hidden");
+					
+			$('#' + toLink + '_page')
+						.removeClass("hidden")
+						.addClass("shown");
+
+			$('body')
+					.css("background-color", "transparent");
+			
 		}
+	);
+	
+	// It's possible (but unlikely) that user opened options before background page finished loading config
+	
+	if (localStorage['ChromeLL-Config'] == ''
+			|| localStorage['ChromeLL-Config'] == undefined) {				
+		console.log("Blank Config. Rebuilding");
 		
-		else if (localStorage['chromeLL_userhighlight'] && 
-				localStorage['chromeLL_userhighlight'] != '') {		
-			options.restoreV1();
-		}
-		else {
+		options.getDefault(function(defaultConfig) {				
+			localStorage['ChromeLL-Config'] = defaultConfig;
 			options.init();
-		}					
+		});					
+	}
+	
+	else if (localStorage['chromeLL_userhighlight'] && 
+			localStorage['chromeLL_userhighlight'] != '') {		
+		options.restoreV1();
+	}
+	else {
+		options.init();
+	}
+	
 });
 
 var options = {
@@ -112,8 +150,7 @@ var options = {
 				options.addListeners.menuButton();
 				options.addListeners.keyup();
 				
-				options.ui.populateCacheSize();				
-				window.onbeforeunload = chrome.runtime.sendMessage({ need: 'closeDatabase' });
+				options.ui.populateCacheSize();
 				
 				options.ui.displayLBContent();
 				
@@ -131,8 +168,7 @@ var options = {
 			options.addListeners.menuButton();
 			options.addListeners.keyup();			
 			
-			options.ui.populateCacheSize();			
-			window.onbeforeunload = chrome.runtime.sendMessage({ need: 'closeDatabase' });
+			options.ui.populateCacheSize();
 			
 			options.ui.displayLBContent();
 			
@@ -474,8 +510,15 @@ var options = {
 	addListeners: {
 		keyup: function() {	
 			document.addEventListener('keyup', function(evt) {
-				if (!evt.target.name)
+				if (!evt.target.name) {
+					
+					// TODO: Close options here
+					if (evt.key === 'Escape') {
+						console.log(evt.key);
+					}
+					
 					return;
+				}
 				if (evt.target.name == "user_highlight_username") {
 					var datas = document.getElementById('user_highlight')
 							.getElementsByClassName('user_name');
@@ -761,8 +804,6 @@ var options = {
 					// TODO: Get all keys, split into pages and display 1 page at a time (with option to show all)
 					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {
 						
-						console.log(images);
-						
 						var table = document.getElementById('cache_contents');
 						var loadingImage = document.getElementById('loading_img');
 						
@@ -802,31 +843,31 @@ var options = {
 		createTableRow: function(result) {
 			
 			if (result) {
-				var table = document.getElementById('cache_contents');			
-				var tableRow = document.createElement('tr');				
+				var table = document.getElementById('cache_contents');		
+				var tableRow = document.createElement('tr');			
 				var filenameData = document.createElement('td');
-				var urlData = document.createElement('td');								
-				
-				if (result.fullsize.length > 100) {
-					var url = result.fullsize.substring(0, 99) + '...';
-				}
-				else {
-					var url = result.fullsize;
-				}
+				var urlData = document.createElement('td');
 				
 				var input = document.createElement('input');
 				input.type = 'text';
 				input.className = 'cache_filenames';
 				input.value = result.filename;
-				input.style.width = '400px';
 				filenameData.appendChild(input);
-						
+				
+				anchor = document.createElement('a');
+				anchor.className = 'cache_url';
+				anchor.href = result.fullsize;
+				anchor.innerHTML = "View original";
+				urlData.appendChild(anchor);				
+				
+				var space = document.createTextNode("  ");			
+				urlData.appendChild(space);
+										
 				var anchor = document.createElement('a');
 				anchor.className = 'cache_url';
-				anchor.title = result.fullsize;
 				anchor.href = result.data;
-				anchor.innerHTML = url;
-				urlData.appendChild(anchor);
+				anchor.innerHTML = "View cached thumbnail";
+				urlData.appendChild(anchor);				
 				
 				table.appendChild(tableRow);
 				tableRow.appendChild(filenameData);
