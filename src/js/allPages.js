@@ -552,14 +552,14 @@ var allPages = {
 			document.getElementById('close_options').addEventListener('click', this.hide);
 			document.body.addEventListener('mousewheel', this.preventScroll);
 		},
-		hide: function() {
+		hide: function() {			
 			var div = document.getElementById('options_div');
 			var bodyClass = document.getElementsByClassName('body')[0];
 			bodyClass.style.opacity = 1;
 			document.body.removeChild(div);
-			bodyClass.removeEventListener('click', this.hide);
-			document.body.removeEventListener('click', this.hide);
-			document.body.removeEventListener('mousewheel', this.preventScroll);
+			bodyClass.removeEventListener('click', allPages.optionsMenu.hide);
+			document.body.removeEventListener('click', allPages.optionsMenu.hide);
+			document.body.removeEventListener('mousewheel', allPages.optionsMenu.preventScroll);
 		},
 		preventScroll: function(event) {
 			event.preventDefault();
