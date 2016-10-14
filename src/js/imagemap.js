@@ -257,9 +257,9 @@ var imagemap = function() {
 		}
 		else {
 			cacheData[src] = {"src": src, "filename": filename, "fullsize": fullsize, "data": dataUri};
-			// Finished encoding image - update cache
+
 			chrome.runtime.sendMessage({
-					need: 'updateDatabase',
+					need: 'addToDatabase',
 					data: cacheData
 			});			
 		}

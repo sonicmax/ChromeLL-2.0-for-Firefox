@@ -588,8 +588,12 @@ var background = {
 						database.clear(sendResponse);
 						return true;
 						
+					case "addToDatabase":
+						database.add(request.data, sendResponse);
+						return true;
+						
 					case "updateDatabase":
-						database.update(request.data, sendResponse);
+						database.updateFilename(request.data.src, request.data.newFilename);
 						return true;
 						
 					case "searchDatabase":
@@ -854,7 +858,7 @@ var database = (function() {
 			};
 		},
 		
-		update: function(cacheData) {
+		add: function(data) {
 			var transaction = db.transaction([IMAGE_DB], READ_WRITE);
 
 			transaction.onerror = (event) => {
@@ -864,9 +868,28 @@ var database = (function() {
 
 			var objectStore = transaction.objectStore(IMAGE_DB);
 			
-			for (var src in cacheData) {
-				var request = objectStore.add(cacheData[src]);
+			for (var src in data) {
+				var request = objectStore.add(data[src]);
 			}
+		},
+			
+		updateFilename: function(src, newFilename) {
+			var transaction = db.transaction([IMAGE_DB], READ_WRITE);
+			
+			transaction.onerror = (event) => {
+				console.log(event.target.error.message);
+			};
+
+			var objectStore = transaction.objectStore(IMAGE_DB);
+			
+			var record = objectStore.get(src);
+			
+			record.onsuccess = function() {
+				var data = record.result;				
+				data.filename = newFilename;				
+				var updateTitleRequest = objectStore.put(data);
+			};		
+			
 		},
 		
 		search: function(query, callback) {

@@ -658,13 +658,27 @@ var options = {
 			});	
 			
 			cacheTable.addEventListener('keyup', function(evt) {
-				/*var newFilename = evt.target.value;
-				var src = evt.target.id;
-				if (src && newFilename) {					
-					options.imageCache.data[src] = newFilename;
+				if (evt.target.value !== 'imagemap_search') {
+					var newFilename = evt.target.value;
+					var src = evt.target.id;
+					
+					clearTimeout(cacheTimer);
+					
+					cacheTimer = setTimeout(() => {
+						
+						chrome.runtime.sendMessage({
+							
+							need: 'updateDatabase',
+							data: {
+								src: src,
+								newFilename: newFilename								
+							}
+							
+						});
+						
+					}, 500);
+				
 				}
-				clearTimeout(cacheTimer);
-				cacheTimer = setTimeout(options.imageCache.save, 500);	*/			
 			});
 			
 			cacheMenu.addEventListener('change', function(evt) {
@@ -852,6 +866,7 @@ var options = {
 				input.type = 'text';
 				input.className = 'cache_filenames';
 				input.value = result.filename;
+				input.id = result.src;
 				filenameData.appendChild(input);
 				
 				anchor = document.createElement('a');
@@ -990,32 +1005,6 @@ var options = {
 		}
 	},
 	imageCache: {
-		data: {},
-		
-		save: function() {
-			var cacheData = options.cache.data;
-			options.cache.restore(function(cached) {
-				var cache = cached.imagemap;
-				// replace old filename value with value from cacheChanges
-				for (var i in cacheData) {
-					cache[i].filename = cacheData[i];
-				}
-				chrome.storage.local.set({"imagemap": cache}, function() {
-					console.log('Cache updated:', cacheData);
-				});
-			});
-		},
-		
-		restore: function(callback) {
-			chrome.storage.local.get("imagemap", function(cache) {
-				if (cache) {
-					callback(cache);
-				}
-				else {
-					// TODO - handle empty imagemap cache
-				}
-			});	
-		},
 
 		open: function(callback) {
 			
