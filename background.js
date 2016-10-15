@@ -119,7 +119,7 @@ var background = {
 					chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
 						if (notifId === id && btnIdx === 0) {
 							// link user to topic containing patch notes & other info
-							window.open("http://boards.endoftheinter.net/showmessages.php?topic=8887077");	
+							window.open("http://boards.endoftheinter.net/showmessages.php?topic=9458231");	
 						}
 					});
 					
