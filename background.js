@@ -114,17 +114,19 @@ var background = {
 					}],
 					iconUrl: "src/images/lueshi_48.png"
 					
-				}, function(id) {
+				}, (id) => {
 					
-					chrome.notifications.onButtonClicked.addListener(function(notifId, btnIdx) {
+					chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+						
 						if (notifId === id && btnIdx === 0) {
-							// link user to topic containing patch notes & other info
+							// link user to topic containing changelog and other info
 							window.open("http://boards.endoftheinter.net/showmessages.php?topic=9458231");	
 						}
+						
 					});
 					
 					setTimeout(function() {
-						chrome.notifications.clear(ID, null);
+						chrome.notifications.clear(id, null);
 					}, 5000);
 				}
 			);
