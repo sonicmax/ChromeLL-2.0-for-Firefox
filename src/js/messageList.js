@@ -1622,11 +1622,11 @@ var messageList = {
 							break;
 							
 						case 'imgs':
-							imgNodes = node.getElementsByTagName('A');
+							var imgNodes = node.getElementsByTagName('A');
 							for (var l = 0, img_len = imgNodes.length; l < img_len; l++) {
 								var imgNode = imgNodes[l];
 								output += '<img imgsrc="' + imgNode.getAttribute('imgsrc') + '" />' + '\n';
-							}									
+							}				
 							break;
 							
 						case 'spoiler_closed':
