@@ -1633,7 +1633,7 @@ var messageList = {
 							output += this.getMarkupFromSpoiler(node);
 							break;
 							
-						case 'quoted_message':
+						case 'quoted-message':
 							output += this.getMarkupFromQuote(node);
 							break;
 						
