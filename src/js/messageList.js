@@ -1950,6 +1950,11 @@ var messageList = {
 				var ins = messageList.config.custom_like_data[templateNumber].contents;
 				ins = ins.replace('[user]', username);
 				ins = ins.replace('[poster]', poster);
+				
+				if (anonymous) {
+					// Kludgy grammar fix
+					ins = ins.replace("this's", "this");
+				}
 			}
 			else {
 				// use default message
