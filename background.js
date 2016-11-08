@@ -216,7 +216,7 @@ var background = {
 		);	
 	},
 	buildContextMenu: function() {
-		// imageTransloader function is located in transloader.js
+		// imageTransloader method is located in transloader.js
 		chrome.contextMenus.create({
 			"title": "Transload image",
 			"onclick": function(info) {
@@ -224,6 +224,7 @@ var background = {
 			},
 			"contexts": ["image"]
 		});
+		
 		if (this.config.enable_image_rename) {
 			chrome.contextMenus.create({
 				"title": "Rename and transload image",
@@ -232,27 +233,32 @@ var background = {
 				},
 				"contexts": ["image"]
 			});
-		}
+		}		
+		
 		chrome.contextMenus.create({
 			"title": "Search LUE",
 			"onclick": this.contextMenu.searchLUE,
 			"contexts": ["selection"]
 		});
-		if (this.config.copy_in_context) {
-			chrome.contextMenus.create({
-				"title": "Copy img code",
-				"onclick": this.contextMenu.imageCopy,
-				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
-				"contexts": ["image"]
-			});
-		}		
-		if (!this.config.simple_context_menu) {
+		
+		if (!this.config.simple_context_menu) {					
+			
+			if (this.config.copy_in_context) {
+				chrome.contextMenus.create({
+					"title": "Copy img code",
+					"onclick": this.contextMenu.imageCopy,
+					"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
+					"contexts": ["image"]
+				});
+			}			
+			
 			chrome.contextMenus.create({
 				"title": "View image map",
 				"onclick": this.contextMenu.imageMap,
 				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
 				"contexts": ["image"]
 			});
+			
 			for (var i in this.boards) {
 				if (this.boards[i] != this.boards[0]) {
 					chrome.contextMenus.create({
@@ -269,6 +275,7 @@ var background = {
 					this.board[id] = this.boards[i][j];
 				}
 			}
+			
 		}
 	},
 	contextMenu: {
