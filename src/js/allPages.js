@@ -671,6 +671,15 @@ var getCustomColors = function() {
 	customColors.userbar = window.getComputedStyle(userbar).getPropertyValue('background-color');
 	customColors.infobar = window.getComputedStyle(infobar).getPropertyValue('background-color');
 	
+	// Kludgy fix to improve visiblity of user info popup if user is using custom CSS with rgba values.
+	// Browser seems to just ignore the alpha parameter if we change rgba to rgb
+	
+	for (var color in customColors) {	
+		if (customColors[color].indexOf('rgba') > -1) {
+			customColors[color] = customColors[color].replace('rgba', 'rgb');
+		}
+	}
+	
 	return customColors;
 };
 
