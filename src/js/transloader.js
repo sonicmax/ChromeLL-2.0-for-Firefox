@@ -1,15 +1,43 @@
+// Original code from Milan
 function imageTransloader(info, rename) {
-	// Code from Milan	
-	var filename = info.srcUrl.substring(info.srcUrl.lastIndexOf('/') + 1);
-	// facebook id fix
-	var pattern = /fbcdn\-sphotos/;
-	if (pattern.test(info.srcUrl)) {
+	var url = info.srcUrl;
+	var filename = url.substring(url.lastIndexOf('/') + 1);
+	
+	// Facebook id fix
+	if (/fbcdn\-sphotos/.test(url)) {
 		filename = "fb.jpg";
 	}
-	// make sure it's not empty
-	if (filename === "") {
-		filename = "something.jpg";
+	
+	// We need to do some extra work to handle Wikia URLs
+	if (/vignette[0-9].wikia.nocookie.net/.test(url)) {
+		
+		// Image won't transload at all unless we strip the cb query parameter.
+		if (/cb=[0-9]+/.test(url)) {
+			url = url.split('?')[0];
+		}
+		
+		// We want to make sure that we transload the full size image
+		if (/scale-to-width-down\/\d+/.test(url)) {
+			var match = url.match(/scale-to-width-down\/\d+/)[0];
+			url = url.replace(match, '');
+		}
+		
+		// Wikia image URL paths can be weird (eg filename.jpg/revision/latest), so the filename is probably incorrect
+		var splitUrl = url.split('/');
+		for (var i = 0, len = splitUrl.length; i < len; i++) {
+			var segment = splitUrl[i];
+			if (/.(gif|jpg|png)/.test(segment)) {
+				filename = segment;
+			}
+		}
+		
 	}
+	
+	// Make sure that filename isn't empty
+	if (filename === "") {
+		filename = "untitled.jpg";
+	}
+	
 	if (rename) {
 		var extension = filename.match(/\.(gif|jpg|png)$/i)[0];	
 		var newFilename = prompt("Enter new filename:", filename.replace(extension, ''));
@@ -32,90 +60,101 @@ function imageTransloader(info, rename) {
 			filename = newFilename + extension;
 		}
 	}
-	// fetch the image
+	
+	// Fetch the image
 	var fileGet = new XMLHttpRequest();
-	fileGet.open("GET", info.srcUrl, true);
+	fileGet.open("GET", url, true);
 	fileGet.responseType = "arraybuffer";
-	fileGet.onreadystatechange = function(oEvent) {
-		if (fileGet.readyState === 4) {
-			if (fileGet.status === 200) {
-				// get necessary metadata
-				var filesize = fileGet.getResponseHeader("Content-Length");
-				var mimetype = fileGet.getResponseHeader("Content-Type");
-				// build blob
-				var dataview = new DataView(fileGet.response);
-				var blob = new Blob([dataview]);
-				// check if gif && > 2MB
-				if (filesize > (1024 * 1024 * 2) && mimetype === "image/gif") {
-					// notify user, updated for chrome.notifications api
-					chrome.notifications.create('fail', {
-						type: "basic",
-						title: "Image transloading failed",
-						message: "This gif is too big (>2MB)",
-						iconUrl: "src/images/lueshi_48_i.png"
-					}, function(id) {
-						setTimeout(function() {
-							clearNotification(id);
-						}, 3000);
-					});
-				} else {
-					// construct FormData object
-					var formData = new FormData();
-					formData.append("file", blob, filename);
-					// open connection to ETI and set callback
-					var xhr = new XMLHttpRequest();
-					xhr.open("POST", "http://u.endoftheinter.net/u.php", true);
-					xhr.onreadystatechange = function(xEvent) {
-							if (xhr.readyState === 4) {
-								if (xhr.status === 200) {
-									// parse response
-									var html = document.createElement('html');
-									html.innerHTML = xhr.responseText;
-									try {
-										var value = html
-											.getElementsByClassName('img')[0]
-											.getElementsByTagName('input')[0].value;
-									} catch (e) {
-										console.log("Error in response", html.innerHTML);
-										return;
-									}
-									// send img code to clipboard
-									var clipboard = document
-										.getElementById('clipboard');
-									clipboard.value = value;
-									clipboard.select();
-									document.execCommand("copy");
-									// notify user
-									chrome.notifications.create('succeed', {
-										type: "basic",
-										title: "Image transloaded",
-										message: "The img code is now in your clipboard",
-										iconUrl: "src/images/lueshi_48.png"
-									}, function(id) {
-										setTimeout(function() {
-											clearNotification(id);
-										}, 3000);
-									});
-								} else {
-									console.log("Error ", xhr.statusText);
-								}
-							}
+	
+	fileGet.onload = () => {
+		if (fileGet.status === 200) {
+			// Get metadata
+			var filesize = fileGet.getResponseHeader("Content-Length");
+			var mimetype = fileGet.getResponseHeader("Content-Type");
+			
+			// Create blob
+			var dataview = new DataView(fileGet.response);
+			var blob = new Blob([dataview]);
+			
+			// GIFs larger than 2MB will not upload to ETI correctly
+			if (filesize > (1024 * 1024 * 2) && mimetype === "image/gif") {
+
+				chrome.notifications.create('fail', {
+					
+					type: "basic",
+					title: "Image transloading failed",
+					message: "This gif is too big (>2MB)",
+					iconUrl: "src/images/lueshi_48_i.png"
+					
+				}, (id) => {
+					
+					setTimeout(() => {
+						chrome.notifications.clear(id, null);
+					}, 3000);
+					
+				});
+				
+			} 
+			
+			else {
+				// Construct FormData object containing image blob
+				var formData = new FormData();
+				formData.append("file", blob, filename);
+				
+				// Upload to ETI
+				var xhr = new XMLHttpRequest();
+				xhr.open("POST", "http://u.endoftheinter.net/u.php", true);
+				
+				xhr.onload = () => {
+					
+					if (xhr.status === 200) {
+						// Parse response
+						var html = document.createElement('html');
+						html.innerHTML = xhr.responseText;
+						
+						try {							
+							var value = html
+								.getElementsByClassName('img')[0]
+								.getElementsByTagName('input')[0].value;
+								
+						} catch (e) {
+							console.log("Error in response", html.innerHTML);
+							return;
 						}
-						// send FormData object to ETI
-					xhr.send(formData);
+						
+						// Copy img code to clipboard
+						var clipboard = document.getElementById('clipboard');
+						clipboard.value = value;
+						clipboard.select();
+						document.execCommand("copy");
+						
+						// Notify user
+						chrome.notifications.create('succeed', {
+							
+							type: "basic",
+							title: "Image transloaded",
+							message: "The img code is now in your clipboard",
+							iconUrl: "src/images/lueshi_48.png"
+							
+						}, (id) => {
+							
+							setTimeout(() => {
+								chrome.notifications.clear(id, null);	
+							}, 3000);
+							
+						});
+						
+					} else {
+						console.log("Error ", xhr.statusText);
+					}
 				}
-			} else {
-				console.log("Error ", xhr.statusText);
+					// send FormData object to ETI
+				xhr.send(formData);
 			}
+		} else {
+			console.log("Error ", fileGet.statusText);
 		}
 	};
+	
 	fileGet.send(null);
-}
-
-function clearNotification(id) {
-	chrome.notifications.clear(id,
-		function() {
-			// empty callback
-		}
-	);
 }
