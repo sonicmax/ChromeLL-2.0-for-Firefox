@@ -364,8 +364,8 @@ var background = {
 				var error = false;
 				switch (bgcol.toLowerCase()) {
 					case "kermit":
-						document.getElementById("dramalinks_ticker").style.border = "2px solid #990099";
 						bgcol = "black";
+						col = "white";
 						kermit = true;
 					case "black":
 					case "blue":
@@ -388,8 +388,8 @@ var background = {
 						break;
 				}
 				if (kermit) {
-					dramas = "Current Dramalinks Level: <blink><font color='" + bgcol
-							+ "'>CODE KERMIT</font></blink><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
+					dramas = "Current Dramalinks Level: <font color='" + col
+							+ "'>CODE KERMIT</font><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
 							+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";			
 				}
 				else if (error) {
