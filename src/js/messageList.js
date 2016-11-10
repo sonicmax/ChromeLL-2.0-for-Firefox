@@ -1654,7 +1654,7 @@ var messageList = {
 							break;
 						
 						default:
-							// Do nothing
+							// If child node doesn't fit into any of these cases, we can just ignore it
 							break;
 					}
 				}
@@ -1677,10 +1677,13 @@ var messageList = {
 		getMarkupFromSpoiler: function(node) {
 			var openSpoiler = '<spoiler>';
 			var closeSpoiler = '</spoiler>';					
-			var spoiler = node.getElementsByClassName('spoiler_on_open')[0];
+			var spoiler = node.getElementsByClassName('spoiler_on_open')[0];					
 			var caption = node.getElementsByClassName('caption')[0].innerText.replace(/<|\/>/g, '');
-					
-			if (caption) {
+			// Caption element contains an added whitespace character at end
+			caption = caption.slice(0, -1);
+			
+			// We only need to include caption if it doesn't match the default text
+			if (caption && caption !== 'spoiler') {
 				openSpoiler = '<spoiler caption="' + caption + '">';
 			}
 
