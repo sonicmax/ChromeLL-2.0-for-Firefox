@@ -2021,8 +2021,8 @@ var messageList = {
 			
 			// Move caret to end of appended text
 			quickreply.focus();
-			var newCaretPosition = quickreply.value.lastIndexOf(textToInsert) + textToInsert.length;			
-			quickreply.setSelectionRange(newCaretPosition, newCaretPosition);
+			var endOfInsertion = caret + textToInsert.length;			
+			quickreply.setSelectionRange(endOfInsertion, endOfInsertion);
 			
 			if (document.getElementsByClassName('regular quickpost-expanded').length == 0) {
 				// quickpost area is hidden - click nub element to open
