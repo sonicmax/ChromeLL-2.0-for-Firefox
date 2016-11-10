@@ -2019,10 +2019,14 @@ var messageList = {
 					+ textToInsert 
 					+ quickreply.value.substring(caret, quickreply.value.length);						
 			
-			// Move caret to end of appended text
-			quickreply.focus();
-			var endOfInsertion = caret + textToInsert.length;			
-			quickreply.setSelectionRange(endOfInsertion, endOfInsertion);
+			// Move caret to end of inserted text.
+			var endOfInsertion = caret + textToInsert.length;
+			
+			// We have to call setSelectionRange from inside setTimeout because of weird Chrome bug
+			setTimeout(() => {
+				quickreply.focus();
+				quickreply.setSelectionRange(endOfInsertion, endOfInsertion);
+			}, 0);
 			
 			if (document.getElementsByClassName('regular quickpost-expanded').length == 0) {
 				// quickpost area is hidden - click nub element to open
