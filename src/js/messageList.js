@@ -1969,25 +1969,25 @@ var messageList = {
 			var quickreply = document.getElementsByTagName('textarea')[0];
 			
 			
-			// get username and quoted username
+			// Get names of user and quoted poster
 			if (document.getElementsByTagName('h2')[0].innerHTML.match(/\/topics\/Anonymous/)) {
 				anonymous = true;
-				var username = "Human";
+				var user = "Human";
 				var poster = "this";
 			}
 			
 			else {
-				var username = document.getElementsByClassName('userbar')[0]
+				var user = document.getElementsByClassName('userbar')[0]
 						.getElementsByTagName('a')[0].innerHTML.replace(/ \((-?\d+)\)$/, "");
 				var poster = container.getElementsByTagName('a')[0].innerHTML;
 			}
 			
 			
-			// generate like message
+			// Create like message
 			var likeMessage;
 			if (templateNumber) {
 				likeMessage = messageList.config.custom_like_data[templateNumber].contents;
-				likeMessage = likeMessage.replace('[user]', username);
+				likeMessage = likeMessage.replace('[user]', user);
 				likeMessage = likeMessage.replace('[poster]', poster);
 				
 				if (anonymous) {
@@ -1996,18 +1996,17 @@ var messageList = {
 				}
 			}
 			
-			else {
-				// use default message
+			else {				
 				var img = '<img src="http://i4.endoftheinter.net/i/n/f818de60196ad15c888b7f2140a77744/like.png" />';
 				if (anonymous) {
 					likeMessage = img + ' Human likes this post';
 				}
 				else {
-					likeMessage = img + ' ' + username + ' likes ' + poster + "'s post"; 
+					likeMessage = img + ' ' + user + ' likes ' + poster + "'s post"; 
 				}
 			}
 			
-			
+			// Generate markup from selected post and format text to insert
 			var msgID = message.getAttribute('msgid');
 			var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});								
 			var textToInsert = quotedMessage + '\n' + likeMessage;
