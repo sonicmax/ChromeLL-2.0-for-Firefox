@@ -638,32 +638,35 @@ var messageList = {
 									allPages.asyncUpload(evt.dataTransfer.files);
 								});
 			},
+			
 			snippet_listener: function() {
+				
 				if (window.location.hostname.indexOf("archives") == -1) {
+					
 					var ta = document.getElementsByName('message')[0];
-					var caret;
-					ta.addEventListener('keydown', 
-						function(event) {
-							if (messageList.config.snippet_alt_key) {
-								if (event.shiftKey == true
-										&& event.key == 'Tab') {
-									event.preventDefault();
-									caret = messageList.snippet.findCaret(ta);
-									messageList.snippet.handler(ta.value, caret);				
-								}
+					
+					ta.addEventListener('keydown', (event) => {
+						
+						if (messageList.config.snippet_alt_key) {
+							if (event.shiftKey == true
+									&& event.key == 'Tab') {
+								event.preventDefault();
+								messageList.snippet.handler(ta.value, ta.selectionStart);				
 							}
-							else {
-								if (event.key == 'Tab') {
-									event.preventDefault();
-									caret = messageList.snippet.findCaret(ta);
-									messageList.snippet.handler(ta.value, caret);
-								}
-							}		
 						}
-					);
+						
+						else {
+							if (event.key == 'Tab') {
+								event.preventDefault();
+								messageList.snippet.handler(ta.value, ta.selectionStart);
+							}
+						}
+						
+					});
 				}
 			}			
-		},	
+		},
+		
 		misc: {
 			highlight_tc: function() {
 				var tcs = messageList.tcs.getMessages();
@@ -1447,13 +1450,6 @@ var messageList = {
 	}		
 	},
 	snippet: {
-		findCaret: function(ta) {
-			var caret = 0;
-			if (ta.selectionStart || ta.selectionStart == '0') {
-				caret = ta.selectionStart; 
-			}
-			return (caret);
-		},
 		handler: function(ta, caret) {
 			// detects keyword & replaces with snippet
 			var text = ta.substring(0, caret);			
