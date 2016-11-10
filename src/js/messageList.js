@@ -1655,9 +1655,8 @@ var messageList = {
 							break;
 							
 						case 'quoted-message':
-						
-							// To match ETI behaviour when building markup, we have to omit quoted text if the quote depth reaches three levels of nesting
-							
+							// getMarkup() is called recursively from inside getMarkupFromQuote(),
+							// so this.depth can increase beyond 1 (depending on the level of nesting)
 							this.depth++;
 							output += this.getMarkupFromQuote(node);
 							this.depth--;
@@ -1681,8 +1680,9 @@ var messageList = {
 				openQuote = '<quote msgid="' + msgId + '">';
 			}						
 			
-			if (this.depth > 1) {
-				// Omit quoted text
+			if (this.depth > 1 && msgId) {
+				// To match ETI behaviour when building markup, we have to omit quoted text if the quote depth 
+				// reaches three levels of nesting. We should only do this if quote is attributed to another user
 				return openQuote + closeQuote;	
 			}
 			
