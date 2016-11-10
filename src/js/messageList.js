@@ -26,11 +26,11 @@ var messageList = {
 		if (document.readyState == 'loading') {
 			// wait for DOMContentLoaded to fire before attempting to modify DOM
 			document.addEventListener('DOMContentLoaded', function() {
-				messageList.callFunctions.call(messageList, messageList.pm);
+				messageList.applyDomModifications.call(messageList, messageList.pm);
 			});
 		}
 		else {
-			this.callFunctions.call(this, this.pm);
+			this.applyDomModifications.call(this, this.pm);
 		}
 	},
 	functions: {
@@ -2222,7 +2222,7 @@ var messageList = {
 			}
 		}
 	}),
-	callFunctions: function(pm) {
+	applyDomModifications: function(pm) {
 		var msgs = document.getElementsByClassName('message-container');
 		var pageFunctions = this.functions.infobar;
 		var postFunctions = this.functions.messagecontainer;
