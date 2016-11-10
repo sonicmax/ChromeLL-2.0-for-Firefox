@@ -1680,7 +1680,7 @@ var messageList = {
 				openQuote = '<quote msgid="' + msgId + '">';
 			}						
 			
-			if (this.depth > 1 && msgId) {
+			if (this.depth >= 2 && msgId) {
 				// To match ETI behaviour when building markup, we have to omit quoted text if the quote depth 
 				// reaches three levels of nesting. We should only do this if quote is attributed to another user
 				return openQuote + closeQuote;	
