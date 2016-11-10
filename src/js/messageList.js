@@ -2009,16 +2009,11 @@ var messageList = {
 			
 			
 			var msgID = message.getAttribute('msgid');
-			var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});
-			
-			// Find existing caret position
-			var caret = 0;
-			if (quickreply.selectionStart || quickreply.selectionStart == '0') {
-				caret = quickreply.selectionStart; 
-			}
+			var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});								
+			var textToInsert = quotedMessage + '\n' + likeMessage;
 			
 			// Insert like message at caret position
-			var textToInsert = quotedMessage + '\n' + likeMessage;
+			var caret = quickreply.selectionStart;
 			
 			quickreply.value = quickreply.value.substring(0, caret) 
 					+ textToInsert 
