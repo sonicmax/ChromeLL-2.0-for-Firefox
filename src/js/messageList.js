@@ -1972,58 +1972,67 @@ var messageList = {
 			var nub = document.getElementsByClassName('quickpost-nub')[0];
 			var quickreply = document.getElementsByTagName('textarea')[0];
 			
-			// get username/quoted username 
-			if (document.getElementsByTagName('h2')[0].innerHTML.match('Anonymous')) {
+			
+			// get username and quoted username
+			if (document.getElementsByTagName('h2')[0].innerHTML.match(/\/topics\/Anonymous/)) {
 				anonymous = true;
 				var username = "Human";
 				var poster = "this";
 			}
+			
 			else {
 				var username = document.getElementsByClassName('userbar')[0]
 						.getElementsByTagName('a')[0].innerHTML.replace(/ \((-?\d+)\)$/, "");
 				var poster = container.getElementsByTagName('a')[0].innerHTML;
 			}
 			
+			
 			// generate like message
+			var likeMessage;
 			if (templateNumber) {
-				// use selected custom message
-				var ins = messageList.config.custom_like_data[templateNumber].contents;
-				ins = ins.replace('[user]', username);
-				ins = ins.replace('[poster]', poster);
+				likeMessage = messageList.config.custom_like_data[templateNumber].contents;
+				likeMessage = likeMessage.replace('[user]', username);
+				likeMessage = likeMessage.replace('[poster]', poster);
 				
 				if (anonymous) {
 					// Kludgy grammar fix
-					ins = ins.replace("this's", "this");
+					likeMessage = likeMessage.replace("this's", "this");
 				}
 			}
+			
 			else {
 				// use default message
 				var img = '<img src="http://i4.endoftheinter.net/i/n/f818de60196ad15c888b7f2140a77744/like.png" />';
 				if (anonymous) {
-					var ins = img + ' Human likes this post';
+					likeMessage = img + ' Human likes this post';
 				}
 				else {
-					var ins = img + ' ' + username + ' likes ' + poster + "'s post"; 
+					likeMessage = img + ' ' + username + ' likes ' + poster + "'s post"; 
 				}
 			}
-						
-			var qrtext = quickreply.value;
-			var oldtxt = '', newtxt = '';			
-			if (qrtext.match('---')) {
-				// remove sig from post
-				oldtxt = qrtext.split('---');
-				for (var i = 0; i < oldtxt.length - 1; i++) {
-					newtxt += oldtxt[i];
-				}
-				newtxt += ins + '\n---' + oldtxt[oldtxt.length - 1];
-			}
-			else {		
-				newtxt = qrtext;
-				newtxt += ins;
-			}
+			
+			
 			var msgID = message.getAttribute('msgid');
 			var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});
-			quickreply.value = quotedMessage + '\n' + newtxt;
+			
+			// Find existing caret position
+			var caret = 0;
+			if (quickreply.selectionStart || quickreply.selectionStart == '0') {
+				caret = quickreply.selectionStart; 
+			}
+			
+			// Insert like message at caret position
+			var textToInsert = quotedMessage + '\n' + likeMessage;
+			
+			quickreply.value = quickreply.value.substring(0, caret) 
+					+ textToInsert 
+					+ quickreply.value.substring(caret, quickreply.value.length);						
+			
+			// Move caret to end of appended text
+			quickreply.focus();
+			var newCaretPosition = quickreply.value.lastIndexOf(textToInsert) + textToInsert.length;			
+			quickreply.setSelectionRange(newCaretPosition, newCaretPosition);
+			
 			if (document.getElementsByClassName('regular quickpost-expanded').length == 0) {
 				// quickpost area is hidden - click nub element to open
 				nub.click();
