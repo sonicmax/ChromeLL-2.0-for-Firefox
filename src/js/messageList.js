@@ -1523,6 +1523,7 @@ var messageList = {
 		}
 	},
 	quote: {
+		depth: 0,
 		handler: function(evt) {
 			
 			if (evt.likeButton) {
@@ -1533,6 +1534,7 @@ var messageList = {
 			}
 			
 			var messageContainer = document.querySelector('[msgid="' + msgId + '"]');
+			
 			var markup = '<quote msgid="' + msgId + '">' + this.getMarkup(messageContainer) + '</quote>';
 			
 			
@@ -1650,7 +1652,12 @@ var messageList = {
 							break;
 							
 						case 'quoted-message':
+						
+							// To match ETI behaviour when building markup, we have to omit quoted text if the quote depth reaches three levels of nesting
+							
+							this.depth++;
 							output += this.getMarkupFromQuote(node);
+							this.depth--;
 							break;
 						
 						default:
@@ -1669,9 +1676,16 @@ var messageList = {
 			var msgId = node.attributes.msgid.value;
 			if (msgId) {
 				openQuote = '<quote msgid="' + msgId + '">';
+			}						
+			
+			if (this.depth > 1) {
+				// Omit quoted text
+				return openQuote + closeQuote;	
 			}
 			
-			return openQuote + this.getMarkup(node) + closeQuote;	
+			else {
+				return openQuote + this.getMarkup(node) + closeQuote;	
+			}						
 		},
 				
 		getMarkupFromSpoiler: function(node) {
