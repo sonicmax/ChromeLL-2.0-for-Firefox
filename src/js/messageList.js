@@ -1,4 +1,20 @@
 var messageList = {
+	config: [],
+	ignores: {},
+	scrolling: false,
+	topsTotal: 0,
+	containersTotal: 0,
+	imagemapDebouncer: '',
+	menuDebouncer: '',
+	zoomLevel: 1,
+	ignorated: {
+		total_ignored: 0,
+		data: {
+			users: {}
+		}
+	},
+	pm: '',
+	
 	init: function(config) {
 		this.config = config.data;
 		this.config.tcs = config.tcs;		
@@ -2325,27 +2341,6 @@ var messageList = {
 			});
 		}
 	},
-	/*passToFunctions: function(element) {
-		var config = this.config;
-		var pm = this.pm;
-		var elementName;
-		if (element.className) {
-			elementName = element.className.replace('-', '');
-			if (elementName == 'messagecontainer') {
-				this.containersTotal++;
-			}
-		}
-		else {
-			elementName = element;
-		}
-		
-		var elementFunctions = this.functions[elementName];
-		for (var i in elementFunctions) {
-			if (config[i + pm]) {
-				elementFunctions[i](element, this.containersTotal);
-			}
-		}
-	},*/
 	prepareIgnoratorArray: function() {
 		this.ignores = this.config.ignorator_list.split(',');
 		for (var r = 0, len = this.ignores.length; r < len; r++) {
@@ -2360,29 +2355,7 @@ var messageList = {
 		sheet.insertRule("#loading_image { -webkit-animation:spin 2s linear infinite; }", 1);
 		sheet.insertRule("@-webkit-keyframes spin { 100% { -webkit-transform:rotate(360deg); } }", 1);
 		sheet.insertRule("#map_div img:hover { opacity: 0.7; }", 1);
-		// TODO: Generate colours of user info popup based on user's existing display settings
-		sheet.insertRule("#rep { color: rgb(39, 16, 70); font-size: 12px; }", 1);;
-		sheet.insertRule("#user-popup-div a { color: rgb(0, 0, 0); }", 1);		
-		sheet.insertRule("#user-popup-div a:hover { color: rgb(140, 72, 159); }", 1);
-		sheet.insertRule(".popup_link { -webkit-user-select: none; }", 1);
-		sheet.insertRule('.userpic_addon { display: block; border: 1px outset; margin-left: 1em; cursor: pointer; float: right; }', 1);
-	},
-	// 'global' vars
-	config: [],
-	ignores: {},
-	scrolling: false,
-	topsTotal: 0,
-	containersTotal: 0,
-	imagemapDebouncer: '',
-	menuDebouncer: '',
-	zoomLevel: 1,
-	ignorated: {
-		total_ignored: 0,
-		data: {
-			users: {}
-		}
-	},
-	pm: ''
+	}
 };
 
 chrome.runtime.sendMessage({
