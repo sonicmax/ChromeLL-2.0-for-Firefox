@@ -1456,37 +1456,44 @@ var messageList = {
 		},
 		handler: function(ta, caret) {
 			// detects keyword & replaces with snippet
-			var text = ta.substring(0, caret);
-			var words, word, snippet, temp, index, newCaret;
-			var message = document.getElementsByName('message')[0];
+			var text = ta.substring(0, caret);			
+			var message = document.getElementsyName('message')[0];
+			
+			var words, word;
+			
 			if (text.indexOf(' ') > -1) {
 				words = text.split(' ');
 				word = words[words.length - 1];
+				
 				if (word.indexOf('\n') > -1) {
 					// makes sure that line breaks are accounted for
 					words = word.split('\n');
 					word = words[words.length - 1];
 				}
 			}
+			
 			else if (text.indexOf('\n') > -1) {
 				// line break(s) in text - no spaces
 				words = text.split('\n');
 				word = words[words.length - 1];
 			}
+			
 			else {
 				// first word in post
 				word = text;
 			}
+			
+			
 			for (var key in messageList.config.snippet_data) {
 				if (key === word) {
-					snippet = messageList.config.snippet_data[key];
-					index = text.lastIndexOf(word);
-					temp = text.substring(0, index);
-					ta = ta.replace(text, temp + snippet);
+					var snippet = messageList.config.snippet_data[key];
+					var index = text.lastIndexOf(word);
+					var temp = text.substring(0, index);
+					var ta = ta.replace(text, temp + snippet);
 					message.value = ta;
 					// manually move caret to end of pasted snippet as changing
 					// message.value property moves caret to end of input)
-					newCaret = ta.lastIndexOf(snippet) + snippet.length;
+					var newCaret = ta.lastIndexOf(snippet) + snippet.length;
 					message.setSelectionRange(newCaret, newCaret);
 				}
 			}
