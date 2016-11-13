@@ -147,7 +147,6 @@ var options = {
 				options.addListeners.menuVisibility();
 				options.addListeners.click();
 				options.addListeners.change();
-				options.addListeners.menuButton();
 				options.addListeners.keyup();
 				
 				options.ui.populateCacheSize();
@@ -165,7 +164,6 @@ var options = {
 			options.addListeners.menuVisibility();
 			options.addListeners.click();
 			options.addListeners.change();
-			options.addListeners.menuButton();
 			options.addListeners.keyup();			
 			
 			options.ui.populateCacheSize();
@@ -409,7 +407,6 @@ var options = {
 			});
 		},		
 		newLike: function() {
-			options.ui.closeMenu();
 			var textarea = document.getElementById('like_ta');
 			var activeLike = document.getElementsByClassName('active_like')[0];
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
@@ -449,10 +446,64 @@ var options = {
 			activeLike.className = '';
 			textarea.value = '';
 			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
-		},	
+		},
+		renameLike: function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);	
+			var activeLike = document.getElementsByClassName('active_like')[0];			
+			var oldName = activeLike.firstChild.nodeValue;
+			var id = activeLike.id;
+			
+			// We can't use window.prompt() from inside chrome://extensions						
+			
+			if (window.location.protocol === 'chrome-extension:') {
+								
+				var nameInput = document.createElement('input');
+				nameInput.id = 'like_rename_input';
+				nameInput.setAttribute('placeholder', oldName);
+				nameInput.setAttribute('size', 15);
+				activeLike.replaceChild(nameInput, activeLike.firstChild);
+				
+				nameInput.addEventListener('keydown', (event) => {
+					
+					if (event.keyCode === 13) {
+						
+						var newName = nameInput.value;
+						
+						if (!newName || !/\S/.test(newName)) {
+							var displayNode = document.createTextNode(oldName);
+							activeLike.replaceChild(displayNode, activeLike.firstChild);
+						}
+						
+						else {						
+							var displayNode = document.createTextNode(newName);
+							activeLike.replaceChild(displayNode, activeLike.firstChild);
+							
+							config.custom_like_data[id].name = newName;
+							config.custom_like_data[id].last_saved = Date.now();
+							localStorage['ChromeLL-Config'] = JSON.stringify(config);						
+						}
+					}
+					
+				});
+			}
+			
+			else {
+				var newName = prompt("Enter new name", oldName);
+				
+				if (!newName || !/\S/.test(newName)) {
+					return;
+				}						
+			
+				else {
+					activeLike.firstChild.nodeValue = newName;					
+					config.custom_like_data[id].name = newName;
+					config.custom_like_data[id].last_saved = Date.now();
+					localStorage['ChromeLL-Config'] = JSON.stringify(config);
+				}			
+			}
+		},
 		saveLike: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			options.ui.closeMenu();		
+			var config = JSON.parse(localStorage['ChromeLL-Config']);	
 			var activeLike = document.getElementsByClassName('active_like')[0];
 			var contents = document.getElementById('like_ta').value;			
 			var name = activeLike.firstChild.innerText;
@@ -468,22 +519,18 @@ var options = {
 			config.custom_like_data[id].last_saved = Date.now();
 			localStorage['ChromeLL-Config'] = JSON.stringify(config);
 		},
-		deleteFromConfig: function(ID) {
+		deleteFromConfig: function(id) {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var type = ID.replace(/[0-9]/g, '');
+			var type = id.replace(/[0-9]/g, '');
 			// TODO - refactor this function
 			var lastKeyInObject;
 			var active = document.getElementsByClassName('active_' + type).length;
 			var inactive = document.getElementsByClassName('inactive_' + type).length;
 			if (type == 'like') {
-				delete config.custom_like_data[ID];
+				delete config.custom_like_data[id];
 				cleanup(config.custom_like_data);
 			}
-			else if (type == 'script') {
-				delete config.userscript_data[ID];
-				cleanup(config.userscript_data);
-			}
-			var nodeToRemove = document.getElementById(ID);
+			var nodeToRemove = document.getElementById(id);
 			if (nodeToRemove.className == 'active_' + type) {
 				var nextActive = document.getElementsByClassName('inactive_' + type)[0];
 				nextActive.className = 'active_' + type;
@@ -606,7 +653,8 @@ var options = {
 				'script_new': 'newScript',
 				'script_save':  'saveScript',
 				'like_new': 'newLike',
-				'like_save':  'saveLike'
+				'like_rename': 'renameLike',
+				'like_save':  'saveLike'				
 			};
 			
 			document.addEventListener('click', function(evt) {
@@ -708,28 +756,6 @@ var options = {
 				// add listener to each checkbox
 				var element = document.getElementById(hiddenOptions[i]);
 				element.addEventListener('change', options.ui.hideUnusedMenus);
-			}
-		},
-		menuButton: function() {
-			var elements = [];
-
-			elements.push(document.getElementById('like_menu'));
-			
-			for (var i = 0, len = elements.length; i < len; i++) {
-				var element = elements[i];
-				
-				element.addEventListener('click', function(evt) {
-					if (evt.target.id == 'script_menu') {
-						options.userscriptsMenu.open();
-					}
-					else if (evt.target.id == 'like_menu') {
-						options.customLikeMenu.open();
-					}
-				});
-				
-				element.addEventListener('mouseleave', function() {
-					options.ui.closeMenu();
-				});
 			}
 		}
 	},
@@ -1116,39 +1142,6 @@ var options = {
 			
 			else {
 				options.ui.populateCacheTable('default');
-			}
-		}
-	},
-	customLikeMenu: {
-		open: function() {
-			var button = document.getElementById('like_menu');
-			var menuElement = document.createElement('span');				
-			var items = ['New', 'Save'];
-			menuElement.id = 'menu_items';	
-			menuElement.style.position = 'absolute';
-			menuElement.style.overflow = 'auto';
-			menuElement.style.padding = '3px 3px';
-			menuElement.style.borderStyle = 'solid';
-			menuElement.style.borderWidth = '2px';
-			menuElement.style.borderRadius = '3px';
-			for (var i = 0, len = items.length; i < len; i++) {
-				var item = items[i];
-				populateMenu.call(this, item, i, menuElement);
-			}
-			button.appendChild(menuElement);
-		
-			function populateMenu(item, index, menuElement) {
-				var menuSpan = document.createElement('span');
-				var menuItem = document.createElement('anchor');
-				var lineBreak = document.createElement('br');
-				menuSpan.className = 'unhigh_span';
-				menuItem.innerHTML = '&nbsp' + item + '&nbsp';
-				menuItem.href = '#';
-				menuItem.className = 'like_menu_items';
-				menuItem.id = 'like_' + item.toLowerCase();
-				menuSpan.appendChild(menuItem);
-				menuElement.appendChild(menuSpan);
-				menuElement.appendChild(lineBreak);
 			}
 		}
 	},

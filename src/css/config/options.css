@@ -398,27 +398,21 @@ span.desc {
 	width:80%;
 	height:90%;
 	float:left;
-	
 }
+
 #like_list {
-	background-color: silver;
+	background-color: silver;	
 	line-height:30px;
 	height:90%;
 	width:20%;
 	float:left;
 }
 
-.like_menu_items:hover {
-	background-color: #509099; 
+.like_menu_item {
+	margin-right: 5px;
 }
 
-#like_menu {
-	border-top: 1px solid #8faad9;
-	color: black;
-	background-color: silver;
-}
-
-#like_menu:hover {
+.like_menu_item:hover {
 	background-color: #509099; 
 }
 
@@ -429,7 +423,7 @@ span.desc {
 
 .active_like {
 	background-color: #509099; 
-	color: white;
+	color: white !important;
 }
 
 /* imagemap cache table */
