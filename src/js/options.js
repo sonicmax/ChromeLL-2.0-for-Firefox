@@ -176,79 +176,113 @@ var options = {
 	utils: {
 		cleanIgnorator: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			config.ignorator_backup = config.ignorator_list;
-			var cleanIgnorator = config.clean_ignorator;
-			var list = config.ignorator_list;
-			var oldIgnorator = list.split(',');
-			var xhr, url, temp, users, newIgnorator, currentTime;
-			for (var i = 1; oldIgnorator[i]; i++) {
-				oldIgnorator[i] = oldIgnorator[i].trim();
-			}
-			var json = {
-					"userList": [],
-					"removeBanned": ""
-			}
-			json.userList = oldIgnorator;
-			json.removeBanned = cleanIgnorator;
-			xhr = new XMLHttpRequest();
-			url = 'http://eti-stats.herokuapp.com/tools/api/clean_ignorator/';
-			xhr.open("POST", url, true);
-			xhr.setRequestHeader('Content-Type', 'application/json');
-			xhr.onreadystatechange = function () {
-				if (xhr.status == 503) {
-					document.getElementById('ignorateinfo').innerText = "eti-stats is down - try again later";
-					return;
-				}
-				if (xhr.readyState == 4 && xhr.status == 200) {
-					temp = JSON.parse(xhr.responseText);
-					users = temp.userList;
-					newIgnorator = users.toString();
-					config.ignorator_list = newIgnorator;
-					localStorage['ChromeLL-Config'] = JSON.stringify(config);
-					document.getElementById('ignorateinfo').innerText = "ignorator cleaned - reloading page in 3 seconds...";
-					setTimeout(function () {
-						location.reload();
-					}, 3000);
-				}
-			}
-			xhr.send(JSON.stringify(json));
-			currentTime = new Date().getTime();
-			config.last_clean = currentTime;
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);	
-		},
-		rateLimiter: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			var rateLimiterResponse = this.checkRateLimit();
+			
 			if (config.ignorator_list == "") {
 				document.getElementById('ignorateinfo').innerText = "no ignorator list found..."
 				return;
+			}			
+			
+			else if (rateLimiterResponse) {
+				document.getElementById('ignorateinfo').innerText = "try again in " + rateLimiterResponse;
+				return;
 			}
+
+			else {
+				document.getElementById('ignorateinfo').innerText = "running ignorator cleaner..."
+			}
+			
+			config.ignorator_backup = config.ignorator_list;
+			
+			var list = config.ignorator_list;
+			var oldIgnorator = list.split(',');
+			for (var i = 1; oldIgnorator[i]; i++) {
+				oldIgnorator[i] = oldIgnorator[i].trim();
+			}			
+			
+			var json = {
+				"userList": oldIgnorator,
+				"removeBanned": config.clean_ignorator
+			};
+			
+			var xhr = new XMLHttpRequest();
+			var url = 'http://eti-stats.herokuapp.com/tools/api/clean_ignorator/';
+			xhr.open("POST", url, true);
+			
+			xhr.setRequestHeader('Content-Type', 'application/json');
+			
+			xhr.onload = () => {
+				
+				if (xhr.status == 503) {
+					document.getElementById('ignorateinfo').innerText = "eti-stats is down - try again later";
+				}
+				
+				else if (xhr.status == 200) {
+					var temp = JSON.parse(xhr.responseText);
+					var users = temp.userList;
+					var newIgnorator = users.toString();
+					config.ignorator_list = newIgnorator;
+					
+					var currentTime = new Date().getTime();
+					config.last_clean = currentTime;					
+					
+					localStorage['ChromeLL-Config'] = JSON.stringify(config);					
+					
+					document.getElementById('ignorateinfo').innerText = "ignorator cleaned - reloading page in 3 seconds...";
+					
+					setTimeout(() => { 
+						location.reload(); 
+					}, 3000);
+				}
+			};
+			
+			xhr.send(JSON.stringify(json));
+		},
+		
+		checkRateLimit: function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+
 			var currentTime = new Date().getTime();
 			var timeLeft = currentTime - config.last_clean;
+			
 			if (timeLeft > 86400000) {
-				document.getElementById('ignorateinfo').innerText = "running ignorator cleaner..."
-				options.utils.cleanIgnorator();
-			} else {
+				return;				
+			}
+			
+			else {
 				var totalseconds = ((86400000 - timeLeft) / 1000);
 				var hours = Math.floor(totalseconds / 3600);
 				var totalminutes = Math.floor(totalseconds / 60);
 				var minutes = totalminutes - (hours * 60);
-				var seconds = Math.floor(totalseconds - (totalminutes * 60))
+				var seconds = Math.floor(totalseconds - (totalminutes * 60));
+				
 				if (hours === 1) {
 					hours = hours + " hour, ";
-				} else if (hours !== 1) {
+				} 
+				
+				else {
 					hours = hours + " hours, ";
 				}
+				
+				
 				if (minutes === 1) {
 					minutes = minutes + " minute, and ";
-				} else if (minutes !== 1) {
+				} 
+				
+				else {
 					minutes = minutes + " minutes, and ";
 				}
+				
+				
 				if (seconds === 1) {
 					seconds = seconds + " second.";
-				} else if (seconds !== 1) {
+				}
+
+				else {
 					seconds = seconds + " seconds."
-				}	
-				document.getElementById('ignorateinfo').innerText = "try again in " + hours + minutes + seconds;
+				}
+				
+				return hours + minutes + seconds;
 			}
 		},
 		restoreIgnorator: function() {
