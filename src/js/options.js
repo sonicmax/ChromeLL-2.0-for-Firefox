@@ -288,25 +288,35 @@ var options = {
 		restoreIgnorator: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var backup = config.ignorator_backup;
-			if (confirm('Are you sure you want to restore last ignorator backup?')) {
-				if (backup == "") {
-					document.getElementById('ignorateinfo').innerHTML = "no backup found...";
-					return;
-				} else if (backup == config.ignorator_list) {
-					document.getElementById('ignorateinfo').innerHTML = "current list and backup are identical...";
-					return;
-				} else {
-					config.ignorator_list = backup;
-					localStorage['ChromeLL-Config'] = JSON.stringify(config);
-					document.getElementById('ignorateinfo').innerHTML = "backup restored - reloading page in 3 seconds...";
-					setTimeout(function () {
-						location.reload();
-					}, 3000);
-				}
-			}
-			else {
-				return;
-			}
+			
+			$.confirm({
+					text: "Are you sure you want to restore last ignorator backup?",
+					
+					confirm: () => {					
+						if (backup == "") {
+							document.getElementById('ignorateinfo').innerHTML = "no backup found...";
+							return;
+						} 
+						
+						else if (backup == config.ignorator_list) {
+							document.getElementById('ignorateinfo').innerHTML = "current list and backup are identical...";
+							return;
+						} 
+						
+						else {
+							config.ignorator_list = backup;
+							localStorage['ChromeLL-Config'] = JSON.stringify(config);
+							document.getElementById('ignorateinfo').innerHTML = "backup restored - reloading page in 3 seconds...";
+							setTimeout(function () {
+								location.reload();
+							}, 3000);
+						}					
+					},
+					
+					cancel: () => {
+						return;
+					}
+			});
 		},
 		ignoratorClick: function() {
 			var ignorator = document.getElementById('ignorator');
@@ -353,18 +363,24 @@ var options = {
 			}
 			location.reload();
 		},
+		
 		resetConfig: function() {
-			var reset = confirm("Are you sure you want to reset your settings?");
-			if (reset === true) {
-				options.getDefault(function(defaultCfg) {
-					localStorage['ChromeLL-Config'] = defaultCfg;
-					location.reload();
-				});
-			}
-			else {
-				return;
-			}
-		},	
+			$.confirm({
+					text: "Are you sure you want to reset your settings?",
+					
+					confirm: () => {					
+						options.getDefault(function(defaultCfg) {
+							localStorage['ChromeLL-Config'] = defaultCfg;
+							location.reload();
+						});					
+					},
+					
+					cancel: () => {
+						return;
+					}
+			});
+		},
+		
 		decodeBase64: function() {
 			var Base64 = {
 				_keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
