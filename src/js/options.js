@@ -439,7 +439,8 @@ var options = {
 				options.ui.populateCacheSize();
 				options.ui.populateCacheTable();			
 			});
-		},		
+		},
+		
 		newLike: function() {
 			var textarea = document.getElementById('like_ta');
 			var activeLike = document.getElementsByClassName('active_like')[0];
@@ -494,6 +495,19 @@ var options = {
 			}			
 			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
 		},
+		
+		saveLike: function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);	
+			var activeLike = document.getElementsByClassName('active_like')[0];
+			var contents = document.getElementById('like_ta').value;			
+			var name = activeLike.firstChild.innerText;
+			var id = activeLike.id;
+			
+			config.custom_like_data[id].contents = contents;
+			config.custom_like_data[id].last_saved = Date.now();
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);
+		},		
+		
 		renameLike: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);	
 			var activeLike = document.getElementsByClassName('active_like')[0];			
@@ -549,23 +563,7 @@ var options = {
 				}			
 			}
 		},
-		saveLike: function() {
-			var config = JSON.parse(localStorage['ChromeLL-Config']);	
-			var activeLike = document.getElementsByClassName('active_like')[0];
-			var contents = document.getElementById('like_ta').value;			
-			var name = activeLike.firstChild.innerText;
-			var id = activeLike.id;
-			var newName = prompt("Rename?", name);
-			if (!newName) {
-				newName = name;
-			}
-			activeLike.firstChild.nodeValue = newName;
-			config.custom_like_data[id] = {};
-			config.custom_like_data[id].name = newName;
-			config.custom_like_data[id].contents = contents;
-			config.custom_like_data[id].last_saved = Date.now();
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);
-		},
+
 		deleteFromConfig: function(id) {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var type = id.replace(/[0-9]/g, '');
@@ -1010,6 +1008,7 @@ var options = {
 				anchor.appendChild(close);
 				likeList.appendChild(linebreak);
 			}
+			
 			document.getElementById(mostRecent.id).className = 'active_like';
 			textarea.value = config.custom_like_data[mostRecent.id].contents;	
 		},
