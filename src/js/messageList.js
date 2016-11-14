@@ -2034,7 +2034,7 @@ var messageList = {
 		},
 		showOptions: function() {
 			if (!document.getElementById('hold_menu')) {
-				var scriptData = messageList.config.custom_like_data;
+				var likeData = messageList.config.custom_like_data;
 				var menuElement = document.createElement('span');
 				menuElement.id = 'hold_menu';	
 				menuElement.style.position = 'absolute';
@@ -2044,8 +2044,8 @@ var messageList = {
 				menuElement.style.borderWidth = '2px';
 				menuElement.style.borderRadius = '3px';
 				menuElement.style.backgroundColor = $(document.body).css('background-color');
-				for (var id in scriptData) {
-					var name = scriptData[id].name;					
+				for (var id in likeData) {
+					var name = likeData[id].name;					
 					populateMenu.call(this, name, id, menuElement);
 				}
 				messageList.cachedEvent.target.appendChild(menuElement);
