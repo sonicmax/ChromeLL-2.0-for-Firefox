@@ -444,8 +444,7 @@ var options = {
 			var textarea = document.getElementById('like_ta');
 			var activeLike = document.getElementsByClassName('active_like')[0];
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
-			var likeData = config.custom_like_data;
-			var oldID = activeLike.id.match(/[0-9]+/)[0];			
+			var likeData = config.custom_like_data;	
 			var highest = 1;
 			for (var i in likeData) {
 				var current = parseInt(i.match(/[0-9]+/)[0], 10);
@@ -453,12 +452,25 @@ var options = {
 					highest = current;
 				}
 			}
-			var newNumber = highest + 1;
+			
+			var newNumber;
+			
+			if (activeLike) {
+				newNumber = highest + 1;
+			}
+			
+			else {
+				newNumber = 1;
+			}
+			
 			var newID = 'like' + newNumber;
 			
 			config.custom_like_data[newID] = {};
 			config.custom_like_data[newID].name = 'Untitled ' + newNumber;
-			config.custom_like_data[newID].contents = '';			
+			config.custom_like_data[newID].contents = '<img src="http://i4.endoftheinter.net/i/n/f818de60196ad15c888b7f2140a77744/like.png" />' + '\n'
+					+ "[user] likes [poster]'s post";			
+					
+			textarea.value = config.custom_like_data[newID].contents;
 			
 			var likeList = document.getElementById('like_list');
 			var anchor = document.createElement('a');
@@ -477,8 +489,9 @@ var options = {
 			anchor.appendChild(close);
 			likeList.appendChild(anchor);
 			likeList.appendChild(linebreak);
-			activeLike.className = '';
-			textarea.value = '';
+			if (activeLike) {
+				activeLike.className = '';
+			}			
 			localStorage['ChromeLL-Config'] = JSON.stringify(config);			
 		},
 		renameLike: function() {
