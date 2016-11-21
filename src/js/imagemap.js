@@ -364,8 +364,12 @@ var imagemap = function() {
 				}
 
 				else {
-					var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');								
-					oldGrid.remove();					
+					var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');
+					
+					if (oldGrid) {
+						oldGrid.remove();					
+					}
+					
 					document.getElementById('loading_image').style.display = 'block';							
 				}
 				
