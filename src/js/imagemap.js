@@ -300,17 +300,18 @@ var imagemap = function() {
 		if (evt.target.id == 'image_search') {
 			return;
 		}
+		
 		else if (evt.target.tagName === 'IMG') {
-			var clipboard = {};				
+			var clipboard = {};
 								
-			src = evt.target.dataset.oldsrc || evt.target.src;			
-
-			var regex = /\.(gif|jpg|png)$/i;
-			
-			// Replace the thumbnail extension with the one from href
-			var extension = evt.target.parentNode.href.match(regex);
-			var extensionToReplace = src.match(regex);
-			src = src.replace(extensionToReplace[0], extension[0]);
+			src = evt.target.dataset.oldsrc || evt.target.src;
+						
+			if (evt.target.parentNode.tagName === 'A') {
+				// We need to replace thumbnail extension with fullsize extension
+				var regex = /\.(gif|jpg|png)$/i;
+				var fullsizeExtension = evt.target.parentNode.href.match(regex)[0];
+				src = src.replace('.jpg', fullsizeExtension);
+			}
 			
 			// Formulate request with LLML img code string
 			var request = {
@@ -419,7 +420,7 @@ var imagemap = function() {
 				var block = document.createElement('div');
 				block.className = 'grid_block';
 				var img = document.createElement('img');
-				img.setAttribute('oldsrc', data[i].fullsize);
+				img.dataset.oldsrc = data[i].fullsize;				
 				img.setAttribute('searchresult', true);
 				img.src = data[i].data;
 				block.className = 'grid_block';
