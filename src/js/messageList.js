@@ -1,9 +1,9 @@
 var messageList = {
 	config: [],
 	ignores: {},
-	scrolling: false,
 	topsTotal: 0,
 	containersTotal: 0,
+	autoscrolling: false,
 	imagemapDebouncer: '',
 	menuDebouncer: '',
 	zoomLevel: 1,
@@ -344,16 +344,16 @@ var messageList = {
 			autoscroll_livelinks_active: function(mutation, index, live) {
 				if (live && !document.hidden 
 						&& messageList.autoscrollCheck(mutation)) {
-					// trigger after 10ms delay to prevent undesired 
-					// behaviour in post_title_notification
-					setTimeout(function() {
-						// setting this to true stops clearUnreadPosts 
-						// from clearing new posts while autoscroll is running
-						messageList.scrolling = true;
-						$.scrollTo((mutation), 800);
+							
+					// trigger after 10ms delay to prevent undesired behaviour in post_title_notification
+					setTimeout(() => {						
+						// set autoscrolling to true to prevent clearUnreadPosts from being triggered
+						messageList.autoscrolling = true;
+						$.scrollTo((mutation), 800);						
 					}, 10);
-					setTimeout(function() {
-						messageList.scrolling = false;	
+					
+					setTimeout(() => {
+						messageList.autoscrolling = false;	
 					}, 850);
 				}
 			},
@@ -2143,7 +2143,7 @@ var messageList = {
 	},
 	clearUnreadPosts: function(evt) {
 		if (!document.title.match(/\(\d+\+?\)/)
-				|| this.scrolling == true
+				|| this.autoscrolling == true
 				|| document.hidden) {
 			// do nothing
 			return;
