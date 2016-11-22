@@ -1,8 +1,6 @@
 var messageList = {
 	config: [],
-	ignores: {},
-	topsTotal: 0,
-	containersTotal: 0,
+	ignoredUsers: {},
 	autoscrolling: false,
 	imagemapDebouncer: '',
 	menuDebouncer: '',
@@ -51,42 +49,38 @@ var messageList = {
 	},
 	functions: {
 		messagecontainer: {
-			ignorator_messagelist: function(msg, index) {
+			ignorator_messagelist: function(msg) {
 				if (!messageList.config.ignorator) {
+					// User enabled ignorator, but didn't populate list with usernames
 					return;
 				}
+				
 				var tops = msg.getElementsByClassName('message-top');
-				var top, username, currentIndex;
-				messageList.topsTotal += tops.length;
+				
 				for (var j = 0; j < tops.length; j++) {
-					top = tops[j];
-					if (top) {
-						username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-						for (var f = 0, len = messageList.ignores.length; f < len; f++) {
-							if (username == messageList.ignores[f]) {
-								// calculate equivalent index of message-top for
-								// show_ignorator function
-								if (j == 0 && messageList.topsTotal > 0) {
-									currentIndex = messageList.topsTotal - tops.length; 
-								}
-								else {
-									currentIndex = messageList.topsTotal - j;
-								}
-								top.parentNode.style.display = 'none';
-								if (messageList.config.debug) {
-									console.log('removed post by '
-											+ messageList.ignores[f]);
-								}
+					var top = tops[j];
+				
+					if (top) {	
+						var username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+						
+						for (var f = 0, len = messageList.ignoredUsers.length; f < len; f++) {
+							var ignoredUser = messageList.ignoredUsers[f];
+							
+							if (username == ignoredUser) {
+								top.parentNode.classList.add('ignorated');
+								
 								messageList.ignorated.total_ignored++;
-								if (!messageList.ignorated.data.users[messageList.ignores[f]]) {
-									messageList.ignorated.data.users[messageList.ignores[f]] = {};
-									messageList.ignorated.data.users[messageList.ignores[f]].total = 1; 
-									messageList.ignorated.data.users[messageList.ignores[f]].trs = [ currentIndex ];
-								} else {
-									messageList.ignorated.data.users[messageList.ignores[f]].total++;
-									messageList.ignorated.data.users[messageList.ignores[f]].trs
-											.push(currentIndex);
+								
+								// Keep track of any users that have been ignored (and the number of posts they made)
+								if (!messageList.ignorated.data.users[ignoredUser]) {
+									messageList.ignorated.data.users[ignoredUser] = {};
+									messageList.ignorated.data.users[ignoredUser].total = 1;
+								} 
+								
+								else {
+									messageList.ignorated.data.users[ignoredUser].total++;
 								}
+								
 								if (!messageList.config.hide_ignorator_badge) {
 									messageList.globalPort.postMessage({
 										action: 'ignorator_update',
@@ -897,22 +891,24 @@ var messageList = {
 		}
 	},
 	handleEvent: {
-		ignoratorUpdate: function(msg) {
-			if (msg.action !== 'ignorator_update') {	
+		ignoratorUpdate: function(msg) {		
+			if (msg.action !== 'ignorator_update') {				
 				switch (msg.action) {
-					case "showIgnorated":				
-						if (messageList.config.debug) {
-							console.log("showing hidden msg", msg.ids);
-						}
-						var tops = document.getElementsByClassName('message-top');
-						for (var i = 0; i < msg.ids.length; i++) {
-							if (messageList.config.debug) {
-								console.log(tops[msg.ids[i]]);
+					case "showIgnorated":
+						var ignoratedPosts = document.getElementsByClassName('ignorated');
+						// Iterate backwards so we can swap classes
+						for (var i = ignoratedPosts.length - 1; i >= 0; i--) {
+							var ignoratedPost = ignoratedPosts[i];
+							var usernameElement = ignoratedPost.getElementsByTagName('a')[0];
+							
+							if (msg.username == usernameElement.innerHTML.toLowerCase()) {
+								ignoratedPost.classList.remove('ignorated');
+								// ignorated_post_peek sets display to "block" and opacity to 0.7
+								ignoratedPost.classList.add('ignorated_post_peek');
 							}
-							tops[msg.ids[i]].parentNode.style.display = 'block';
-							tops[msg.ids[i]].parentNode.style.opacity = '.7';
 						}
 						break;
+						
 					default:
 						if (messageList.config.debug)
 							console.log('invalid action', msg);
@@ -2369,10 +2365,10 @@ var messageList = {
 		}
 	},
 	prepareIgnoratorArray: function() {
-		this.ignores = this.config.ignorator_list.split(',');
-		for (var r = 0, len = this.ignores.length; r < len; r++) {
-			var ignore = this.ignores[r].toLowerCase().trim();
-			this.ignores[r] = ignore;
+		this.ignoredUsers = this.config.ignorator_list.split(',');
+		for (var r = 0, len = this.ignoredUsers.length; r < len; r++) {
+			var ignore = this.ignoredUsers[r].toLowerCase().trim();
+			this.ignoredUsers[r] = ignore;
 		}	
 	},
 	addCSSRules: function() {

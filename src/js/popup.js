@@ -18,12 +18,17 @@ function openOptions() {
 	window.close();
 }
 
-function showHidden(i, el) {
+function showHidden(evt) {
+	var el = evt.target;
+	var i = el.parentNode.getElementsByClassName('i_data')[0].innerHTML;
+	
 	console.log(ignoratorData.users[i].trs);
+	
 	chrome.runtime.sendMessage({
-		need : "showIgnorated",
-		ids : ignoratorData.users[i].trs
+		need: "showIgnorated",
+		username: i
 	});
+	
 	el.parentNode.style.display = 'none';
 }
 
@@ -76,58 +81,53 @@ function addListeners() {
 }
 
 function handleIgnorator() {
-	var insert;
 	if (cfg.ignorator && cfg.ignorator_list 
 			|| !cfg.ignorator && cfg.ignore_keyword && cfg.ignore_keyword_list) {
-		chrome.runtime
-			.sendMessage({
-					need: "noIgnores"
-				},
-				function(response) {
-					// prevents "Cannot read property 'data' of undefined" error if no users are currently being ignored
-					if (!response.noIgnores) {
-						chrome.runtime
-							.sendMessage({
-									need: "getIgnored"
-								},
-								function(response) {
-									ignoratorData = response.ignorator.data;
-									if (response.ignorator.data.users) {
-										for (var i in response.ignorator.data.users) {
-											insert = document.createElement('div');
-											insert.className = 'user_ignore';
-											var show = document.createElement('span');
-											show.title = 'show ' + i + ' on this page';
-											show.className = 'show_hidden';
-											show.innerHTML = 'x';
-											var current = response.ignorator.data.users[i];
-											show
-												.addEventListener(
-													'click',
-													function(evt) {
-														showHidden(
-															evt.target.parentNode
-															.getElementsByClassName('i_data')[0].innerHTML,
-															evt.target);
-													});
-											insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.users[i].total + '</span><span class="i_data">' + i + '</span>';
-											insert.insertBefore(show, null);
-											document.getElementById('js_insert')
-												.insertBefore(insert, null);
-										}
-									}
-									if (response.ignorator.data.keywords) {
-										for (var i in response.ignorator.data.keywords) {
-											insert = document.createElement('div');
-											insert.className = 'keyword_ignore';
-											insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.keywords[i].total + '</span>' + i;
-											document.getElementById('js_insert')
-												.insertBefore(insert, null);
-										}
-									}
-								});
+				
+		chrome.runtime.sendMessage({
+				need: "noIgnores"
+		}, (response) => {
+			
+			// prevents "Cannot read property 'data' of undefined" error if no users are currently being ignored
+			if (!response.noIgnores) {
+				
+				chrome.runtime.sendMessage({
+							need: "getIgnored"
+				}, (response) => {
+					
+					ignoratorData = response.ignorator.data;
+					if (response.ignorator.data.users) {
+						for (var i in response.ignorator.data.users) {
+							var insert = document.createElement('div');
+							insert.className = 'user_ignore';
+							var show = document.createElement('span');
+							show.title = 'show ' + i + ' on this page';
+							show.className = 'show_hidden';
+							show.innerHTML = 'x';
+							var current = response.ignorator.data.users[i];
+							
+							show.addEventListener('click', (evt) => {
+								showHidden(evt);
+							});
+							
+							insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.users[i].total + '</span><span class="i_data">' + i + '</span>';
+							insert.insertBefore(show, null);
+							document.getElementById('js_insert')
+								.insertBefore(insert, null);
+						}
+					}
+					if (response.ignorator.data.keywords) {
+						for (var i in response.ignorator.data.keywords) {
+							insert = document.createElement('div');
+							insert.className = 'keyword_ignore';
+							insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.keywords[i].total + '</span>' + i;
+							document.getElementById('js_insert')
+								.insertBefore(insert, null);
+						}
 					}
 				});
+			}
+		});
 	}
 }
 

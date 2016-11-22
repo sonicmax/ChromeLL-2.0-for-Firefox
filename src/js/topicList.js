@@ -1,13 +1,9 @@
 var topicList = {
-	ignore: {
-		users: [],
-		keywords: []
-	},
-	highlight: {
-		keywords: {},
-		tags: {}
-	},
 	config: {},
+	ignoredUsers: [],
+	ignoredKeywords: [],
+	highlightedKeywords: {},
+	highlightedTags: {},		
 	ignorated: {
 		total_ignored: 0,
 		data: {
@@ -18,45 +14,41 @@ var topicList = {
 	index: 1,
 	pm: '',
 	functions: {
-		ignorator_topiclist: function(tr, i) {
-			var ignores = topicList.ignore.users;
-			if (!ignores) {
+		ignorator_topiclist: function(tr) {
+			if (!topicList.ignoredUsers) {
 				return;
 			}
+			
 			else {
 				var td = tr.getElementsByTagName('td')[1];
-				for (var f = 0, len = ignores.length; f < len; f++) {
-					if (!td || td.innerHTML.indexOf('<td>Human</td>') > -1) {					
-						// ignore anonymous topics
+				
+				for (var f = 0, len = topicList.ignoredUsers.length; f < len; f++) {
+					var ignoredUser = topicList.ignoredUsers[f];
+					
+					if (!td || td.innerHTML.indexOf('<td>Human</td>') > -1) {											
 						return;
 					}
-					else {						
-						var username = td.getElementsByTagName('a')[0];					
-						if (td.getElementsByTagName('a')[0]
-								&& td.getElementsByTagName('a')[0].innerHTML
-										.toLowerCase() == ignores[f]) {
-							if (topicList.config.debug) {
-								console
-										.log('found topic to remove: \"'
-												+ tr.getElementsByTagName('td')[0]
-														.getElementsByTagName('a')[0].innerHTML
-														.toLowerCase()
-												+ "\" author: " + ignores[f]
-												+ " topic: " + i);
-							}
-							tr.setAttribute('ignored', true);
-							tr.style.display = 'none';
+					
+					else {
+						var username = td.getElementsByTagName('a')[0];
+						
+						if (username && username.innerHTML.toLowerCase() == ignoredUser) {
+							
+							tr.classList.add('ignorated');						
+							
 							topicList.ignorated.total_ignored++;
-							if (!topicList.ignorated.data.users[ignores[f]]) {
-								topicList.ignorated.data.users[ignores[f]] = {};
-								topicList.ignorated.data.users[ignores[f]].total = 1;
-								topicList.ignorated.data.users[ignores[f]].trs = [i];
-							} else {
-								topicList.ignorated.data.users[ignores[f]].total++;
-								topicList.ignorated.data.users[ignores[f]].trs.push(i);
-							}				
+							
+							if (!topicList.ignorated.data.users[ignoredUser]) {
+								topicList.ignorated.data.users[ignoredUser] = {};
+								topicList.ignorated.data.users[ignoredUser].total = 1;
+							} 
+							
+							else {
+								topicList.ignorated.data.users[ignoredUser].total++;
+							}
+							
 						}
-					}
+					}				
 				}
 			}
 		},
@@ -65,7 +57,7 @@ var topicList = {
 				return;
 			}
 			var re = false;
-			var keywords = topicList.ignore.keywords;
+			var keywords = topicList.ignoredKeywords;
 			var title;
 			var match = false;
 			var reg;
@@ -165,7 +157,7 @@ var topicList = {
 		},
 		enable_keyword_highlight: function(tr) {
 			var title;
-			var keys = topicList.highlight.keywords;
+			var keys = topicList.highlightedKeywords;
 			if (!keys) {
 				return;
 			}
@@ -204,7 +196,7 @@ var topicList = {
 				}
 		},
 		enable_tag_highlight: function(tr) {
-			var highlightTags = topicList.highlight.tags;
+			var highlightTags = topicList.highlightedTags;
 			if (!highlightTags) {
 				return;
 			}
@@ -281,40 +273,40 @@ var topicList = {
 		if (this.config.ignorator_list) {
 			if (this.config.ignorator_list.indexOf(',') == -1) {
 				// ignorator list only has one user
-				this.ignore.users[0] = this.config.ignorator_list.toLowerCase()
+				this.ignoredUsers[0] = this.config.ignorator_list.toLowerCase()
 			}
 			else {
 				// split comma separated list into array
 				var ignore_users = this.config.ignorator_list.split(',');
 				for (var i = 0, len = ignore_users.length; i < len; i++) {
-					this.ignore.users[i] = ignore_users[i].toLowerCase().trim();
+					this.ignoredUsers[i] = ignore_users[i].toLowerCase().trim();
 				}
 			}
 		}
 		if (this.config.ignore_keyword_list) {
 			if (this.config.ignore_keyword_list.indexOf(',') == -1) {
-				this.ignore.keywords[0] = this.config.ignore_keyword_list;
+				this.ignoredKeywords[0] = this.config.ignore_keyword_list;
 			}
 			else {
 				var ignore_words = this.config.ignore_keyword_list.split(',');		
 				for (var i = 0, len = ignore_words.length; i < len; i++) {
-					this.ignore.keywords[i] = ignore_words[i]
+					this.ignoredKeywords[i] = ignore_words[i]
 							.toLowerCase().trim();
 				}
 			}
 		}
 		for (var i = 0; this.config.keyword_highlight_data[i]; i++) {
-			this.highlight.keywords[i] = {};
-			this.highlight.keywords[i].bg = this.config.keyword_highlight_data[i].bg;
-			this.highlight.keywords[i].color = this.config.keyword_highlight_data[i].color;
-			this.highlight.keywords[i].match = this.config.keyword_highlight_data[i].match
+			this.highlightedKeywords[i] = {};
+			this.highlightedKeywords[i].bg = this.config.keyword_highlight_data[i].bg;
+			this.highlightedKeywords[i].color = this.config.keyword_highlight_data[i].color;
+			this.highlightedKeywords[i].match = this.config.keyword_highlight_data[i].match
 					.split(',');
 		}
 		for (var i = 0; this.config.tag_highlight_data[i]; i++) {
-			this.highlight.tags[i] = {};	
-			this.highlight.tags[i].bg = this.config.tag_highlight_data[i].bg;
-			this.highlight.tags[i].color = this.config.tag_highlight_data[i].color;	
-			this.highlight.tags[i].match = this.config.tag_highlight_data[i].match.split(',');
+			this.highlightedTags[i] = {};	
+			this.highlightedTags[i].bg = this.config.tag_highlight_data[i].bg;
+			this.highlightedTags[i].color = this.config.tag_highlight_data[i].color;	
+			this.highlightedTags[i].match = this.config.tag_highlight_data[i].match.split(',');
 		}
 	},
 	checkTags: function() {
@@ -360,11 +352,19 @@ var topicList = {
 		message: function(msg) {
 			if (msg.action !== 'ignorator_update') {
 				switch (msg.action) {
-					case "showIgnorated":
-						var ignoredTopics = document.querySelectorAll('[ignored]');
-						for (var i = 0, len = ignoredTopics.length; i < len; i++) {
-							ignoredTopics[i].style.display = '';
-							ignoredTopics[i].style.opacity = '.7';	
+					case "showIgnorated":			
+						var ignoredTopics = document.getElementsByClassName('ignorated');
+						for (var i = ignoredTopics.length - 1; i >= 0; i--) {
+							var ignoredTopic = ignoredTopics[i];
+							var usernameElement = ignoredTopic.getElementsByTagName('td')[1]
+									.getElementsByTagName('a')[0];
+							
+							if (msg.username == usernameElement.innerHTML.toLowerCase()) {										
+								ignoredTopic.classList.remove('ignorated');
+								// ignorated_peek sets opacity to 0.7							
+								ignoredTopic.classList.add('ignorated_topic_peek');
+							}
+							
 						}
 						break;
 					default:
