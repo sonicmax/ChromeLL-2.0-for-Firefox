@@ -33,14 +33,9 @@ function imageTransloader(info, rename) {
 			var segment = splitUrl[i];
 			if (/.(gif|jpg|png)/.test(segment)) {
 				filename = segment;
+				break;
 			}
 		}
-		
-	}
-	
-	// Make sure that filename isn't empty
-	if (filename === "") {
-		filename = "untitled.jpg";
 	}
 	
 	if (rename) {
