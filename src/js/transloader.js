@@ -38,26 +38,50 @@ function imageTransloader(info, rename) {
 		}
 	}
 	
+	// Check whether user requested to rename image
 	if (rename) {
-		var extension = filename.match(/\.(gif|jpg|png)$/i)[0];	
-		var newFilename = prompt("Enter new filename:", filename.replace(extension, ''));
-		if (newFilename === null || !/\S/.test(newFilename)) {
-			// user pressed cancel or entered blank filename
+	
+		var extensionCheck = filename.match(/\.(gif|jpg|png)$/i);
+			
+		var originalExtension;
+				
+		if (extensionCheck) {
+			originalExtension = extensionCheck[0];
+			filename = filename.replace(originalExtension, '');
+		}
+		
+		var newFilename = prompt("Enter new filename:", filename);
+		
+		if (newFilename === null) {
+			// User pressed cancel
 			return;
 		}
-		else if (newFilename.match(/\.(gif|jpg|png)$/i)) {
-			var newExtension = newFilename.match(/\.(gif|jpg|png)$/i)[0];
-			if (newExtension != extension) {
-				// make sure that new filename has correct extension
-				newFilename = newFilename.replace(newExtension, extension);
-				filename = newFilename;
-			}
-			else if (newExtension == extension) {
-				filename = newFilename;
-			}
+		
+		else if (!/\S/.test(newFilename)) {
+			// User entered blank filename, but presumably still wanted to upload something
+			filename = 'untitled.jpg';
 		}
+		
+		else if (newFilename.match(/\.(gif|jpg|png)$/i)) {
+			
+			var newExtension = newFilename.match(/\.(gif|jpg|png)$/i)[0];
+			
+			// Make sure that new filename has correct extension			
+			if (newExtension != originalExtension) {				
+				newFilename = newFilename.replace(newExtension, originalExtension);
+				filename = newFilename;
+			}
+			
+			else if (newExtension == originalExtension) {
+				filename = newFilename;
+			}
+			
+		}
+		
 		else {
-			filename = newFilename + extension;
+			// It's possible for originalExtension to be null - in this case, we let ETI handle the file extension.
+			// (ETI also corrects extensions that don't match the file format)			
+			filename = newFilename + originalExtension;
 		}
 	}
 	
