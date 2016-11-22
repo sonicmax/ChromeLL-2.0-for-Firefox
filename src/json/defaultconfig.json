@@ -94,6 +94,7 @@
 	"ignorator_topiclist_pm":false,
 	"userhl_topiclist_pm":false,
 	"page_jump_buttons_pm":true,
+	"fix_new_post_jump":true,
 	"click_expand_thumbnail_pm":true,
 	"user_notes_pm":false,
 	"userhl_messagelist_pm":false,

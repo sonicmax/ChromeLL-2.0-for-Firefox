@@ -155,6 +155,27 @@ var topicList = {
 				}
 			}
 		},
+		fix_new_post_jump: function(tr) {
+			//Check each topic to see if the last seen post was the end of the page
+			//If it was, change the link to goto the next page
+
+			//dont run on PM page
+			if (window.location.href.includes('inbox.php')) {
+				return;
+			}
+			var msgs = tr.childNodes[2].textContent.split(' ');
+			var msgCount = msgs[0];
+			if ( msgs.length > 1 ) {
+				var newPosts = msgs[1].match(/[0-9]+/)[0];
+				var link = tr.childNodes[2].querySelector('a');
+				var lastSeen = msgCount-newPosts;
+				var topic = link.href.match(/([0-9]+)/)[0];
+				if (lastSeen % 50 === 0) {
+					var newPage = lastSeen/50 + 1;
+					link.href = "//boards.endoftheinter.net/showmessages.php?topic=" + topic +"&page=" +  newPage;
+				}
+			}   
+		},
 		enable_keyword_highlight: function(tr) {
 			var title;
 			var keys = topicList.highlightedKeywords;
@@ -448,6 +469,7 @@ var topicList = {
 				}
 				else {
 					for (var k in functions) {
+						
 						if (config[k + pm]) {
 							functions[k](tr, j);
 						}
