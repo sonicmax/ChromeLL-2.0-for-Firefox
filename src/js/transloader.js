@@ -3,6 +3,11 @@ function imageTransloader(info, rename) {
 	var url = info.srcUrl;
 	var filename = url.substring(url.lastIndexOf('/') + 1);
 	
+	// Make sure that filename isn't empty
+	if (!filename) {
+		filename = "untitled.jpg";
+	}
+	
 	// Facebook id fix
 	if (/fbcdn\-sphotos/.test(url)) {
 		filename = "fb.jpg";
