@@ -17,7 +17,7 @@ function imageTransloader(info, rename) {
 	if (/vignette[0-9].wikia.nocookie.net/.test(url)) {
 		
 		// Image won't transload at all unless we strip the cb query parameter.
-		if (/cb=[0-9]+/.test(url)) {
+		if (/\?cb=[0-9]+/.test(url)) {
 			url = url.split('?')[0];
 		}
 		
