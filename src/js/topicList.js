@@ -432,7 +432,7 @@ var topicList = {
 			}
 		}
 	},
-	callFunctions: function(pm) {
+	applyDomModifications: function(pm) {
 		var grids = document.getElementsByClassName('grid');
 		var functions = this.functions;
 		var config = this.config;
@@ -488,7 +488,7 @@ var topicList = {
 	waitForAsyncContent: function() {
 		// We need to wait for async stuff on page to load before we can call topic list functions						
 		var melonwolfObserver = new MutationObserver(function(mutations) {
-			topicList.callFunctions(topicList.pm);
+			topicList.applyDomModifications(topicList.pm);
 			melonwolfObserver.disconnect();
 		});
 		
@@ -502,7 +502,7 @@ var topicList = {
 		}
 		
 		else {
-			topicList.callFunctions(topicList.pm);
+			topicList.applyDomModifications(topicList.pm);
 		}
 	},
 	
@@ -540,7 +540,7 @@ var topicList = {
 				}
 				
 				else {					
-					topicList.callFunctions(topicList.pm);
+					topicList.applyDomModifications(topicList.pm);
 				}
 				
 			});
@@ -553,7 +553,7 @@ var topicList = {
 			}
 			
 			else {					
-				this.callFunctions(this.pm);
+				this.applyDomModifications(this.pm);
 			}
 		}
 	}
