@@ -90,55 +90,44 @@ var topicList = {
 		
 		page_jump_buttons: function(tr, i) {
 			var inbox;
+			
 			if (window.location.href.indexOf('inbox.php') > -1) {
-				if (!topicList.config.page_jump_buttons_pm) {
-					return;
-				}
+				// Page jump buttons are appended to page slightly differently inside PM inbox
 				inbox = true;
 			}
-			var insert;
-			var tmp, topic;
+
 			var td = tr.getElementsByTagName('td')[0];
+			
 			if (td) {
-				insert = document.createElement('span');
+				var insert = document.createElement('span');
+				
 				if (inbox) {
 					insert.style.cssFloat = 'right';
 				}
-				try {
-					topic = td.getElementsByTagName('a');
-					var space = document.createTextNode(' ');
-					var jumpWindow = document.createElement('a');
-					jumpWindow.href = '##' + i;
-					jumpWindow.id = 'jumpWindow';
-					jumpWindow.innerHTML = '#';
-					var jumpLast = document.createElement('a');
-					jumpLast.href = '##' + i;
-					jumpLast.id = 'jumpLast';
-					jumpLast.innerHTML = '&gt;';
-					insert.appendChild(jumpWindow);
-					insert.appendChild(space);
-					insert.appendChild(jumpLast);
-					if (inbox) {
-						td.appendChild(insert);				
-					}
-					else {
-						td.getElementsByClassName('fr')[0].appendChild(insert);
-					}					
-				} catch (e) {
-					if (topicList.config.debug) {
-						console.log('locked topic?');
-					}
-					topic = td.getElementsByTagName('span')[0]
-							.getElementsByTagName('a');
-					tmp = topic[0].href.match(/(topic|thread)=([0-9]+)/)[2];
-					insert.innerHTML = '<a href="##' + tmp
-							+ '" id="jumpWindow">#</a> <a href="##' + tmp
-							+ '" id="jumpLast">&gt;</a>';
-					td.getElementsByClassName('fr')[0].insertBefore(
-							insert, null);
+				
+				var jumpWindow = document.createElement('a');
+				jumpWindow.href = '##' + i;
+				jumpWindow.id = 'jumpWindow';
+				jumpWindow.innerHTML = '#';
+				
+				var jumpLast = document.createElement('a');
+				jumpLast.href = '##' + i;
+				jumpLast.id = 'jumpLast';
+				jumpLast.innerHTML = '&gt;';
+				
+				insert.appendChild(jumpWindow);
+				insert.appendChild(document.createTextNode(' '));
+				insert.appendChild(jumpLast);
+				
+				if (inbox) {
+					td.appendChild(insert);				
+				}
+				else {
+					td.getElementsByClassName('fr')[0].appendChild(insert);
 				}
 			}
 		},
+		
 		fix_new_post_jump: function(tr) {
 			//Check each topic to see if the last seen post was the end of the page
 			//If it was, change the link to goto the next page
