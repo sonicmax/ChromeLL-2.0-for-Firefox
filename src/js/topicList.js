@@ -13,7 +13,9 @@ var topicList = {
 	},
 	index: 1,
 	pm: '',
+	
 	functions: {
+		
 		ignorator_topiclist: function(tr) {
 			if (!topicList.ignoredUsers) {
 				return;
@@ -34,7 +36,7 @@ var topicList = {
 						
 						if (username && username.innerHTML.toLowerCase() == ignoredUser) {
 							
-							tr.classList.add('ignorated');						
+							tr.classList.add('ignorated');			
 							
 							topicList.ignorated.total_ignored++;
 							
@@ -52,58 +54,38 @@ var topicList = {
 				}
 			}
 		},
+		
 		ignore_keyword: function(tr, i) {
 			if (!topicList.config.ignore_keyword_list) {
 				return;
 			}
-			var re = false;
-			var keywords = topicList.ignoredKeywords;
-			var title;
-			var match = false;
-			var reg;
-			if (tr.getElementsByTagName('td')[0]) {
-				title = tr.getElementsByTagName('td')[0];
-				username = title.getElementsByTagName('a')[0].innerHTML;
-				for (var f = 0, len = keywords.length; f < len; f++) {
-					if (re) {
-						if (keywords[f].substring(0, 1) == '/') {
-							reg = new RegExp(keywords[f].substring(1,
-									keywords[f].lastIndexOf('/')), keywords[f]
-									.substring(
-											keywords[f].lastIndexOf('/') + 1,
-											keywords[f].length));
-						} else {
-							reg = keywords[f];
-						}
-						match = username.match(reg);
-					} else {
-						match = username.toLowerCase().indexOf(
-										keywords[f].toLowerCase()) != -1;
-					}
-					if (match) {
-						if (topicList.config.debug) {
-							console
-									.log('found topic to remove: \"'
-											+ tr.getElementsByTagName('td')[0]
-													.getElementsByTagName('a')[0].innerHTML
-													.toLowerCase()
-											+ "\" keyword: " + keywords[f]
-											+ " topic: " + i);
-						}
-						title.parentNode.style.display = 'none';
-						topicList.ignorated.total_ignored++;
-						if (!topicList.ignorated.data.keywords[keywords[f]]) {
-							topicList.ignorated.data.keywords[keywords[f]] = {};
-							topicList.ignorated.data.keywords[keywords[f]].total = 1;
-							topicList.ignorated.data.keywords[keywords[f]].trs = [ i ];
-						} else {
-							topicList.ignorated.data.keywords[keywords[f]].total++;
-							topicList.ignorated.data.keywords[keywords[f]].trs.push(i);
-						}				
-					}
+			
+			var ignoredKeywords = topicList.ignoredKeywords;
+					
+			var titleElement = tr.getElementsByTagName('td')[0];
+			var title = titleElement.getElementsByTagName('a')[0].innerHTML;
+			
+			for (var f = 0, len = ignoredKeywords.length; f < len; f++) {		
+				var ignoredKeyword = ignoredKeywords[f];
+				
+				if (title.toLowerCase().indexOf(ignoredKeyword.toLowerCase()) != -1) {
+					
+					titleElement.parentNode.classList.add('ignorated', 'keyword');
+					
+					topicList.ignorated.total_ignored++;
+					
+					if (!topicList.ignorated.data.keywords[ignoredKeyword]) {
+						topicList.ignorated.data.keywords[ignoredKeyword] = {};
+						topicList.ignorated.data.keywords[ignoredKeyword].total = 1;
+					} 
+					
+					else {
+						topicList.ignorated.data.keywords[ignoredKeyword].total++;
+					}				
 				}
 			}
 		},
+		
 		page_jump_buttons: function(tr, i) {
 			var inbox;
 			if (window.location.href.indexOf('inbox.php') > -1) {
