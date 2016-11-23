@@ -324,7 +324,7 @@ var topicList = {
 		});
 	},
 	addListeners: function() {
-		document.addEventListener('click', function(evt) {
+		document.addEventListener('click', (evt) => {
 			if (evt.target.id.match(/(jump)([Last|Window])/)) {
 				evt.preventDefault();
 				var url = topicList.handle.pageJump(evt);
@@ -482,7 +482,7 @@ var topicList = {
 	
 	waitForAsyncContent: function() {
 		// We need to wait for async stuff on page to load before we can call topic list functions						
-		var melonwolfObserver = new MutationObserver(function(mutations) {
+		var melonwolfObserver = new MutationObserver((mutations) => {
 			topicList.applyDomModifications(topicList.pm);
 			melonwolfObserver.disconnect();
 		});
@@ -509,13 +509,9 @@ var topicList = {
 		
 		if (window.location.href.match(/topics|history/)) {
 			
-			if (this.config.dramalinks) {		
+			if (this.config.dramalinks) {
 				
-				chrome.runtime.sendMessage({
-						need : "dramalinks"
-				}, 
-				
-				function(response) {
+				chrome.runtime.sendMessage({ need : "dramalinks" }, (response) => {
 					
 					dramalinks.html = response.data;
 					dramalinks.config = topicList.config;
@@ -528,7 +524,7 @@ var topicList = {
 		}
 		
 		if (document.readyState == 'loading') {
-			document.addEventListener('DOMContentLoaded', function() {
+			document.addEventListener('DOMContentLoaded', () => {
 				
 				if (window.location.pathname === "/main.php") {
 					topicList.waitForAsyncContent();
@@ -554,9 +550,6 @@ var topicList = {
 	}
 };
 
-chrome.runtime.sendMessage({
-	need: "config"
-}, function(config) {
-	
+chrome.runtime.sendMessage({ need: "config" }, (config) => {
 	topicList.init.call(topicList, config);
 });
