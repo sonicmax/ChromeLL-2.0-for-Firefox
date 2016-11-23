@@ -1,15 +1,14 @@
 /* Classes for ignorated posts */
-.ignorated {
+.ignorated, .ignorated_keyword {
 	display: none;
+}
+
+.ignorated_post_peek, .ignorated_topic_peek {
+	opacity: 0.7;
 }
 
 .ignorated_post_peek {
 	display: block;
-	opacity: 0.7;
-}
-
-.ignorated_topic_peek {
-	opacity: 0.7;
 }
 
 /* Options popup */

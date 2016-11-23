@@ -71,7 +71,7 @@ var topicList = {
 					
 					if (title.indexOf(ignoredKeyword.toLowerCase()) != -1) {
 						
-						titleElement.parentNode.classList.add('ignorated', 'keyword');
+						titleElement.parentNode.classList.add('ignorated_keyword');
 						
 						topicList.ignorated.total_ignored++;
 						
@@ -377,7 +377,7 @@ var topicList = {
 						
 						else if (msg.type === 'keyword') {
 							
-							var ignoredTopics = document.getElementsByClassName('keyword');
+							var ignoredTopics = document.getElementsByClassName('ignorated_keyword');
 							var topicsToShow = [];
 							
 							for (var i = 0, len = ignoredTopics.length; i < len; i++) {
@@ -392,7 +392,7 @@ var topicList = {
 							
 							for (var i = topicsToShow.length - 1; i >= 0; i--) {
 								var topicToShow = topicsToShow[i];										
-								topicToShow.classList.remove('ignorated', 'keyword');
+								topicToShow.classList.remove('ignorated_keyword');
 								// ignorated_topic_peek sets opacity to 0.7							
 								topicToShow.classList.add('ignorated_topic_peek');
 								
