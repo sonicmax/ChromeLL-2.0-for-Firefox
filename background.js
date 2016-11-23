@@ -555,8 +555,13 @@ var background = {
 						return true;
 						
 					case "showIgnorated":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								background.tabPorts[tabs[0].id].postMessage({action: 'showIgnorated', username: request.username});
+						chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+								
+								background.tabPorts[tabs[0].id].postMessage({
+										action: 'showIgnorated', 
+										type: request.type, 
+										value: request.value
+								});
 						});
 						
 						return true;

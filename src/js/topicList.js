@@ -346,20 +346,45 @@ var topicList = {
 		message: function(msg) {
 			if (msg.action !== 'ignorator_update') {
 				switch (msg.action) {
-					case "showIgnorated":			
-						var ignoredTopics = document.getElementsByClassName('ignorated');
-						for (var i = ignoredTopics.length - 1; i >= 0; i--) {
-							var ignoredTopic = ignoredTopics[i];
-							var usernameElement = ignoredTopic.getElementsByTagName('td')[1]
-									.getElementsByTagName('a')[0];
+					case "showIgnorated":
+						
+						var ignoredTopics;
+						
+						if (msg.type === 'user') {
 							
-							if (msg.username == usernameElement.innerHTML.toLowerCase()) {										
-								ignoredTopic.classList.remove('ignorated');
-								// ignorated_peek sets opacity to 0.7							
-								ignoredTopic.classList.add('ignorated_topic_peek');
-							}
+							ignoredTopics = document.getElementsByClassName('ignorated');
 							
+							for (var i = ignoredTopics.length - 1; i >= 0; i--) {
+								var ignoredTopic = ignoredTopics[i];
+								var usernameElement = ignoredTopic.getElementsByTagName('td')[1]
+										.getElementsByTagName('a')[0];
+								
+								if (msg.value == usernameElement.innerHTML.toLowerCase()) {										
+									ignoredTopic.classList.remove('ignorated');
+									// ignorated_topic_peek sets opacity to 0.7							
+									ignoredTopic.classList.add('ignorated_topic_peek');
+								}
+								
+							}														
 						}
+						
+						else if (msg.type === 'keyword') {
+							
+							ignoredTopics = document.getElementsByClassName('keyword');
+							
+							for (var i = ignoredTopics.length - 1; i >= 0; i--) {
+								var ignoredTopic = ignoredTopics[i];
+								var titleElement = ignoredTopic.getElementsByTagName('td')[0].getElementsByTagName('a')[0];
+								var title = titleElement.innerHTML.toLowerCase();
+								
+								if (title.indexOf(msg.value.toLowerCase()) > -1) {
+									ignoredTopic.classList.remove('ignorated', 'keyword');
+									// ignorated_topic_peek sets opacity to 0.7							
+									ignoredTopic.classList.add('ignorated_topic_peek');
+								}
+							}							
+						}
+						
 						break;
 					default:
 						if (this.config.debug) {

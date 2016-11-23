@@ -901,7 +901,7 @@ var messageList = {
 							var ignoratedPost = ignoratedPosts[i];
 							var usernameElement = ignoratedPost.getElementsByTagName('a')[0];
 							
-							if (msg.username == usernameElement.innerHTML.toLowerCase()) {
+							if (msg.value == usernameElement.innerHTML.toLowerCase()) {
 								ignoratedPost.classList.remove('ignorated');
 								// ignorated_post_peek sets display to "block" and opacity to 0.7
 								ignoratedPost.classList.add('ignorated_post_peek');
