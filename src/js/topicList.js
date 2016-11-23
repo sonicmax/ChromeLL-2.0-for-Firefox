@@ -34,7 +34,7 @@ var topicList = {
 					else {
 						var username = td.getElementsByTagName('a')[0];
 						
-						if (username && username.innerHTML.toLowerCase() == ignoredUser) {
+						if (username && username.innerHTML.toLowerCase() == ignoredUser.toLowerCase()) {
 							
 							tr.classList.add('ignorated');			
 							
@@ -64,12 +64,12 @@ var topicList = {
 				var ignoredKeywords = topicList.ignoredKeywords;
 						
 				var titleElement = tr.getElementsByTagName('td')[0];
-				var title = titleElement.getElementsByTagName('a')[0].innerHTML;
+				var title = titleElement.getElementsByTagName('a')[0].innerHTML.toLowerCase();
 				
 				for (var f = 0, len = ignoredKeywords.length; f < len; f++) {		
 					var ignoredKeyword = ignoredKeywords[f];
 					
-					if (title.toLowerCase().indexOf(ignoredKeyword.toLowerCase()) != -1) {
+					if (title.indexOf(ignoredKeyword.toLowerCase()) != -1) {
 						
 						titleElement.parentNode.classList.add('ignorated', 'keyword');
 						
@@ -267,13 +267,13 @@ var topicList = {
 		if (this.config.ignorator_list) {
 			if (this.config.ignorator_list.indexOf(',') == -1) {
 				// ignorator list only has one user
-				this.ignoredUsers[0] = this.config.ignorator_list.toLowerCase()
+				this.ignoredUsers[0] = this.config.ignorator_list;
 			}
 			else {
 				// split comma separated list into array
 				var ignore_users = this.config.ignorator_list.split(',');
 				for (var i = 0, len = ignore_users.length; i < len; i++) {
-					this.ignoredUsers[i] = ignore_users[i].toLowerCase().trim();
+					this.ignoredUsers[i] = ignore_users[i].trim();
 				}
 			}
 		}
@@ -359,7 +359,7 @@ var topicList = {
 								var usernameElement = ignoredTopic.getElementsByTagName('td')[1]
 										.getElementsByTagName('a')[0];
 								
-								if (msg.value == usernameElement.innerHTML.toLowerCase()) {										
+								if (msg.value.toLowerCase() == usernameElement.innerHTML.toLowerCase()) {										
 									ignoredTopic.classList.remove('ignorated');
 									// ignorated_topic_peek sets opacity to 0.7							
 									ignoredTopic.classList.add('ignorated_topic_peek');

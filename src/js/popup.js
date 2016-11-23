@@ -100,7 +100,7 @@ function handleIgnorator() {
 							insert.className = 'user_ignore';
 							
 							var show = document.createElement('span');
-							show.title = 'show ' + i + ' on this page';
+							show.title = 'show topics by ' + i + ' on this page';
 							show.className = 'show_hidden';
 							show.innerHTML = 'x';
 							
@@ -123,7 +123,7 @@ function handleIgnorator() {
 							insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.keywords[i].total + '</span>' + '<span class="i_data">' + i + '</span>';
 							
 							var show = document.createElement('span');
-							show.title = 'show ' + i + ' on this page';
+							show.title = 'show topics containing ' + i + ' on this page';
 							show.className = 'show_hidden';
 							show.innerHTML = 'x';
 

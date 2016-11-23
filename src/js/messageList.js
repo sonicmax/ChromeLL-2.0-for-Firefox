@@ -66,7 +66,8 @@ var messageList = {
 						for (var f = 0, len = messageList.ignoredUsers.length; f < len; f++) {
 							var ignoredUser = messageList.ignoredUsers[f];
 							
-							if (username == ignoredUser) {
+							if (username == ignoredUser.toLowerCase()) {
+								
 								top.parentNode.classList.add('ignorated');
 								
 								messageList.ignorated.total_ignored++;
@@ -901,7 +902,7 @@ var messageList = {
 							var ignoratedPost = ignoratedPosts[i];
 							var usernameElement = ignoratedPost.getElementsByTagName('a')[0];
 							
-							if (msg.value == usernameElement.innerHTML.toLowerCase()) {
+							if (msg.value.toLowerCase() == usernameElement.innerHTML.toLowerCase()) {
 								ignoratedPost.classList.remove('ignorated');
 								// ignorated_post_peek sets display to "block" and opacity to 0.7
 								ignoratedPost.classList.add('ignorated_post_peek');
@@ -2367,8 +2368,7 @@ var messageList = {
 	prepareIgnoratorArray: function() {
 		this.ignoredUsers = this.config.ignorator_list.split(',');
 		for (var r = 0, len = this.ignoredUsers.length; r < len; r++) {
-			var ignore = this.ignoredUsers[r].toLowerCase().trim();
-			this.ignoredUsers[r] = ignore;
+			this.ignoredUsers[r] = this.ignoredUsers[r].trim();
 		}	
 	},
 	addCSSRules: function() {
