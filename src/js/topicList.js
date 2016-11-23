@@ -60,28 +60,30 @@ var topicList = {
 				return;
 			}
 			
-			var ignoredKeywords = topicList.ignoredKeywords;
-					
-			var titleElement = tr.getElementsByTagName('td')[0];
-			var title = titleElement.getElementsByTagName('a')[0].innerHTML;
-			
-			for (var f = 0, len = ignoredKeywords.length; f < len; f++) {		
-				var ignoredKeyword = ignoredKeywords[f];
+			else {			
+				var ignoredKeywords = topicList.ignoredKeywords;
+						
+				var titleElement = tr.getElementsByTagName('td')[0];
+				var title = titleElement.getElementsByTagName('a')[0].innerHTML;
 				
-				if (title.toLowerCase().indexOf(ignoredKeyword.toLowerCase()) != -1) {
+				for (var f = 0, len = ignoredKeywords.length; f < len; f++) {		
+					var ignoredKeyword = ignoredKeywords[f];
 					
-					titleElement.parentNode.classList.add('ignorated', 'keyword');
-					
-					topicList.ignorated.total_ignored++;
-					
-					if (!topicList.ignorated.data.keywords[ignoredKeyword]) {
-						topicList.ignorated.data.keywords[ignoredKeyword] = {};
-						topicList.ignorated.data.keywords[ignoredKeyword].total = 1;
-					} 
-					
-					else {
-						topicList.ignorated.data.keywords[ignoredKeyword].total++;
-					}				
+					if (title.toLowerCase().indexOf(ignoredKeyword.toLowerCase()) != -1) {
+						
+						titleElement.parentNode.classList.add('ignorated', 'keyword');
+						
+						topicList.ignorated.total_ignored++;
+						
+						if (!topicList.ignorated.data.keywords[ignoredKeyword]) {
+							topicList.ignorated.data.keywords[ignoredKeyword] = {};
+							topicList.ignorated.data.keywords[ignoredKeyword].total = 1;
+						} 
+						
+						else {
+							topicList.ignorated.data.keywords[ignoredKeyword].total++;
+						}				
+					}
 				}
 			}
 		},
