@@ -346,50 +346,65 @@ var topicList = {
 		message: function(msg) {
 			if (msg.action !== 'ignorator_update') {
 				switch (msg.action) {
-					case "showIgnorated":
-						
-						var ignoredTopics;
+					case "showIgnorated":												
 						
 						if (msg.type === 'user') {
 							
-							ignoredTopics = document.getElementsByClassName('ignorated');
+							var ignoredTopics = document.getElementsByClassName('ignorated');
+							var topicsToShow = [];							
 							
-							for (var i = ignoredTopics.length - 1; i >= 0; i--) {
+							for (var i = 0, len = ignoredTopics.length; i < len; i++) {
 								var ignoredTopic = ignoredTopics[i];
 								var usernameElement = ignoredTopic.getElementsByTagName('td')[1]
 										.getElementsByTagName('a')[0];
 								
 								if (msg.value.toLowerCase() == usernameElement.innerHTML.toLowerCase()) {										
-									ignoredTopic.classList.remove('ignorated');
-									// ignorated_topic_peek sets opacity to 0.7							
-									ignoredTopic.classList.add('ignorated_topic_peek');
-								}
+									topicsToShow.push(ignoredTopic);
+								}								
+							}
+							
+							for (var i = topicsToShow.length - 1; i >= 0; i--) {
+								var topicToShow = topicsToShow[i];										
+								topicToShow.classList.remove('ignorated');
+								// ignorated_topic_peek sets opacity to 0.7							
+								topicToShow.classList.add('ignorated_topic_peek');
 								
-							}														
+								if (i === 0) {
+									$.scrollTo(topicToShow);
+								}
+							}
 						}
 						
 						else if (msg.type === 'keyword') {
 							
-							ignoredTopics = document.getElementsByClassName('keyword');
+							var ignoredTopics = document.getElementsByClassName('keyword');
+							var topicsToShow = [];
 							
-							for (var i = ignoredTopics.length - 1; i >= 0; i--) {
+							for (var i = 0, len = ignoredTopics.length; i < len; i++) {
 								var ignoredTopic = ignoredTopics[i];
 								var titleElement = ignoredTopic.getElementsByTagName('td')[0].getElementsByTagName('a')[0];
 								var title = titleElement.innerHTML.toLowerCase();
 								
-								if (title.indexOf(msg.value.toLowerCase()) > -1) {
-									ignoredTopic.classList.remove('ignorated', 'keyword');
-									// ignorated_topic_peek sets opacity to 0.7							
-									ignoredTopic.classList.add('ignorated_topic_peek');
+								if (title.indexOf(msg.value.toLowerCase()) > -1) {										
+									topicsToShow.push(ignoredTopic);
+								}								
+							}
+							
+							for (var i = topicsToShow.length - 1; i >= 0; i--) {
+								var topicToShow = topicsToShow[i];										
+								topicToShow.classList.remove('ignorated', 'keyword');
+								// ignorated_topic_peek sets opacity to 0.7							
+								topicToShow.classList.add('ignorated_topic_peek');
+								
+								if (i === 0) {
+									$.scrollTo(topicToShow);
 								}
-							}							
+							}						
 						}
 						
 						break;
+						
 					default:
-						if (this.config.debug) {
-							console.log('invalid action', msg);
-						}
 						break;
 				}
 			}

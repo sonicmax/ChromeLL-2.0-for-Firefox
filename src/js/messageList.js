@@ -897,22 +897,32 @@ var messageList = {
 				switch (msg.action) {
 					case "showIgnorated":
 						var ignoratedPosts = document.getElementsByClassName('ignorated');
-						// Iterate backwards so we can swap classes
-						for (var i = ignoratedPosts.length - 1; i >= 0; i--) {
+						var postsToShow = [];
+						
+						for (var i = 0, len = ignoratedPosts.length; i < len; i++) {
 							var ignoratedPost = ignoratedPosts[i];
 							var usernameElement = ignoratedPost.getElementsByTagName('a')[0];
 							
 							if (msg.value.toLowerCase() == usernameElement.innerHTML.toLowerCase()) {
-								ignoratedPost.classList.remove('ignorated');
-								// ignorated_post_peek sets display to "block" and opacity to 0.7
-								ignoratedPost.classList.add('ignorated_post_peek');
+								postsToShow.push(ignoratedPost);
+							}							
+						}
+						
+						// Iterate backwards so we can swap classes
+						for (var i = postsToShow.length - 1; i >= 0; i--) {
+							var postToShow = postsToShow[i];														
+							postToShow.classList.remove('ignorated');
+							// ignorated_post_peek sets display to "block" and opacity to 0.7
+							postToShow.classList.add('ignorated_post_peek');
+							
+							if (i === 0) {
+								$.scrollTo(postToShow);
 							}
 						}
+						
 						break;
 						
 					default:
-						if (messageList.config.debug)
-							console.log('invalid action', msg);
 						break;
 				}
 			}
