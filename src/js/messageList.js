@@ -1837,8 +1837,8 @@ var messageList = {
 			// iterate backwards to prevent errors when modifying class of elements
 			while (i--) {
 				var link = links[i];
-				if (link.href.match(ytRegex) && link.href.match(videoCodeRegex)
-						&& messageList.config.embed_on_hover) {	
+				
+				if (messageList.config.embed_on_hover && link.href.match(ytRegex) && link.href.match(videoCodeRegex)) {						
 					link.className = "youtube";
 					// give each video link a unique id for embed/hide functions
 					link.id = link.href + "&" + Math.random().toString(16).slice(2);			
