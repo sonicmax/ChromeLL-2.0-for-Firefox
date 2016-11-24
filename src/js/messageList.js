@@ -2375,7 +2375,11 @@ var messageList = {
 			}
 		}
 		
-		this.addCSSRules();			
+		this.addCSSRules();		
+		
+		// Make sure that caret in quickpost-area has not been moved
+		var quickpostArea = document.getElementsByName('message')[0];
+		quickpostArea.setSelectionRange(0, 0);				
 		
 		// call functions that dont modify DOM
 		for (var i in miscFunctions) {
