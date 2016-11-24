@@ -1860,23 +1860,7 @@ var messageList = {
 						}
 					);
 				}
-				else if (link.href.indexOf('://lue.link/') > -1
-						&& messageList.config.full_link_names) {
-					// make sure that we only make 1 request for each unique url on page
-					if (!checkedLinks[link.href]) {
-						var url = 'https://jsonp.nodejitsu.com/?url=http://urlex.org/json/' + link.href;
-						checkedLinks[link.href] = true;
-						$.getJSON(url, function(response) {
-							for (var url in response) {		
-								var linksToKyvenate = $('a[href="' + url + '"]');
-								for (var k = 0, len = linksToKyvenate.length; k < len; k++) {
-									var kyvenLink = linksToKyvenate[k];
-									kyvenLink.innerHTML = response[url];																
-								}
-							}	
-						});
-					}
-				}
+				
 				else if (link.title.indexOf("gfycat.com/") > -1) {			
 					if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
 						link.className = "gfycat";
