@@ -326,7 +326,7 @@ span.desc {
 
 /* tooltips */
 
-.tooltip {
+.chromell_tooltip {
 	border-bottom: 1px dotted #000000;
 	color: #000000; outline: none;
 	cursor: help; text-decoration: none;
@@ -334,12 +334,12 @@ span.desc {
 	color: #0000FF;
 }
 
-.tooltip span {
+.chromell_tooltip span {
 	margin-left: -999em;
 	position: absolute;
 }
 
-.tooltip:hover span {
+.chromell_tooltip:hover span {
 	font-family: Calibri, Tahoma, Geneva, sans-serif;
 	font-size: 16px;
 	color: #000000;
@@ -352,14 +352,14 @@ span.desc {
 	width: 250px;
 }
 
-.tooltip:hover img {
+.chromell_tooltip:hover img {
 	border: 0;
 	margin: -10px 0 0 -55px;
 	float: left;
 	position: absolute;
 }
 
-.tooltip:hover em {
+.chromell_tooltip:hover em {
 	font-family: Candara, Tahoma, Geneva, sans-serif;
 	font-size: 1.2em;
 	font-weight: bold;
