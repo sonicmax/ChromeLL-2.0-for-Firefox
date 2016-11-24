@@ -983,69 +983,98 @@ var messageList = {
 				});
 			}
 		},
-		mouseclick: function(evt) {
-			// TODO - reorganise this using switch statements
+		
+		mouseclick: function(evt) {			
 			if (this.config.post_templates) {
 				this.postTemplateAction(evt.target);
 			}
-			if (evt.target.id == 'notebook') {
-				this.usernotes.open(evt.target);
-				evt.preventDefault();
+			
+			switch (evt.target.id) {
+				case 'notebook':
+					this.usernotes.open(evt.target);
+					evt.preventDefault();
+					return;
+					
+				case 'quick_image':
+					imagemap.init();
+					evt.preventDefault();
+					return;				
 			}
-			else if (evt.target.id == 'quick_image') {
-				// imagemap object located in imagemap.js
-				imagemap.init();
-				evt.preventDefault();
-			}
-			else if (evt.target.className == 'like_button') {
-				this.likeButton.process(evt.target);
-				evt.preventDefault();
-			}
-			else if (evt.target.className == 'like_button_custom') {
-				var templateNumber = evt.target.id;
-				for (var i = 0, len = evt.path.length; i < len; i++) {
-					var pathNode = evt.path[i];
-					if (pathNode.className == 'like_button') {
-						this.likeButton.process(pathNode, templateNumber);			
-						break;
+			
+			switch (evt.target.className) {		
+				case 'l':		
+					// Fix relative URLs for LUEpedia (note that index === 0)
+					if (evt.target.title.indexOf("/index.php") === 0) {
+						this.links.fixRelativeUrls(evt.target, "wiki");
+						evt.preventDefault();						
 					}
-				}
-				evt.preventDefault();	
-			}
-			// Fix for relative URLs for LUEpedia (note that index === 0)
-			else if (evt.target.title.indexOf("/index.php") === 0) {
-				this.links.fixRelativeUrls(evt.target, "wiki");
-				evt.preventDefault();
-			}
-			// Fix relative URLs for imagemap
-			else if (evt.target.title.indexOf("/imap/") === 0) {
-				this.links.fixRelativeUrls(evt.target, "imagemap");					
-				evt.preventDefault();
-			}
-			else if (evt.target.className.match(/youtube|gfycat/)
-					&& evt.target.tagName == 'DIV') {
-				evt.preventDefault();
-			}
-			else if (evt.target.className == 'archivequote') {
-				this.quote.handler(evt);
-				evt.preventDefault();
-			}
-			else if (evt.target.parentNode) {
-				if (evt.target.parentNode.className == 'embed') {
-					this.youtube.embed(evt.target.parentNode);
+					
+					// Fix relative URLs for imagemap
+					else if (evt.target.title.indexOf("/imap/") === 0) {
+						this.links.fixRelativeUrls(evt.target, "imagemap");					
+						evt.preventDefault();
+					}
+					
+					// Fix relative URLs for archive links
+					else if (evt.target.innerHTML.indexOf('://archives.endoftheinte') > -1) {
+						this.links.fixRelativeUrls(evt.target, "archives");
+						evt.preventDefault();												
+					}
+			
+					return;
+					
+			
+				case 'like_button':
+					this.likeButton.process(evt.target);
 					evt.preventDefault();
-				}
-				else if (evt.target.parentNode.className == 'hide') {
-					this.youtube.hide(evt.target.parentNode);
+					return;
+				
+				case 'like_button_custom':
+					var templateNumber = evt.target.id;
+					for (var i = 0, len = evt.path.length; i < len; i++) {
+						var pathNode = evt.path[i];
+						if (pathNode.className == 'like_button') {
+							this.likeButton.process(pathNode, templateNumber);			
+							break;
+						}
+					}
+					evt.preventDefault();				
+					return;
+					
+				case 'archivequote':
+					this.quote.handler(evt);
 					evt.preventDefault();
-				}
-				else if (evt.target.parentNode.className == 'embed_nws_gfy') {
-					var gfycatID = evt.target.parentNode.id.replace('_embed', '');
-					this.gfycat.embed(document.getElementById(gfycatID));
-					evt.preventDefault();
+					return;
+					
+				case 'youtube':
+				case 'gfycat':
+					if (evt.target.tagName === 'DIV') {
+						evt.preventDefault();
+					}
+					return;					
+			}
+			
+			if (evt.target.parentNode) {
+				switch (evt.target.parentNode.className) {
+					case 'embed':
+						this.youtube.embed(evt.target.parentNode);
+						evt.preventDefault();
+						return;
+					
+					case 'hide':
+						this.youtube.hide(evt.target.parentNode);
+						evt.preventDefault();
+						return;
+					
+					case 'embed_nws_gfy':
+						var gfycatID = evt.target.parentNode.id.replace('_embed', '');
+						this.gfycat.embed(document.getElementById(gfycatID));
+						evt.preventDefault();
+						return;
 				}
 			}
 		},
+		
 		mouseenter: function(evt) {
 			if (evt.target.className == 'like_button' && this.config.custom_like_button) {
 				this.cachedEvent = evt;
@@ -1878,17 +1907,28 @@ var messageList = {
 				window.addEventListener('scroll', messageList.gfycat.loader);
 				document.addEventListener('visibilitychange', messageList.gfycat.pause);
 			}
+			
 		},
+		
 		fixRelativeUrls: function(anchor, type) {
-			// fixes problem where wiki/imagemap links redirect incorrectly
-			if (type === "wiki") {
-				window.open(anchor.href.replace("boards", "wiki"));
-			}
-			else if (type === "imagemap") {				
-				window.open(anchor.href.replace("boards", "images"));
-			}
+			// Fixes incorrect subdomain when following certain types of relative URLs on ETI
+			switch (type) {
+				case 'wiki':
+					window.open(anchor.href.replace('boards', 'wiki'));
+					break;
+				
+				case 'imagemap':
+					window.open(anchor.href.replace('boards', 'images'));
+					break;
+				
+				case 'archives':
+					window.open(anchor.href.replace('boards', 'archives'));
+					break;
+			}			
 		}
+		
 	},
+	
 	tcs: {
 		getMessages: function() {
 			if (!messageList.config.tcs)
