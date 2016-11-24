@@ -198,27 +198,41 @@ var options = {
 			var oldIgnorator = list.split(',');
 			for (var i = 1; oldIgnorator[i]; i++) {
 				oldIgnorator[i] = oldIgnorator[i].trim();
-			}			
+			}
 			
-			var json = {
-				"userList": oldIgnorator,
-				"removeBanned": config.clean_ignorator
-			};
-			
+			$.confirm({
+				text: "Remove banned users?",
+				
+				confirm: () => {					
+					this.sendCleanerRequest({ "userList": oldIgnorator, "removeBanned": true });
+				},
+				
+				cancel: () => {
+					this.sendCleanerRequest({ "userList": oldIgnorator, "removeBanned": false });
+				},
+				
+				confirmButton: "Yes",
+				cancelButton: "No"
+			});
+		},
+		
+		sendCleanerRequest: function(json) {			
 			var xhr = new XMLHttpRequest();
 			var url = 'http://eti-stats.herokuapp.com/tools/api/clean_ignorator/';
 			xhr.open("POST", url, true);
 			
 			xhr.setRequestHeader('Content-Type', 'application/json');
 			
-			xhr.onload = () => {
-				
-				if (xhr.status == 503) {
-					document.getElementById('ignorateinfo').innerText = "eti-stats is down - try again later";
-				}
-				
-				else if (xhr.status == 200) {
-					var temp = JSON.parse(xhr.responseText);
+			xhr.onload = this.handleResponse;							
+			
+			xhr.send(JSON.stringify(json));	
+		},
+		
+		handleResponse: function() {
+			// Note: 'this' is reference to XHR object
+			switch (this.status) {
+				case 200:
+					var temp = JSON.parse(this.responseText);
 					var users = temp.userList;
 					var newIgnorator = users.toString();
 					config.ignorator_list = newIgnorator;
@@ -230,13 +244,21 @@ var options = {
 					
 					document.getElementById('ignorateinfo').innerText = "ignorator cleaned - reloading page in 3 seconds...";
 					
-					setTimeout(() => { 
+					setTimeout(() => {
 						location.reload(); 
 					}, 3000);
-				}
-			};
-			
-			xhr.send(JSON.stringify(json));
+					
+					break;																
+					
+					case 503:
+						document.getElementById('ignorateinfo').innerText = "eti-stats is down - try again later";
+						break;
+				
+					default:
+						// Probably an error - display responseText
+						document.getElementById('ignorateinfo').innerText = this.responseText;
+						break;
+			}			
 		},
 		
 		checkRateLimit: function() {
