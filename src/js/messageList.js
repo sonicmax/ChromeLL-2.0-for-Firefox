@@ -1856,6 +1856,7 @@ var messageList = {
 		}
 	},
 	links: {
+
 		check: function(msg) {
 			var target = msg || document;
 			var links = target.getElementsByClassName("l");
@@ -1870,7 +1871,7 @@ var messageList = {
 				if (messageList.config.embed_on_hover && link.href.match(ytRegex) && link.href.match(videoCodeRegex)) {						
 					link.className = "youtube";
 					// give each video link a unique id for embed/hide functions
-					link.id = link.href + "&" + Math.random().toString(16).slice(2);			
+					link.id = link.href + "&" + i;
 					// attach event listener						
 					$(link).hoverIntent(
 						function() {
