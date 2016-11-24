@@ -177,6 +177,7 @@ var options = {
 		cleanIgnorator: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var rateLimiterResponse = this.checkRateLimit();
+			//var rateLimiterResponse;
 			
 			if (config.ignorator_list == "") {
 				document.getElementById('ignorateinfo').innerText = "no ignorator list found..."
@@ -193,6 +194,7 @@ var options = {
 			}
 			
 			config.ignorator_backup = config.ignorator_list;
+			localStorage['ChromeLL-Config'] = JSON.stringify(config);
 			
 			var list = config.ignorator_list;
 			var oldIgnorator = list.split(',');
@@ -204,11 +206,11 @@ var options = {
 				text: "Remove banned users?",
 				
 				confirm: () => {					
-					this.sendCleanerRequest({ "userList": oldIgnorator, "removeBanned": true });
+					this.sendCleanerRequestBackup({ "userList": oldIgnorator, "removeBanned": true });
 				},
 				
 				cancel: () => {
-					this.sendCleanerRequest({ "userList": oldIgnorator, "removeBanned": false });
+					this.sendCleanerRequestBackup({ "userList": oldIgnorator, "removeBanned": false });
 				},
 				
 				confirmButton: "Yes",
@@ -216,19 +218,39 @@ var options = {
 			});
 		},
 		
-		sendCleanerRequest: function(json) {			
+		sendCleanerRequest: function(json) {						
+			const url = 'http://eti-stats.herokuapp.com/tools/api/clean_ignorator/';
 			var xhr = new XMLHttpRequest();
-			var url = 'http://eti-stats.herokuapp.com/tools/api/clean_ignorator/';
-			xhr.open("POST", url, true);
-			
-			xhr.setRequestHeader('Content-Type', 'application/json');
-			
-			xhr.onload = this.handleResponse;							
-			
+			xhr.open("POST", url, true);		
+			xhr.setRequestHeader('Content-Type', 'application/json');		
+			xhr.onload = this.handleResponse;		
 			xhr.send(JSON.stringify(json));	
 		},
 		
+		
+		/**
+		 *  Using this instead of sendCleanerRequest() until this issue has been resolved https://github.com/sonicmax/ChromeLL-2.0/issues/69
+		 */
+		 
+		sendCleanerRequestBackup: function(data) {						
+			const url = 'http://eti-stats.herokuapp.com/tools/clean_ignorator/';
+			
+			var formData = new FormData();
+			
+			formData.append('name_list', data.userList.toString());
+			
+			if (data.removeBanned) {
+				formData.append('remove_banned', 'on');
+			}
+			
+			var xhr = new XMLHttpRequest();
+			xhr.open("POST", url, true);
+			xhr.onload = this.handleResponseBackup;	
+			xhr.send(formData);
+		},
+		
 		handleResponse: function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			// Note: 'this' is reference to XHR object
 			switch (this.status) {
 				case 200:
@@ -237,9 +259,7 @@ var options = {
 					var newIgnorator = users.toString();
 					config.ignorator_list = newIgnorator;
 					
-					var currentTime = new Date().getTime();
-					config.last_clean = currentTime;					
-					
+					config.last_clean = new Date().getTime();			
 					localStorage['ChromeLL-Config'] = JSON.stringify(config);					
 					
 					document.getElementById('ignorateinfo').innerText = "ignorator cleaned - reloading page in 3 seconds...";
@@ -258,7 +278,66 @@ var options = {
 						// Probably an error - display responseText
 						document.getElementById('ignorateinfo').innerText = this.responseText;
 						break;
-			}			
+			}
+		},
+		
+		handleResponseBackup: function() {
+			var config = JSON.parse(localStorage['ChromeLL-Config']);
+			// Note: 'this' is reference to XHR object
+			
+			switch (this.status) {
+				case 200:
+					var html = document.createElement('html');
+					html.innerHTML = this.responseText;
+					
+					// We have to scrape new ignorator list from HTML response
+					var newIgnoratorList = html.getElementsByClassName('well well-small')[0].innerHTML.trim().split(',');
+					
+					for (var i = 0, len = newIgnoratorList.length; i < len; i++) {
+						var listItem = newIgnoratorList[i];
+						listItem = listItem.trim();						
+					}
+	
+					// We can scrape list of changes from page as well
+					var changeList = html.getElementsByTagName('ul')[1];
+					if (changeList) {
+						var changes = changeList.getElementsByTagName('li');
+						var changeString = '';
+
+						// Build string to display changes in ignorateinfo element
+						for (var i = 0, len = changes.length; i < len; i++) {
+							var string = changes[i].innerHTML;
+							string = string.replace('<span class="text-error">', '');
+							string = string.replace('<span class="text-info">', '');
+							string = string.replace('</span>', '');
+							string = string.replace('-&gt;', '->');
+							changeString += string + '\n';						
+						}
+						
+						document.getElementById('ignorator_list').value = newIgnoratorList.toString();
+						document.getElementById('ignorateinfo').innerText = 'changes: \n\n' + changeString;						
+					}
+					
+					else {
+						document.getElementById('ignorateinfo').innerText = 'no changes.';
+					}
+					
+					// Save list
+					config.ignorator_list = newIgnoratorList;
+					config.last_clean = new Date().getTime();					
+					localStorage['ChromeLL-Config'] = JSON.stringify(config);					
+					
+					break;																
+					
+					case 503:
+						document.getElementById('ignorateinfo').innerText = "eti-stats is down - try again later";
+						break;
+				
+					default:
+						// Probably an error - display responseText
+						document.getElementById('ignorateinfo').innerText = 'status ' + this.status; 
+						break;
+			}
 		},
 		
 		checkRateLimit: function() {
