@@ -322,10 +322,9 @@ var options = {
 						else {
 							config.ignorator_list = backup;
 							localStorage['ChromeLL-Config'] = JSON.stringify(config);
-							document.getElementById('ignorateinfo').innerHTML = "backup restored - reloading page in 3 seconds...";
-							setTimeout(function () {
-								location.reload();
-							}, 3000);
+							
+							document.getElementById('ignorator_list').value = backup.toString();
+							document.getElementById('ignorateinfo').innerHTML = "backup restored.";
 						}					
 					},
 					
