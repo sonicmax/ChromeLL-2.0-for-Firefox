@@ -264,19 +264,34 @@ var topicList = {
 		}
 	},
 	prepareArrays: function() {
+		
 		if (this.config.ignorator_list) {
-			if (this.config.ignorator_list.indexOf(',') == -1) {
-				// ignorator list only has one user
-				this.ignoredUsers[0] = this.config.ignorator_list;
-			}
-			else {
-				// split comma separated list into array
-				var ignore_users = this.config.ignorator_list.split(',');
-				for (var i = 0, len = ignore_users.length; i < len; i++) {
-					this.ignoredUsers[i] = ignore_users[i].trim();
+			
+			this.ignoredUsers = this.config.ignorator_list.split(',');
+			
+			for (var i = 0, len = this.ignoredUsers.length; i < len; i++) {
+				this.ignoredUsers[i] = this.ignoredUsers[i].trim();
+			}	
+			
+			if (this.config.ignorator_allow_topics && this.config.ignorator_topic_whitelist) {
+				
+				var whitelist = this.config.ignorator_topic_whitelist.split(',');
+
+				for (var i = 0, len = whitelist.length; i < len; i++) {
+					whitelist[i] = whitelist[i].trim();
 				}
-			}
+				
+				// Iterate backwards over ignorator list and remove any whitelisted users
+				for (var i = this.ignoredUsers.length - 1; i >= 0; i--) {				
+					for (var j = 0, len = whitelist.length; j < len; j++) {	
+						if (whitelist[j].toLowerCase() == this.ignoredUsers[i].toLowerCase()) {
+							this.ignoredUsers.splice(i, 1);
+						}
+					}
+				}			
+			}			
 		}
+		
 		if (this.config.ignore_keyword_list) {
 			if (this.config.ignore_keyword_list.indexOf(',') == -1) {
 				this.ignoredKeywords[0] = this.config.ignore_keyword_list;
@@ -284,18 +299,18 @@ var topicList = {
 			else {
 				var ignore_words = this.config.ignore_keyword_list.split(',');		
 				for (var i = 0, len = ignore_words.length; i < len; i++) {
-					this.ignoredKeywords[i] = ignore_words[i]
-							.toLowerCase().trim();
+					this.ignoredKeywords[i] = ignore_words[i].toLowerCase().trim();
 				}
 			}
 		}
+		
 		for (var i = 0; this.config.keyword_highlight_data[i]; i++) {
 			this.highlightedKeywords[i] = {};
 			this.highlightedKeywords[i].bg = this.config.keyword_highlight_data[i].bg;
 			this.highlightedKeywords[i].color = this.config.keyword_highlight_data[i].color;
-			this.highlightedKeywords[i].match = this.config.keyword_highlight_data[i].match
-					.split(',');
+			this.highlightedKeywords[i].match = this.config.keyword_highlight_data[i].match.split(',');
 		}
+		
 		for (var i = 0; this.config.tag_highlight_data[i]; i++) {
 			this.highlightedTags[i] = {};	
 			this.highlightedTags[i].bg = this.config.tag_highlight_data[i].bg;

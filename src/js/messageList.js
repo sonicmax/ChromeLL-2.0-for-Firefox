@@ -2406,9 +2406,28 @@ var messageList = {
 	},
 	prepareIgnoratorArray: function() {
 		this.ignoredUsers = this.config.ignorator_list.split(',');
+		
 		for (var r = 0, len = this.ignoredUsers.length; r < len; r++) {
 			this.ignoredUsers[r] = this.ignoredUsers[r].trim();
-		}	
+		}
+		
+		if (this.config.ignorator_allow_posts && this.config.ignorator_post_whitelist) {
+			
+			var whitelist = this.config.ignorator_post_whitelist.split(',');
+			
+			for (var i = 0, len = whitelist.length; i < len; i++) {
+				whitelist[i] = whitelist[i].trim();
+			}
+			
+			// Iterate backwards over ignorator list and remove any whitelisted users
+			for (var i = this.ignoredUsers.length - 1; i >= 0; i--) {					
+				for (var j = 0, len = whitelist.length; j < len; j++) {			
+					if (whitelist[j].toLowerCase() == this.ignoredUsers[i].toLowerCase()) {
+						this.ignoredUsers.splice(i, 1);
+					}
+				}
+			}			
+		}		
 	},
 	addCSSRules: function() {
 		var sheet = document.styleSheets[0];
@@ -2421,8 +2440,10 @@ var messageList = {
 };
 
 chrome.runtime.sendMessage({
+	
 	need: "config",
 	tcs: true
-}, function(config) {
+	
+}, (config) => {
 	messageList.init.call(messageList, config);
 });
