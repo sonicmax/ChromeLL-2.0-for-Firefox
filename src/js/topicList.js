@@ -133,21 +133,33 @@ var topicList = {
 			//If it was, change the link to goto the next page
 
 			//dont run on PM page
-			if (window.location.href.includes('inbox.php')) {
+			if (window.location.pathname === '/inbox.php') {
 				return;
 			}
-			var msgs = tr.childNodes[2].textContent.split(' ');
-			var msgCount = msgs[0];
-			if ( msgs.length > 1 ) {
+			
+			var msgsNode;
+			
+			if (window.location.pathname === '/history.php') {
+				// Message history page adds text nodes between each td
+				msgsNode = tr.childNodes[5];				
+			}
+			
+			else {
+				msgsNode = tr.childNodes[2];				
+			}
+			
+			var msgs = msgsNode.textContent.split(' ');
+			
+			if (msgs.length > 1) {			
 				var newPosts = msgs[1].match(/[0-9]+/)[0];
-				var link = tr.childNodes[2].querySelector('a');
-				var lastSeen = msgCount-newPosts;
+				var link = msgsNode.getElementsByTagName('a')[0];
+				var lastSeen = msgs[0] - newPosts;
 				var topic = link.href.match(/([0-9]+)/)[0];
 				if (lastSeen % 50 === 0) {
-					var newPage = lastSeen/50 + 1;
-					link.href = "//boards.endoftheinter.net/showmessages.php?topic=" + topic +"&page=" +  newPage;
+					var newPage = lastSeen / 50 + 1;
+					link.href = "//boards.endoftheinter.net/showmessages.php?topic=" + topic + "&page=" +  newPage;
 				}
-			}   
+			}
 		},
 		enable_keyword_highlight: function(tr) {
 			var title;
