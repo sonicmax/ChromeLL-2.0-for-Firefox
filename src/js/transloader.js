@@ -1,7 +1,11 @@
 // Original code from Milan
 function imageTransloader(info, rename) {
 	var url = info.srcUrl;
-	var filename = url.substring(url.lastIndexOf('/') + 1);
+	
+	// Remove query parameters
+	url = url.split('?')[0];	
+	
+	var filename = url.substring(url.lastIndexOf('/') + 1);	
 	
 	// Debugging for issue 66 https://github.com/sonicmax/ChromeLL-2.0/issues/66
 	console.log('Menu event:', info);
@@ -21,12 +25,7 @@ function imageTransloader(info, rename) {
 	
 	// We need to do some extra work to handle Wikia URLs
 	if (/vignette[0-9].wikia.nocookie.net/.test(url)) {
-		
-		// Image won't transload at all unless we strip the cb query parameter.
-		if (/\?cb=[0-9]+/.test(url)) {
-			url = url.split('?')[0];
-		}
-		
+	
 		// We want to make sure that we transload the full size image
 		if (/scale-to-width-down\/\d+/.test(url)) {
 			var match = url.match(/scale-to-width-down\/\d+/)[0];
