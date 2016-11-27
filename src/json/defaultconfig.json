@@ -116,6 +116,7 @@
   "ignorator_backup":"",
 	"user_id":"",
 	"tag_admin":[],
+	"emoji_menu":true,
 	"emoji_history":[],
 	"image_cache_version": 1,
 	"last_clean":0,

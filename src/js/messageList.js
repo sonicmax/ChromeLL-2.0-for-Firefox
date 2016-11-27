@@ -673,7 +673,11 @@ var messageList = {
 						
 					});
 				}
-			}			
+			},
+
+			emoji_menu: function() {
+				messageList.emojis.addMenu();
+			}
 		},
 		
 		misc: {
@@ -2665,8 +2669,6 @@ var messageList = {
 			var quickpostArea = document.getElementsByName('message')[0];
 			quickpostArea.setSelectionRange(0, 0);
 		}
-		
-		this.emojis.addMenu();
 		
 		// Check anchors for media links to embed, etc
 		this.links.check();
