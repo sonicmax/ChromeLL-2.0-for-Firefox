@@ -106,9 +106,9 @@
 													<span>Hide all context menu items except the "Transload image" option
 													<a class="chromell_tooltip" href="#">(?)
 														<span class="moreinfo">
-															Enabling this option will place the "Transload image" option in a slightly more convenient location if "Rename and transload image" is disabled.
+															Enabling this option will place the "Transload image" option in a slightly more convenient location, if "Rename and transload image" is disabled.
 														</span>
-													</a>												
+													</a>													
 													</span>
 											</label>
 										</div>
@@ -858,34 +858,41 @@
 									</label>
 								</div>
 								<div class="checkbox">
-									<input type="checkbox" id="highlight_tc" />
-									<span>Highlight the TC's username color <input type="text" id="tc_highlight_color" class="color color-input" value="ffff00" /></span>
+									<label>
+										<input type="checkbox" id="highlight_tc" />
+										<span>Highlight the TC's username color <input type="text" id="tc_highlight_color" class="color color-input" value="ffff00" /></span>
+									</label>
 								</div>
-								<div class="checkbox">
-									<input type="checkbox" id="label_tc" />
-									<span>Show <b>TC</b> next to the TC's username<input type="text" id="tc_label_color" class="color color-input" /></span>
-								</div>
-								<div class="checkbox">
-									<input type="checkbox" id="label_self_anon" />
-									<span>Show <b>(Me)</b> next to own posts in anonymous topics
-										<a class="chromell_tooltip" href="#">(?)
-											<span class="moreinfo">
-												<em>Note:</em>
-												ChromeLL does not store any data relating to your identity in anonymous topics - it checks for the
-												human number displayed in the quickpost box.
-											</span>
-										</a>																	
-									</span>
-								</div>
-								<div class="checkbox">
-									<input type="checkbox" id="foxlinks_quotes" />
-									<span>Foxlinks style quotes color #<input type="text" id="foxlinks_quotes_color" class="color-input" /> 
-										(set this to <a href="http://endoftheinter.net/colors.php">main color 3</a>)</span>
-								</div>						
 								<div class="checkbox">
 									<label>
-										<span>Autoscroll (while at bottom of screen)</span>
+										<input type="checkbox" id="label_tc" />
+										<span>Show <b>TC</b> next to the TC's username<input type="text" id="tc_label_color" class="color color-input" /></span>
 									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+									<input type="checkbox" id="label_self_anon" />
+										<span>Show <b>(Me)</b> next to own posts in anonymous topics
+											<a class="chromell_tooltip" href="#">(?)
+												<span class="moreinfo">
+													<em>Note:</em>
+													ChromeLL does not store any data relating to your identity in anonymous topics - it checks for the
+													human number displayed in the quickpost box.
+												</span>
+											</a>																	
+										</span>
+									</label>
+								</div>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="foxlinks_quotes" />
+										<span>Foxlinks style quotes color #<input type="text" id="foxlinks_quotes_color" class="color-input" /> 
+											(set this to <a href="http://endoftheinter.net/colors.php">main color 3</a>)</span>
+									</label>
+								</div>
+								<section>
+								<div class="checkbox">
+									<span>Autoscroll (while at bottom of screen)</span>
 									<div class="checkbox subbox">
 										<label>
 											<input type="checkbox" id="autoscroll_livelinks_active" />
@@ -899,6 +906,7 @@
 										</label>
 									</div>
 								</div>
+								</section>
 							</div>
 						</section>
 						
