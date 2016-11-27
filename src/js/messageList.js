@@ -456,23 +456,7 @@ var messageList = {
 					infobar.appendChild(anchor);
 				}
 			},
-			expand_spoilers: function() {
-				var infobar = document.getElementsByClassName('infobar')[0];
-				var ains = document.createElement('span');
-				var anchor = document.createElement('a');
-				var divider = document.createTextNode(' | ');
-				anchor.id = 'chromell_spoilers';
-				anchor.href = '##';
-				anchor.innerText = 'Expand Spoilers';
-				infobar.appendChild(divider);
-				infobar.appendChild(anchor);
-				anchor.addEventListener('click', messageList.spoilers.find);		
-			}
-		},
-		quickpostbody: {
 			filter_me: function() {
-				// even though element is appended to infobar, we need quickpost-body
-				// so we can check for human number in anonymous topics
 				var quickpostElement = document.getElementsByClassName('quickpost-body')[0];				
 				var infobar = document.getElementsByClassName('infobar')[0];
 				var tops = document.getElementsByClassName('message-top');
@@ -512,7 +496,21 @@ var messageList = {
 				}
 				infobar.appendChild(divider);
 				infobar.appendChild(anchor);
-			},		
+			},			
+			expand_spoilers: function() {
+				var infobar = document.getElementsByClassName('infobar')[0];
+				var ains = document.createElement('span');
+				var anchor = document.createElement('a');
+				var divider = document.createTextNode(' | ');
+				anchor.id = 'chromell_spoilers';
+				anchor.href = '##';
+				anchor.innerText = 'Expand Spoilers';
+				infobar.appendChild(divider);
+				infobar.appendChild(anchor);
+				anchor.addEventListener('click', messageList.spoilers.find);		
+			}
+		},
+		quickpostbody: {		
 			quick_imagemap: function() {
 				var quickpost = document.getElementsByClassName('quickpost-body')[0];
 				if (quickpost) {
