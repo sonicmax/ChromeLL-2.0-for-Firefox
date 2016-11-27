@@ -2013,7 +2013,7 @@ var messageList = {
 			
 			// Style main div			
 			menu.style.width = (width * 0.95) + 'px';
-			menu.style.height = (height * 0.475) + 'px';
+			menu.style.height = (height * 0.4) + 'px';
 			menu.style.left = (width - (width * 0.975)) + 'px';
 			menu.style.top = (height - (height * 0.975)) + 'px';
 			menu.id = "emoji_menu";
