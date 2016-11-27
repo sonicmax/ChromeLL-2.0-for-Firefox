@@ -827,7 +827,7 @@ var options = {
 			});			
 		},
 		menuVisibility: function() {
-			var hiddenOptions = ['history_menubar', 'context_menu', 'dramalinks', 'user_info_popup'];
+			var hiddenOptions = ['history_menubar', 'context_menu', 'dramalinks', 'user_info_popup', 'embed_gfycat'];
 			for (var i = 0, len = hiddenOptions.length; i < len; i++) {
 				// add listener to each checkbox
 				var element = document.getElementById(hiddenOptions[i]);
@@ -837,10 +837,14 @@ var options = {
 	},
 	ui: {
 		hideUnusedMenus: function() {
-			var hiddenOptions = {'history_menubar' : 'history_options', 
-					'context_menu' : 'context_options', 
-					'dramalinks' : 'dramalinks_options', 
-					'user_info_popup' : 'doubleclick_options'};
+			var hiddenOptions = {		
+				'history_menubar': 'history_options', 
+				'context_menu': 'context_options', 
+				'dramalinks': 'dramalinks_options', 
+				'user_info_popup': 'doubleclick_options',
+				'embed_gfycat': 'gfycat_options'
+			};
+			
 			for (var key in hiddenOptions) {
 				var box = document.getElementById(key);
 				var menu = document.getElementById(hiddenOptions[key]);		
