@@ -94,30 +94,36 @@ var messageList = {
 					}
 				}
 			},
-			user_notes: function(msg) {
+			
+			user_notes: function(msg, top) {			
+				// Unlikely, but still possible that usernote_notes hasn't been populated
 				if (!messageList.config.usernote_notes) {
 					messageList.config.usernote_notes = {};
 				}	
-				var top = msg.getElementsByClassName('message-top')[0];
+								
+				// Anon topic - ignore
 				if (!top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
 					return;
 				}
+				
 				var notebook = document.createElement('a');	
 				notebook.id = 'notebook';
-				var divider = document.createTextNode(' | ');
-				var top, tempID;
-				top.appendChild(divider);
-				tempID = top.getElementsByTagName('a')[0].href
-						.match(/user=(\d+)$/i)[1];
-				notebook.innerHTML = (messageList.config.usernote_notes[tempID] != undefined 
-						&& messageList.config.usernote_notes[tempID] != '') 
+				
+				var userId = top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[1];
+				
+				notebook.innerHTML = (messageList.config.usernote_notes[userId] != undefined 
+						&& messageList.config.usernote_notes[userId] != '')
 								? 'Notes*' : 'Notes';
-				notebook.href = "##note" + tempID;
+								
+				notebook.href = "##note" + userId;
+				
+								
+				top.appendChild(document.createTextNode(' | '));
 				top.appendChild(notebook);
 			},
-			like_button: function(msg, index) {
-				if (!window.location.href.match("archives")) {		
-					var top = msg.getElementsByClassName('message-top')[0];
+			
+			like_button: function(msg, top, index) {			
+				if (!window.location.href.match("archives")) {
 					var anchor = document.createElement('a');
 					var divider = document.createTextNode(" | ");
 					anchor.innerText = 'Like';
@@ -128,42 +134,47 @@ var messageList = {
 					anchor.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
 					anchor.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));					
 				}
-			},	
-			number_posts: function(msg, index, live) {
-				var top = msg.getElementsByClassName('message-top')[0];
+			},
+			
+			number_posts: function(msg, top, index) {
 				var page;
+				
 				if (!window.location.href.match(/page=/)) {
 					page = 1;
 				}
+				
 				else {
 					page = window.location.href.match(/page=(\d+)/)[1];
 				}
+				
 				var id = (index + (50 * (page - 1)));
+				
+				// Pad id with zeros so we always have a 4 digit number (0001, 0010, etc)
 				if (id < 1000)
 					id = "0" + id;
 				if (id < 100)
 					id = "0" + id;
 				if (id < 10)
 					id = "0" + id;
+				
 				var postNumber = document.createTextNode(' | #' + id);
 				top.appendChild(postNumber);
 			},
-			post_templates: function(msg, index) {
-				var top = msg.getElementsByClassName('message-top')[0];
-				var sep, sepIns, qr;
+			
+			post_templates: function(msg, top, index) {
 				var cDiv = document.createElement('div');
 				cDiv.style.display = 'none';
 				cDiv.id = 'cdiv';
 				document.body.appendChild(cDiv, null);
 				messageList.postEvent = document.createEvent('Event');
 				messageList.postEvent.initEvent('postTemplateInsert', true, true);
-				sep = document.createElement('span');
+				var sep = document.createElement('span');
 				sep.innerHTML = " | ";
 				sep.className = "post_template_holder";
-				sepIns = document.createElement('span');
+				var sepIns = document.createElement('span');
 				sepIns.className = 'post_template_opts';
 				sepIns.innerHTML = '[';
-				qr = document.createElement('a');
+				var qr = document.createElement('a');
 				qr.href = "##" + index;
 				qr.innerHTML = "&gt;"
 				qr.className = "expand_post_template";
@@ -171,102 +182,96 @@ var messageList = {
 				sepIns.innerHTML += ']';
 				sep.appendChild(sepIns);
 				top.appendChild(sep);
-			},	
-			userhl_messagelist: function(msg, index, live) {
+			},
+			
+			userhl_messagelist: function(msg, firstTop, index, live) {
 				if (!messageList.config.enable_user_highlight) {
 					return;
 				}
+				
 				var tops = msg.getElementsByClassName('message-top');
-				var first_top = msg.getElementsByClassName('message-top')[0];
+				
 				if (!messageList.config.no_user_highlight_quotes) {
-					try {
-						for (var k = 0; k < tops.length; k++) {
-							var top = tops[k];			
-								var user = top.getElementsByTagName('a')[0].innerHTML
-										.toLowerCase();
-							if (messageList.config.user_highlight_data[user]) {
-								if (messageList.config.debug) {
-									console.log('highlighting post by ' + user);
-								}
-								top.setAttribute('highlighted', true);								
-								top.style.background = '#'
-										+ messageList.config.user_highlight_data[user].bg;
-								top.style.color = '#'
+					
+					for (var k = 0; k < tops.length; k++) {
+						var top = tops[k];			
+						var user = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+						
+						if (messageList.config.user_highlight_data[user]) {
+
+							top.setAttribute('highlighted', true);								
+							top.style.background = '#'
+									+ messageList.config.user_highlight_data[user].bg;
+							top.style.color = '#'
+									+ messageList.config.user_highlight_data[user].color;
+									
+							var anchors = top.getElementsByTagName('a');
+							
+							for (var j = 0, len = anchors.length; j < len; j++) {
+								var anchor = anchors[j];
+								anchor.style.color = '#'
 										+ messageList.config.user_highlight_data[user].color;
-								var anchors = top.getElementsByTagName('a');
-								for (var j = 0, len = anchors.length; j < len; j++) {
-									var anchor = anchors[j];
-									anchor.style.color = '#'
-											+ messageList.config.user_highlight_data[user].color;
-								}
-								if (live && messageList.config.notify_userhl_post 
-										&& k == 0
-										&& msg.getElementsByClassName('message-top')[0]
-												.getElementsByTagName('a')[0].innerHTML != document
-												.getElementsByClassName('userbar')[0]
-												.getElementsByTagName('a')[0].innerHTML
-												.replace(/ \((\d+)\)$/, "")) {
-									chrome.runtime.sendMessage({
-										need: "notify",
-										message: document.title
-												.replace(/End of the Internet - /i, ''),
-										title: "Post by " + user
-									}, function(data) {
-										console.log(data);
-									});
-								}
+							}
+							
+							if (live && messageList.config.notify_userhl_post && k === 0
+									&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[1] != messageList.config.user_id) {
+												
+								chrome.runtime.sendMessage({
+									need: "notify",
+									message: document.title
+											.replace(/End of the Internet - /i, ''),
+									title: "Post by " + user
+								}, null);
+								
 							}
 						}
-					} catch (e) {
-						if (messageList.config.debug) {
-							console.log(e);
-						}
 					}
+					
 				}
+				
 				else {
-					user = first_top.getElementsByTagName('a')[0]
-							.innerHTML.toLowerCase();
+					user = firstTop.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+							
 					if (messageList.config.user_highlight_data[user]) {
-						if (messageList.config.debug) {
-							console.log('highlighting post by ' + user);
-						}
-						first_top.style.background = '#'
+						
+						firstTop.style.background = '#'
 								+ messageList.config.user_highlight_data[user].bg;
-						first_top.style.color = '#'
+						firstTop.style.color = '#'
 								+ messageList.config.user_highlight_data[user].color;
-						anchors = first_top.getElementsByTagName('a');
+								
+						anchors = firstTop.getElementsByTagName('a');
+						
 						for (var j = 0, len = anchors.length; j < len; j++) {
 							anchor = anchors[j];
 							anchor.style.color = '#'
 									+ messageList.config.user_highlight_data[user].color;
 						}
+						
 						if (live && messageList.config.notify_userhl_post
-								&& msg.getElementsByClassName('message-top')[0]
-										.getElementsByTagName('a')[0].innerHTML != document
-										.getElementsByClassName('userbar')[0]
-										.getElementsByTagName('a')[0].innerHTML
-										.replace(/ \((\d+)\)$/, "")) {
-							chrome.runtime.sendMessage({
+								&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[0] != messageList.config.user_id) {
+											
+							chrome.runtime.sendMessage({								
 								need: "notify",
 								message: document.title.replace(
 										/End of the Internet - /i, ''),
-								title: "Post by " + user
-							}, function(data) {
-								console.log(data);
-							});
+								title: "Post by " + user								
+							}, null);
+							
 						}				
 					}
 				}
 			},
-			foxlinks_quotes: function(msg) {
+			
+			foxlinks_quotes: function(msg, top) {
 				var color = "#" + messageList.config['foxlinks_quotes_color'];
 				var quotes = msg.getElementsByClassName('quoted-message');
-				if (!quotes.length) {
+				
+				if (!quotes) {
 					return;
 				}
-				var quote, top;
+
 				for (var i = 0, len = quotes.length; i < len; i++) {
-					quote = quotes[i];
+					var quote = quotes[i];
 					quot_msg_style = quote.style;
 					quot_msg_style.borderStyle = 'solid';
 					quot_msg_style.borderWidth = '2px';
@@ -276,7 +281,8 @@ var messageList = {
 					quot_msg_style.paddingBottom = '10px';
 					quot_msg_style.marginTop = '0px';
 					quot_msg_style.borderColor = color;
-					top = quote.getElementsByClassName('message-top')[0];
+					
+					// TODO: why the heck did I add this conditional
 					if (top) {
 						if (top.style.background == '') {
 							top.style.background = color;
@@ -288,7 +294,8 @@ var messageList = {
 						top.style.marginLeft = '-6px';
 					}
 				}
-			},		
+			},
+			
 			label_self_anon: function(msg) {
 				var tagList = document.getElementsByTagName('h2')[0];
 				if (tagList.innerHTML.indexOf('/topics/Anonymous') > -1) {
@@ -330,13 +337,15 @@ var messageList = {
 					}
 				}
 			},
-			autoscroll_livelinks: function(mutation, index, live) {
+			
+			autoscroll_livelinks: function(mutation, top, index, live) {
 				if (live && document.hidden 
 						&& messageList.autoscrollCheck(mutation) ) {
 					$.scrollTo(mutation);
 				}
 			},
-			autoscroll_livelinks_active: function(mutation, index, live) {
+			
+			autoscroll_livelinks_active: function(mutation, top, index, live) {
 				if (live && !document.hidden 
 						&& messageList.autoscrollCheck(mutation)) {
 							
@@ -352,7 +361,8 @@ var messageList = {
 					}, 850);
 				}
 			},
-			post_title_notification: function(mutation, index, live) {
+			
+			post_title_notification: function(mutation, top, index, live) {
 				if (live) {
 					if (mutation.style.display === "none") {
 						if (messageList.config.debug) {
@@ -380,20 +390,25 @@ var messageList = {
 					}
 				}
 			},
-			notify_quote_post: function(mutation, index, live) {
+			
+			notify_quote_post: function(mutation, top, index, live) {
 				if (live) {
+					
 					if (!mutation.getElementsByClassName('quoted-message')) {
 						return;
 					}
-					if (mutation.getElementsByClassName('message-top')[0]
-							.getElementsByTagName('a')[0].innerHTML == document
+					
+					if (top.getElementsByTagName('a')[0].innerHTML == document
 							.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
 							.replace(/ \((\d+)\)$/, "")) {
 						// dont notify when quoting own posts
 						return;
 					}
-					var notify = false;
+					
+					var shouldNotify = false;
+					
 					var msg = mutation.getElementsByClassName('quoted-message');
+					
 					for (var i = 0, len = msg.length; i < len; i++) {
 						if (msg[i].getElementsByClassName('message-top')[0]
 								.getElementsByTagName('a')[0].innerHTML == document
@@ -402,10 +417,11 @@ var messageList = {
 								/ \((.*)\)$/, "")) {
 							if (msg[i].parentNode.className != 'quoted-message')
 								// only display notification if user has been directly quoted
-								notify = true;
+								shouldNotify = true;
 						}
 					}
-					if (notify) {
+					
+					if (shouldNotify) {
 						chrome.runtime.sendMessage({
 							need: "notify",
 							title: "Quoted by "
@@ -949,16 +965,21 @@ var messageList = {
 			}
 		},
 		newPost: function(container) {
-			var index = document.getElementsByClassName('message-container').length;
-			var functions = this.functions.messagecontainer;
-			var live = true;
+			var top = container.getElementsByClassName('message-top')[0];
+			var index = document.getElementsByClassName('message-container').length;			
+			var functions = this.functions.messagecontainer;			
+			
 			var pm = '';
+			
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";
 			}
+			
 			for (var i in functions) {
 				if (this.config[i + pm]) {
-						functions[i](container, index, live);
+						// Fourth parameter signifies that we are dealing with livelinks post
+						// TODO: Refactor this
+						functions[i](container, top, index, true);
 				}
 			}
 			
@@ -969,13 +990,15 @@ var messageList = {
 				this.functions.misc.click_expand_thumbnail(container);
 			}
 			
-			var usernameElement = container.getElementsByClassName('message-top')[0].getElementsByTagName('a')[0];			
+			var usernameElement = top.getElementsByTagName('a')[0];
+			
+			// Add username_anchor class for user info popup mouseenter listener
 			if (usernameElement.innerHTML != 'Filter') {
 				usernameElement.className = 'username_anchor';
 			}
 					
 			if (!this.config.hide_ignorator_badge) {
-				// send updated ignorator data to background script
+				// Send updated ignorator data to background script
 				this.globalPort.postMessage({
 					action: 'ignorator_update',
 					ignorator: this.ignorated,
@@ -2305,42 +2328,49 @@ var messageList = {
 		var miscFunctions = this.functions.misc;
 		var config = this.config;
 		
-		// crude method to detect zoom level for image resizing - we don't need to be completely accurate
+		// Crude method to detect zoom level for image resizing - we don't need to be completely accurate
 		var screenWidth = window.screen.width;
 		var documentWidth = document.documentElement.clientWidth;
 		this.zoomLevel = screenWidth / documentWidth;	
 		
-		// call functions which modify infobar element
+		// Call functions which modify infobar element
 		for (var k in pageFunctions) {
 			if (config[k + pm]) {
 					pageFunctions[k]();
 			}
 		}
 		
-		// add archive quote buttons before highlights/post numbers are added
+		// Add archive quote buttons before highlights/post numbers are added
 		this.quote.addButtons();
 		
-		// iterate over first 5 message-containers (or fewer)
+		// Iterate over first 5 message-containers.
+		// TODO: do we really need to unroll this loop
 		var len;
+		
 		if (msgs.length < 4) {
 			len = msgs.length;
 		}
+		
 		else {
 			len = 4;
 		}
+		
+		// Iterate over message-containers, check config value and pass elements to each function
 		for (var j = 0; j < len; j++) {
 			var msg = msgs[j];
-			// iterate over functions in messageList
-			for (var k in postFunctions) {
+			var top = msg.getElementsByClassName('message-top')[0];
+
+			for (var k in postFunctions) {			
 				if (config[k + pm]) {
-					// pass msg and index value to function
-					postFunctions[k](msg, j + 1);
+					postFunctions[k](msg, top, j + 1);
 				}
 			}
 		}
-		var element = document.getElementsByTagName('h2')[0];
+		
+		var titleElement = document.getElementsByTagName('h2')[0];
+		
 		if (config.dramalinks && !config.hide_dramalinks_topiclist) {
-			dramalinks.appendTo(element);
+			dramalinks.appendTo(titleElement);
 			
 			// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
 			var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
@@ -2350,16 +2380,19 @@ var messageList = {
 		// page will appear to have been fully loaded by this point
 		if (len == 4) {
 			// iterate over rest of messages
-			for (var j = 4; msg = msgs[j]; j++) {
+			for (var j = 4, len = msgs.length; j < len; j++) {
+				var msg = msgs[j];
+				var top = msg.getElementsByClassName('message-top')[0];
+				
 				for (var k in postFunctions) {
 					if (config[k + pm]) {
-						postFunctions[k](msg, j + 1);
+						postFunctions[k](msg, top, j + 1);
 					}
 				}
 			}
 		}
 		
-		// pass updated ignorator data to background page
+		// Pass updated ignorator data to background page so we can update badge and popup menu
 		if (!this.config.hide_ignorator_badge) {
 			this.globalPort.postMessage({
 				action: 'ignorator_update',
@@ -2368,36 +2401,41 @@ var messageList = {
 			});
 		}
 		
-		// call functions which modify quickpost area
-		for (var i in quickpostFunctions) {
-			if (config[i + pm]) {
-				quickpostFunctions[i]();
-			}
-		}
-		
-		this.addCSSRules();		
-		
-		// Make sure that caret in quickpost-area has not been moved
-		var quickpostArea = document.getElementsByName('message')[0];
-		quickpostArea.setSelectionRange(0, 0);				
-		
-		// call functions that dont modify DOM
+		// Finish modifying visible DOM
 		for (var i in miscFunctions) {
 			if (config[i + pm]) {
 				miscFunctions[i]();
 			}
 		}
 		
-		// call functions that dont exist in posts/page/misc objects
+		// Call functions which modify quickpost-area (user probably won't see this)
+		for (var i in quickpostFunctions) {
+			if (config[i + pm]) {
+				quickpostFunctions[i]();
+			}
+		}
+		
+		// Add CSS rules for user info popup, etc
+		this.addCSSRules();
+		
+		// Make sure that caret in quickpost-area has not been moved
+		if (window.location.hostname !== 'archives.endoftheinter.net') {
+			var quickpostArea = document.getElementsByName('message')[0];
+			quickpostArea.setSelectionRange(0, 0);
+		}
+		
+		
+		// Check anchors for media links to embed, etc
 		this.links.check();
 		this.addListeners();
 		this.appendScripts();
 		
-		// add livelinks listeners 
+		// Add livelinks listeners	
 		this.livelinks.observe(document.getElementById('u0_1'), {
 				subtree: true,
 				childList: true
-		});		
+		});
+		
 		if (this.config.new_page_notify) {
 			this.newPage.observe(document.getElementById('nextpage'), {
 					attributes: true
