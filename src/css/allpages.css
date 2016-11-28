@@ -22,12 +22,12 @@
 	---------------------------------------------
 */
 
-#emoji_button {
+.emoji_button {
 	-webkit-user-select: none;
 	cursor: pointer;
 }
 
-#clear_emoji_history {
+.clear_emoji_history {
 	display: inline-block;
 	color: rgb(150, 150, 150);
 	margin: 5px;
@@ -42,7 +42,7 @@
 	font-size: 20px;
 }
 
-#emoji_menu {
+.emoji_menu {
 	position: fixed;
 	box-shadow: 5px 5px 7px black;
 	border-radius: 4px;
@@ -51,16 +51,16 @@
 	z-index: 999;
 }
 
-#emoji_selector {
+.emoji_selector {
 	margin: 0;
 }
  
-#emoji_selector_container {
+.emoji_selector_container {
 	background-color: #fff;
 	width: 100px;
 }
  
-#emoji_selector ul {
+.emoji_selector ul {
 	-webkit-user-select: none;
 	list-style-type: none;
 	margin: 0;
@@ -85,7 +85,7 @@
 	background-color: #d3d3d3;
 }
 
-#emoji_display {
+.emoji_display {
 	-webkit-user-select: none;
 	-webkit-box-align: stretch;
 	overflow-y: scroll;

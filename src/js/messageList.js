@@ -1025,16 +1025,6 @@ var messageList = {
 					imagemap.init();
 					evt.preventDefault();
 					return;
-
-				case 'emoji_button':
-					this.emojis.toggleMenu(evt);
-					evt.preventDefault();
-					return;
-
-				case 'clear_emoji_history':
-					this.emojis.clearHistory();
-					evt.preventDefault();
-					return;
 			}
 			
 			switch (evt.target.className) {		
@@ -1059,6 +1049,15 @@ var messageList = {
 			
 					return;
 					
+				case 'emoji_button':
+					this.emojis.toggleMenu(evt);
+					evt.preventDefault();
+					return;		
+
+				case 'clear_emoji_history':
+					this.emojis.clearHistory();
+					evt.preventDefault();
+					return;					
 			
 				case 'like_button':
 					this.likeButton.process(evt.target);
@@ -1989,15 +1988,14 @@ var messageList = {
 		
 		addMenu: function() {
 			var quickpostBody = document.getElementsByClassName('quickpost-body')[0];
-			var emojiMenu = document.createElement('span');
-			emojiMenu.className = 'clickable_span';
-			emojiMenu.id = 'emoji_button';
+			var emojiMenu = document.createElement('span');			
+			emojiMenu.className = 'emoji_button';
 			emojiMenu.innerHTML = ' 🙂 ';
 			quickpostBody.insertBefore(emojiMenu, quickpostBody.getElementsByTagName('textarea')[0]);
 		},
 		
 		toggleMenu: function(evt) {
-			var menu = document.getElementById('emoji_menu');
+			var menu = document.getElementsByClassName('emoji_menu')[0];
 			
 			if (menu) {
 				document.body.removeChild(menu);
@@ -2018,13 +2016,13 @@ var messageList = {
 			menu.style.height = (height * 0.4) + 'px';
 			menu.style.left = (width - (width * 0.975)) + 'px';
 			menu.style.top = (height - (height * 0.975)) + 'px';
-			menu.id = "emoji_menu";
+			menu.className = "emoji_menu";
 			
 			var selector = document.createElement('div');
-			selector.id = 'emoji_selector';
+			selector.className = 'emoji_selector';
 			
 			var selectorList = document.createElement('ul');
-			selectorList.id = 'emoji_selector_container';
+			selectorList.className = 'emoji_selector_container';
 			selectorList.append(document.createElement('br'));		
 			
 			for (var i = 0, len = this.categories.length; i < len; i++) {
@@ -2039,7 +2037,7 @@ var messageList = {
 			selector.appendChild(selectorList);
 			
 			var display = document.createElement('div'); 
-			display.id = 'emoji_display';
+			display.className = 'emoji_display';
 			
 			display.appendChild(document.createElement('br'));
 	
@@ -2054,6 +2052,64 @@ var messageList = {
 			else {
 				this.displayCategory('🔁');
 			}
+			
+			document.body.addEventListener('click', this.menuCloseIntentCheck);			
+		},
+		
+		menuCloseIntentCheck: function(evt) {
+			// Close popup if user clicks outside of emoji menu or quickpost area, 
+			// if they click the Post Message button, or if they close the quickpost area.
+			// We also have to account for clicks inside tag-div elements					
+
+			// Weird edge cases that we should ignore
+			if (evt.target.innerHTML === 'Your message must be at least 5 characters'
+					|| evt.target.innerHTML === 'Know the rules! Mouse over the tags to learn more.') {						
+				return;
+			}			
+						
+			var targetClass = evt.target.className;
+			
+			if (targetClass
+					&& !targetClass.match(/quickpost/)
+					&& !targetClass.match(/emoji/)
+					&& !targetClass.match(/tag/)
+					
+					|| targetClass === 'quickpost-nub'
+					|| targetClass === 'close') {							
+											
+				messageList.emojis.closeMenuFromListener();
+				return;
+			}
+			
+			var parent = evt.target.parentNode;			
+			
+			if (parent) {
+				var parentClass = evt.target.parentNode.className;
+			
+				if (!parentClass.match(/quickpost/) 
+						&& !parentClass.match(/emoji/)
+						&& !parentClass.match(/tag/)) {
+						
+					messageList.emojis.closeMenuFromListener();
+					return;
+				}
+			}
+			
+			if (evt.target.getAttribute('name') === 'post') {
+				messageList.emojis.closeMenuFromListener();
+				return;
+			}
+
+			if (targetClass === 'emoji_button') {
+				// Just remove the listener - toggleMenu() is called elsewhere				
+				document.body.removeEventListener('click', messageList.emojis.menuCloseIntentCheck);
+				return;
+			}	
+		},
+		
+		closeMenuFromListener: function() {
+			document.body.removeEventListener('click', messageList.emojis.menuCloseIntentCheck);
+			messageList.emojis.toggleMenu();			
 		},
 		
 		selectEmoji: function(evt) {
@@ -2100,12 +2156,12 @@ var messageList = {
 				
 			}, null);			
 			
-			var display = document.getElementById('emoji_display');
+			var display = document.getElementsByClassName('emoji_display')[0];
 			display.innerHTML = '<br>';
 			
 			var clear = document.createElement('span');
 			clear.innerHTML = 'Clear';
-			clear.id = 'clear_emoji_history';
+			clear.className = 'clear_emoji_history';
 			display.appendChild(clear);			
 		},				
 		
@@ -2116,7 +2172,7 @@ var messageList = {
 		},
 		
 		displayAll: function() {
-			var display = document.getElementById('emoji_display');
+			var display = document.getElementsByClassName('emoji_display')[0];
 			display.innerHTML = '<br>';
 			
 			for (var i = 0, len = this.categories.length; i < len; i++) {
@@ -2138,7 +2194,7 @@ var messageList = {
 		},
 		
 		displayCategory: function(type) {
-			var display = document.getElementById('emoji_display');
+			var display = document.getElementsByClassName('emoji_display')[0];
 			display.innerHTML = '<br>';
 			
 			var selectedType = document.getElementById(type);
@@ -2157,7 +2213,7 @@ var messageList = {
 			if (type === '🔁') {
 				var clear = document.createElement('span');
 				clear.innerHTML = 'Clear';
-				clear.id = 'clear_emoji_history';
+				clear.className = 'clear_emoji_history';
 				fragment.appendChild(clear);
 			}
 			
