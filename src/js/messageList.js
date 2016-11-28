@@ -2378,8 +2378,24 @@ var messageList = {
 			var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});								
 			var textToInsert = quotedMessage + '\n' + likeMessage;
 			
-			// Insert like message at caret position
-			var caret = quickreply.selectionStart;
+			// If no other text has been added before sig belt, always insert text at beginning of textarea.
+			// Fixes https://github.com/sonicmax/ChromeLL-2.0/issues/74
+			var caret;
+						
+			// Check whether any text has been inserted before sig belt.
+			// If user doesn't have a sig, it will always be inserted at caret position
+			if (quickreply.value) {
+				var message = quickreply.value.split('\n---')[0];
+				if (message[0] === undefined) {
+					// Insert at 0
+					caret = 0;
+				}								
+			}
+			
+			if (caret !== 0) {
+				// We can insert like message at caret position
+				caret = quickreply.selectionStart;
+			}			
 			
 			quickreply.value = quickreply.value.substring(0, caret) 
 					+ textToInsert 
