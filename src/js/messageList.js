@@ -510,23 +510,24 @@ var messageList = {
 				anchor.addEventListener('click', messageList.spoilers.find);		
 			}
 		},
-		quickpostbody: {		
+		
+		quickpostbody: {
+		
 			quick_imagemap: function() {
 				var quickpost = document.getElementsByClassName('quickpost-body')[0];
-				if (quickpost) {
-					var button = document.createElement('button');
-					var divider = document.createTextNode(' ');
-					var search = document.createElement('input');
-					button.textContent = "Browse Imagemap";					
-					button.id = "quick_image";
-					search.placeholder = "Search Imagemap...";
-					search.id = "image_search";
-					quickpost.appendChild(divider);
-					quickpost.appendChild(button);
-					quickpost.appendChild(divider);
-					quickpost.appendChild(search);
-				}
+				var button = document.createElement('button');
+				var divider = document.createTextNode(' ');
+				var search = document.createElement('input');
+				button.textContent = "Browse Imagemap";					
+				button.id = "quick_image";
+				search.placeholder = "Search Imagemap...";
+				search.id = "image_search";
+				quickpost.appendChild(divider);
+				quickpost.appendChild(button);
+				quickpost.appendChild(divider);
+				quickpost.appendChild(search);
 			},
+			
 			post_before_preview: function() {
 				var inputs = document.getElementsByClassName('quickpost-body')[0]
 						.getElementsByTagName('input');
@@ -544,7 +545,8 @@ var messageList = {
 				}
 				post.parentNode.removeChild(post);
 				preview.parentNode.insertBefore(post, preview);
-			},	
+			},
+			
 			batch_uploader: function() {
 				var quickpost_body = document.getElementsByClassName('quickpost-body')[0];
 				var ulBox = document.createElement('input');
@@ -558,124 +560,124 @@ var messageList = {
 				quickpost_body.insertBefore(ulBox, null);
 				quickpost_body.insertBefore(ulButton, ulBox);
 			},
+			
 			quickpost_on_pgbottom: function() {
 				chrome.runtime.sendMessage({
 					need: "insertcss",
 					file: "src/css/quickpost_on_pgbottom.css"
 				});
 			},
+			
 			quickpost_tag_buttons: function() {
-				if (!window.location.href.match('archives')) {
-					var m = document.getElementsByClassName('quickpost-body')[0];
-					var txt = document.getElementById('u0_13');
-					var insM = document.createElement('input');
-					insM.value = 'Mod';
-					insM.name = 'Mod';
-					insM.type = 'button';
-					insM.id = 'mod';
-					insM.addEventListener("click", messageList.qpTagButton, false);
-					var insA = document.createElement('input');
-					insA.value = 'Admin';
-					insA.name = 'Admin';
-					insA.type = 'button';
-					insA.addEventListener("click", messageList.qpTagButton, false);
-					insA.id = 'adm';
-					var insQ = document.createElement('input');
-					insQ.value = 'Quote';
-					insQ.name = 'Quote';
-					insQ.type = 'button';
-					insQ.addEventListener("click", messageList.qpTagButton, false);
-					insQ.id = 'quote';
-					var insS = document.createElement('input');
-					insS.value = 'Spoiler';
-					insS.name = 'Spoiler';
-					insS.type = 'button';
-					insS.addEventListener("click", messageList.qpTagButton, false);
-					insS.id = 'spoiler';
-					var insP = document.createElement('input');
-					insP.value = 'Preformated';
-					insP.name = 'Preformated';
-					insP.type = 'button';
-					insP.addEventListener("click", messageList.qpTagButton, false);
-					insP.id = 'pre';
-					var insU = document.createElement('input');
-					insU.value = 'Underline';
-					insU.name = 'Underline';
-					insU.type = 'button';
-					insU.addEventListener("click", messageList.qpTagButton, false);
-					insU.id = 'u';
-					var insI = document.createElement('input');
-					insI.value = 'Italic';
-					insI.name = 'Italic';
-					insI.type = 'button';
-					insI.addEventListener("click", messageList.qpTagButton, false);
-					insI.id = 'i';
-					var insB = document.createElement('input');
-					insB.value = 'Bold';
-					insB.name = 'Bold';
-					insB.type = 'button';
-					insB.addEventListener("click", messageList.qpTagButton, false);
-					insB.id = 'b';
-					m.insertBefore(insM, m.getElementsByTagName('textarea')[0]);
-					m.insertBefore(insQ, insM);
-					m.insertBefore(insS, insQ);
-					m.insertBefore(insP, insS);
-					m.insertBefore(insU, insP);
-					m.insertBefore(insI, insU);
-					m.insertBefore(insB, insI);
-					m.insertBefore(document.createElement('br'), insB);
-				}
-			},
-			drop_batch_uploader: function() {
-				if (window.location.href.indexOf('postmsg.php') > -1 
-				|| window.location.hostname.indexOf("archives") > -1) {
-					return;
-				}
-				var quickreply = document.getElementsByTagName('textarea')[0];
-				quickreply
-						.addEventListener(
-								'drop',
-								function(evt) {
-									evt.preventDefault();
-									if (evt.dataTransfer.files.length == 0) {
-										console.log(evt);
-										return;
-									}
-									document.getElementsByClassName('quickpost-body')[0]
-											.getElementsByTagName('b')[0].innerHTML += " (Uploading: 1/"
-											+ evt.dataTransfer.files.length + ")";
-									allPages.asyncUpload(evt.dataTransfer.files);
-								});
+				var m = document.getElementsByClassName('quickpost-body')[0];
+				var txt = document.getElementById('u0_13');
+				var insM = document.createElement('input');
+				insM.value = 'Mod';
+				insM.name = 'Mod';
+				insM.type = 'button';
+				insM.id = 'mod';
+				insM.addEventListener("click", messageList.qpTagButton, false);
+				var insA = document.createElement('input');
+				insA.value = 'Admin';
+				insA.name = 'Admin';
+				insA.type = 'button';
+				insA.addEventListener("click", messageList.qpTagButton, false);
+				insA.id = 'adm';
+				var insQ = document.createElement('input');
+				insQ.value = 'Quote';
+				insQ.name = 'Quote';
+				insQ.type = 'button';
+				insQ.addEventListener("click", messageList.qpTagButton, false);
+				insQ.id = 'quote';
+				var insS = document.createElement('input');
+				insS.value = 'Spoiler';
+				insS.name = 'Spoiler';
+				insS.type = 'button';
+				insS.addEventListener("click", messageList.qpTagButton, false);
+				insS.id = 'spoiler';
+				var insP = document.createElement('input');
+				insP.value = 'Preformated';
+				insP.name = 'Preformated';
+				insP.type = 'button';
+				insP.addEventListener("click", messageList.qpTagButton, false);
+				insP.id = 'pre';
+				var insU = document.createElement('input');
+				insU.value = 'Underline';
+				insU.name = 'Underline';
+				insU.type = 'button';
+				insU.addEventListener("click", messageList.qpTagButton, false);
+				insU.id = 'u';
+				var insI = document.createElement('input');
+				insI.value = 'Italic';
+				insI.name = 'Italic';
+				insI.type = 'button';
+				insI.addEventListener("click", messageList.qpTagButton, false);
+				insI.id = 'i';
+				var insB = document.createElement('input');
+				insB.value = 'Bold';
+				insB.name = 'Bold';
+				insB.type = 'button';
+				insB.addEventListener("click", messageList.qpTagButton, false);
+				insB.id = 'b';
+				m.insertBefore(insM, m.getElementsByTagName('textarea')[0]);
+				m.insertBefore(insQ, insM);
+				m.insertBefore(insS, insQ);
+				m.insertBefore(insP, insS);
+				m.insertBefore(insU, insP);
+				m.insertBefore(insI, insU);
+				m.insertBefore(insB, insI);
+				m.insertBefore(document.createElement('br'), insB);
 			},
 			
-			snippet_listener: function() {
-				
-				if (window.location.hostname.indexOf("archives") == -1) {
-					
-					var ta = document.getElementsByName('message')[0];
-					
-					ta.addEventListener('keydown', (event) => {
-						
-						if (messageList.config.snippet_alt_key) {
-							if (event.shiftKey == true
-									&& event.key == 'Tab') {
-								event.preventDefault();
-								messageList.snippet.handler(ta.value, ta.selectionStart);				
-							}
-						}
-						
-						else {
-							if (event.key == 'Tab') {
-								event.preventDefault();
-								messageList.snippet.handler(ta.value, ta.selectionStart);
-							}
-						}
-						
-					});
+			drop_batch_uploader: function() {
+				// TODO: Fix this on postmsg.php
+				if (window.location.pathname === "/postmsg.php") {
+					return;
 				}
+				
+				var quickreply = document.getElementsByTagName('textarea')[0];
+				
+				quickreply.addEventListener('drop', (evt) => {
+					
+					evt.preventDefault();
+					
+					if (evt.dataTransfer.files.length == 0) {
+						console.log(evt);
+						return;
+					}
+					
+					var text = " (Uploading: 1/" + evt.dataTransfer.files.length + ")";
+					document.getElementsByClassName('quickpost-body')[0].getElementsByTagName('b')[0].innerHTML += text;
+							
+					allPages.asyncUpload(evt.dataTransfer.files);
+					
+				});
+			},
+			
+			snippet_listener: function() {			
+				var ta = document.getElementsByName('message')[0];
+				
+				ta.addEventListener('keydown', (event) => {
+					
+					if (messageList.config.snippet_alt_key) {
+						if (event.shiftKey == true
+								&& event.key == 'Tab') {
+							event.preventDefault();
+							messageList.snippet.handler(ta.value, ta.selectionStart);				
+						}
+					}
+					
+					else {
+						if (event.key == 'Tab') {
+							event.preventDefault();
+							messageList.snippet.handler(ta.value, ta.selectionStart);
+						}
+					}
+					
+				});
 			},
 
-			emoji_menu: function() {
+			emoji_menu: function() {			
 				messageList.emojis.addMenu();
 			}
 		},
@@ -2709,12 +2711,14 @@ var messageList = {
 			if (config[i + pm]) {
 				miscFunctions[i]();
 			}
-		}
+		}				
 		
-		// Call functions which modify quickpost-area (user probably won't see this)
-		for (var i in quickpostFunctions) {
-			if (config[i + pm]) {
-				quickpostFunctions[i]();
+		if (document.getElementsByClassName('quickpost').length > 0) {		
+			// Call functions which modify quickpost-area (user probably won't see this)
+			for (var i in quickpostFunctions) {
+				if (config[i + pm]) {
+					quickpostFunctions[i]();
+				}
 			}
 		}
 		
