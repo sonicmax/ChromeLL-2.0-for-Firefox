@@ -2086,7 +2086,8 @@ var messageList = {
 			if (parent) {
 				var parentClass = evt.target.parentNode.className;
 			
-				if (!parentClass.match(/quickpost/) 
+				if (parentClass
+						&& !parentClass.match(/quickpost/) 
 						&& !parentClass.match(/emoji/)
 						&& !parentClass.match(/tag/)) {
 						
