@@ -2713,23 +2713,21 @@ var messageList = {
 			}
 		}				
 		
-		if (document.getElementsByClassName('quickpost').length > 0) {		
+		if (document.getElementsByClassName('quickpost').length > 0) {
 			// Call functions which modify quickpost-area (user probably won't see this)
 			for (var i in quickpostFunctions) {
 				if (config[i + pm]) {
 					quickpostFunctions[i]();
 				}
 			}
+			
+			// Make sure that caret in quickpost area has not been moved
+			var quickpostArea = document.getElementsByName('message')[0];
+			quickpostArea.setSelectionRange(0, 0);		
 		}
 		
 		// Add CSS rules for user info popup, etc
 		this.addCSSRules();
-		
-		// Make sure that caret in quickpost-area has not been moved
-		if (window.location.hostname !== 'archives.endoftheinter.net') {
-			var quickpostArea = document.getElementsByName('message')[0];
-			quickpostArea.setSelectionRange(0, 0);
-		}
 		
 		// Check anchors for media links to embed, etc
 		this.links.check();
