@@ -2013,6 +2013,11 @@ var messageList = {
 			var width = window.innerWidth;
 			var height = window.innerHeight;
 			
+			// Create close button
+			var close = document.createElement('div');
+			close.id = "close_options";
+			close.className = 'close';
+			
 			// Style main div			
 			menu.style.width = (width * 0.95) + 'px';
 			menu.style.height = (height * 0.4) + 'px';
@@ -2042,7 +2047,8 @@ var messageList = {
 			display.className = 'emoji_display';
 			
 			display.appendChild(document.createElement('br'));
-	
+			
+			menu.appendChild(close);
 			menu.appendChild(selector);
 			menu.appendChild(display);
 			document.body.appendChild(menu);
