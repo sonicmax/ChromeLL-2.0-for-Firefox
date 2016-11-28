@@ -38,7 +38,8 @@
 .emoji {
 	display: inline-block;
 	cursor: pointer;
-	margin: 5px;	
+	margin: 5px;
+	font-size: 20px;
 }
 
 #emoji_menu {
