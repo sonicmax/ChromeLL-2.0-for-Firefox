@@ -262,7 +262,7 @@ var messageList = {
 				}
 			},
 			
-			foxlinks_quotes: function(msg, top) {
+			foxlinks_quotes: function(msg) {
 				var color = "#" + messageList.config['foxlinks_quotes_color'];
 				var quotes = msg.getElementsByClassName('quoted-message');
 				
@@ -282,7 +282,8 @@ var messageList = {
 					quot_msg_style.marginTop = '0px';
 					quot_msg_style.borderColor = color;
 					
-					// TODO: why the heck did I add this conditional
+					var top = quote.getElementsByClassName('message-top')[0];
+					
 					if (top) {
 						if (top.style.background == '') {
 							top.style.background = color;
