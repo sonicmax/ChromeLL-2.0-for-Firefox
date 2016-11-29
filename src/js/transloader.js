@@ -85,8 +85,13 @@ function imageTransloader(info, rename) {
 		
 		else {
 			// It's possible for originalExtension to be null - in this case, we let ETI handle the file extension.
-			// (ETI also corrects extensions that don't match the file format)			
-			filename = newFilename + originalExtension;
+			// (ETI also corrects extensions that don't match the file format)
+			if (originalExtension) {
+				filename = newFilename + originalExtension;
+			}
+			else {
+				filename = newFilename;
+			}
 		}
 	}
 	
