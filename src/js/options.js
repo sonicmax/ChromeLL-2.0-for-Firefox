@@ -882,7 +882,6 @@ var options = {
 			options.imageCache.open(function() {
 			
 				chrome.runtime.sendMessage({ need: 'getSizeInBytes' }, (bytes) => {
-					console.log(bytes);
 					// Convert bytes to MB and round to 2 decimal places							
 					var megabytes = Math.round(bytes / 1048576 * 100) / 100;
 					document.getElementById('cache_size').innerHTML =	megabytes;
