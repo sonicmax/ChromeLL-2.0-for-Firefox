@@ -72,20 +72,19 @@ function imageTransloader(info, rename) {
 			var newExtension = newFilename.match(/\.(gif|jpg|png)$/i)[0];
 			
 			// Make sure that new filename has correct extension			
-			if (newExtension != originalExtension) {				
+			if (originalExtension && newExtension != originalExtension) {
 				newFilename = newFilename.replace(newExtension, originalExtension);
 				filename = newFilename;
 			}
 			
-			else if (newExtension == originalExtension) {
+			else {
 				filename = newFilename;
 			}
 			
 		}
 		
 		else {
-			// It's possible for originalExtension to be null - in this case, we let ETI handle the file extension.
-			// (ETI also corrects extensions that don't match the file format)
+			// If originalExtension is undefined, we let ETI handle the file extension.
 			if (originalExtension) {
 				filename = newFilename + originalExtension;
 			}
