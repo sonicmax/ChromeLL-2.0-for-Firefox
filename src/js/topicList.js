@@ -276,32 +276,21 @@ var topicList = {
 		}
 	},
 	prepareArrays: function() {
-		
 		if (this.config.ignorator_list) {
-			
-			this.ignoredUsers = this.config.ignorator_list.split(',');
-			
-			for (var i = 0, len = this.ignoredUsers.length; i < len; i++) {
-				this.ignoredUsers[i] = this.ignoredUsers[i].trim();
-			}	
+			this.ignoredUsers = this.config.ignorator_list.split(',').map((user) => {
+				return user.trim(); 
+			});
 			
 			if (this.config.ignorator_allow_topics && this.config.ignorator_topic_whitelist) {
 				
-				var whitelist = this.config.ignorator_topic_whitelist.split(',');
-
-				for (var i = 0, len = whitelist.length; i < len; i++) {
-					whitelist[i] = whitelist[i].trim();
-				}
+				var whitelist = this.config.ignorator_topic_whitelist.split(',').map((user) => { 
+					return user.trim().toLowerCase(); 
+				});
 				
-				// Iterate backwards over ignorator list and remove any whitelisted users
-				for (var i = this.ignoredUsers.length - 1; i >= 0; i--) {				
-					for (var j = 0, len = whitelist.length; j < len; j++) {	
-						if (whitelist[j].toLowerCase() == this.ignoredUsers[i].toLowerCase()) {
-							this.ignoredUsers.splice(i, 1);
-						}
-					}
-				}			
-			}			
+				this.ignoredUsers = this.ignoredUsers.filter((user) => {		
+					return (whitelist.indexOf(user.toLowerCase()) === -1);				
+				});
+			}	
 		}
 		
 		if (this.config.ignore_keyword_list) {
