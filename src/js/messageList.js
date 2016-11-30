@@ -1085,11 +1085,23 @@ var messageList = {
 					return;
 					
 				case 'youtube':
+					if (evt.target.tagName === 'DIV') {
+						evt.preventDefault();
+					}
+					// Prevent [Embed] links from remaining on screen if user navigates to the YouTube link					
+					this.youtube.hideEmbedLink();
+					return;
+				
 				case 'gfycat':
 					if (evt.target.tagName === 'DIV') {
 						evt.preventDefault();
 					}
 					return;
+					
+				case 'embed':
+					this.youtube.embed(evt.target.parentNode);
+					evt.preventDefault();
+					return;					
 
 				case 'emoji_type':
 					this.emojis.switchType(evt);
@@ -1103,12 +1115,7 @@ var messageList = {
 			}
 			
 			if (evt.target.parentNode) {
-				switch (evt.target.parentNode.className) {
-					case 'embed':
-						this.youtube.embed(evt.target.parentNode);
-						evt.preventDefault();
-						return;
-					
+				switch (evt.target.parentNode.className) {					
 					case 'hide':
 						this.youtube.hide(evt.target.parentNode);
 						evt.preventDefault();
@@ -1126,21 +1133,28 @@ var messageList = {
 		mouseenter: function(evt) {
 			if (evt.target.className == 'like_button' && this.config.custom_like_button) {
 				this.cachedEvent = evt;
-				this.menuDebouncer = setTimeout(
-						this.likeButton.showOptions.call(this.likeButton), 250);
-				// evt.preventDefault();
+				this.menuDebouncer = setTimeout(this.likeButton.showOptions.bind(this.likeButton), 250);
 			}
+			
 			else if (evt.target.className == 'username_anchor' && this.config.user_info_popup) {
 				allPages.cachedEvent = evt;
 				this.popupDebouncer = setTimeout(allPages.popup.handler.bind(allPages.popup), 750);
 			}
+			
+			else if (evt.target.className == 'youtube' && this.config.embed_on_hover) {
+				this.youtube.debouncerId = setTimeout(this.youtube.showEmbedLink.bind(this.youtube, evt), 400);				
+			}
 		},
-		mouseleave: function(evt) {
+		mouseleave: function(evt) {			
+			clearTimeout(this.youtube.debouncerId);
 			clearTimeout(this.menuDebouncer);
 			clearTimeout(this.popupDebouncer);
 			if (document.getElementById('hold_menu')) {
 				this.likeButton.hideOptions();
 				evt.preventDefault();
+			}
+			if (evt.target.className === 'youtube') {
+				this.youtube.hideEmbedLink();
 			}
 		},
 		keydown: function(evt) {
@@ -1463,10 +1477,39 @@ var messageList = {
 		}
 	},
 	youtube: {
+		debouncerId: '',
+		showEmbedLink: function(evt) {
+			var target = evt.target;
+			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;
+			var anchor = document.createElement('a');
+			anchor.id = target.id;
+			anchor.className = 'embed';
+			anchor.href = '#embed';
+			anchor.style.backgroundColor = backgroundColor;
+			anchor.style.display = 'inline';
+			anchor.style.position = 'absolute';
+			anchor.style.zIndex = 1;
+			anchor.style.fontWeight = 'bold';
+			anchor.innerHTML = '&nbsp[Embed]';
+			
+			target.appendChild(anchor);
+		},
+		
+		hideEmbedLink: function() {
+			if (document.getElementsByClassName('embed').length > 0) {
+				var embedLink = document.getElementsByClassName('embed')[0];
+				embedLink.parentNode.removeChild(embedLink);
+			}
+			else if (document.getElementsByClassName('hide').length > 0) {
+				var embedLink = document.getElementsByClassName('hide')[0];
+				embedLink.parentNode.removeChild(embedLink);
+			}
+		},
+		
 		embed: function(anchor) {
 			var toEmbed = document.getElementById(anchor.id);
 			if (toEmbed.className == "youtube") {
-				var color = $("table.message-body tr td.message").css("background-color");		
+				var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;	
 				var videoCode;
 				var embedHTML;
 				var href = toEmbed.href;
@@ -1506,14 +1549,15 @@ var messageList = {
 					}
 					videoCode += "?start=" + seconds + "'";
 				}				
-				embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + color + ";'>" 
+				embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + backgroundColor + ";'>" 
 									+ "<a id='" + anchor.id + "' class='hide' href='#hide'>&nbsp<b>[Hide]</b></a></span>" 
 									+ "<br><div class='youtube'>" 
 									+ "<iframe id='" + "yt" + anchor.id + "' type='text/html' width='640' height='390'" 
 									+ "src='https://www.youtube.com/embed/" + videoCode 
 									+ "'?autoplay='0' frameborder='0' allowfullscreen='allowfullscreen'/>" 
 									+ "</div>";
-				$(toEmbed).find("span:last").remove();
+									
+				this.hideEmbedLink();
 				toEmbed.className = "hideme";
 				toEmbed.innerHTML += embedHTML;
 			}
@@ -1903,12 +1947,17 @@ var messageList = {
 			return false;
 		}
 	},
-	links: {
-
+	
+	links: {		
 		check: function(msg) {
 			var target = msg || document;
+			
 			var links = target.getElementsByClassName("l");
-			var checkedLinks = {};
+			
+			if (!links) {
+				return;
+			}
+			
 			var i = links.length;
 			var ytRegex = /youtube|youtu.be/;
 			var videoCodeRegex = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -1916,37 +1965,20 @@ var messageList = {
 			while (i--) {
 				var link = links[i];
 				
-				if (messageList.config.embed_on_hover && link.href.match(ytRegex) && link.href.match(videoCodeRegex)) {						
+				if (messageList.config.embed_on_hover && link.href.match(ytRegex) && link.href.match(videoCodeRegex)) {				
 					link.className = "youtube";
 					// give each video link a unique id for embed/hide functions
 					link.id = link.href + "&" + i;
-					// attach event listener						
-					$(link).hoverIntent(
-						function() {
-							var color = $("table.message-body tr td.message").css("background-color");
-							if (this.className == "youtube") {
-								// TODO - create this element without html strings
-								$(this).append($("<span style='display: inline; position: absolute; z-index: 1; left: 100; " 
-										+ "background: " + color 
-										+ ";'><a id='" + this.id 
-										+ "' class='embed' href=#embed'>&nbsp<b>[Embed]</b></a></span>"));
-							}
-						}, function() {							
-							if (this.className == "youtube") {
-								$(this).find("span").remove();
-							}
-						}
-					);
+					link.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
+					link.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));
 				}
 				
-				else if (link.title.indexOf("gfycat.com/") > -1) {			
-					if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
-						link.className = "gfycat";
-						if (messageList.config.embed_gfycat_thumbs 
-								|| link.parentNode.className == "quoted-message") {
-							link.setAttribute('name', "gfycat_thumb");
-						}
-					}
+				else if ((messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) && link.title.indexOf("gfycat.com/") > -1) {
+					link.className = "gfycat";
+					if (messageList.config.embed_gfycat_thumbs 
+							|| link.parentNode.className == "quoted-message") {
+						link.setAttribute('name', "gfycat_thumb");
+					}					
 				}
 			}
 			
