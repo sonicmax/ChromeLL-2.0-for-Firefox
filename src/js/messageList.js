@@ -1183,32 +1183,32 @@ var messageList = {
 			for (var i = 0, len = gfycats.length; i < len; i++) {
 				var gfycat = gfycats[i];			
 				var position = gfycat.getBoundingClientRect();
+				var nameAttribute = gfycat.getAttribute('name');
 				// use window height + 200 to increase visibility of gfycatLoader
 				if (position.top > height + 200 || position.bottom < 0) {
 							
-					if (gfycat.getAttribute('name') == 'embedded'
-						|| gfycat.getAttribute('name') == 'embedded_thumb') {
+					if (nameAttribute == 'embedded' || nameAttribute == 'embedded_thumb') {
 							
 						if (!gfycat.getElementsByTagName('video')[0].paused) {
 							// pause hidden video elements to reduce CPU load
-							gfycat.getElementsByTagName('video')[0].pause();	
+							gfycat.getElementsByTagName('video')[0].pause();							
 						}
 					}
 				}
 				
 				else if (gfycat.tagName == 'A') {
-					if (gfycat.getAttribute('name') == 'gfycat_thumb') {
+					if (nameAttribute == 'gfycat_thumb') {
 						messageList.gfycat.thumbnail(gfycat);
 					} else {
 						messageList.gfycat.placeholder(gfycat);
 					}
 				}
 				
-				else if (gfycat.getAttribute('name') == 'placeholder') {
+				else if (nameAttribute == 'placeholder') {
 					messageList.gfycat.embed(gfycat);
 				}
 				
-				else if (gfycat.getAttribute('name') == 'embedded'
+				else if (nameAttribute == 'embedded'
 						&& gfycat.getElementsByTagName('video')[0].paused) {
 					gfycat.getElementsByTagName('video')[0].play();
 				}
@@ -1219,8 +1219,8 @@ var messageList = {
 			var code = splitURL.join('/');
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", window.location.protocol + '//gfycat.com/cajax/get/' + code, true);
-			xhr.onreadystatechange = function() {
-				if (xhr.readyState == 4 && xhr.status == 200) {
+			xhr.onload = function() {
+				if (xhr.status == 200) {
 					var apiData = {};
 					// gfycat api provides width, height, & webm url
 					var response = JSON.parse(xhr.responseText);
