@@ -1162,16 +1162,23 @@ var messageList = {
 			}
 		},
 		keydown: function(evt) {
-			if (evt.keyCode === 13 && document.activeElement.id === 'image_search') {
-				imagemap.search.init.call(imagemap.search);
-				evt.preventDefault();
+			const RETURN_KEY = 13;
+			
+			if (document.activeElement.id === 'image_search') {
+				if (evt.keyCode === RETURN_KEY) {
+					imagemap.search.init.call(imagemap.search);
+					evt.preventDefault();
+				}
+				else if (messageList.config.auto_image_search) {
+					this.searchDebouncer = setTimeout(this.likeButton.showOptions.call(this.likeButton), 400);
+				}
 			}
 		},
 		search: function() {
 			clearTimeout(this.imagemapDebouncer);
 			
 			this.imagemapDebouncer = setTimeout(() => {
-				
+								
 				if (document.getElementById('search_results')) {			
 					imagemap.search.init.call(imagemap.search);
 				}
