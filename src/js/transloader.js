@@ -135,18 +135,31 @@ function imageTransloader(info, rename) {
 				xhr.onload = () => {
 					
 					if (xhr.status === 200) {
-						// Parse response
-						var html = document.createElement('html');
-						html.innerHTML = xhr.responseText;
+						var responseText = xhr.responseText;
+						var value;
 						
-						try {							
-							var value = html
-								.getElementsByClassName('img')[0]
-								.getElementsByTagName('input')[0].value;
-								
+						try {
+							// Spooky HTML regex. The 1st group contains the string we are looking for
+							var valueRegex = /<input value="(<img src=&quot;+.+&quot;\s\/>)"/;
+							var matches = responseText.match(valueRegex);
+							value = matches[1].replace(/&quot;/g, '"');
+							
 						} catch (e) {
-							console.log("Error in response", html.innerHTML);
-							return;
+							console.log('Error in spooky HTML regex:', e);
+							
+							try {
+								// This method is not ideal as Chrome will try to load these images using the
+								// chrome-extension: protocol, throwing multiple errors. But it's preferable 
+								// to doing nothing
+								
+								var html = document.createElement('html');
+								html.innerHTML = responseText;
+								value = html.getElementsByClassName('img')[0].getElementsByTagName('input')[0].value;
+								
+							} catch (e2) {
+								console.log('Error parsing HTML:', e2);
+								return;
+							}
 						}
 						
 						// Copy img code to clipboard
