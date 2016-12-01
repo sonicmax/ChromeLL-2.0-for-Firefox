@@ -1,6 +1,6 @@
 var messageList = {
 	config: [],
-	ignoredUsers: {},
+	ignoredUsers: [],
 	autoscrolling: false,
 	imagemapDebouncer: '',
 	menuDebouncer: '',
