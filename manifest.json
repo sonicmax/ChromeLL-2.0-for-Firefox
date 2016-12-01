@@ -69,11 +69,6 @@
     "js": ["src/js/search.js"]
   },
 	{
-		"matches": ["*://wiki.endoftheinter.net/*"],
-		"js": ["src/js/wiki.js"],
-		"run_at" : "document_end"
-	},
-	{
 		"matches": ["*://endoftheinter.net/token.php?*"],
 		"js": ["src/js/tokenhelper.js"],
 		"run_at": "document_end"
