@@ -193,6 +193,7 @@ var messageList = {
 				
 				if (!messageList.config.no_user_highlight_quotes) {
 					
+					// Note: don't cache length property, it will break
 					for (var k = 0; k < tops.length; k++) {
 						var top = tops[k];			
 						var user = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
@@ -217,10 +218,11 @@ var messageList = {
 									&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[1] != messageList.config.user_id) {
 												
 								chrome.runtime.sendMessage({
+									
 									need: "notify",
-									message: document.title
-											.replace(/End of the Internet - /i, ''),
-									title: "Post by " + user
+									message: document.title.replace(/End of the Internet - /i, ''),
+									title: "Post by " + top.getElementsByTagName('a')[0].innerHTML
+									
 								}, null);
 								
 							}
