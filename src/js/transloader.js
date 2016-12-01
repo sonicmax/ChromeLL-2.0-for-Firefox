@@ -7,12 +7,6 @@ function imageTransloader(info, rename) {
 	
 	var filename = url.substring(url.lastIndexOf('/') + 1);	
 	
-	// Debugging for issue 66 https://github.com/sonicmax/ChromeLL-2.0/issues/66
-	console.log('Menu event:', info);
-	console.log('Rename flag:', rename);
-	console.log('Captured URL:', url);
-	console.log('Filename:', filename);
-	
 	// Make sure that filename isn't empty
 	if (!filename) {
 		filename = "untitled.jpg";

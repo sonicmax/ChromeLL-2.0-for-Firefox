@@ -29,8 +29,10 @@ var background = {
 		for (var i in allBg.activeListeners) {
 			// sets listeners for force_https, batch_uploader, etc
 			allBg.activeListeners[i] = this.config[i];
-			console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
-		}	
+			if (this.config.debug) {
+				console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
+			}
+		}
 		allBg.init_listener(this.config);	
 		this.addListeners();
 		this.checkVersion();
@@ -85,10 +87,8 @@ var background = {
 			database.open(database.convertCache);
 			
 			// Save the config, in case it was updated.
-			console.log('old version:', background.config.image_cache_version);
 			background.config.image_cache_version = 2;
-			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
-			console.log('new version:', JSON.parse(localStorage['ChromeLL-Config']).image_cache_version);			
+			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);	
 		}
 		
 		else {		
@@ -653,9 +653,6 @@ var background = {
 						this.noIgnores = true;
 					}
 					break;
-				default:
-					console.log('no', msg);
-					break;
 			}
 		}
 	},	
@@ -688,7 +685,7 @@ var background = {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
 		var url = "http://endoftheinter.net/profile.php?user=" + userID;
 		var xhr = new XMLHttpRequest();
-		console.log("User Profile = " + url);
+				
 		xhr.open("GET", url, true);
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
@@ -721,10 +718,14 @@ var background = {
 					var tag = tagArray[i].innerText;
 					tagArray[i] = tag;
 				}
-				console.log(tagArray);
+				
 				config.tag_admin = tagArray;
 				localStorage['ChromeLL-Config'] = JSON.stringify(config);
-				console.log("scraped profile for tag information");
+				
+				if (config.debug) {
+					console.log("User Profile = " + url);
+					console.log(tagArray);
+				}
 			}
 		}
 		xhr.send();
@@ -783,7 +784,6 @@ var database = (function() {
 	
 	var getStorageApiCache = function(callback) {
 		chrome.storage.local.get("imagemap", (cache) => {
-			console.log(cache);
 			if (typeof cache !== "object" && Object.keys(cache.imagemap).length === 0) {
 				callback();
 			}

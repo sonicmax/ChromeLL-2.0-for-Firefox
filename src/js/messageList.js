@@ -423,15 +423,17 @@ var messageList = {
 					}
 					
 					if (shouldNotify) {
+						
 						chrome.runtime.sendMessage({
+							
 							need: "notify",
 							title: "Quoted by "
 									+ mutation.getElementsByClassName('message-top')[0]
 											.getElementsByTagName('a')[0].innerHTML,
 							message: document.title.replace(/End of the Internet - /i, '')
-						}, function(data) {
-							console.log(data);
-						});
+							
+						}, null);
+						
 					}
 				}	
 			}
@@ -2315,7 +2317,7 @@ var messageList = {
 					&& !window.location.href.match(/u=(\d+)/))
 				tc = heads[0].getElementsByTagName('a')[0].innerHTML.toLowerCase();
 			else {
-				if (!messageList.config.tcs[topic]) {
+				if (!messageList.config.tcs[topic] && messageList.config.debug) {
 					console.log('Unknown TC!');
 					return;
 				}
@@ -2484,9 +2486,6 @@ var messageList = {
 			var menu = document.getElementById('hold_menu');
 			if (menu) {
 				menu.remove();
-			}
-			else {
-				console.log('no menu found');
 			}
 		}
 	},
