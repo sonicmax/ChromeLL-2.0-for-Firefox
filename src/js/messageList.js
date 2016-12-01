@@ -302,16 +302,20 @@ var messageList = {
 			label_self_anon: function(msg) {
 				var tagList = document.getElementsByTagName('h2')[0];
 				if (tagList.innerHTML.indexOf('/topics/Anonymous') > -1) {
-					// skip archived topics as they don't have the quickpost-body element
-					if (!window.location.href.match('archives')) {
+					// We can only get human number from topics that we can post in
+					var quickpostBody = document.getElementsByClassName('quickpost-body')[0];
+					
+					if (quickpostBody) {					
 						var tops = msg.getElementsByClassName('message-top');
-						if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {				
-							var self = document.getElementsByClassName('quickpost-body')[0]
-									.getElementsByTagName('a')[0].innerHTML;
+						
+						if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {		
+							var self = quickpostBody.getElementsByTagName('a')[0].innerHTML;
+							
 							if (self.indexOf('Human #') == -1) {
-								// user hasn't posted in topic yet
+								// User hasn't posted in topic yet
 								return;
 							}
+							
 							else {
 								for (var i = 0, len = tops.length; i < len; i++) {
 									var top = tops[i];
