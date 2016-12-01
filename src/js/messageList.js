@@ -56,7 +56,8 @@ var messageList = {
 				}
 				
 				var tops = msg.getElementsByClassName('message-top');
-				
+					
+				// Note: don't cache length property, it will break
 				for (var j = 0; j < tops.length; j++) {
 					var top = tops[j];
 				
@@ -225,10 +226,9 @@ var messageList = {
 									
 								}, null);
 								
-							}
+							}					
 						}
-					}
-					
+					}				
 				}
 				
 				else {
@@ -410,17 +410,19 @@ var messageList = {
 					
 					var shouldNotify = false;
 					
-					var msg = mutation.getElementsByClassName('quoted-message');
-					
-					for (var i = 0, len = msg.length; i < len; i++) {
-						if (msg[i].getElementsByClassName('message-top')[0]
-								.getElementsByTagName('a')[0].innerHTML == document
-								.getElementsByClassName('userbar')[0]
-								.getElementsByTagName('a')[0].innerHTML.replace(
-								/ \((.*)\)$/, "")) {
-							if (msg[i].parentNode.className != 'quoted-message')
+					var quotedMessages = mutation.getElementsByClassName('quoted-message');
+					var currentUser = document.getElementsByClassName('userbar')[0]
+							.getElementsByTagName('a')[0].innerHTML.replace(/ \((.*)\)$/, "");
+							
+					for (var i = 0; i < quotedMessages.length; i++) {
+						
+						if (quotedMessages[i].getElementsByClassName('message-top')[0]
+								.getElementsByTagName('a')[0].innerHTML == currentUser) {
+									
+							if (quotedMessages[i].parentNode.className != 'quoted-message') {
 								// only display notification if user has been directly quoted
 								shouldNotify = true;
+							}
 						}
 					}
 					
@@ -917,62 +919,43 @@ var messageList = {
 		}
 	},
 	handleEvent: {
-		ignoratorUpdate: function(msg) {		
-			if (msg.action !== 'ignorator_update') {				
-				switch (msg.action) {
-					case "showIgnorated":
-						var ignoratedPosts = document.getElementsByClassName('ignorated');
-						var postsToShow = [];
-						
-						for (var i = 0, len = ignoratedPosts.length; i < len; i++) {
-							var ignoratedPost = ignoratedPosts[i];
-							var usernameElement = ignoratedPost.getElementsByTagName('a')[0];
-							
-							if (msg.value.toLowerCase() == usernameElement.innerHTML.toLowerCase()) {
-								postsToShow.push(ignoratedPost);
-							}							
-						}
-						
-						// Iterate backwards so we can swap classes
-						for (var i = postsToShow.length - 1; i >= 0; i--) {
-							var postToShow = postsToShow[i];														
-							postToShow.classList.remove('ignorated');
-							// ignorated_post_peek sets display to "block" and opacity to 0.7
-							postToShow.classList.add('ignorated_post_peek');
-							
-							if (i === 0) {
-								$.scrollTo(postToShow);
-							}
-						}
-						
-						break;
-						
-					default:
-						break;
+		
+		/**
+		 *  Takes message containing name user, and unhides any currently ignorated posts by that user
+		 */
+		
+		ignoratorUpdate: function(msg) {
+			if (msg.action === 'showIgnorated') {
+				var ignoratedPosts = document.getElementsByClassName('ignorated');
+				var postsToShow = [];
+				
+				for (var i = 0, len = ignoratedPosts.length; i < len; i++) {
+					var ignoratedPost = ignoratedPosts[i];
+					var usernameElement = ignoratedPost.getElementsByTagName('a')[0];
+					
+					if (msg.value.toLowerCase() == usernameElement.innerHTML.toLowerCase()) {
+						postsToShow.push(ignoratedPost);
+					}							
+				}
+				
+				// Iterate backwards so we can swap classes
+				for (var i = postsToShow.length - 1; i >= 0; i--) {
+					var postToShow = postsToShow[i];														
+					postToShow.classList.remove('ignorated');
+					// ignorated_post_peek sets display to "block" and opacity to 0.7
+					postToShow.classList.add('ignorated_post_peek');
+					
+					if (i === 0) {
+						$.scrollTo(postToShow);
+					}
 				}
 			}
 		},
-		load: function() {
-			this.parseObserver.disconnect();
-			if (window.location.hostname == 'archives.endoftheinter.net') {
-				// quickpost-body element doesnt exist in archived topics - call filter_me method manually
-				this.functions.quickpostbody.filter_me();
-			}
-			this.passToFunctions('misc');
-			this.quote.addButtons();
-			this.addListeners();
-			this.appendScripts();
-			this.addCSSRules();	
-			this.livelinks.observe(document.getElementById('u0_1'), {
-					subtree: true,
-					childList: true
-			});
-			if (this.config.new_page_notify) {
-				this.newPage.observe(document.getElementById('nextpage'), {
-						attributes: true
-				});
-			}
-		},
+		
+		/**
+		 *  Recieves new livelinks posts and applies any required modifications
+		 */
+		
 		newPost: function(container) {
 			var top = container.getElementsByClassName('message-top')[0];
 			var index = document.getElementsByClassName('message-container').length;			
@@ -1016,7 +999,14 @@ var messageList = {
 			}
 		},
 		
-		mouseclick: function(evt) {			
+		/**
+		 *  Because ChromeLL adds so many clickable elements to the screen,
+		 *  we use a single handler for click events and detirmine which was 
+		 *  clicked from its attributes. This prevents us from having 
+		 *  to attach a listener to each element on creation.
+		 */ 
+		 
+		mouseclick: function(evt) {
 			if (this.config.post_templates) {
 				this.postTemplateAction(evt.target);
 			}
@@ -1028,7 +1018,7 @@ var messageList = {
 					return;
 					
 				case 'quick_image':
-					// Note: imagemap object contained in imagemap.js
+					// Note: imagemap object located in imagemap.js
 					imagemap.init();
 					evt.preventDefault();
 					return;
@@ -1186,7 +1176,14 @@ var messageList = {
 			}, 250);
 		}
 	},
+	
 	gfycat: {
+		
+		/**
+		 *  To reduce CPU load, we only embed Gfycat videos that are visible in viewport,
+		 *  and pause any videos which are no longer visible.
+		 */
+		
 		loader: function() {
 			var gfycats = document.getElementsByClassName('gfycat');
 			var height = window.innerHeight;
@@ -1488,7 +1485,7 @@ var messageList = {
 		}
 	},
 	youtube: {
-		debouncerId: '',
+		debouncerId: '', // Stores setTimeout() id for embed link
 		showEmbedLink: function(evt) {
 			var target = evt.target;
 			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;
@@ -1747,11 +1744,14 @@ var messageList = {
 					tops[i].appendChild(quote);
 				}
 			}
-		},
+		},				
 		
 		getMarkup: function(parentElement) {
 			var output = '';
 			var childNodes = parentElement.childNodes;
+			
+			// Iterate over children of message element and generate markup for each one.
+			// We have to call getMarkup recursively for quoted-message and spoiler elements.
 			
 			for (var i = 0, len = childNodes.length; i < len; i++) {				
 				var node = childNodes[i];
@@ -1852,6 +1852,9 @@ var messageList = {
 		
 	},
 	image: {
+		
+		// originally rewritten by xdrvonscottx
+		
 		expand: function(evt) {
 			var num_children = evt.target.parentNode.parentNode.childNodes.length;
 			// first time expanding - only span
@@ -1862,27 +1865,29 @@ var messageList = {
 				// build new span
 				var newspan = document.createElement('span');
 				newspan.setAttribute("class", "img-loaded");
-				newspan.setAttribute("id", evt.target.parentNode.getAttribute('id')
-						+ "_expanded");
-				// build new img child for our newspan
-				var newimg = document.createElement('img');
-				// find fullsize image url
-				var fullsize = evt.target.parentNode.parentNode
-						.getAttribute('imgsrc');
+				newspan.setAttribute("id", evt.target.parentNode.getAttribute('id') + "_expanded");								
+
+				var fullsize = evt.target.parentNode.parentNode.getAttribute('imgsrc');
+				
 				// set proper protocol
 				if (window.location.protocol == "https:") {
 					fullsize = fullsize.replace(/^http:/i, "https:");
 				}
+				
+				// build new img child for our newspan
+				var newimg = document.createElement('img');				
 				newimg.src = fullsize;
 				newspan.insertBefore(newimg, null);
-				evt.target.parentNode.parentNode.insertBefore(newspan,
-						evt.target.parentNode);
+				
+				evt.target.parentNode.parentNode.insertBefore(newspan, evt.target.parentNode);
 				evt.target.parentNode.style.display = "none"; // hide old img
 			}
+			
 			// has been expanded before - just switch which node is hidden
 			else if (num_children == 2) {
-				if (messageList.config.debug)
+				if (messageList.config.debug) {
 					console.log("not first time expanding - toggle display status");
+				}
 
 				// toggle their display statuses
 				var children = evt.target.parentNode.parentNode.childNodes
@@ -1893,10 +1898,13 @@ var messageList = {
 						children[i].style.display = "none";
 					}
 				}
-			} else if (messageList.config.debug)
-				console
-						.log("I don't know what's going on with this image - weird number of siblings");
+			} 
+			
+			else if (messageList.config.debug) {
+				console.log("I don't know what's going on with this image - weird number of siblings");
+			}
 		},
+		
 		resize: function(el) {	
 			var width = el.width;			
 			if ((width * messageList.zoomLevel) > messageList.config.img_max_width) {
@@ -1907,6 +1915,7 @@ var messageList = {
 				el.parentNode.style.width = el.width + 'px';
 			}
 		},
+				
 		observer: new MutationObserver(function(mutations) {
 			for (var i = 0; i < mutations.length; i++) {
 				var mutation = mutations[i];
@@ -1939,6 +1948,7 @@ var messageList = {
 			}
 		})
 	},
+	
 	spoilers: {
 		find: function(el) {
 			var spans = document.getElementsByClassName('spoiler_on_close');
@@ -1959,7 +1969,12 @@ var messageList = {
 		}
 	},
 	
-	links: {		
+	links: {
+		
+		/**
+		 *  Iterates over any posted links in topic so we can check for media that should be embedded
+		 */
+	
 		check: function(msg) {
 			var target = msg || document;
 			
@@ -2002,8 +2017,11 @@ var messageList = {
 			
 		},
 		
-		fixRelativeUrls: function(anchor, type) {
-			// Fixes incorrect subdomain when following certain types of relative URLs on ETI
+		/**
+		 *  Fixes issue where certain types of relative URL on ETI would redirect to the wrong subdomain.
+		 */
+		
+		fixRelativeUrls: function(anchor, type) {		
 			switch (type) {
 				case 'wiki':
 					window.open(anchor.href.replace('boards', 'wiki'));
@@ -2022,6 +2040,7 @@ var messageList = {
 	},
 	
 	emojis: {
+		
 		/* Note:
 				
 				Generally emoji categories correspond to things like smileys, animals, food, etc
@@ -2108,18 +2127,21 @@ var messageList = {
 			document.body.addEventListener('click', this.menuCloseIntentCheck);			
 		},
 		
+		/**
+		 *  Recieves click events on document.body and decides whether to close emoji popup (based on likely user intent)
+		 */
+		
 		menuCloseIntentCheck: function(evt) {
-			// Close popup if user clicks outside of emoji menu or quickpost area, 
-			// if they click the Post Message button, or if they close the quickpost area.
-			// We also have to account for clicks inside tag-div elements					
-
 			// Weird edge cases that we should ignore
 			if (evt.target.innerHTML === 'Your message must be at least 5 characters'
 					|| evt.target.innerHTML === 'Know the rules! Mouse over the tags to learn more.') {						
 				return;
-			}			
-						
+			}							
+			
 			var targetClass = evt.target.className;
+			
+			// Close popup if user clicks outside of emoji menu, quickpost area, tag info popups,
+			// or if user closes quickpost area by clicking on the quickpost-nub
 			
 			if (targetClass
 					&& !targetClass.match(/quickpost/)
@@ -2148,13 +2170,14 @@ var messageList = {
 				}
 			}
 			
+			// Close popup if user clicks Post Message button			
 			if (evt.target.getAttribute('name') === 'post') {
 				messageList.emojis.closeMenuFromListener();
 				return;
 			}
-
-			if (targetClass === 'emoji_button') {
-				// Just remove the listener - toggleMenu() is called elsewhere				
+			
+			// Just remove the listener if user clicks on button which opens popup - toggleMenu() is called elsewhere
+			if (targetClass === 'emoji_button') {				
 				document.body.removeEventListener('click', messageList.emojis.menuCloseIntentCheck);
 				return;
 			}	
@@ -2272,6 +2295,10 @@ var messageList = {
 			
 			display.appendChild(fragment);
 		},				
+		
+		/**
+		 *  Returns lists of emojis based on categories scraped from emojipedia.org
+		 */
 		
 		getEmojis: function(type) {
 			switch (type) {				
@@ -2688,6 +2715,12 @@ var messageList = {
 			}
 		}
 	}),
+	
+	/**
+	 *  The main loop for this script - called after DOMContentLoaded has fired (or otherwise once DOM is ready)
+	 *  Applies various types of DOM modifications to the message list, adds listeners for ChromeLL features, etc
+	 */
+	
 	applyDomModifications: function(pm) {
 		var msgs = document.getElementsByClassName('message-container');
 		var pageFunctions = this.functions.infobar;
@@ -2809,6 +2842,11 @@ var messageList = {
 			});
 		}
 	},
+
+	/**
+	 *  Converts ignorator string to array and removes any whitelisted users
+	 */
+	
 	prepareIgnoratorArray: function() {
 		this.ignoredUsers = this.config.ignorator_list.split(',').map((user) => {
 			return user.trim();
@@ -2824,7 +2862,8 @@ var messageList = {
 				return (whitelist.indexOf(user.toLowerCase()) === -1);				
 			});
 		}
-	},
+	},		
+	
 	addCSSRules: function() {
 		var sheet = document.styleSheets[0];
 		sheet.insertRule(".like_button_custom { opacity: 0.5; }", 1);
