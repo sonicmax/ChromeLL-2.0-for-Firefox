@@ -421,21 +421,37 @@ var background = {
 	},
 	addListeners: function() {
 		chrome.tabs.onActivated.addListener(function(tab) {
-			if (!background.tabPorts[tab.tabId]) {
-				return;
-			}
-			else {
-				background.tabPorts[tab.tabId].postMessage({
-					action: 'ignorator_update'
-				});
+			
+			if (background.tabPorts[tab.tabId]) {
+				
+				try {					
+					background.tabPorts[tab.tabId].postMessage({
+						action: 'ignorator_update'
+					});
+				
+				} catch(e) {
+					// Attempting to use a disconnected port object - remove any references to this tab
+					delete background.tabPorts[tab.tabId];
+					delete background.ignoratorInfo[tab.tabId];
+					delete background.scopeInfo[tab.tabId];
+				}
 			}
 		});
 		
-		chrome.tabs.onRemoved.addListener(function(tab) {
-			if (background.tabPorts[tab]) {				
-				delete background.tabPorts[tab];
-				delete background.ignoratorInfo[tab];
-				delete background.scopeInfo[tab];
+		chrome.tabs.onRemoved.addListener(function(tabId) {
+			if (background.tabPorts[tabId]) {
+				delete background.tabPorts[tabId];
+				delete background.ignoratorInfo[tabId];
+				delete background.scopeInfo[tabId];
+			}
+		});
+		
+		chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+			var newUrl = changeInfo.url;
+			if (newUrl && newUrl.indexOf('endoftheinter.net') === -1) {
+				delete background.tabPorts[tabId];
+				delete background.ignoratorInfo[tabId];
+				delete background.scopeInfo[tabId];
 			}
 		});
 		
