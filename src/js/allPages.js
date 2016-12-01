@@ -516,7 +516,6 @@ var allPages = {
 			var width = window.innerWidth;
 			var height = window.innerHeight;
 			var close = document.createElement('div');
-			var bodyClass = document.getElementsByClassName('body')[0];
 			var anchorHeight;
 			
 			div.id = "options_div";
@@ -532,7 +531,7 @@ var allPages = {
 			iframe.style.backgroundColor = "white";
 			iframe.style.border = "none";
 			
-			bodyClass.style.opacity = 0.3;
+			document.getElementsByClassName('body')[0].style.opacity = 0.3;
 			
 			div.appendChild(close);
 			div.appendChild(iframe);
@@ -541,8 +540,20 @@ var allPages = {
 			anchorHeight = close.getBoundingClientRect().height * 2;
 			iframe.style.height = ((height * 0.95) - anchorHeight) + 'px';
 			
-			bodyClass.addEventListener('click', this.hide);
+			this.addListeners();						
+		},
+		addListeners: function() {
+			const ESCAPE_KEY = 27;
+			
+			document.getElementsByClassName('body')[0].addEventListener('click', this.hide);
 			document.getElementById('close_options').addEventListener('click', this.hide);
+			
+			document.body.addEventListener('keyup', (evt) => {
+				if (evt.keyCode === ESCAPE_KEY) {
+					this.hide();
+				}			
+			});
+			
 			document.body.addEventListener('mousewheel', this.preventScroll);
 		},
 		hide: function() {			
@@ -551,7 +562,7 @@ var allPages = {
 			bodyClass.style.opacity = 1;
 			document.body.removeChild(div);
 			bodyClass.removeEventListener('click', allPages.optionsMenu.hide);
-			document.body.removeEventListener('click', allPages.optionsMenu.hide);
+			document.body.removeEventListener('click', allPages.optionsMenu.hide);			
 			document.body.removeEventListener('mousewheel', allPages.optionsMenu.preventScroll);
 		},
 		preventScroll: function(event) {
@@ -559,7 +570,6 @@ var allPages = {
 		}
 	},
 	asyncUpload : function(tgt, i) {
-		console.log(tgt, i);
 		if (!i) {
 			var i = 0;
 		}
@@ -568,7 +578,6 @@ var allPages = {
 			if (this.readyState === 4 && this.status === 200) {
 				var tmp = document.createElement('div');
 				tmp.innerHTML = this.responseText;
-				console.log(tmp);
 				var update_ul;
 				if (window.location.href.match('postmsg')) {
 					update_ul = document.getElementsByTagName('form')[0]

@@ -633,15 +633,6 @@ var options = {
 	addListeners: {
 		keyup: function() {	
 			document.addEventListener('keyup', function(evt) {
-				if (!evt.target.name) {
-					
-					// TODO: Close options here
-					if (evt.key === 'Escape') {
-						console.log(evt.key);
-					}
-					
-					return;
-				}
 				if (evt.target.name == "user_highlight_username") {
 					var datas = document.getElementById('user_highlight')
 							.getElementsByClassName('user_name');
