@@ -131,6 +131,37 @@
 	background-color: white;
 }
 
+/* 
+	---------------------------------------------
+	Custom like button menu
+	---------------------------------------------
+*/
+
+.like_button_custom {
+	opacity: 0.5;
+}
+
+.like_button_custom:hover {
+	opacity: 1;
+}
+
+/* 
+	---------------------------------------------
+	Imagemap popup
+	---------------------------------------------
+*/
+
+#loading_image {
+	-webkit-animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin { 
+	100% { -webkit-transform:rotate(360deg); }	
+}
+
+#map_div img:hover {
+	opacity: 0.7;
+}
 
 /* 
 	---------------------------------------------

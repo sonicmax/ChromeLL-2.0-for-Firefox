@@ -2822,9 +2822,6 @@ var messageList = {
 			quickpostArea.setSelectionRange(0, 0);		
 		}
 		
-		// Add CSS rules for user info popup, etc
-		this.addCSSRules();
-		
 		// Check anchors for media links to embed, etc
 		this.links.check();
 		this.addListeners();
@@ -2862,15 +2859,6 @@ var messageList = {
 				return (whitelist.indexOf(user.toLowerCase()) === -1);				
 			});
 		}
-	},		
-	
-	addCSSRules: function() {
-		var sheet = document.styleSheets[0];
-		sheet.insertRule(".like_button_custom { opacity: 0.5; }", 1);
-		sheet.insertRule(".like_button_custom:hover { opacity: 1.0; }", 1);
-		sheet.insertRule("#loading_image { -webkit-animation:spin 2s linear infinite; }", 1);
-		sheet.insertRule("@-webkit-keyframes spin { 100% { -webkit-transform:rotate(360deg); } }", 1);
-		sheet.insertRule("#map_div img:hover { opacity: 0.7; }", 1);
 	}
 };
 
