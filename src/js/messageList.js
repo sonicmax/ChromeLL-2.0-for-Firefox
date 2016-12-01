@@ -463,37 +463,45 @@ var messageList = {
 					infobar.appendChild(anchor);
 				}
 			},
-			filter_me: function() {
-				var quickpostElement = document.getElementsByClassName('quickpost-body')[0];				
-				var infobar = document.getElementsByClassName('infobar')[0];
+			filter_me: function() {				
 				var tops = document.getElementsByClassName('message-top');
-				if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
-					// anonymous topic - check quickpost-body for human number
-					if (window.location.hostname == 'archives.endoftheinter.net') {
-						// archived anon topics don't have quickpost-body element
-						return;
-					}
-					else if (quickpostElement.getElementsByTagName('a')) {
+				
+				// Handle anonymous topics
+				if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {				
+					var quickpostElement = document.getElementsByClassName('quickpost-body')[0];					
+										
+					if (quickpostElement && quickpostElement.getElementsByTagName('a')) {
 						var human = quickpostElement.getElementsByTagName('a')[0]
 								.innerText.replace('Human #', '');
+								
 						if (isNaN(human)) {
-							// user hasn't posted in topic
-							return;
-						}
+							// User hasn't posted in topic yet
+							return;					
+						} 
+						
 						else {
 							var me = '&u=-' + human;
 						}
+						
+					}
+					
+					else {
+						// Can't identify user
+						return;
 					}
 				}
-				else {
-					// handle non anonymous topics
+				
+				// Handle non-anonymous topics
+				else {					
 					var me = '&u=' + document.getElementsByClassName('userbar')[0]
 							.getElementsByTagName('a')[0].href
 							.match(/\?user=([0-9]+)/)[1];
 				}
+				
 				var topic = window.location.href.match(/topic=([0-9]+)/)[1];
 				var anchor = document.createElement('a');		
 				var divider = document.createTextNode(" | ");		
+				
 				if (window.location.href.indexOf(me) == -1) {
 					anchor.href = window.location.href.split('?')[0] + '?topic=' + topic + me;
 					anchor.innerHTML = 'Filter Me';
@@ -501,9 +509,12 @@ var messageList = {
 					anchor.href = window.location.href.replace(me, '');
 					anchor.innerHTML = 'Unfilter Me';
 				}
+				
+				var infobar = document.getElementsByClassName('infobar')[0];				
 				infobar.appendChild(divider);
 				infobar.appendChild(anchor);
-			},			
+			},
+			
 			expand_spoilers: function() {
 				var infobar = document.getElementsByClassName('infobar')[0];
 				var ains = document.createElement('span');
