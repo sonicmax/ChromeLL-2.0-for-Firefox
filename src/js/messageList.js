@@ -2704,8 +2704,9 @@ var messageList = {
 			templates.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
 			head.appendChild(templates);
 		}
-	},	
-	newPage: new MutationObserver(function(mutations) {
+	},
+	
+	newPageObserver: new MutationObserver((mutations) => {
 		for (var i = 0, len = mutations.length; i < len; i++) {
 			var mutation = mutations[i];
 			if (mutation.type === 'attributes' 
@@ -2718,7 +2719,8 @@ var messageList = {
 			}
 		}
 	}),
-	livelinks: new MutationObserver(function(mutations) {
+	
+	livelinksObserver: new MutationObserver((mutations) => {
 		for (var i = 0, len = mutations.length; i < len; i++) {
 			var mutation = mutations[i];
 			if (mutation.addedNodes.length > 0
@@ -2843,13 +2845,13 @@ var messageList = {
 		this.appendScripts();
 		
 		// Add livelinks listeners	
-		this.livelinks.observe(document.getElementById('u0_1'), {
+		this.livelinksObserver.observe(document.getElementById('u0_1'), {
 				subtree: true,
 				childList: true
 		});
 		
 		if (this.config.new_page_notify) {
-			this.newPage.observe(document.getElementById('nextpage'), {
+			this.newPageObserver.observe(document.getElementById('nextpage'), {
 					attributes: true
 			});
 		}
