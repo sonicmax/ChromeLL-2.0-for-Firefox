@@ -29,11 +29,9 @@ var messageList = {
 		// check whether we need to display dramalinks ticker
 		if (this.config.dramalinks && !this.pm) {
 			
-			chrome.runtime.sendMessage({
-					need : "dramalinks"
-			}, function(response) {
+			this.sendMessage({ need: "dramalinks" }, (response) => {
 				dramalinks.html = response.data;					
-				dramalinks.config = messageList.config;
+				dramalinks.config = messageList.config;				
 			});
 		}
 		
@@ -217,14 +215,12 @@ var messageList = {
 							
 							if (live && messageList.config.notify_userhl_post && k === 0
 									&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[1] != messageList.config.user_id) {
-												
-								chrome.runtime.sendMessage({
-									
+								
+								messageList.sendMessage({
 									need: "notify",
-									message: document.title.replace(/End of the Internet - /i, ''),
-									title: "Post by " + top.getElementsByTagName('a')[0].innerHTML
-									
-								}, null);
+									title: "Post by " + top.getElementsByTagName('a')[0].innerHTML,
+									message: document.title.replace(/End of the Internet - /i, '')									
+								});
 								
 							}					
 						}
@@ -251,14 +247,12 @@ var messageList = {
 						
 						if (live && messageList.config.notify_userhl_post
 								&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[0] != messageList.config.user_id) {
-											
-							chrome.runtime.sendMessage({								
-								need: "notify",
-								message: document.title.replace(
-										/End of the Internet - /i, ''),
-								title: "Post by " + user								
-							}, null);
 							
+							messageList.sendMessage({
+								need: "notify",
+								title: "Post by " + user,
+								message: document.title.replace(/End of the Internet - /i, '')
+							});
 						}				
 					}
 				}
@@ -418,8 +412,7 @@ var messageList = {
 					var currentUser = document.getElementsByClassName('userbar')[0]
 							.getElementsByTagName('a')[0].innerHTML.replace(/ \((.*)\)$/, "");
 							
-					for (var i = 0; i < quotedMessages.length; i++) {
-						
+					for (var i = 0; i < quotedMessages.length; i++) {					
 						if (quotedMessages[i].getElementsByClassName('message-top')[0]
 								.getElementsByTagName('a')[0].innerHTML == currentUser) {
 									
@@ -430,19 +423,16 @@ var messageList = {
 						}
 					}
 					
-					if (shouldNotify) {
+					if (shouldNotify) {					
+						var user = mutation.getElementsByClassName('message-top')[0].getElementsByTagName('a')[0].innerHTML;
 						
-						chrome.runtime.sendMessage({
-							
+						messageList.sendMessage({
 							need: "notify",
-							title: "Quoted by "
-									+ mutation.getElementsByClassName('message-top')[0]
-											.getElementsByTagName('a')[0].innerHTML,
+							title: "Quoted by " + user,
 							message: document.title.replace(/End of the Internet - /i, '')
-							
-						}, null);
-						
+						});						
 					}
+					
 				}	
 			}
 		},
@@ -584,9 +574,9 @@ var messageList = {
 			},
 			
 			quickpost_on_pgbottom: function() {
-				chrome.runtime.sendMessage({
-					need: "insertcss",
-					file: "src/css/quickpost_on_pgbottom.css"
+				messageList.sendMessage({
+					need: 'insertcss',
+					file: 'src/css/quickpost_on_pgbottom.css' 
 				});
 			},
 			
@@ -1667,12 +1657,10 @@ var messageList = {
 			}
 		},
 		save: function() {
-			chrome.runtime.sendMessage({
+			messageList.sendMessage({
 				need: "save",
 				name: "usernote_notes",
-				data: messageList.config.usernote_notes
-			}, function(rsp) {
-				console.log(rsp);
+				data: messageList.config.usernote_notes				
 			});
 		}
 	},
@@ -1698,10 +1686,10 @@ var messageList = {
 			}
 			
 			else {
-				// Send markup to background page to be copied to clipboard
-				chrome.runtime.sendMessage({
-						need: "copy",
-						data: markup
+				// Send markup to background page to be copied to clipboard				
+				messageList.sendMessage({
+					need: "copy",
+					data: markup
 				});
 				
 				this.notify(evt.target);
@@ -2226,26 +2214,22 @@ var messageList = {
 			if (messageList.config.emoji_history.indexOf(emoji) === -1) {
 				messageList.config.emoji_history.push(emoji);
 				
-				chrome.runtime.sendMessage({
-					
+				messageList.sendMessage({
 					need: "save",
 					name: "emoji_history",
 					data: messageList.config.emoji_history
-					
-				}, null);
+				});
 			}	
 		},
 		
 		clearHistory: function() {
 			messageList.config.emoji_history = [];
 			
-			chrome.runtime.sendMessage({
-				
+			messageList.sendMessage({
 				need: "save",
 				name: "emoji_history",
-				data: messageList.config.emoji_history
-				
-			}, null);			
+				data: []
+			});
 			
 			var display = document.getElementsByClassName('emoji_display')[0];
 			display.innerHTML = '<br>';
@@ -2396,20 +2380,24 @@ var messageList = {
 			var lowest = Infinity;
 			var lowestTc;
 			var numTcs = 0;
-			for ( var i in messageList.config.tcs) {
+			
+			for (var i in messageList.config.tcs) {
 				if (messageList.config.tcs[i].date < lowest) {
 					lowestTc = i;
 					lowest = messageList.config.tcs[i].date;
 				}
 				numTcs++;
 			}
-			if (numTcs > max)
+			
+			if (numTcs > max) {
 				delete messageList.config.tcs[lowestTc];
-			chrome.runtime.sendMessage({
-				need: "save",
-				name: "tcs",
-				data: messageList.config.tcs
-			});
+				
+				messageList.sendMessage({
+					need: "save",
+					name: "tcs",
+					data: messageList.config.tcs
+				});
+			}
 		}	
 	},
 	likeButton: {
@@ -2706,15 +2694,34 @@ var messageList = {
 		}
 	},
 	
+	/**
+	 *  Used to communicate with background page.
+	 */
+	
+	sendMessage: function(message, callback) {
+		
+		try {		
+			chrome.runtime.sendMessage(message, callback);
+		} catch (e) {
+			// Maybe there was an error in background page, or extension was updated and 
+			// user hasn't refreshed page yet. We can't really do anything but log the error
+			console.log('Error while sending message to background page:', message, e);
+		}
+		
+	},
+	
 	newPageObserver: new MutationObserver((mutations) => {
 		for (var i = 0, len = mutations.length; i < len; i++) {
 			var mutation = mutations[i];
+			
 			if (mutation.type === 'attributes' 
 					&& mutation.target.style.display === 'block') {
-				chrome.runtime.sendMessage({
+				
+				messageList.sendMessage({
 					need: "notify",
 					title: "New Page Created",
-					message: document.title
+					message: document.title					
+					
 				});
 			}
 		}
