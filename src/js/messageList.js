@@ -916,10 +916,6 @@ var messageList = {
 					}
 				}
 				var interval = window.setInterval(checkMssgs, 1000);
-			},
-			load_next_page: function() {
-				document.getElementById('u0_3').addEventListener('dblclick',
-						messageList.loadNextPage);
 			}
 		}
 	},
@@ -2605,16 +2601,6 @@ var messageList = {
 			var newTitle = document.title.replace(/\(\d+\+?\) /, "");
 			document.title = newTitle;
 		}
-	},
-	loadNextPage: function() {
-		var page = 1;
-		if (window.location.href.match('asyncpg')) {
-			page = parseInt(window.location.href.match('asyncpg=(\d+)')[1]);
-		} else if (window.location.href.match('page')) {
-			page = parseInt(window.location.href.match('page=(\d+)')[1]);
-		}
-		page++;
-		var topic = window.location.href.match('topic=(\d+)')[1];
 	},
 	qpTagButton: function(e) {
 		if (e.target.tagName != 'INPUT') {
