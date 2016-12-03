@@ -1477,12 +1477,11 @@ var messageList = {
 		
 		showEmbedLink: function(evt) {	
 			var target = evt.target;
-			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;
 			var anchor = document.createElement('a');
 			anchor.id = target.id;
 			anchor.className = 'embed_nws_gfy';
 			anchor.href = '#embed';
-			anchor.style.backgroundColor = backgroundColor;
+			anchor.style.backgroundColor = window.getComputedStyle(document.getElementsByClassName('message')[0]).backgroundColor;
 			anchor.style.display = 'inline';
 			anchor.style.position = 'absolute';
 			anchor.style.zIndex = 1;
@@ -1551,11 +1550,10 @@ var messageList = {
 		
 		showEmbedLink: function(evt) {
 			var target = evt.target;
-			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;
 			var span = document.createElement('span');
 			span.id = target.id;
 			span.className = 'embed';
-			span.style.backgroundColor = backgroundColor;
+			span.style.backgroundColor = window.getComputedStyle(document.getElementsByClassName('message')[0]).backgroundColor;
 			span.style.display = 'inline';
 			span.style.position = 'absolute';
 			span.style.zIndex = 1;
@@ -1580,7 +1578,7 @@ var messageList = {
 		
 		embed: function(span) {
 			var toEmbed = document.getElementById(span.id);
-			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;	
+			var backgroundColor = window.getComputedStyle(document.getElementsByClassName('message')[0]).backgroundColor;
 			var videoCode;
 			var embedHTML;
 			var href = toEmbed.href;
@@ -2607,7 +2605,7 @@ var messageList = {
 				menuElement.style.borderStyle = 'solid';
 				menuElement.style.borderWidth = '2px';
 				menuElement.style.borderRadius = '3px';
-				menuElement.style.backgroundColor = $(document.body).css('background-color');
+				menuElement.style.backgroundColor = window.getComputedStyle(document.body).backgroundColor;
 				for (var id in likeData) {
 					var name = likeData[id].name;					
 					populateMenu.call(this, name, id, menuElement);
