@@ -1796,20 +1796,24 @@ var messageList = {
 					need: "copy",
 					data: markup
 				});
-				
+								
 				this.notify(evt.target);
 			}
 		},
 		
-		notify: function(node) {
-			var bgColor = $(node.parentNode).css('background-color');
-			// create hidden notification so we can use fadeIn() later
-			$(node).append(
-					$('<span id="copied"' 
-							+ 'style="display: none; position: absolute; z-index: 1; left: 100; '
-							+ 'background: ' + bgColor 
-							+ ';">&nbsp<b>[copied to clipboard]</b></span>')
-			);
+		notify: function(node) {			
+			// Create hidden notification so we can use fadeIn() later
+			var span = document.createElement('span');
+			span.id = 'copied';
+			span.style.display = 'none';
+			span.style.position = 'absolute';
+			span.style.zIndex = 1;
+			span.style.left = 100;
+			span.style.backgroundColor = window.getComputedStyle(node.parentNode).backgroundColor;
+			span.style.fontWeight = 'bold';
+			span.innerHTML = '&nbsp[copied to clipboard]';
+			
+			node.appendChild(span);
 						
 			$("#copied").fadeIn(200);
 				
@@ -1820,10 +1824,9 @@ var messageList = {
 						
 			}, 1500);
 			
-			setTimeout(function() {
+			setTimeout(() => {
 				
-				$(node).find("span:last")
-						.remove();
+				node.removeChild(span);				
 						
 			}, 2000);
 		},
