@@ -1129,22 +1129,27 @@ var messageList = {
 		},
 		
 		mouseenter: function(evt) {
-			if (evt.target.className == 'like_button' && this.config.custom_like_button) {
-				this.cachedEvent = evt;
-				this.menuDebouncer = setTimeout(this.likeButton.showOptions.bind(this.likeButton), 250);
-			}
-			
-			else if (evt.target.className == 'username_anchor' && this.config.user_info_popup) {
-				allPages.cachedEvent = evt;
-				this.popupDebouncer = setTimeout(allPages.popup.handler.bind(allPages.popup), 750);
-			}
-			
-			else if (evt.target.className == 'youtube' && this.config.embed_on_hover) {
-				this.youtube.debouncerId = setTimeout(this.youtube.showEmbedLink.bind(this.youtube, evt), 400);				
-			}
-			
-			else if (evt.target.className == 'nws_gfycat') {
-				this.gfycat.debouncerId = setTimeout(this.gfycat.showEmbedLink.bind(this.gfycat, evt), 400);
+			switch (evt.target.className) {
+				case 'like_button':
+					this.cachedEvent = evt;
+					this.menuDebouncer = setTimeout(this.likeButton.showOptions.bind(this.likeButton), 250);
+					break;
+				
+				case 'username_anchor':
+					allPages.cachedEvent = evt;
+					this.popupDebouncer = setTimeout(allPages.popup.handler.bind(allPages.popup), 750);				
+					break;
+				
+				case 'youtube':
+					this.youtube.debouncerId = setTimeout(this.youtube.showEmbedLink.bind(this.youtube, evt), 400);
+					break;
+				
+				case 'nws_gfycat':
+					this.gfycat.debouncerId = setTimeout(this.gfycat.showEmbedLink.bind(this.gfycat, evt), 400);
+					break;
+				
+				default:
+					break;
 			}
 		},
 		mouseleave: function(evt) {	
