@@ -986,7 +986,7 @@ var messageList = {
 			var usernameElement = top.getElementsByTagName('a')[0];
 			
 			// Add username_anchor class for user info popup mouseenter listener
-			if (usernameElement.innerHTML != 'Filter') {
+			if (usernameElement.innerHTML != 'Filter' && this.config.user_info_popup) {
 				usernameElement.className = 'username_anchor';
 			}
 					
