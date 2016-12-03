@@ -1081,14 +1081,19 @@ var messageList = {
 					
 				case 'youtube':
 					if (evt.target.tagName === 'DIV') {
+						// Prevent clicks on div from bubbling up to parent
 						evt.preventDefault();
+						return;
 					}
-					// Prevent [Embed] links from remaining on screen if user navigates to the YouTube link					
-					this.youtube.hideEmbedLink();
+					else {
+						// Prevent [Embed] links from remaining on screen if user navigates to the YouTube link					
+						this.youtube.hideEmbedLink();
+					}
 					return;
 				
 				case 'gfycat':
 					if (evt.target.tagName === 'DIV') {
+						// Prevent clicks on div from bubbling up to parent
 						evt.preventDefault();
 					}
 					return;
@@ -1102,7 +1107,14 @@ var messageList = {
 				case 'embed':
 					this.youtube.embed(evt.target.parentNode);
 					evt.preventDefault();
-					return;					
+					return;
+
+				case 'hide':
+					this.youtube.hide(evt.target.parentNode);
+					// Manually remove [Hide] span
+					this.youtube.hideEmbedLink();
+					evt.preventDefault();
+					return;				
 
 				case 'emoji_type':
 					this.emojis.switchType(evt);
@@ -1113,15 +1125,6 @@ var messageList = {
 					this.emojis.selectEmoji(evt);
 					evt.preventDefault();
 					return;
-			}
-			
-			if (evt.target.parentNode) {
-				switch (evt.target.parentNode.className) {					
-					case 'hide':
-						this.youtube.hide(evt.target.parentNode);
-						evt.preventDefault();
-						return;
-				}
 			}
 		},
 		
@@ -1537,8 +1540,10 @@ var messageList = {
 			}
 		}
 	},
+	
 	youtube: {
 		debouncerId: '', // Stores setTimeout() id for embed link
+		
 		showEmbedLink: function(evt) {
 			var target = evt.target;
 			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;
@@ -1569,74 +1574,119 @@ var messageList = {
 		
 		embed: function(anchor) {
 			var toEmbed = document.getElementById(anchor.id);
-			if (toEmbed.className == "youtube") {
-				var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;	
-				var videoCode;
-				var embedHTML;
-				var href = toEmbed.href;
-				var timeEquals = href.match(/(\?|\&|#)(t=)/);
-				if (timeEquals) {
-					var substring = href.substring(timeEquals.index, href.length);
-					var time = substring.match(/([0-9])+([h|m|s])?/g);
-				}
-				var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-				var match = anchor.id.match(regExp);
-				if (match && match[2].length == 11) {
-					videoCode = match[2];
-				} else {
-					videoCode = match;
-				}
-				if (time) {
-					// convert into seconds
-					var splitTime, temp;
-					var seconds = 0;
-					for (var i = 0, len = time.length; i < len; i++) {
-						splitTime = time[i];
-						if (!splitTime.match(/([h|m|s])/)) {
-							// timecode is probably in format "#t=xx" 
-							seconds += splitTime;
-						}
-						else if (splitTime.indexOf('h') > -1) {
-							temp = Number(splitTime.replace('h', ''), 10);
-							seconds += temp * 60 * 60;
-						}
-						else if (splitTime.indexOf('m') > -1) {
-							temp = parseInt(splitTime.replace('m', ''), 10);
-							seconds += temp * 60;
-						}
-						else if (splitTime.indexOf('s') > -1) {
-							seconds += parseInt(splitTime.replace('s', ''), 10);
-						}
-					}
-					videoCode += "?start=" + seconds + "'";
-				}				
-				embedHTML = "<span style='display: inline; position: absolute; z-index: 1; left: 100; background: " + backgroundColor + ";'>" 
-									+ "<a id='" + anchor.id + "' class='hide' href='#hide'>&nbsp<b>[Hide]</b></a></span>" 
-									+ "<br><div class='youtube'>" 
-									+ "<iframe id='" + "yt" + anchor.id + "' type='text/html' width='640' height='390'" 
-									+ "src='https://www.youtube.com/embed/" + videoCode 
-									+ "'?autoplay='0' frameborder='0' allowfullscreen='allowfullscreen'/>" 
-									+ "</div>";
-									
-				this.hideEmbedLink();
-				toEmbed.className = "hideme";
-				toEmbed.innerHTML += embedHTML;
+			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;	
+			var videoCode;
+			var embedHTML;
+			var href = toEmbed.href;
+			var timeCode;
+			var timeCodeCheck = href.match(/(\?|\&|#)(t=)/);
+			if (timeCodeCheck) {
+				var substring = href.substring(timeCodeCheck.index, href.length);
+				timeCode = substring.match(/([0-9])+([h|m|s])?/g);
 			}
+			var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;			
+			var match = anchor.id.match(regExp);
+			
+			if (match && match[2].length == 11) {
+				videoCode = match[2];
+			} 
+			
+			else {
+				videoCode = match;
+			}
+			
+			
+			if (timeCode) {
+				videoCode += this.buildTimeCode(timeCode);
+			}
+								
+			this.hideEmbedLink();
+			toEmbed.className = "hideme";
+			toEmbed.appendChild(this.createYouTubeElements(anchor.id, videoCode, backgroundColor));
 		},
-		hide: function(anchor) {
-		var toEmbed = document.getElementById(anchor.id);
-		var i = toEmbed.childNodes.length;
-		var child;
-		// iterate backwards as we are removing nodes
-		while (i--) {
-			child = toEmbed.childNodes[i];
-			if (child.nodeName !== '#text'
-				&& child.tagName !== 'SPAN') {
-				toEmbed.removeChild(child);
+		
+		buildTimeCode: function(timeCode) {
+			var seconds = 0;
+			for (var i = 0, len = timeCode.length; i < len; i++) {
+				var splitTime = timeCode[i];
+				if (!splitTime.match(/([h|m|s])/)) {
+					// timecode is probably in format "#t=xx" 
+					seconds += splitTime;
+				}
+				else if (splitTime.indexOf('h') > -1) {
+					var temp = Number(splitTime.replace('h', ''), 10);
+					seconds += temp * 60 * 60;
+				}
+				else if (splitTime.indexOf('m') > -1) {
+					var temp = parseInt(splitTime.replace('m', ''), 10);
+					seconds += temp * 60;
+				}
+				else if (splitTime.indexOf('s') > -1) {
+					seconds += parseInt(splitTime.replace('s', ''), 10);
+				}
 			}
+			return "?start=" + seconds;			
+		},
+		
+		createYouTubeElements: function(id, videoCode, backgroundColor) {
+			const VIDEO_WIDTH = 640;
+			const VIDEO_HEIGHT = 390;
+			
+			// Create span to hide embedded video
+			var span = document.createElement('span');
+			span.style.display = 'inline';
+			span.style.position = 'absolute';
+			span.style.backgroundColor = backgroundColor;
+			span.style.fontWeight = 'bold';
+			span.style.textDecoration = 'underline';
+			span.style.cursor = 'pointer';
+			span.className = 'hide';			
+			span.id = id;
+			span.innerHTML = '&nbsp[Hide]'
+			
+			var lineBreak = document.createElement('br');
+			
+			// Create div containing YouTube iframe
+			var div = document.createElement('div');
+			div.className = 'youtube';
+			
+			// Create iframe
+			var iframe = document.createElement('iframe');
+			iframe.id = 'yt' + id;
+			iframe.src = 'https://www.youtube.com/embed/' + videoCode;
+			
+			iframe.setAttribute('type', 'text/html');
+			iframe.setAttribute('width', VIDEO_WIDTH);
+			iframe.setAttribute('height', VIDEO_HEIGHT);
+			iframe.setAttribute('autoplay', 0);
+			iframe.setAttribute('frameborder', 0);
+			iframe.setAttribute('allowfullscreen', 'allowfullscreen');			
+						
+			var fragment = document.createDocumentFragment();
+			
+			div.appendChild(iframe);
+			
+			fragment.appendChild(span);
+			fragment.appendChild(lineBreak);
+			fragment.appendChild(div);
+			
+			return fragment;
+		},
+		
+		hide: function(anchor) {
+			var toEmbed = document.getElementById(anchor.id);
+			var i = toEmbed.childNodes.length;
+			var child;
+			// iterate backwards as we are removing nodes
+			while (i--) {
+				child = toEmbed.childNodes[i];
+				if (child.nodeName !== '#text'
+					&& child.tagName !== 'SPAN') {
+					toEmbed.removeChild(child);
+				}
+			}
+			toEmbed.className = "youtube";
 		}
-		toEmbed.className = "youtube";
-	}		
 	},
 	snippet: {
 		handler: function(ta, caret) {
