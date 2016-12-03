@@ -1552,18 +1552,19 @@ var messageList = {
 		showEmbedLink: function(evt) {
 			var target = evt.target;
 			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;
-			var anchor = document.createElement('a');
-			anchor.id = target.id;
-			anchor.className = 'embed';
-			anchor.href = '#embed';
-			anchor.style.backgroundColor = backgroundColor;
-			anchor.style.display = 'inline';
-			anchor.style.position = 'absolute';
-			anchor.style.zIndex = 1;
-			anchor.style.fontWeight = 'bold';
-			anchor.innerHTML = '&nbsp[Embed]';
+			var span = document.createElement('span');
+			span.id = target.id;
+			span.className = 'embed';
+			span.style.backgroundColor = backgroundColor;
+			span.style.display = 'inline';
+			span.style.position = 'absolute';
+			span.style.zIndex = 1;
+			span.style.fontWeight = 'bold';
+			span.style.textDecoration = 'underline';
+			span.style.cursor = 'pointer';			
+			span.innerHTML = '&nbsp[Embed]';
 			
-			target.appendChild(anchor);
+			target.appendChild(span);
 		},
 		
 		hideEmbedLink: function() {
@@ -1577,8 +1578,8 @@ var messageList = {
 			}
 		},
 		
-		embed: function(anchor) {
-			var toEmbed = document.getElementById(anchor.id);
+		embed: function(span) {
+			var toEmbed = document.getElementById(span.id);
 			var backgroundColor = document.getElementsByClassName('message')[0].style.backgroundColor;	
 			var videoCode;
 			var embedHTML;
@@ -1590,7 +1591,7 @@ var messageList = {
 				timeCode = substring.match(/([0-9])+([h|m|s])?/g);
 			}
 			var regExp = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;			
-			var match = anchor.id.match(regExp);
+			var match = span.id.match(regExp);
 			
 			if (match && match[2].length == 11) {
 				videoCode = match[2];
@@ -1607,7 +1608,7 @@ var messageList = {
 								
 			this.hideEmbedLink();
 			toEmbed.className = "hideme";
-			toEmbed.appendChild(this.createYouTubeElements(anchor.id, videoCode, backgroundColor));
+			toEmbed.appendChild(this.createYouTubeElements(span.id, videoCode, backgroundColor));
 		},
 		
 		buildTimeCode: function(timeCode) {
@@ -1645,6 +1646,7 @@ var messageList = {
 			span.style.fontWeight = 'bold';
 			span.style.textDecoration = 'underline';
 			span.style.cursor = 'pointer';
+			span.style.zIndex = 1;
 			span.className = 'hide';			
 			span.id = id;
 			span.innerHTML = '&nbsp[Hide]'
