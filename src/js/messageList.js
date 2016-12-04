@@ -1809,6 +1809,11 @@ var messageList = {
 			
 			var markup = '<quote msgid="' + msgId + '">' + this.getMarkup(messageContainer) + '</quote>';
 			
+			if (this.depth !== 0) {
+				console.log('Warning: quote depth not reset to 0');
+				this.depth = 0;
+			}
+			
 			
 			if (evt.likeButton) {
 				// Return output to likeButton.handler
