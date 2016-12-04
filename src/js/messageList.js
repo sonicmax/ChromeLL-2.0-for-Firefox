@@ -106,7 +106,7 @@ var messageList = {
 				}	
 								
 				// Anon topic - ignore
-				if (!top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {
+				if (!/user=(\d+)$/i.test(top.getElementsByTagName('a')[0].href)) {
 					return;
 				}
 				
@@ -306,8 +306,9 @@ var messageList = {
 					
 					if (quickpostBody) {					
 						var tops = msg.getElementsByClassName('message-top');
+						var userRegex = /user=(\d+)$/;
 						
-						if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {		
+						if (!userRegex.test(tops[0].getElementsByTagName('a')[0])) {	
 							var self = quickpostBody.getElementsByTagName('a')[0].innerHTML;
 							
 							if (self.indexOf('Human #') == -1) {
@@ -387,11 +388,14 @@ var messageList = {
 					if (document.getElementsByClassName('message-container')[49]) {
 						ud = ud + "+";
 					}
-					if (document.title.match(/\(\d+\)/)) {
+					
+					if (/\(\d+\)/.test(document.title)) {
 						posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
 						document.title = "(" + (posts + 1) + ud + ") "
 								+ document.title.replace(/\(\d+\) /, "");
-					} else {
+					} 
+					
+					else {
 						document.title = "(" + posts + ud + ") " + document.title;
 					}
 				}
@@ -466,7 +470,8 @@ var messageList = {
 				var tops = document.getElementsByClassName('message-top');
 				
 				// Handle anonymous topics
-				if (!tops[0].getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)) {				
+				var userRegex = /user=(\d+)$/;
+				if (!userRegex.test(tops[0].getElementsByTagName('a')[0].href)) {
 					var quickpostElement = document.getElementsByClassName('quickpost-body')[0];					
 										
 					if (quickpostElement && quickpostElement.getElementsByTagName('a')) {
@@ -1287,7 +1292,7 @@ var messageList = {
 				else {
 					messageList.gfycat.checkWorkSafe(gfycatElement, data.nsfw, (isWorkSafe) => {
 						
-						if (!isWorkSafe && messageList.config.hide_nws_gfycat && !document.getElementsByTagName('h2')[0].innerHTML.match(/N[WL]S/)) {
+						if (!isWorkSafe && messageList.config.hide_nws_gfycat && !/N[WL]S/.test(document.getElementsByTagName('h2')[0].innerHTML)) {
 							gfycatElement.className = 'nws_gfycat';
 							gfycatElement.setAttribute('w', data.width);
 							gfycatElement.setAttribute('h', data.height);
@@ -1479,13 +1484,13 @@ var messageList = {
 		checkWorkSafe: function(gfycatElement, nsfw, callback) {			
 			var userbar = document.getElementsByTagName('h2')[0];
 			// only check topics without NWS/NLS tags
-			if (!userbar.innerHTML.match(/N[WL]S/)) {
+			if (!/N[WL]S/.test(userbar.innerHTML)) {
 				
 				var post = gfycatElement.parentNode;
 				
 				console.log(post);
 				
-				if (nsfw === '1' || (post && post.innerHTML.match(/(n[wl]s)/i))) {
+				if (nsfw === '1' || post && /(n[wl]s)/i.test(post.innerHTML)) {
 					gfycatElement.className = 'nws_gfycat';
 					callback(false);
 				}
@@ -1642,7 +1647,7 @@ var messageList = {
 			var seconds = 0;
 			for (var i = 0, len = timeCode.length; i < len; i++) {
 				var splitTime = timeCode[i];
-				if (!splitTime.match(/([h|m|s])/)) {
+				if (!/([h|m|s])/.test(splitTime)) {
 					// timecode is probably in format "#t=xx" 
 					seconds += splitTime;
 				}
@@ -2070,8 +2075,7 @@ var messageList = {
 					// url where fullsize have /i/n/
 					if (mutation.attributeName == "class"
 							&& mutation.target.getAttribute('class') == "img-loaded"
-							&& mutation.target.childNodes[0].src
-									.match(/.*\/i\/t\/.*/)) {
+							&& /.*\/i\/t\/.*/.test(mutation.target.childNodes[0].src)) {
 						/*
 						 * set up the onclick and do some dom manip that the
 						 * script originally did - i think only removing href
@@ -2134,7 +2138,8 @@ var messageList = {
 			while (i--) {
 				var link = links[i];
 				
-				if (messageList.config.embed_on_hover && link.href.match(ytRegex) && link.href.match(videoCodeRegex)) {				
+				// Check for YouTube links and make sure they are videos
+				if (messageList.config.embed_on_hover && ytRegex.test(link.href) && videoCodeRegex.test(link.href)) {
 					link.className = "youtube";
 					// give each video link a unique id for embed/hide functions
 					link.id = link.href + "&" + i;
@@ -2287,9 +2292,9 @@ var messageList = {
 			// or if user closes quickpost area by clicking on the quickpost-nub
 			
 			if (targetClass
-					&& !targetClass.match(/quickpost/)
-					&& !targetClass.match(/emoji/)
-					&& !targetClass.match(/tag/)
+					&& !/quickpost/.test(targetClass)
+					&& !/emoji/.test(targetClass)
+					&& !/tag/.test(targetClass)
 					
 					|| targetClass === 'quickpost-nub'
 					|| targetClass === 'close') {							
@@ -2304,9 +2309,9 @@ var messageList = {
 				var parentClass = evt.target.parentNode.className;
 			
 				if (parentClass
-						&& !parentClass.match(/quickpost/) 
-						&& !parentClass.match(/emoji/)
-						&& !parentClass.match(/tag/)) {
+						&& !/quickpost/.test(parentClass)
+						&& !/emoji/.test(parentClass)
+						&& !/tag/.test(parentClass)) {
 						
 					messageList.emojis.closeMenuFromListener();
 					return;
@@ -2391,7 +2396,7 @@ var messageList = {
 			display.innerHTML = '<br>';
 			
 			for (var i = 0, len = this.categories.length; i < len; i++) {
-				if (!this.categories[i].match(/All|🔁/)) {
+				if (!/All|🔁/.test(this.categories[i])) {
 					var fragment = document.createDocumentFragment();
 					var emojis = this.getEmojis(this.categories[i]);
 					
@@ -2550,7 +2555,7 @@ var messageList = {
 			
 			
 			// Get names of user and quoted poster
-			if (document.getElementsByTagName('h2')[0].innerHTML.match(/\/topics\/Anonymous/)) {
+			if (/\/topics\/Anonymous/.test(document.getElementsByTagName('h2')[0].innerHTML)) {
 				anonymous = true;
 				var user = "Human";
 				var poster = "this";
@@ -2735,13 +2740,13 @@ var messageList = {
 		}
 	},
 	clearUnreadPosts: function(evt) {
-		if (!document.title.match(/\(\d+\+?\)/)
+		if (!/\(\d+\+?\)/.test(document.title)
 				|| this.autoscrolling == true
 				|| document.hidden) {
 			// do nothing
 			return;
 		}
-		else if (document.title.match(/\(\d+\+?\)/)) {
+		else if (/\(\d+\+?\)/.test(document.title)) {
 			var newTitle = document.title.replace(/\(\d+\+?\) /, "");
 			document.title = newTitle;
 		}
