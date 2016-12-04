@@ -2875,7 +2875,7 @@ var messageList = {
 		var documentWidth = document.documentElement.clientWidth;
 		this.zoomLevel = screenWidth / documentWidth;	
 		
-		// Call dom which modify infobar element
+		// Call methods which modify infobar element
 		for (var k in this.dom.infobar) {
 			if (this.config[k + pm]) {
 				this.dom.infobar[k]();
@@ -2951,7 +2951,7 @@ var messageList = {
 		}				
 		
 		if (document.getElementsByClassName('quickpost').length > 0) {
-			// Call dom which modify quickpost-area (user probably won't see this)
+			// Call methods which modify quickpost-area (user probably won't see this)
 			for (var i in this.dom.quickpostbody) {
 				if (this.config[i + pm]) {
 					this.dom.quickpostbody[i]();
