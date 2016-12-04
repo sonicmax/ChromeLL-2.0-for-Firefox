@@ -34,7 +34,7 @@ var background = {
 			}
 		}
 		allBg.init_listener(this.config);	
-		this.addListeners();
+		this.messagePassing.addListeners();
 		this.checkVersion();
 		this.omniboxSearch();
 		this.clipboardHandler();	
@@ -419,9 +419,39 @@ var background = {
 			}
 		}
 	},
-	addListeners: function() {
-		chrome.tabs.onActivated.addListener(function(tab) {
+	
+	/**
+	 *  Handles message passing between content scripts and background page
+	 */
+	
+	messagePassing: {
+		addListeners: function() {
+			// Add listener to handle incoming connections
+			chrome.runtime.onConnect.addListener(this.connectToTab.bind(this));
 			
+			// Handle incoming messages
+			chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+			
+			// Update badge with ignorator info for active tab
+			chrome.tabs.onActivated.addListener(this.updateActiveTab.bind(this));
+			
+			// Delete references to tab after navigating away from ETI
+			chrome.tabs.onUpdated.addListener(this.checkNavigationDest.bind(this));		
+			
+			// Delete references to tab after closing
+			chrome.tabs.onRemoved.addListener(this.deleteTabRefs.bind(this));						
+		},
+		
+		connectToTab: function(port) {
+			background.tabPorts[port.sender.tab.id] = {};
+			background.tabPorts[port.sender.tab.id] = port;
+			
+			background.tabPorts[port.sender.tab.id].onMessage.addListener((msg) => {
+				background.ignoratorUpdate.call(background, port.sender.tab.id, msg);
+			});
+		},
+		
+		updateActiveTab: function(tab) {
 			if (background.tabPorts[tab.tabId]) {
 				
 				try {					
@@ -431,247 +461,249 @@ var background = {
 				
 				} catch(e) {
 					// Attempting to use a disconnected port object - remove any references to this tab
-					delete background.tabPorts[tab.tabId];
-					delete background.ignoratorInfo[tab.tabId];
-					delete background.scopeInfo[tab.tabId];
+					this.deleteTabRefs(tab.tabId);
 				}
 			}
-		});
+		},
 		
-		chrome.tabs.onRemoved.addListener(function(tabId) {
+		checkNavigationDest: function(tabId, changeInfo) {
+			var newUrl = changeInfo.url;
+			if (newUrl && newUrl.indexOf('endoftheinter.net') === -1) {
+				this.deleteTabRefs(tabId);
+			}			
+		},
+		
+		deleteTabRefs: function(tabId) {
 			if (background.tabPorts[tabId]) {
 				delete background.tabPorts[tabId];
 				delete background.ignoratorInfo[tabId];
 				delete background.scopeInfo[tabId];
-			}
-		});
+			}	
+		},
 		
-		chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-			var newUrl = changeInfo.url;
-			if (newUrl && newUrl.indexOf('endoftheinter.net') === -1) {
-				delete background.tabPorts[tabId];
-				delete background.ignoratorInfo[tabId];
-				delete background.scopeInfo[tabId];
-			}
-		});
-		
-		chrome.runtime.onConnect.addListener(function(port) {
-			background.tabPorts[port.sender.tab.id] = {};
-			background.tabPorts[port.sender.tab.id] = port;
-			background.tabPorts[port.sender.tab.id].onMessage.addListener(function(msg) {
-				background.handle.ignoratorUpdate.call(background, port.sender.tab.id, msg);
-			});
-		});
-		
-		chrome.runtime.onMessage.addListener(
-			function(request, sender, sendResponse) {
+		handleMessage: function(request, sender, sendResponse) {
+			switch(request.need) {
 				
-				switch(request.need) {
+				case "xhr":		
+					ajax(request, sendResponse);
+					// Return true so that we can use sendResponse asynchronously 
+					// (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
+					return true;
+				
+				case "config":
+					// page script needs extension config.
+					background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
+					if (request.sub) {
+						sendResponse({"data": background.cfg[request.sub]});
+					} else if (request.tcs) {
+						var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
+						sendResponse({"data": background.cfg, "tcs": tcs});
+					} else {
+						sendResponse({"data": background.cfg});
+					}
+					break;
 					
-					case "xhr":		
-						ajax(request, sendResponse);
-						// Return true so that we can use sendResponse asynchronously 
-						// (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
-						return true;
+				case "save":
+					// page script needs config save.
+					if (request.name === "tcs") {
+						localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
+					} else {
+						background.cfg[request.name] = request.data;
+						background.cfg.last_saved = new Date().getTime();
+						localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
+					}
+					if (background.cfg.debug) {
+						console.log('saving ', request.name, request.data);
+					}
+					break;
 					
-					case "config":
-						// page script needs extension config.
-						background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
-						if (request.sub) {
-							sendResponse({"data": background.cfg[request.sub]});
-						} else if (request.tcs) {
-							var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
-							sendResponse({"data": background.cfg, "tcs": tcs});
-						} else {
-							sendResponse({"data": background.cfg});
-						}
-						break;
+				case "notify":
+					chrome.notifications.create('popup', {
+						type: "basic",
+						title: request.title,
+						message: request.message,
+						iconUrl: "src/images/lueshi_48.png"
+					},
+					
+					(id) => {
 						
-					case "save":
-						// page script needs config save.
-						if (request.name === "tcs") {
-							localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
-						} else {
-							background.cfg[request.name] = request.data;
-							background.cfg.last_saved = new Date().getTime();
-							localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
+						if (!background.cfg.clear_notify) {
+							this.cfg.clear_notify = "5";
 						}
-						if (background.cfg.debug) {
-							console.log('saving ', request.name, request.data);
-						}
-						break;
 						
-					case "notify":
-						chrome.notifications.create('popup', {
-							type: "basic",
-							title: request.title,
-							message: request.message,
-							iconUrl: "src/images/lueshi_48.png"
-						},
-						function (id) {
-							if (!background.cfg.clear_notify) {
-								this.cfg.clear_notify = "5";
-							}
-							if (background.cfg.clear_notify === "0") {
-								return;
-							}
-							setTimeout(function() {
-								chrome.notifications.clear(id, null);
-							}, parseInt(background.cfg.clear_notify, 10) * 1000);
-						});
-						break;
+						if (background.cfg.clear_notify === "0") {
+							return;
+						}
+						
+						setTimeout(() => {
+							chrome.notifications.clear(id, null);
+						}, parseInt(background.cfg.clear_notify, 10) * 1000);
+						
+					});
+					
+					break;
 
-					case "copy":
-						var clipboard = document.getElementById('clipboard');
-						clipboard.value = request.data;
-						clipboard.select();
-						document.execCommand("copy");
-						break;
-						
-					case "dramalinks":
-						var time = parseInt(new Date().getTime());
-						if (background.drama.time && (time < background.drama.time)){
-							if (background.cfg.debug) {
-								console.log('returning cached dramalinks. cache exp: ' + background.drama.time + ' current: ' + time);
-							}
-							sendResponse({"data": background.drama.txt});
-						} else {
-							sendResponse({"data": background.drama.txt});
-							background.getDrama();
-						}
-						break;
-						
-					case "insertcss":
-						if (background.cfg.debug) {
-							console.log('inserting css ', request.file);
-						}
-						chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
-						break;
-						
-					case "opentab":
-						if (background.cfg.debug) {
-							console.log('opening tab ', request.url);
-						}
-						chrome.tabs.create({url: request.url});
-						break;
-						
-					case "noIgnores":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								sendResponse({"noignores": background.noIgnores});										
-						});
-						return true;
-						
-					case "getIgnored":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								sendResponse({
-										"ignorator": background.ignoratorInfo[tabs[0].id], 
-										"scope": background.scopeInfo[tabs[0].id]}
-								);
-						});		
-						return true;
-						
-					case "showIgnorated":
-						chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-								
-								background.tabPorts[tabs[0].id].postMessage({
-										action: 'showIgnorated', 
-										type: request.type, 
-										value: request.value
-								});
-						});
-						
-						return true;
-						
-					case "options":
-						chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-								// check whether bg script can send messages to current tab
-								if (background.tabPorts[tabs[0].id] && !background.cfg.options_window) {
-									// Open options page in iframe
-									chrome.tabs.sendMessage(tabs[0].id, {
-										action: "showOptions"
-									}, null);
-								}
-								
-								else {
-									// Create new tab
-									chrome.runtime.openOptionsPage();						
-								}
-								
-						});
-						break;
-						
-					case "openDatabase":
-						database.open(sendResponse);					
-						return true;					
-						
-					case "convertCacheToDb":
-						database.convertCache(sendResponse);					
-						return true;
-						
-					case "queryDb":
-						database.query(request.src, sendResponse);
-						return true;
-						
-					case "clearDatabase":
-						database.clear(sendResponse);
-						return true;
-						
-					case "addToDatabase":
-						database.add(request.data, sendResponse);
-						return true;
-						
-					case "updateDatabase":
-						database.updateFilename(request.data.src, request.data.newFilename);
-						return true;
-						
-					case "searchDatabase":
-						database.search(request.query, sendResponse);
-						return true;
-						
-					case "getAllFromDb":
-						database.getAll(sendResponse);
-						return true;
-						
-					case "getDbSize":
-						database.getSize(sendResponse);
-						return true;
+				case "copy":
+					var clipboard = document.getElementById('clipboard');
+					clipboard.value = request.data;
+					clipboard.select();
+					document.execCommand("copy");
+					break;
 					
-					case "getSizeInBytes":
-						database.getSizeInBytes(sendResponse);
-						return true;						
-						
-					default:
-						if (background.cfg.debug) {
-							console.log("Error in request listener - undefined parameter?", request);
-						}
-						break;
-				}
-			}
-		);
-	},
-	handle: {
-		ignoratorUpdate: function(tab, msg) {
-			switch (msg.action) {
-				case "ignorator_update":
-					this.ignoratorInfo[tab] = msg.ignorator;
-					this.scopeInfo[tab] = msg.scope;
-					if (msg.ignorator.total_ignored > 0) {
-						chrome.browserAction.setBadgeBackgroundColor({
-							tabId: tab,
-							color: "#ff0000"
-						});
-						chrome.browserAction.setBadgeText({
-							tabId: tab,
-							text: "" + msg.ignorator.total_ignored
-						});							
-						this.noIgnores = false;
-					} else if (msg.ignorator.total_ignored == 0) {
-						this.noIgnores = true;
+				case "dramalinks":
+					var time = parseInt(new Date().getTime());
+					
+					if (background.drama.time && (time < background.drama.time)) {
+						sendResponse({"data": background.drama.txt});
+					} 
+					
+					else {
+						sendResponse({"data": background.drama.txt});
+						background.getDrama();
+					}
+					
+					break;
+					
+				case "insertcss":
+					if (background.cfg.debug) {
+						console.log('inserting css ', request.file);
+					}
+					chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
+					break;
+					
+				case "opentab":
+					if (background.cfg.debug) {
+						console.log('opening tab ', request.url);
+					}
+					chrome.tabs.create({url: request.url});
+					break;
+					
+				case "noIgnores":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							sendResponse({"noignores": background.noIgnores});										
+					});
+					return true;
+					
+				case "getIgnored":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							sendResponse({
+									"ignorator": background.ignoratorInfo[tabs[0].id], 
+									"scope": background.scopeInfo[tabs[0].id]}
+							);
+					});		
+					return true;
+					
+				case "showIgnorated":
+					chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+							
+							background.tabPorts[tabs[0].id].postMessage({
+									action: 'showIgnorated', 
+									type: request.type, 
+									value: request.value
+							});
+					});
+					
+					return true;
+					
+				case "options":
+					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+							// check whether bg script can send messages to current tab
+							if (background.tabPorts[tabs[0].id] && !background.cfg.options_window) {
+								// Open options page in iframe
+								chrome.tabs.sendMessage(tabs[0].id, {
+									action: "showOptions"
+								}, null);
+							}
+							
+							else {
+								// Create new tab
+								chrome.runtime.openOptionsPage();						
+							}
+							
+					});
+					break;
+					
+				case "openDatabase":
+					database.open(sendResponse);					
+					return true;					
+					
+				case "convertCacheToDb":
+					database.convertCache(sendResponse);					
+					return true;
+					
+				case "queryDb":
+					database.query(request.src, sendResponse);
+					return true;
+					
+				case "clearDatabase":
+					database.clear(sendResponse);
+					return true;
+					
+				case "addToDatabase":
+					database.add(request.data, sendResponse);
+					return true;
+					
+				case "updateDatabase":
+					database.updateFilename(request.data.src, request.data.newFilename);
+					return true;
+					
+				case "searchDatabase":
+					database.search(request.query, sendResponse);
+					return true;
+					
+				case "getAllFromDb":
+					database.getAll(sendResponse);
+					return true;
+					
+				case "getDbSize":
+					database.getSize(sendResponse);
+					return true;
+				
+				case "getSizeInBytes":
+					database.getSizeInBytes(sendResponse);
+					return true;						
+					
+				default:
+					if (background.cfg.debug) {
+						console.log("Error in request listener - undefined parameter?", request);
 					}
 					break;
 			}
 		}
-	},	
+	},
+	
+	/**
+	 *  Checks whether any users have been ignored on active tab and updates badge text
+	 */
+	 
+	ignoratorUpdate: function(tab, msg) {
+		switch (msg.action) {
+			case "ignorator_update":
+				this.ignoratorInfo[tab] = msg.ignorator;
+				this.scopeInfo[tab] = msg.scope;
+				
+				if (msg.ignorator.total_ignored > 0) {				
+					chrome.browserAction.setBadgeBackgroundColor({
+						tabId: tab,
+						color: "#ff0000"
+					});
+					
+					chrome.browserAction.setBadgeText({
+						tabId: tab,
+						text: "" + msg.ignorator.total_ignored
+					});
+					
+					this.noIgnores = false;
+				} 
+				
+				else {
+					this.noIgnores = true;
+				}
+				
+				break;
+		}
+	},
+	
 	getUserID: function() {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
 		var xhr = new XMLHttpRequest();
