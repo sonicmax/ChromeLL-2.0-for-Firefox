@@ -37,7 +37,7 @@ var messageList = {
 		
 		if (document.readyState == 'loading') {
 			// wait for DOMContentLoaded to fire before attempting to modify DOM
-			document.addEventListener('DOMContentLoaded', function() {
+			document.addEventListener('DOMContentLoaded', () => {
 				messageList.applyDomModifications.call(messageList, messageList.pm);
 			});
 		}
@@ -63,36 +63,34 @@ var messageList = {
 				// Note: don't cache length property, it will break
 				for (var j = 0; j < tops.length; j++) {
 					var top = tops[j];
-				
-					if (top) {	
-						var username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+									
+					var username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+					
+					for (var f = 0, len = messageList.ignoredUsers.length; f < len; f++) {
+						var ignoredUser = messageList.ignoredUsers[f];
 						
-						for (var f = 0, len = messageList.ignoredUsers.length; f < len; f++) {
-							var ignoredUser = messageList.ignoredUsers[f];
+						if (username == ignoredUser.toLowerCase()) {
 							
-							if (username == ignoredUser.toLowerCase()) {
-								
-								top.parentNode.classList.add('ignorated');
-								
-								messageList.ignorated.total_ignored++;
-								
-								// Keep track of any users that have been ignored (and the number of posts they made)
-								if (!messageList.ignorated.data.users[ignoredUser]) {
-									messageList.ignorated.data.users[ignoredUser] = {};
-									messageList.ignorated.data.users[ignoredUser].total = 1;
-								} 
-								
-								else {
-									messageList.ignorated.data.users[ignoredUser].total++;
-								}
-								
-								if (!messageList.config.hide_ignorator_badge) {
-									messageList.globalPort.postMessage({
-										action: 'ignorator_update',
-										ignorator: messageList.ignorated,
-										scope: "messageList"
-									});
-								}
+							top.parentNode.classList.add('ignorated');
+							
+							messageList.ignorated.total_ignored++;
+							
+							// Keep track of any users that have been ignored (and the number of posts they made)
+							if (!messageList.ignorated.data.users[ignoredUser]) {
+								messageList.ignorated.data.users[ignoredUser] = {};
+								messageList.ignorated.data.users[ignoredUser].total = 1;
+							} 
+							
+							else {
+								messageList.ignorated.data.users[ignoredUser].total++;
+							}
+							
+							if (!messageList.config.hide_ignorator_badge) {
+								messageList.globalPort.postMessage({
+									action: 'ignorator_update',
+									ignorator: messageList.ignorated,
+									scope: "messageList"
+								});
 							}
 						}
 					}
@@ -203,19 +201,16 @@ var messageList = {
 						var user = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
 						
 						if (messageList.config.user_highlight_data[user]) {
-
+							
 							top.setAttribute('highlighted', true);								
-							top.style.background = '#'
-									+ messageList.config.user_highlight_data[user].bg;
-							top.style.color = '#'
-									+ messageList.config.user_highlight_data[user].color;
+							top.style.background = '#' + messageList.config.user_highlight_data[user].bg;
+							top.style.color = '#' + messageList.config.user_highlight_data[user].color;
 									
 							var anchors = top.getElementsByTagName('a');
 							
 							for (var j = 0, len = anchors.length; j < len; j++) {
 								var anchor = anchors[j];
-								anchor.style.color = '#'
-										+ messageList.config.user_highlight_data[user].color;
+								anchor.style.color = '#' + messageList.config.user_highlight_data[user].color;
 							}
 							
 							if (live && messageList.config.notify_userhl_post && k === 0
@@ -348,7 +343,8 @@ var messageList = {
 			autoscroll_livelinks: function(mutation, top, index, live) {
 				if (live && document.hidden 
 						&& messageList.autoscrollCheck(mutation) ) {
-					$.scrollTo(mutation);
+						
+					mutation.scrollIntoView();					
 				}
 			},
 			
@@ -445,6 +441,7 @@ var messageList = {
 				}	
 			}
 		},
+		
 		infobar: {
 			imagemap_on_infobar: function() {
 				// Adds link to imagemap for current topic on infobar
@@ -929,6 +926,7 @@ var messageList = {
 			}
 		}
 	},
+	
 	handleEvent: {
 		
 		/**
@@ -1555,6 +1553,7 @@ var messageList = {
 				video.play();
 			}
 		},
+		
 		pause: function() {
 			// pause all gfycat videos if document is hidden
 			if (document.hidden) {
@@ -2117,7 +2116,7 @@ var messageList = {
 			
 			var links = target.getElementsByClassName("l");
 			
-			if (!links) {
+			if (links.length == 0) {
 				return;
 			}
 			
@@ -2131,24 +2130,26 @@ var messageList = {
 				// Check for YouTube links and make sure they are videos
 				if (messageList.config.embed_on_hover && ytRegex.test(link.href) && videoCodeRegex.test(link.href)) {
 					link.className = "youtube";
-					// give each video link a unique id for embed/hide functions
+					// give each video link a unique id for embed/hide dom
 					link.id = link.href + "&" + i;
 					link.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
 					link.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));
 				}
 				
+				// Check for Gfycat links
 				else if ((messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) && link.title.indexOf("gfycat.com/") > -1) {
 					link.className = "gfycat";
-					if (messageList.config.embed_gfycat_thumbs 
-							|| link.parentNode.className == "quoted-message") {
+					
+					// Embed gfycat videos in quoted messages as thumbnails
+					if (messageList.config.embed_gfycat_thumbs || link.parentNode.className == "quoted-message") {
 						link.setAttribute('name', "gfycat_thumb");
 					}					
 				}
 			}
 			
-			if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {
-				// call gfycat.loader to embed links which are visible in viewport
-				messageList.gfycat.loader();				
+			// Call gfycat.loader to embed links which are visible in viewport
+			if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {				
+				messageList.gfycat.loader();
 				window.addEventListener('scroll', messageList.gfycat.loader);
 				document.addEventListener('visibilitychange', messageList.gfycat.pause);
 			}
@@ -2386,9 +2387,11 @@ var messageList = {
 			display.innerHTML = '<br>';
 			
 			for (var i = 0, len = this.categories.length; i < len; i++) {
-				if (!/All|🔁/.test(this.categories[i])) {
+				var category = this.categories[i];
+				
+				if (category !== 'All' && category !== '🔁') {
 					var fragment = document.createDocumentFragment();
-					var emojis = this.getEmojis(this.categories[i]);
+					var emojis = this.getEmojis(category);								
 					
 					for (var j = 0, len = emojis.length; j < len; j++) {
 						var emoji = emojis[j];
@@ -2741,6 +2744,11 @@ var messageList = {
 			document.title = newTitle;
 		}
 	},
+	
+	/**
+	 *  Handles quickpost HTML tag button events
+	 */
+	 
 	qpTagButton: function(e) {
 		if (e.target.tagName != 'INPUT') {
 			return 0;
@@ -2778,9 +2786,14 @@ var messageList = {
 		ta.scrollTop = st;
 		ta.focus();
 	},
-	addListeners: function(newPost) {
+	
+	/**
+	 *  Add event listeners required for ChromeLL features to work
+	 */
+	
+	addListeners: function(message) {
 		// make sure that these listeners are only added once
-		if (!newPost) {
+		if (!message) {
 			document.body.addEventListener('click', this.handleEvent.mouseclick.bind(this));
 			
 			var searchBox = document.getElementById('image_search');			
@@ -2792,8 +2805,8 @@ var messageList = {
 		// these listeners should be added to every new post
 		if (this.config.user_info_popup) {
 			var tops;
-			if (newPost) {
-				tops = newPost.getElementsByClassName('message-top');
+			if (message) {
+				tops = message.getElementsByClassName('message-top');
 			} else {
 				tops = document.getElementsByClassName('message-top');
 			}
@@ -2809,7 +2822,9 @@ var messageList = {
 			}
 		}
 	},
+	
 	appendScripts: function() {
+		// TODO: there's really no reason that this has to be loaded from an external script
 		var head = document.getElementsByTagName("head")[0];
 		if (messageList.config.post_templates) {
 			var templates = document.createElement('script');
@@ -2835,6 +2850,11 @@ var messageList = {
 		
 	},
 	
+	/**
+	 *  Creates a MutationObserver which observes topic and notifies user if a new page is created
+	 */
+	 
+	
 	newPageObserver: new MutationObserver((mutations) => {
 		for (var i = 0, len = mutations.length; i < len; i++) {
 			var mutation = mutations[i];
@@ -2851,6 +2871,10 @@ var messageList = {
 			}
 		}
 	}),
+	
+	/**
+	 *  Creates a MutationObserver which observes page for new livelinks posts and passes them to handler
+	 */
 	
 	livelinksObserver: new MutationObserver((mutations) => {
 		for (var i = 0, len = mutations.length; i < len; i++) {
