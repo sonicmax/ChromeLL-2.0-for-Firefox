@@ -545,9 +545,8 @@ var allPages = {
 		addListeners: function() {
 			const ESCAPE_KEY = 27;
 			
-			document.getElementsByClassName('body')[0].addEventListener('click', this.hide);
-			document.getElementById('close_options').addEventListener('click', this.hide);
-			
+			document.body.addEventListener('click', this.hide);
+			document.getElementById('close_options').addEventListener('click', this.hide);		
 			document.body.addEventListener('keyup', (evt) => {
 				if (evt.keyCode === ESCAPE_KEY) {
 					this.hide();
@@ -561,8 +560,8 @@ var allPages = {
 			var bodyClass = document.getElementsByClassName('body')[0];
 			bodyClass.style.opacity = 1;
 			document.body.removeChild(div);
-			bodyClass.removeEventListener('click', allPages.optionsMenu.hide);
-			document.body.removeEventListener('click', allPages.optionsMenu.hide);			
+			document.body.removeEventListener('click', allPages.optionsMenu.hide);						
+			document.body.removeEventListener('keyup', allPages.optionsMenu.hide);
 			document.body.removeEventListener('mousewheel', allPages.optionsMenu.preventScroll);
 		},
 		preventScroll: function(event) {
