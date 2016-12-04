@@ -965,6 +965,7 @@ var messageList = {
 		newPost: function(container) {
 			var top = container.getElementsByClassName('message-top')[0];
 			var index = document.getElementsByClassName('message-container').length;
+			var pm;
 			
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";
