@@ -20,7 +20,11 @@ var messageList = {
 		
 		// set up globalPort so we can interact with background page
 		this.globalPort = chrome.runtime.connect();
-		this.globalPort.onMessage.addListener(this.handleEvent.ignoratorUpdate);
+		this.globalPort.onMessage.addListener(this.handleEvent.onReceiveMessage);
+		
+		if (this.config.reload_on_update) {
+			this.globalPort.onDisconnect.addListener(this.handleEvent.onPortDisconnect);
+		}
 		
 		if (window.location.pathname === '/inboxthread.php') {
 			this.pm = "_pm";
@@ -933,7 +937,7 @@ var messageList = {
 		 *  Takes message containing name user, and unhides any currently ignorated posts by that user
 		 */
 		
-		ignoratorUpdate: function(msg) {
+		onReceiveMessage: function(msg) {
 			if (msg.action === 'showIgnorated') {
 				var ignoratedPosts = document.getElementsByClassName('ignorated');
 				var postsToShow = [];
@@ -959,6 +963,26 @@ var messageList = {
 					}
 				}
 			}
+		},
+		
+		/**
+		 *  After updating extension or reloading background page, it's not possible to send or receive messages
+		 *  from orphaned content scripts (see https://bugs.chromium.org/p/chromium/issues/detail?id=168263).
+		 *  If we detect the onDisconnect event, we should save user input and reload the page.
+		 */
+		 
+		
+		onPortDisconnect: function(port) {			
+			if (document.getElementsByClassName('quickpost').length > 0) {
+				var quickpost = document.getElementsByName('message')[0];
+				sessionStorage.setItem('quickpost_value', quickpost.value);
+				sessionStorage.setItem('quickpost_caret_position', quickpost.selectionStart);
+			}
+			
+			sessionStorage.setItem('scrollx', window.scrollX);
+			sessionStorage.setItem('scrolly', window.scrollY);
+			
+			window.location.reload();				
 		},
 		
 		/**
@@ -2985,9 +3009,27 @@ var messageList = {
 				}
 			}
 			
-			// Make sure that caret in quickpost area has not been moved
-			var quickpostArea = document.getElementsByName('message')[0];
-			quickpostArea.setSelectionRange(0, 0);		
+			// Check whether we need to restore page state
+			if (sessionStorage.getItem('quickpost_value') !== null) {
+				var quickpost = document.getElementsByName('message')[0];
+				
+				quickpost.value = sessionStorage.getItem('quickpost_value');				
+				
+				setTimeout(() => {
+					var caret = sessionStorage.getItem('quickpost_caret_position');
+					quickpost.setSelectionRange(caret, caret);
+				}, 0);
+				
+				sessionStorage.removeItem('quickpost_value');
+				sessionStorage.removeItem('quickpost_caret_position');
+			}
+		}
+		
+		if (sessionStorage.getItem('scrollx') !== null) {
+			window.scrollX = sessionStorage.getItem('scrollx');
+			window.scrollY = sessionStorage.getItem('scrolly');
+			sessionStorage.removeItem('scrollx');
+			sessionStorage.removeItem('scrolly');
 		}
 		
 		// Check anchors for media links to embed, etc
