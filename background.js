@@ -37,7 +37,7 @@ var background = {
 		this.messagePassing.addListeners();
 		this.checkVersion();
 		this.omniboxSearch();
-		this.clipboardHandler();	
+		this.createClipboardElement();	
 		this.getUserID();
 		this.getDrama();
 	},
@@ -194,27 +194,14 @@ var background = {
 			}
 		});
 	},
-	clipboardHandler: function() {
+	
+	createClipboardElement: function() {
 		var backgroundPage = chrome.extension.getBackgroundPage();
 		var textArea = backgroundPage.document.createElement("textarea");
 		textArea.id = "clipboard";
-		backgroundPage.document.body.appendChild(textArea);
-		chrome.runtime.onMessage.addListener(
-			// allows text content to be copied to clipboard from content scripts
-			function(request, sender, sendResponse) {
-				if (request.quote) {
-					var quote = request.quote;
-					var clipboard = document.getElementById('clipboard');
-					clipboard.value = quote;
-					clipboard.select();
-					document.execCommand("copy");
-					sendResponse({
-						clipboard: "Copied to clipboard."
-					});
-				}
-			}
-		);	
+		backgroundPage.document.body.appendChild(textArea);	
 	},
+	
 	buildContextMenu: function() {
 		// imageTransloader method is located in transloader.js
 		chrome.contextMenus.create({
