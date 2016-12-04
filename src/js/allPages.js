@@ -631,14 +631,10 @@ var allPages = {
 	init: function(config) {
 		this.config = config;
 		
-		try {
-			for (var i in this.commonFunctions) {
-				if (config[i]) {
-					this.commonFunctions[i]();
-				}
+		for (var i in this.commonFunctions) {
+			if (config[i]) {
+				this.commonFunctions[i]();
 			}
-		} catch (err) {
-			console.log("error in " + i + ":", err);
 		}
 		
 		chrome.runtime.sendMessage({
