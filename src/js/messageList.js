@@ -45,7 +45,12 @@ var messageList = {
 			this.applyDomModifications.call(this, this.pm);
 		}
 	},
-	functions: {
+	
+	/**
+	 *  Methods which modify DOM
+	 */
+	
+	dom: {
 		messagecontainer: {
 			ignorator_messagelist: function(msg) {
 				if (!messageList.config.ignorator) {
@@ -959,20 +964,17 @@ var messageList = {
 		
 		newPost: function(container) {
 			var top = container.getElementsByClassName('message-top')[0];
-			var index = document.getElementsByClassName('message-container').length;			
-			var functions = this.functions.messagecontainer;			
-			
-			var pm = '';
+			var index = document.getElementsByClassName('message-container').length;
 			
 			if (window.location.href.match('inboxthread')) {
 				pm = "_pm";
 			}
 			
-			for (var i in functions) {
+			for (var i in this.dom.messagecontainer) {
 				if (this.config[i + pm]) {
 						// Fourth parameter signifies that we are dealing with livelinks post
 						// TODO: Refactor this
-						functions[i](container, top, index, true);
+						this.dom.messagecontainer[i](container, top, index, true);
 				}
 			}
 			
@@ -980,7 +982,7 @@ var messageList = {
 			this.links.check(container);
 			
 			if (this.config.click_expand_thumbnail) {
-				this.functions.misc.click_expand_thumbnail(container);
+				this.dom.misc.click_expand_thumbnail(container);
 			}
 			
 			var usernameElement = top.getElementsByTagName('a')[0];
@@ -2843,21 +2845,16 @@ var messageList = {
 	
 	applyDomModifications: function(pm) {
 		var msgs = document.getElementsByClassName('message-container');
-		var pageFunctions = this.functions.infobar;
-		var postFunctions = this.functions.messagecontainer;
-		var quickpostFunctions = this.functions.quickpostbody;
-		var miscFunctions = this.functions.misc;
-		var config = this.config;
 		
 		// Crude method to detect zoom level for image resizing - we don't need to be completely accurate
 		var screenWidth = window.screen.width;
 		var documentWidth = document.documentElement.clientWidth;
 		this.zoomLevel = screenWidth / documentWidth;	
 		
-		// Call functions which modify infobar element
-		for (var k in pageFunctions) {
-			if (config[k + pm]) {
-					pageFunctions[k]();
+		// Call dom which modify infobar element
+		for (var k in this.dom.infobar) {
+			if (this.config[k + pm]) {
+				this.dom.infobar[k]();
 			}
 		}
 		
@@ -2881,16 +2878,16 @@ var messageList = {
 			var msg = msgs[j];
 			var top = msg.getElementsByClassName('message-top')[0];
 
-			for (var k in postFunctions) {			
-				if (config[k + pm]) {
-					postFunctions[k](msg, top, j + 1);
+			for (var k in this.dom.messagecontainer) {			
+				if (this.config[k + pm]) {
+					this.dom.messagecontainer[k](msg, top, j + 1);
 				}
 			}
 		}
 		
 		var titleElement = document.getElementsByTagName('h2')[0];
 		
-		if (config.dramalinks && !config.hide_dramalinks_topiclist) {
+		if (this.config.dramalinks && !this.config.hide_dramalinks_topiclist) {
 			dramalinks.appendTo(titleElement);
 			
 			// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
@@ -2905,9 +2902,9 @@ var messageList = {
 				var msg = msgs[j];
 				var top = msg.getElementsByClassName('message-top')[0];
 				
-				for (var k in postFunctions) {
-					if (config[k + pm]) {
-						postFunctions[k](msg, top, j + 1);
+				for (var k in this.dom.messagecontainer) {
+					if (this.config[k + pm]) {
+						this.dom.messagecontainer[k](msg, top, j + 1);
 					}
 				}
 			}
@@ -2916,24 +2913,24 @@ var messageList = {
 		// Pass updated ignorator data to background page so we can update badge and popup menu
 		if (!this.config.hide_ignorator_badge) {
 			this.globalPort.postMessage({
-				action: 'ignorator_update',
-				ignorator: this.ignorated,
-				scope: "messageList"
+					action: 'ignorator_update',
+					ignorator: this.ignorated,
+					scope: "messageList"
 			});
 		}
 		
 		// Finish modifying visible DOM
-		for (var i in miscFunctions) {
-			if (config[i + pm]) {
-				miscFunctions[i]();
+		for (var i in this.dom.misc) {
+			if (this.config[i + pm]) {
+				this.dom.misc[i]();
 			}
 		}				
 		
 		if (document.getElementsByClassName('quickpost').length > 0) {
-			// Call functions which modify quickpost-area (user probably won't see this)
-			for (var i in quickpostFunctions) {
-				if (config[i + pm]) {
-					quickpostFunctions[i]();
+			// Call dom which modify quickpost-area (user probably won't see this)
+			for (var i in this.dom.quickpostbody) {
+				if (this.config[i + pm]) {
+					this.dom.quickpostbody[i]();
 				}
 			}
 			
