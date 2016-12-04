@@ -993,12 +993,36 @@ var messageList = {
 			}
 					
 			if (!this.config.hide_ignorator_badge) {
-				// Send updated ignorator data to background script
-				this.globalPort.postMessage({
+				
+				var ignoratorData = {
 					action: 'ignorator_update',
 					ignorator: this.ignorated,
 					scope: "messageList"
-				});
+				};
+				
+				try {
+					// Send updated ignorator data to background page
+					this.globalPort.postMessage(ignoratorData);
+					
+				} catch(e) {
+					// We should attempt to reinitialise the connections to background page
+					this.globalPort = chrome.runtime.connect();
+					
+					if (this.globalPort) {
+						this.globalPort.onMessage.addListener(this.handleEvent.ignoratorUpdate);
+					}
+					
+					try {
+						// Send data again
+						this.globalPort.postMessage(ignoratorData);
+						console.log('Warning: content script was disconnected from background page, but recovered');
+						
+					} catch(e) {
+						// Not much else we can do - wait for user to reload the page.
+						console.log('Error while sending data to background page:', e);
+						console.log(chrome.runtime.lastError);
+					}
+				}
 			}
 		},
 		
