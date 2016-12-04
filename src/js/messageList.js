@@ -127,7 +127,7 @@ var messageList = {
 			},
 			
 			like_button: function(msg, top, index) {			
-				if (!window.location.href.match("archives")) {
+				if (window.location.hostname !== 'archives.endoftheinter.net') {
 					var anchor = document.createElement('a');
 					var divider = document.createTextNode(" | ");
 					anchor.innerText = 'Like';
@@ -300,7 +300,7 @@ var messageList = {
 			
 			label_self_anon: function(msg) {
 				var tagList = document.getElementsByTagName('h2')[0];
-				if (tagList.innerHTML.indexOf('/topics/Anonymous') > -1) {
+				if (tagList.innerHTML.indexOf('href="/topics/Anonymous"') > -1) {
 					// We can only get human number from topics that we can post in
 					var quickpostBody = document.getElementsByClassName('quickpost-body')[0];
 					
@@ -972,7 +972,7 @@ var messageList = {
 			var index = document.getElementsByClassName('message-container').length;
 			var pm = '';
 			
-			if (window.location.href.match('inboxthread')) {
+			if (window.location.pathname === '/inboxthread.php') {			
 				pm = "_pm";
 			}
 			
@@ -2555,7 +2555,7 @@ var messageList = {
 			
 			
 			// Get names of user and quoted poster
-			if (/\/topics\/Anonymous/.test(document.getElementsByTagName('h2')[0].innerHTML)) {
+			if (document.getElementsByTagName('h2')[0].innerHTML.indexOf('href="/topics/Anonymous"') > -1) {
 				anonymous = true;
 				var user = "Human";
 				var poster = "this";
