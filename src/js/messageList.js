@@ -22,7 +22,7 @@ var messageList = {
 		this.globalPort = chrome.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handleEvent.ignoratorUpdate);
 		
-		if (window.location.href.match('inboxthread.php')) {
+		if (window.location.pathname === '/inboxthread.php') {
 			this.pm = "_pm";
 		}
 		
