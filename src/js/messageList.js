@@ -1021,7 +1021,9 @@ var messageList = {
 					} catch(e) {
 						// Not much else we can do - wait for user to reload the page.
 						console.log('Error while sending data to background page:', e);
-						console.log(chrome.runtime.lastError);
+						if (chrome.runtime.lastError) {
+							console.log(chrome.runtime.lastError);
+						}
 					}
 				}
 			}
