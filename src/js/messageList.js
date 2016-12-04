@@ -1026,9 +1026,6 @@ var messageList = {
 					} catch(e) {
 						// Not much else we can do - wait for user to reload the page.
 						console.log('Error while sending data to background page:', e);
-						if (chrome.runtime.lastError) {
-							console.log(chrome.runtime.lastError);
-						}
 					}
 				}
 			}
@@ -2007,9 +2004,6 @@ var messageList = {
 			var num_children = evt.target.parentNode.parentNode.childNodes.length;
 			// first time expanding - only span
 			if (num_children == 1) {
-				if (messageList.config.debug)
-					console.log("first time expanding - build span, load img");
-
 				// build new span
 				var newspan = document.createElement('span');
 				newspan.setAttribute("class", "img-loaded");
@@ -2033,10 +2027,6 @@ var messageList = {
 			
 			// has been expanded before - just switch which node is hidden
 			else if (num_children == 2) {
-				if (messageList.config.debug) {
-					console.log("not first time expanding - toggle display status");
-				}
-
 				// toggle their display statuses
 				var children = evt.target.parentNode.parentNode.childNodes
 				for (var i = 0; i < children.length; i++) {
@@ -2049,7 +2039,7 @@ var messageList = {
 			} 
 			
 			else if (messageList.config.debug) {
-				console.log("I don't know what's going on with this image - weird number of siblings");
+				console.log("Couldn't expand thumbnail - weird number of siblings");
 			}
 		},
 		
