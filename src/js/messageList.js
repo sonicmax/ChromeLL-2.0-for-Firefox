@@ -13,6 +13,11 @@ var messageList = {
 	},
 	pm: '',
 	
+	
+	/**
+	 *  Do some initialisation before DOMContentLoaded fires.
+	 */
+	
 	init: function(config) {
 		this.config = config.data;
 		this.config.tcs = config.tcs;		
@@ -51,6 +56,7 @@ var messageList = {
 			this.applyDomModifications.call(this, this.pm);
 		}
 	},
+	
 	
 	/**
 	 *  Methods which modify DOM
@@ -133,7 +139,7 @@ var messageList = {
 			like_button: function(msg, top, index) {											
 				var anchor = document.createElement('a');
 				var divider = document.createTextNode(" | ");
-				anchor.innerText = 'Like';
+				anchor.innerHTML = 'Like';
 				anchor.className = 'like_button';
 				anchor.href = '##like';
 				top.appendChild(divider);
@@ -358,7 +364,7 @@ var messageList = {
 							
 					// trigger after 10ms delay to prevent undesired behaviour in post_title_notification
 					setTimeout(() => {						
-						// set autoscrolling to true to prevent clearUnreadPosts from being triggered
+						// set autoscrolling to true to prevent clearUnreadPostsFromTitle from being triggered
 						messageList.autoscrolling = true;
 						$.scrollTo((mutation), 800);						
 					}, 10);
@@ -462,11 +468,12 @@ var messageList = {
 					var anchor = document.createElement('a');
 					var divider = document.createTextNode(" | ");
 					anchor.href = '/imagemap.php?' + topicNumber + currentPage;
-					anchor.innerText = 'Imagemap';
+					anchor.innerHTML = 'Imagemap';
 					infobar.appendChild(divider);
 					infobar.appendChild(anchor);
 				}
 			},
+			
 			filter_me: function() {				
 				var tops = document.getElementsByClassName('message-top');
 				
@@ -477,7 +484,7 @@ var messageList = {
 										
 					if (quickpostElement && quickpostElement.getElementsByTagName('a')) {
 						var human = quickpostElement.getElementsByTagName('a')[0]
-								.innerText.replace('Human #', '');
+								.innerHTML.replace('Human #', '');
 								
 						if (isNaN(human)) {
 							// User hasn't posted in topic yet
@@ -527,15 +534,14 @@ var messageList = {
 				var divider = document.createTextNode(' | ');
 				anchor.id = 'chromell_spoilers';
 				anchor.href = '##';
-				anchor.innerText = 'Expand Spoilers';
+				anchor.innerHTML = 'Expand Spoilers';
 				infobar.appendChild(divider);
 				infobar.appendChild(anchor);
 				anchor.addEventListener('click', messageList.spoilers.find);		
 			}
 		},
 		
-		quickpostbody: {
-		
+		quickpostbody: {		
 			quick_imagemap: function() {
 				var quickpost = document.getElementsByClassName('quickpost-body')[0];
 				var button = document.createElement('button');
@@ -720,6 +726,7 @@ var messageList = {
 					}
 				}
 			},
+			
 			label_tc: function() {
 				var tcs = messageList.tcs.getMessages();
 				if (!tcs) {
@@ -746,29 +753,32 @@ var messageList = {
 					username.outerHTML += span.innerHTML;
 				}
 			},
+			
 			pm_title: function() {
 				if (window.location.href.indexOf('inboxthread.php') == -1) {
 					return;
 				}
 				var me = document.getElementsByClassName('userbar')[0]
-						.getElementsByTagName('a')[0].innerText;
+						.getElementsByTagName('a')[0].innerHTML;
 				var other = '';
 				var tops = document.getElementsByClassName('message-top');
 				var top;
 				for (var i = 0, len = tops.length; i < len; i++) {
 					top = tops[i];
-					if (top.getElementsByTagName('a')[0].innerText.indexOf(me) == -1) {
-						other = top.getElementsByTagName('a')[0].innerText;
+					if (top.getElementsByTagName('a')[0].innerHTML.indexOf(me) == -1) {
+						other = top.getElementsByTagName('a')[0].innerHTML;
 						break;
 					}
 				}
 				document.title = "PM - " + other;
 			},
+			
 			post_title_notification: function() {
-				document.addEventListener('visibilitychange', messageList.clearUnreadPosts);
-				document.addEventListener('scroll', messageList.clearUnreadPosts);
-				document.addEventListener('mousemove', messageList.clearUnreadPosts);
+				document.addEventListener('visibilitychange', messageList.clearUnreadPostsFromTitle);
+				document.addEventListener('scroll', messageList.clearUnreadPostsFromTitle);
+				document.addEventListener('mousemove', messageList.clearUnreadPostsFromTitle);
 			},
+			
 			click_expand_thumbnail: function(newPost) {
 				var messages;
 				if (newPost && typeof newPost != 'string') {
@@ -790,6 +800,7 @@ var messageList = {
 					}
 				}
 			},				
+			
 			loadquotes: function() {
 				function getElementsByClass(searchClass, node, tag) {
 					var classElements = new Array();
@@ -964,13 +975,13 @@ var messageList = {
 				}
 			}
 		},
+
 		
 		/**
 		 *  After updating extension or reloading background page, it's not possible to send or receive messages
 		 *  from orphaned content scripts (see https://bugs.chromium.org/p/chromium/issues/detail?id=168263).
 		 *  If we detect the onDisconnect event, we should save user input and reload the page.
-		 */
-		 
+		 */	 
 		
 		onPortDisconnect: function(port) {			
 			if (document.getElementsByClassName('quickpost').length > 0) {
@@ -984,6 +995,7 @@ var messageList = {
 			
 			window.location.reload();				
 		},
+
 		
 		/**
 		 *  Recieves new livelinks posts and applies any required modifications
@@ -1052,6 +1064,7 @@ var messageList = {
 				}
 			}
 		},
+
 		
 		/**
 		 *  Because ChromeLL adds so many clickable elements to the screen,
@@ -1111,7 +1124,7 @@ var messageList = {
 					return;					
 			
 				case 'like_button':
-					this.likeButton.process(evt.target);
+					this.likeButton.buildMarkup(evt.target);
 					evt.preventDefault();
 					return;
 				
@@ -1120,7 +1133,7 @@ var messageList = {
 					for (var i = 0, len = evt.path.length; i < len; i++) {
 						var pathNode = evt.path[i];
 						if (pathNode.className == 'like_button') {
-							this.likeButton.process(pathNode, templateNumber);			
+							this.likeButton.buildMarkup(pathNode, templateNumber);			
 							break;
 						}
 					}
@@ -1179,7 +1192,7 @@ var messageList = {
 					evt.preventDefault();
 					return;
 			}
-		},
+		},		
 		
 		mouseenter: function(evt) {
 			switch (evt.target.className) {
@@ -1205,6 +1218,7 @@ var messageList = {
 					break;
 			}
 		},
+		
 		mouseleave: function(evt) {	
 			clearTimeout(this.youtube.debouncerId);
 			clearTimeout(this.gfycat.debouncerId);
@@ -1224,6 +1238,7 @@ var messageList = {
 			}
 			
 		},
+		
 		keydown: function(evt) {
 			const RETURN_KEY = 13;
 			
@@ -1237,6 +1252,7 @@ var messageList = {
 				}
 			}
 		},
+		
 		search: function() {
 			clearTimeout(this.imagemapDebouncer);
 			
@@ -1250,10 +1266,15 @@ var messageList = {
 		}
 	},
 	
+	
+	/**
+	 *  Methods which handle the embedding of Gfycat videos
+	 */
+	
 	gfycat: {
 		
 		debouncerId: '', // id for setTimeout()
-		
+				
 		/**
 		 *  To reduce CPU load, we only embed Gfycat videos that are visible in viewport,
 		 *  and pause any videos which are no longer visible.
@@ -1292,6 +1313,7 @@ var messageList = {
 				}
 			}
 		},
+		
 		
 		/**
 		 *  Checks Gfycat anchors and decides how to embed them
@@ -1340,6 +1362,7 @@ var messageList = {
 		
 		},
 		
+		
 		/**
 		 *  Checks Gfycat API to get height, width, .webm url and nsfw status
 		 */
@@ -1379,6 +1402,7 @@ var messageList = {
 			};
 			xhr.send();
 		},
+		
 		
 		/**
 		 *  Creates placeholder using API data, which will be populated once visible in viewport
@@ -1426,6 +1450,7 @@ var messageList = {
 				}
 			}
 		},
+		
 		
 		/**
 		 *  Creates thumbnail for video using API data, which can be played on click
@@ -1496,6 +1521,7 @@ var messageList = {
 			}
 		},
 		
+		
 		/**
 		 *  Check whether Gfycat is NWS based on API response and post content
 		 */
@@ -1524,8 +1550,9 @@ var messageList = {
 			}
 		},
 		
+		
 		/**
-		 *  Method which allows us to display "embed on hover" link for NWS Gfycat videos
+		 *  Methods which allows us to display/hide "embed on hover" links for NWS Gfycat videos
 		 */
 		
 		showEmbedLink: function(evt) {	
@@ -1550,6 +1577,11 @@ var messageList = {
 				embedLink.parentNode.removeChild(embedLink);
 			}
 		},
+		
+		
+		/**
+		 *  Main embedding method which converts placeholder elements into video elements
+		 */
 		
 		embed: function(placeholder) {
 			if (placeholder.className === 'gfycat') {
@@ -1578,6 +1610,11 @@ var messageList = {
 			}
 		},
 		
+		
+		/**
+		 *  Handles pausing of Gfycats that are no longer visible to user
+		 */
+		
 		pause: function() {
 			// pause all gfycat videos if document is hidden
 			if (document.hidden) {
@@ -1593,7 +1630,7 @@ var messageList = {
 			}
 			else {
 				// call gfycatLoader so that only visible gfycat videos are played
-				// if document visibility changes from hidden to !hidden
+				// if document visibility changes from hidden to not hidden
 				messageList.gfycat.loader();
 			}
 		}
@@ -1747,6 +1784,7 @@ var messageList = {
 			toEmbed.className = "youtube";
 		}
 	},
+	
 	snippet: {
 		handler: function(ta, caret) {
 			// detects keyword & replaces with snippet
@@ -1793,6 +1831,7 @@ var messageList = {
 			}
 		}	
 	},
+	
 	usernotes: {
 		open: function(el) {
 			var userID = el.href.match(/note(\d+)$/i)[1];
@@ -1813,6 +1852,7 @@ var messageList = {
 				el.parentNode.appendChild(page);
 			}
 		},
+		
 		save: function() {
 			messageList.sendMessage({
 				need: "save",
@@ -1821,8 +1861,15 @@ var messageList = {
 			});
 		}
 	},
+	
 	quote: {
 		depth: 0,
+		
+		/**
+		 *  Called after user uses feature which requires ETI markup to be generated
+		 *  (archive quote buttons, like button, etc)
+		 */
+		
 		handler: function(evt) {
 			
 			if (evt.likeButton) {
@@ -1854,11 +1901,11 @@ var messageList = {
 					data: markup
 				});
 								
-				this.notify(evt.target);
+				this.showNotification(evt.target);
 			}
 		},
 		
-		notify: function(node) {			
+		showNotification: function(node) {
 			// Create hidden notification so we can use fadeIn() later
 			var span = document.createElement('span');
 			span.id = 'copied';
@@ -1893,33 +1940,34 @@ var messageList = {
 			var topicId = window.location.search.replace("?topic=", "");
 			var container;
 			var tops = [];
-			if (hostname === "archives.endoftheinter.net") {
-				var links = document.getElementsByTagName("a");
-				var msgs = document.getElementsByClassName("message");
-				var containers = document.getElementsByClassName("message-container");
-				for (var i = 0, len = containers.length; i < len; i++) {
-					var container = containers[i];
-					tops[i] = container.getElementsByClassName("message-top")[0];
-					var msgID = msgs[i].getAttribute("msgid");
-					var quote = document.createElement("a");
-					var quoteText = document.createTextNode("Quote");
-					var space = document.createTextNode(" | ");
-					quote.appendChild(quoteText);
-					quote.href = "#";
-					quote.id = msgID;
-					quote.className = "archivequote";
-					tops[i].appendChild(space);
-					tops[i].appendChild(quote);
-				}
+			var links = document.getElementsByTagName("a");
+			var msgs = document.getElementsByClassName("message");
+			var containers = document.getElementsByClassName("message-container");
+			for (var i = 0, len = containers.length; i < len; i++) {
+				var container = containers[i];
+				tops[i] = container.getElementsByClassName("message-top")[0];
+				var msgID = msgs[i].getAttribute("msgid");
+				var quote = document.createElement("a");
+				var quoteText = document.createTextNode("Quote");
+				var space = document.createTextNode(" | ");
+				quote.appendChild(quoteText);
+				quote.href = "#";
+				quote.id = msgID;
+				quote.className = "archivequote";
+				tops[i].appendChild(space);
+				tops[i].appendChild(quote);
 			}
 		},				
+		
+		
+		/**
+		 *  Iterates of children of message element and generates markup.
+		 *  Called recursively to handle quoted-message and spoiler elements.
+		 */
 		
 		getMarkup: function(parentElement) {
 			var output = '';
 			var childNodes = parentElement.childNodes;
-			
-			// Iterate over children of message element and generate markup for each one.
-			// We have to call getMarkup recursively for quoted-message and spoiler elements.
 			
 			for (var i = 0, len = childNodes.length; i < len; i++) {				
 				var node = childNodes[i];
@@ -2019,6 +2067,7 @@ var messageList = {
 		}		
 		
 	},
+	
 	image: {
 		
 		// originally rewritten by xdrvonscottx
@@ -2077,7 +2126,7 @@ var messageList = {
 			}
 		},
 				
-		observer: new MutationObserver(function(mutations) {
+		observer: new MutationObserver((mutations) => {
 			for (var i = 0; i < mutations.length; i++) {
 				var mutation = mutations[i];
 				if (messageList.config.resize_imgs) {
@@ -2118,6 +2167,7 @@ var messageList = {
 				messageList.spoilers.toggle(node);
 			}
 		},
+		
 		toggle: function(obj) {
 			while (!/spoiler_(?:open|close)/.test(obj.className)) {
 				obj = obj.parentNode;
@@ -2180,6 +2230,7 @@ var messageList = {
 			
 		},
 		
+		
 		/**
 		 *  Fixes issue where certain types of relative URL on ETI would redirect to the wrong subdomain.
 		 */
@@ -2198,8 +2249,7 @@ var messageList = {
 					window.open(anchor.href.replace('boards', 'archives'));
 					break;
 			}			
-		}
-		
+		}	
 	},
 	
 	emojis: {
@@ -2537,6 +2587,7 @@ var messageList = {
 			messageList.tcs.save();
 			return tcs;
 		},
+		
 		save: function() {
 			var max = 40;
 			var lowest = Infinity;
@@ -2562,11 +2613,19 @@ var messageList = {
 			}
 		}	
 	},
+	
 	likeButton: {
-		process: function(node, templateNumber) {
+		
+		/**
+		 *  Checks whether user is posting in anonymous topic and builds markup for given post
+		 *  after user clicks like button. The markup is either inserted at the start of the
+		 *  quickpost area or at caret position, depending on whether user has typed anything or not
+		 */
+		
+		buildMarkup: function(likeButtonElement, templateNumber) {
 			var anonymous;
-			var container = node.parentNode.parentNode;
-			var message = node.parentNode.parentNode.getElementsByClassName('message')[0];
+			var container = likeButtonElement.parentNode.parentNode;
+			var message = likeButtonElement.parentNode.parentNode.getElementsByClassName('message')[0];
 			var nub = document.getElementsByClassName('quickpost-nub')[0];
 			var quickreply = document.getElementsByTagName('textarea')[0];
 			
@@ -2650,6 +2709,7 @@ var messageList = {
 				nub.click();
 			}
 		},
+		
 		showOptions: function() {
 			if (!document.getElementById('hold_menu')) {
 				var likeData = messageList.config.custom_like_data;
@@ -2683,6 +2743,7 @@ var messageList = {
 				menuElement.appendChild(lineBreak);
 			}
 		},
+		
 		hideOptions: function() {
 			var menu = document.getElementById('hold_menu');
 			if (menu) {
@@ -2690,6 +2751,13 @@ var messageList = {
 			}
 		}
 	},
+	
+	
+	/**
+	 *  Makes sure that we only autoscroll if user is already at bottom of page 
+	 *  (ie has finished reading current page and is waiting for new posts)
+	 */
+	
 	autoscrollCheck: function(mutation) {
 		// checks whether user has scrolled to bottom of page
 		var position = mutation.getBoundingClientRect();
@@ -2700,6 +2768,7 @@ var messageList = {
 			return true;
 		}
 	},
+	
 	startBatchUpload: function(evt) {
 		var chosen = document.getElementById('batch_uploads');
 		if (chosen.files.length == 0) {
@@ -2711,6 +2780,7 @@ var messageList = {
 				+ chosen.files.length + ")";
 		allPages.asyncUpload(chosen.files, 0);
 	},
+	
 	postTemplateAction: function(evt) {
 		if (evt.className === "expand_post_template") {
 			var ins = evt.parentNode;
@@ -2752,11 +2822,12 @@ var messageList = {
 			var cdiv = document.getElementById('cdiv');
 			var d = {};
 			d.text = this.config.post_template_data[evt.parentNode.className].text;
-			cdiv.innerText = JSON.stringify(d);
+			cdiv.innerHTML = JSON.stringify(d);
 			cdiv.dispatchEvent(this.postEvent);
 		}
-	},
-	clearUnreadPosts: function(evt) {
+	},	
+	
+	clearUnreadPostsFromTitle: function(evt) {
 		if (!/\(\d+\+?\)/.test(document.title)
 				|| this.autoscrolling == true
 				|| document.hidden) {
@@ -2768,6 +2839,7 @@ var messageList = {
 			document.title = newTitle;
 		}
 	},
+	
 	
 	/**
 	 *  Handles quickpost HTML tag button events
@@ -2810,6 +2882,7 @@ var messageList = {
 		ta.scrollTop = st;
 		ta.focus();
 	},
+	
 	
 	/**
 	 *  Add event listeners required for ChromeLL features to work
@@ -2858,6 +2931,7 @@ var messageList = {
 		}
 	},
 	
+	
 	/**
 	 *  Used to communicate with background page.
 	 */
@@ -2874,10 +2948,10 @@ var messageList = {
 		
 	},
 	
+	
 	/**
 	 *  Creates a MutationObserver which observes topic and notifies user if a new page is created
-	 */
-	 
+	 */	 
 	
 	newPageObserver: new MutationObserver((mutations) => {
 		for (var i = 0, len = mutations.length; i < len; i++) {
@@ -2896,6 +2970,7 @@ var messageList = {
 		}
 	}),
 	
+	
 	/**
 	 *  Creates a MutationObserver which observes page for new livelinks posts and passes them to handler
 	 */
@@ -2913,6 +2988,7 @@ var messageList = {
 		}
 	}),
 	
+	
 	/**
 	 *  Crude method to detect zoom level for image resizing - we don't need to be completely accurate
 	 */
@@ -2922,6 +2998,7 @@ var messageList = {
 		var documentWidth = document.documentElement.clientWidth;
 		this.zoomLevel = screenWidth / documentWidth;
 	 },
+	
 	
 	/**
 	 *  The main loop for this script - called after DOMContentLoaded has fired (or otherwise once DOM is ready)
@@ -3085,6 +3162,7 @@ var messageList = {
 	}
 };
 
+// Entry point
 chrome.runtime.sendMessage({
 	
 	need: "config",
