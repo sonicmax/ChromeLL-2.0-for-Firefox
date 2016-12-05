@@ -1210,16 +1210,16 @@ var messageList = {
 					this.youtube.debouncerId = setTimeout(this.youtube.showEmbedLink.bind(this.youtube, evt), 400);
 					break;
 				
-				case 'nws_gfycat':
-					this.gfycat.debouncerId = setTimeout(this.gfycat.showEmbedLink.bind(this.gfycat, evt), 400);
-					break;
-					
-				case 'nws_imgur':
-					this.imgur.debouncerId = setTimeout(this.imgur.showEmbedLink.bind(this.imgur, evt), 400);
-					break;
-				
 				default:
 					break;
+			}
+			
+			if (evt.target.className && evt.target.classList.contains('nws_gfycat')) {
+				this.gfycat.debouncerId = setTimeout(this.gfycat.showEmbedLink.bind(this.gfycat, evt), 400);
+			}
+			
+			else if (evt.target.className && evt.target.classList.contains('nws_imgur')) {
+				this.imgur.debouncerId = setTimeout(this.imgur.showEmbedLink.bind(this.imgur, evt), 400);				
 			}
 		},
 		
@@ -1389,44 +1389,49 @@ var messageList = {
 		checkLink: function(gfycatElement) {
 			var url = gfycatElement.getAttribute('href');
 			
-			this.getDataFromApi(url, (data) => {
+			if (!gfycatElement.classList.contains('checked')) {
 				
-				if (data === "error") {
-					// revert class name to stop gfycat loader from detecting link
-					gfycatElement.className = 'l';
-					return;
-				}						
-				
-				else {
-					messageList.gfycat.checkWorkSafe(gfycatElement, data.nsfw, (isWorkSafe) => {
+				gfycatElement.classList.add('checked');
 						
-						if (!isWorkSafe && messageList.config.hide_nws_gfycat && !/N[WL]S/.test(document.getElementsByTagName('h2')[0].innerHTML)) {
-							gfycatElement.className = 'nws_gfycat';
-							gfycatElement.setAttribute('w', data.width);
-							gfycatElement.setAttribute('h', data.height);
-							gfycatElement.id = data.webm;
-							gfycatElement.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
-							gfycatElement.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));
-						}
-						
-						else {					
-							if (gfycatElement.getAttribute('name') == 'gfycat_thumb') {								
-								var splitURL = url.split('/').slice(-1);
-								var code = splitURL.join('/');
-								var thumbnailUrl = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
-								
-								messageList.gfycat.createThumbnail(gfycatElement, url, thumbnailUrl, data);
-							} 
+				this.getDataFromApi(url, (data) => {
+					
+					if (data === "error") {
+						// revert class name to stop gfycat loader from detecting link
+						gfycatElement.className = 'l';
+						return;
+					}						
+					
+					else {
+						messageList.gfycat.checkWorkSafe(gfycatElement, data.nsfw, (isWorkSafe) => {
 							
-							else {
-								messageList.gfycat.createPlaceholder(gfycatElement, url, data);
+							if (!isWorkSafe && messageList.config.hide_nws_gfycat && !/N[WL]S/.test(document.getElementsByTagName('h2')[0].innerHTML)) {
+								gfycatElement.classList.remove('gfycat');
+								gfycatElement.classList.add('nws_gfycat');
+								gfycatElement.setAttribute('w', data.width);
+								gfycatElement.setAttribute('h', data.height);
+								gfycatElement.id = data.webm;
+								gfycatElement.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
+								gfycatElement.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));
 							}
-						}
-						
-					});
-				}
-			});		
-		
+							
+							else {					
+								if (gfycatElement.getAttribute('name') == 'gfycat_thumb') {								
+									var splitURL = url.split('/').slice(-1);
+									var code = splitURL.join('/');
+									var thumbnailUrl = 'http://thumbs.gfycat.com/' + code + '-poster.jpg';
+									
+									messageList.gfycat.createThumbnail(gfycatElement, url, thumbnailUrl, data);
+								} 
+								
+								else {
+									messageList.gfycat.createPlaceholder(gfycatElement, url, data);
+								}
+							}
+							
+						});
+					}
+				});			
+			}	
 		},
 		
 		getDataFromApi: function (url, callback) {
@@ -1473,7 +1478,7 @@ var messageList = {
 			
 			// create placeholder
 			var placeholder = document.createElement('div');
-			placeholder.classList.add('gfycat');
+			placeholder.classList.add('media', 'gfycat');
 			placeholder.id = data.webm;
 			placeholder.setAttribute('name', 'placeholder');
 
@@ -1516,7 +1521,7 @@ var messageList = {
 			
 			// create placeholder element
 			var placeholder = document.createElement('div');
-			placeholder.classList.add('gfycat');
+			placeholder.classList.add('media', 'gfycat');
 			placeholder.id = data.webm;
 			
 			var thumbnail = document.createElement('img');
@@ -1581,7 +1586,8 @@ var messageList = {
 				var post = gfycatElement.parentNode;
 				
 				if (nsfw === '1' || post && /(n[wl]s)/i.test(post.innerHTML)) {
-					gfycatElement.className = 'nws_gfycat';
+					gfycatElement.classList.remove('gfycat');
+					gfycatElement.classList.add('nws_gfycat');
 					callback(false);
 				}
 				
@@ -1619,7 +1625,7 @@ var messageList = {
 		},
 		
 		embed: function(placeholder) {
-			if (placeholder.className === 'gfycat') {
+			if (placeholder.classList.contains('gfycat')) {
 				// use placeholder element to embed gfycat video
 				var video = placeholder.getElementsByTagName('video')[0];
 				if (messageList.config.show_gfycat_link) {
@@ -1630,7 +1636,7 @@ var messageList = {
 				video.src = placeholder.id;
 				video.play();
 			}
-			else if (placeholder.className === 'nws_gfycat') {
+			else if (placeholder.classList.contains('nws_gfycat')) {
 				// create video element & embed gfycat
 				var video = document.createElement('video');
 				var width = placeholder.getAttribute('w');
@@ -1658,6 +1664,7 @@ var messageList = {
 				
 				this.getDataFromApi(code, (data) => {					
 					if (data.error) {
+						// Make sure that this is only appended once
 						if (imgurElement.classList.contains('imgur')) {
 							var container = document.createElement('span');
 							container.style.display = 'inline-block';
@@ -1679,7 +1686,8 @@ var messageList = {
 					}
 					
 					else if (data.nsfw === false && messageList.config.hide_nws_gfycat) {
-						imgurElement.className = 'nws_imgur';
+						imgurElement.classList.remove('imgur');
+						imgurElement.classList.add('nws_imgur');
 						imgurElement.setAttribute('width', data.width);
 						imgurElement.setAttribute('height', data.height);
 						imgurElement.id = data.url;
@@ -1764,7 +1772,7 @@ var messageList = {
 		createThumbnail: function(imgurElement, thumbnailUrl, data) {			
 			// create placeholder element
 			var placeholder = document.createElement('div');
-			placeholder.classList.add('imgur');
+			placeholder.classList.add('media', 'imgur');
 			placeholder.id = data.url;
 			
 			var thumbnail = document.createElement('img');
@@ -1818,7 +1826,7 @@ var messageList = {
 		createPlaceholder: function(imgurElement, data) {		
 			// create placeholder
 			var placeholder = document.createElement('div');
-			placeholder.classList.add('imgur');
+			placeholder.classList.add('media', 'imgur');
 			placeholder.id = data.url;
 			placeholder.setAttribute('name', 'placeholder');
 
@@ -1848,7 +1856,7 @@ var messageList = {
 		},
 		
 		embed: function(placeholder) {
-			if (placeholder.className === 'imgur') {
+			if (placeholder.classList.contains('imgur')) {
 				// use placeholder element to embed gfycat video
 				var video = placeholder.getElementsByTagName('video')[0];
 				if (messageList.config.show_gfycat_link) {
@@ -1859,7 +1867,7 @@ var messageList = {
 				video.src = placeholder.id;
 				video.play();
 			}
-			else if (placeholder.className === 'nws_imgur') {
+			else if (placeholder.className.contains('nws_imgur')) {
 				// create video element & embed gfycat
 				var video = document.createElement('video');
 				var width = placeholder.getAttribute('width');
