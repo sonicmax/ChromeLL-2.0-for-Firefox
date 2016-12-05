@@ -2937,7 +2937,7 @@ var messageList = {
 		}
 		
 		// Check whether user can post in topic
-		var topicOpen = (document.getElementsByClassName('quickpost').length === 0);
+		var topicOpen = (document.getElementsByClassName('quickpost').length > 0);
 		
 		if (!topicOpen) {
 			// Add ChromeLL quote buttons before highlights/post numbers are added
