@@ -39,6 +39,8 @@ var messageList = {
 			});
 		}
 		
+		this.getZoomLevel();
+		
 		if (document.readyState == 'loading') {
 			// wait for DOMContentLoaded to fire before attempting to modify DOM
 			document.addEventListener('DOMContentLoaded', () => {
@@ -128,18 +130,16 @@ var messageList = {
 				top.appendChild(notebook);
 			},
 			
-			like_button: function(msg, top, index) {			
-				if (window.location.hostname !== 'archives.endoftheinter.net') {
-					var anchor = document.createElement('a');
-					var divider = document.createTextNode(" | ");
-					anchor.innerText = 'Like';
-					anchor.className = 'like_button';
-					anchor.href = '##like';
-					top.appendChild(divider);
-					top.appendChild(anchor);
-					anchor.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
-					anchor.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));					
-				}
+			like_button: function(msg, top, index) {											
+				var anchor = document.createElement('a');
+				var divider = document.createTextNode(" | ");
+				anchor.innerText = 'Like';
+				anchor.className = 'like_button';
+				anchor.href = '##like';
+				top.appendChild(divider);
+				top.appendChild(anchor);
+				anchor.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
+				anchor.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));				
 			},
 			
 			number_posts: function(msg, top, index) {
@@ -2914,18 +2914,21 @@ var messageList = {
 	}),
 	
 	/**
+	 *  Crude method to detect zoom level for image resizing - we don't need to be completely accurate
+	 */
+	 
+	 getZoomLevel: function() {
+		var screenWidth = window.screen.width;
+		var documentWidth = document.documentElement.clientWidth;
+		this.zoomLevel = screenWidth / documentWidth;
+	 },
+	
+	/**
 	 *  The main loop for this script - called after DOMContentLoaded has fired (or otherwise once DOM is ready)
 	 *  Applies various types of DOM modifications to the message list, adds listeners for ChromeLL features, etc
 	 */
 	
-	applyDomModifications: function(pm) {
-		var msgs = document.getElementsByClassName('message-container');
-		
-		// Crude method to detect zoom level for image resizing - we don't need to be completely accurate
-		var screenWidth = window.screen.width;
-		var documentWidth = document.documentElement.clientWidth;
-		this.zoomLevel = screenWidth / documentWidth;	
-		
+	applyDomModifications: function(pm) {	
 		// Call methods which modify infobar element
 		for (var k in this.dom.infobar) {
 			if (this.config[k + pm]) {
@@ -2933,11 +2936,21 @@ var messageList = {
 			}
 		}
 		
-		// Add archive quote buttons before highlights/post numbers are added
-		this.quote.addButtons();
+		// Check whether user can post in topic
+		var topicOpen = (document.getElementsByClassName('quickpost').length === 0);
+		
+		if (!topicOpen) {
+			// Add ChromeLL quote buttons before highlights/post numbers are added
+			this.quote.addButtons();
+			
+			// Delete unusable methods
+			delete this.dom.messagecontainer.like_button;
+			delete this.dom.messagecontainer.post_templates;			
+		}	
 		
 		// Iterate over first 5 message-containers.
 		// TODO: do we really need to unroll this loop
+		var msgs = document.getElementsByClassName('message-container');
 		var len;
 		
 		if (msgs.length < 4) {
@@ -2960,8 +2973,8 @@ var messageList = {
 			}
 		}
 		
-		var titleElement = document.getElementsByTagName('h2')[0];
-		
+		// Append dramalinks ticker to page
+		var titleElement = document.getElementsByTagName('h2')[0];	
 		if (this.config.dramalinks && !this.config.hide_dramalinks_topiclist) {
 			dramalinks.appendTo(titleElement);
 			
@@ -2970,9 +2983,8 @@ var messageList = {
 			document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);			
 		}
 		
-		// page will appear to have been fully loaded by this point
-		if (len == 4) {
-			// iterate over rest of messages
+		// Iterate over rest of messages
+		if (len == 4) {			
 			for (var j = 4, len = msgs.length; j < len; j++) {
 				var msg = msgs[j];
 				var top = msg.getElementsByClassName('message-top')[0];
@@ -2999,17 +3011,17 @@ var messageList = {
 			if (this.config[i + pm]) {
 				this.dom.misc[i]();
 			}
-		}				
+		}
 		
-		if (document.getElementsByClassName('quickpost').length > 0) {
-			// Call methods which modify quickpost-area (user probably won't see this)
+		if (topicOpen) {
+			// Call methods which modify quickpost area (user probably won't see this)
 			for (var i in this.dom.quickpostbody) {
 				if (this.config[i + pm]) {
 					this.dom.quickpostbody[i]();
 				}
 			}
 			
-			// Check whether we need to restore page state
+			// Check whether we need to restore quickpost contents
 			if (sessionStorage.getItem('quickpost_value') !== null) {
 				var quickpost = document.getElementsByName('message')[0];
 				
@@ -3025,6 +3037,7 @@ var messageList = {
 			}
 		}
 		
+		// Check whether we need to restore scroll position
 		if (sessionStorage.getItem('scrollx') !== null) {
 			window.scrollX = sessionStorage.getItem('scrollx');
 			window.scrollY = sessionStorage.getItem('scrolly');
