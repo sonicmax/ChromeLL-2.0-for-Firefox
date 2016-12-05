@@ -80,12 +80,12 @@ function handleRename(filename) {
 	var newFilename = prompt('Enter new filename:', filename);
 	
 	if (newFilename === null) {
-		// User pressed cancel
-		return;
+		// User pressed cancel. Return false to cancel upload
+		return false;
 	}
 	
 	else if (!/\S/.test(newFilename)) {
-		// User entered blank filename, but presumably still wanted to upload something
+		// User entered blank filename, but presumably still wanted to upload something. Return null
 		return;
 	}
 	
