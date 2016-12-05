@@ -1301,6 +1301,8 @@ var messageList = {
 			}
 			
 			else if (link.tagName == 'A') {
+				messageList.preventSigEmbeds(link);
+				
 				if (link.classList.contains('gfycat')) {
 					messageList.gfycat.checkLink(link);
 				}
@@ -1341,6 +1343,33 @@ var messageList = {
 			// call gfycatLoader so that only visible gfycat videos are played
 			// if document visibility changes from hidden to not hidden
 			messageList.mediaLoader();
+		}
+	},		
+	
+	preventSigEmbeds: function(element) {
+		var message = element.closest(".message");
+
+		if (message.innerHTML.indexOf('---') === -1) {
+			// No sig - do nothing
+			return;
+		}
+		
+		var nodes = message.childNodes;
+		var i = nodes.length - 1;
+				
+		// For long posts, it will be much quicker to iterate backwards to find sig belt.
+		// It also makes sure that we don't detect any false positives.
+		while (i--) {
+			var node = nodes[i];
+			if (node.nodeType === 3 && node.nodeValue.replace(/^\s+|\s+$/g, "") === '---') {
+				var sigIndex = Array.prototype.indexOf.call(nodes, node);
+				var mediaIndex = Array.prototype.indexOf.call(nodes, element);
+				if (mediaIndex > sigIndex) {
+					// Remove imgur/gfycat classes so that mediaLoader() doesn't attempt to embed this element
+					element.classList.remove('imgur', 'gfycat');
+				}
+				break;
+			}	
 		}
 	},
 	
