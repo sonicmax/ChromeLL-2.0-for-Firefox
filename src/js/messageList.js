@@ -1283,6 +1283,8 @@ var messageList = {
 	mediaLoader: function() {
 		var links = document.getElementsByClassName('media');
 		var height = window.innerHeight;
+		
+		var linksToIgnore = [];
 					
 		for (var i = 0, len = links.length; i < len; i++) {
 			var link = links[i];
@@ -1309,6 +1311,9 @@ var messageList = {
 				else if (link.classList.contains('imgur')) {
 					messageList.imgur.checkLink(link);
 				}
+				else if (link.classList.contains('ignore')) {
+					linksToIgnore.push(link);
+				}
 			}
 			
 			else if (nameAttribute == 'placeholder') {
@@ -1323,6 +1328,11 @@ var messageList = {
 			else if (nameAttribute == 'embedded' && link.getElementsByTagName('video')[0].paused) {
 				link.getElementsByTagName('video')[0].play();
 			}
+		}
+		
+		// Remove all other classes from links that should not be embedded
+		for (var i = 0, len = linksToIgnore.length; i < len; i++) {
+			linksToIgnore[i].className = 'l';
 		}
 	},
 	
