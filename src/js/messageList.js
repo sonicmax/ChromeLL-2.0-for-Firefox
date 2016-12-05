@@ -1473,7 +1473,7 @@ var messageList = {
 			
 			// create placeholder
 			var placeholder = document.createElement('div');
-			placeholder.className = 'gfycat';
+			placeholder.classList.add('gfycat');
 			placeholder.id = data.webm;
 			placeholder.setAttribute('name', 'placeholder');
 
@@ -1516,7 +1516,7 @@ var messageList = {
 			
 			// create placeholder element
 			var placeholder = document.createElement('div');
-			placeholder.className = 'gfycat';
+			placeholder.classList.add('gfycat');
 			placeholder.id = data.webm;
 			
 			var thumbnail = document.createElement('img');
@@ -1764,7 +1764,7 @@ var messageList = {
 		createThumbnail: function(imgurElement, thumbnailUrl, data) {			
 			// create placeholder element
 			var placeholder = document.createElement('div');
-			placeholder.className = 'imgur';
+			placeholder.classList.add('imgur');
 			placeholder.id = data.url;
 			
 			var thumbnail = document.createElement('img');
@@ -1818,7 +1818,7 @@ var messageList = {
 		createPlaceholder: function(imgurElement, data) {		
 			// create placeholder
 			var placeholder = document.createElement('div');
-			placeholder.className = 'imgur';
+			placeholder.classList.add('imgur');
 			placeholder.id = data.url;
 			placeholder.setAttribute('name', 'placeholder');
 
