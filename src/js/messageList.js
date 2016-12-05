@@ -1213,15 +1213,20 @@ var messageList = {
 				case 'nws_gfycat':
 					this.gfycat.debouncerId = setTimeout(this.gfycat.showEmbedLink.bind(this.gfycat, evt), 400);
 					break;
+					
+				case 'nws_imgur':
+					this.imgur.debouncerId = setTimeout(this.imgur.showEmbedLink.bind(this.imgur, evt), 400);
+					break;
 				
 				default:
 					break;
 			}
 		},
 		
-		mouseleave: function(evt) {	
+		mouseleave: function(evt) {
 			clearTimeout(this.youtube.debouncerId);
 			clearTimeout(this.gfycat.debouncerId);
+			clearTimeout(this.imgur.debouncerId);
 			
 			clearTimeout(this.menuDebouncer);
 			clearTimeout(this.popupDebouncer);			
@@ -1235,6 +1240,9 @@ var messageList = {
 			}
 			else if (evt.target.className === 'nws_gfycat') {
 				this.gfycat.hideEmbedLink();
+			}
+			else if (evt.target.className === 'nws_imgur') {
+				this.imgur.hideEmbedLink();
 			}
 			
 		},
@@ -1265,59 +1273,79 @@ var messageList = {
 			}, 250);
 		}
 	},
-	
+
 	
 	/**
-	 *  Methods which handle the embedding of Gfycat videos
+	 *  To reduce CPU load, we only embed videos that are visible in viewport,
+	 *  and pause any videos which are no longer visible.
 	 */
 	
-	gfycat: {
-		
-		debouncerId: '', // id for setTimeout()
-				
-		/**
-		 *  To reduce CPU load, we only embed Gfycat videos that are visible in viewport,
-		 *  and pause any videos which are no longer visible.
-		 */
-		
-		loader: function() {
-			var gfycats = document.getElementsByClassName('gfycat');
-			var height = window.innerHeight;
+	mediaLoader: function() {
+		var links = document.getElementsByClassName('media');
+		var height = window.innerHeight;
+					
+		for (var i = 0, len = links.length; i < len; i++) {
+			var link = links[i];
+			var position = link.getBoundingClientRect();
+			var nameAttribute = link.getAttribute('name');
+			// use window height + 200 to increase visibility of gfycatLoader
+			if (position.top > height + 200 || position.bottom < 0) {
 						
-			for (var i = 0, len = gfycats.length; i < len; i++) {
-				var gfycat = gfycats[i];			
-				var position = gfycat.getBoundingClientRect();
-				var nameAttribute = gfycat.getAttribute('name');
-				// use window height + 200 to increase visibility of gfycatLoader
-				if (position.top > height + 200 || position.bottom < 0) {
-							
-					if (nameAttribute == 'embedded' || nameAttribute == 'embedded_thumb') {
-							
-						if (!gfycat.getElementsByTagName('video')[0].paused) {
-							// pause hidden video elements to reduce CPU load
-							gfycat.getElementsByTagName('video')[0].pause();							
-						}
+				if (nameAttribute == 'embedded' || nameAttribute == 'embedded_thumb') {
+						
+					if (!link.getElementsByTagName('video')[0].paused) {
+						// pause hidden video elements to reduce CPU load
+						link.getElementsByTagName('video')[0].pause();							
 					}
 				}
-				
-				else if (gfycat.tagName == 'A') {					
-					messageList.gfycat.checkLink(gfycat);
+			}
+			
+			else if (link.tagName == 'A') {
+				if (link.classList.contains('gfycat')) {
+					messageList.gfycat.checkLink(link);
 				}
-				
-				else if (nameAttribute == 'placeholder') {
-					messageList.gfycat.embed(gfycat);
-				}
-				
-				else if (nameAttribute == 'embedded' && gfycat.getElementsByTagName('video')[0].paused) {
-					gfycat.getElementsByTagName('video')[0].play();
+				else if (link.classList.contains('imgur')) {
+					messageList.imgur.checkLink(link);
 				}
 			}
-		},
-		
-		
-		/**
-		 *  Checks Gfycat anchors and decides how to embed them
-		 */
+			
+			else if (nameAttribute == 'placeholder') {
+				if (link.classList.contains('gfycat')) {
+					messageList.gfycat.embed(link);
+				}
+				else if (link.classList.contains('imgur')) {
+					messageList.imgur.embed(link);
+				}
+			}
+			
+			else if (nameAttribute == 'embedded' && link.getElementsByTagName('video')[0].paused) {
+				link.getElementsByTagName('video')[0].play();
+			}
+		}
+	},
+	
+	mediaPauser: function() {
+		// pause all videos if document is hidden
+		if (document.hidden) {
+			var videos = document.getElementsByTagName('video');
+			var video;
+			for (var i = 0, len = videos.length; i < len; i++) {
+				video = videos[i];
+				if (video.src &&
+						!video.paused) {
+					video.pause();
+				}
+			}
+		}
+		else {
+			// call gfycatLoader so that only visible gfycat videos are played
+			// if document visibility changes from hidden to not hidden
+			messageList.mediaLoader();
+		}
+	},
+	
+	gfycat: {
+		debouncerId: '', // id for setTimeout()
 		
 		checkLink: function(gfycatElement) {
 			var url = gfycatElement.getAttribute('href');
@@ -1362,11 +1390,6 @@ var messageList = {
 		
 		},
 		
-		
-		/**
-		 *  Checks Gfycat API to get height, width, .webm url and nsfw status
-		 */
-		
 		getDataFromApi: function (url, callback) {
 			var splitURL = url.split('/').slice(-1);
 			var code = splitURL.join('/');
@@ -1402,11 +1425,6 @@ var messageList = {
 			};
 			xhr.send();
 		},
-		
-		
-		/**
-		 *  Creates placeholder using API data, which will be populated once visible in viewport
-		 */
 		
 		createPlaceholder: function(gfycatElement, url, data) {
 			var display;
@@ -1450,11 +1468,6 @@ var messageList = {
 				}
 			}
 		},
-		
-		
-		/**
-		 *  Creates thumbnail for video using API data, which can be played on click
-		 */ 
 		
 		createThumbnail: function(gfycatElement, url, thumbnailUrl, data) {
 			var display;
@@ -1521,19 +1534,12 @@ var messageList = {
 			}
 		},
 		
-		
-		/**
-		 *  Check whether Gfycat is NWS based on API response and post content
-		 */
-		
-		checkWorkSafe: function(gfycatElement, nsfw, callback) {			
+		checkWorkSafe: function(gfycatElement, nsfw, callback) {
 			var userbar = document.getElementsByTagName('h2')[0];
 			// only check topics without NWS/NLS tags
 			if (!/N[WL]S/.test(userbar.innerHTML)) {
 				
 				var post = gfycatElement.parentNode;
-				
-				console.log(post);
 				
 				if (nsfw === '1' || post && /(n[wl]s)/i.test(post.innerHTML)) {
 					gfycatElement.className = 'nws_gfycat';
@@ -1550,12 +1556,7 @@ var messageList = {
 			}
 		},
 		
-		
-		/**
-		 *  Methods which allows us to display/hide "embed on hover" links for NWS Gfycat videos
-		 */
-		
-		showEmbedLink: function(evt) {	
+		showEmbedLink: function(evt) {
 			var target = evt.target;
 			var anchor = document.createElement('a');
 			anchor.id = target.id;
@@ -1577,11 +1578,6 @@ var messageList = {
 				embedLink.parentNode.removeChild(embedLink);
 			}
 		},
-		
-		
-		/**
-		 *  Main embedding method which converts placeholder elements into video elements
-		 */
 		
 		embed: function(placeholder) {
 			if (placeholder.className === 'gfycat') {
@@ -1608,32 +1604,259 @@ var messageList = {
 				placeholder.parentNode.replaceChild(video, placeholder);			
 				video.play();
 			}
+		}
+	},
+	
+	imgur: {
+		debouncerId: '',
+		
+		checkLink: function(imgurElement) {
+			var splitURL = imgurElement.href.split('/').slice(-1);
+			var code = splitURL.join('/').replace(/.gifv|.webm|.gif/, '');
+			if (!imgurElement.classList.contains('checked')) {				
+				this.getDataFromApi(code, (data) => {
+					imgurElement.classList.add('checked');
+					
+					if (data.error) {
+						if (imgurElement.classList.contains('imgur')) {
+							var container = document.createElement('span');
+							container.style.display = 'inline-block';
+							
+							var notFoundSpan = document.createElement('span');
+							notFoundSpan.style.textDecoration = 'none';
+							notFoundSpan.style.verticalAlign = 'super'; // Superscript
+							notFoundSpan.style.fontSize = 'smaller';
+							notFoundSpan.style.color = 'red';						
+							notFoundSpan.innerHTML = '&nbsp' + data.error;
+							
+							// Append 404 in superscript
+							container.appendChild(notFoundSpan);
+							imgurElement.appendChild(container);
+						}
+						
+						imgurElement.className = 'l';
+						return;
+					}
+					
+					else if (data.nsfw === false && messageList.config.hide_nws_gfycat) {
+						imgurElement.className = 'nws_imgur';
+						imgurElement.setAttribute('width', data.width);
+						imgurElement.setAttribute('height', data.height);
+						imgurElement.id = data.url;
+						imgurElement.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
+						imgurElement.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));					
+					}
+					
+					else {
+						if (imgurElement.getAttribute('name') == 'imgur_thumb') {
+							// Large thumbnail url
+							var thumbnailUrl = window.location.protocol + '//i.imgur.com/' + code + 'l.jpg';						
+							messageList.imgur.createThumbnail(imgurElement, thumbnailUrl, data);
+						} 
+						
+						else {
+							messageList.imgur.createPlaceholder(imgurElement, data);
+						}
+					}
+					
+				});		
+			}
 		},
 		
+		getDataFromApi: function(code, callback) {
+			// Documentation for the Imgur image data model: https://api.imgur.com/models/image
+			const API_KEY = 'Client-ID 6356976da2dad83';
+
+			var url = 'https://api.imgur.com/3/image/' + code;
+			
+			chrome.runtime.sendMessage({
+				
+				need: "xhr",
+				url: url,
+				auth: API_KEY
+				
+			}, (response) => {
+				
+				var jsonResponse = JSON.parse(response);
+				this.handleResponse(jsonResponse, callback);				
+				
+			});	
+		},
 		
-		/**
-		 *  Handles pausing of Gfycats that are no longer visible to user
-		 */
+		handleResponse: function(jsonResponse, callback) { 
+			// Check for errors
+			if (!jsonResponse || !jsonResponse.success) {
+				if (!jsonResponse) {
+					// Background page returns false if 404 error is detected
+					callback({ error: 404 });
+				}
+				else if (!jsonResponse.success) {
+					callback({ error: jsonResponse.status });
+				}				
+			}
+			
+			else {			
+				var data = jsonResponse.data;
+				
+				var url = data.mp4;
+				
+				var width = data.width;
+				var height = data.height;
+				
+				if (messageList.config.resize_imgurs && data.width > messageList.config.imgur_max_width) {
+					width = messageList.imgur_max_width;
+					height = height / (width / messageList.config.imgur_max_width);
+				}
+				
+				var title = data.title || data.redditIdText;
+				var nsfw = data.nsfw;
+				
+				callback({
+					width: width,
+					height: height,
+					url: url,
+					title: title,
+					nsfw: nsfw
+				});
+			}
+		},
 		
-		pause: function() {
-			// pause all gfycat videos if document is hidden
-			if (document.hidden) {
-				var videos = document.getElementsByTagName('video');
-				var video;
-				for (var i = 0, len = videos.length; i < len; i++) {
-					video = videos[i];
-					if (video.src &&
-							!video.paused) {
-						video.pause();
-					}
+		createThumbnail: function(imgurElement, thumbnailUrl, data) {			
+			// create placeholder element
+			var placeholder = document.createElement('div');
+			placeholder.className = 'imgur';
+			placeholder.id = data.url;
+			
+			var thumbnail = document.createElement('img');
+			thumbnail.setAttribute('src', thumbnailUrl);
+			thumbnail.setAttribute('width', data.width);
+			thumbnail.setAttribute('height', data.height);		
+			
+			placeholder.appendChild(thumbnail);
+			
+			if (imgurElement.parentNode) {
+				imgurElement.parentNode.replaceChild(placeholder, imgurElement);
+				
+				// add click listener to replace img with video
+				var img = placeholder.getElementsByTagName('img')[0];
+				img.title = "Click to play";
+				
+				img.addEventListener('click', (evt) => {
+					
+					evt.preventDefault();
+					
+					var video = document.createElement('video');
+					video.setAttribute('width', data.width);
+					video.setAttribute('height', data.height);
+					video.setAttribute('loop', true);
+					
+					evt.target.parentNode.replaceChild(video, img);
+					
+					var video = placeholder.getElementsByTagName('video')[0];
+					placeholder.setAttribute('name', 'embedded_thumb');
+					video.src = placeholder.id;
+					video.title = "Click to pause";
+					video.play();
+					
+					video.addEventListener('click', () => {					
+						video.title = "Click to play/pause";
+						
+						if (!video.paused) {
+							video.pause();
+						}
+						
+						else {
+							video.play();
+						}
+						
+					});
+					
+				});	
+			}
+		},
+		
+		createPlaceholder: function(imgurElement, data) {		
+			// create placeholder
+			var placeholder = document.createElement('div');
+			placeholder.className = 'imgur';
+			placeholder.id = data.url;
+			placeholder.setAttribute('name', 'placeholder');
+
+			var video = document.createElement('video');
+			video.setAttribute('width', data.width);
+			video.setAttribute('height', data.height);
+			video.setAttribute('loop', true);
+
+			placeholder.appendChild(video);				
+					
+			// prevent "Cannot read property 'replaceChild' of null" error
+			if (imgurElement.parentNode) {
+				
+				imgurElement.parentNode.replaceChild(placeholder, imgurElement);
+				// check if placeholder is visible (some placeholders will be off screen)
+				var position = placeholder.getBoundingClientRect();
+				
+				if (position.top > window.innerHeight) {
+					return;
+				} 
+				
+				else {
+					// pass placeholder video element to embed function
+					messageList.imgur.embed(placeholder);
 				}
 			}
-			else {
-				// call gfycatLoader so that only visible gfycat videos are played
-				// if document visibility changes from hidden to not hidden
-				messageList.gfycat.loader();
+		},
+		
+		embed: function(placeholder) {
+			if (placeholder.className === 'imgur') {
+				// use placeholder element to embed gfycat video
+				var video = placeholder.getElementsByTagName('video')[0];
+				if (messageList.config.show_gfycat_link) {
+					placeholder.getElementsByTagName('span')[0].style.display = 'inline';
+				}
+				placeholder.setAttribute('name', 'embedded');
+				// placeholder id is mp4 url
+				video.src = placeholder.id;
+				video.play();
 			}
-		}
+			else if (placeholder.className === 'nws_imgur') {
+				// create video element & embed gfycat
+				var video = document.createElement('video');
+				var width = placeholder.getAttribute('width');
+				var height = placeholder.getAttribute('height');		
+				video.setAttribute('width', width);
+				video.setAttribute('height', height);
+				video.setAttribute('name', 'embedded');
+				video.setAttribute('loop', true);
+				video.src = placeholder.id;				
+				placeholder.parentNode.replaceChild(video, placeholder);			
+				video.play();
+			}
+		},
+		
+		showEmbedLink: function(evt) {
+			var target = evt.target;
+			var anchor = document.createElement('a');
+			anchor.id = target.id;
+			anchor.className = 'embed_nws_imgur';
+			anchor.href = '#embed';
+			anchor.style.backgroundColor = window.getComputedStyle(document.getElementsByClassName('message')[0]).backgroundColor;
+			anchor.style.display = 'inline';
+			anchor.style.position = 'absolute';
+			anchor.style.zIndex = 1;
+			anchor.style.fontWeight = 'bold';
+			anchor.innerHTML = '&nbsp[Embed NWS Imgur]';
+			
+			target.appendChild(anchor);
+		},
+		
+		hideEmbedLink: function() {
+			if (document.getElementsByClassName('embed_nws_imgur').length > 0) {
+				var embedLink = document.getElementsByClassName('embed_nws_imgur')[0];
+				embedLink.parentNode.removeChild(embedLink);
+			}
+		},		
+		
 	},
 	
 	youtube: {
@@ -2186,9 +2409,10 @@ var messageList = {
 		 */
 	
 		check: function(msg) {
+			var mediaToEmbed = false;
 			var target = msg || document;
 			
-			var links = target.getElementsByClassName("l");
+			var links = target.getElementsByClassName('l');
 			
 			if (links.length == 0) {
 				return;
@@ -2197,35 +2421,53 @@ var messageList = {
 			var i = links.length;
 			var ytRegex = /youtube|youtu.be/;
 			var videoCodeRegex = /^.*(youtu.be\/|v\/|u\/\w\/\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-			// iterate backwards to prevent errors when modifying class of elements
+			
+			// Iterate backwards to prevent errors when modifying class of elements.
 			while (i--) {
 				var link = links[i];
 				
 				// Check for YouTube links and make sure they are videos
 				if (messageList.config.embed_on_hover && ytRegex.test(link.href) && videoCodeRegex.test(link.href)) {
-					link.className = "youtube";
+					link.className = 'youtube';
 					// give each video link a unique id for embed/hide dom
-					link.id = link.href + "&" + i;
+					link.id = link.href + '&' + i;
 					link.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
 					link.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));
 				}
 				
 				// Check for Gfycat links
-				else if ((messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) && link.title.indexOf("gfycat.com/") > -1) {
-					link.className = "gfycat";
+				else if ((messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) 
+							&& link.title.indexOf('gfycat.com/') > -1) {
+								
+					link.classList.add('media', 'gfycat');
+					mediaToEmbed = true;
 					
 					// Embed gfycat videos in quoted messages as thumbnails
-					if (messageList.config.embed_gfycat_thumbs || link.parentNode.className == "quoted-message") {
-						link.setAttribute('name', "gfycat_thumb");
-					}					
+					if (messageList.config.embed_gfycat_thumbs || link.parentNode.className == 'quoted-message') {
+						link.setAttribute('name', 'gfycat_thumb');
+					}
 				}
+				
+				// Check for Imgur links
+				else if ((messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) 
+							&& link.title.indexOf('imgur.com/') > -1 && /.webm|.gifv|.gif/.test(link)) {
+								
+					link.classList.add('media', 'imgur');
+					mediaToEmbed = true;
+
+					if (messageList.config.embed_imgur_thumbs || link.parentNode.className == 'quoted-message') {
+						link.setAttribute('name', 'imgur_thumb');
+					}					
+					
+				}			
+				
 			}
 			
-			// Call gfycat.loader to embed links which are visible in viewport
-			if (messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) {				
-				messageList.gfycat.loader();
-				window.addEventListener('scroll', messageList.gfycat.loader);
-				document.addEventListener('visibilitychange', messageList.gfycat.pause);
+			// Call mediaLoader to embed links which are visible in viewport
+			if (mediaToEmbed) {
+				messageList.mediaLoader();
+				window.addEventListener('scroll', messageList.mediaLoader);
+				document.addEventListener('visibilitychange', messageList.mediaPauser);
 			}
 			
 		},
@@ -2235,7 +2477,7 @@ var messageList = {
 		 *  Fixes issue where certain types of relative URL on ETI would redirect to the wrong subdomain.
 		 */
 		
-		fixRelativeUrls: function(anchor, type) {		
+		fixRelativeUrls: function(anchor, type) {
 			switch (type) {
 				case 'wiki':
 					window.open(anchor.href.replace('boards', 'wiki'));
