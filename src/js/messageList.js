@@ -1613,10 +1613,11 @@ var messageList = {
 		checkLink: function(imgurElement) {
 			var splitURL = imgurElement.href.split('/').slice(-1);
 			var code = splitURL.join('/').replace(/.gifv|.webm|.gif/, '');
-			if (!imgurElement.classList.contains('checked')) {				
-				this.getDataFromApi(code, (data) => {
-					imgurElement.classList.add('checked');
-					
+			
+			if (!imgurElement.classList.contains('checked')) {
+				imgurElement.classList.add('checked');
+				
+				this.getDataFromApi(code, (data) => {					
 					if (data.error) {
 						if (imgurElement.classList.contains('imgur')) {
 							var container = document.createElement('span');
