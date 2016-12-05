@@ -2466,26 +2466,23 @@ var messageList = {
 				}
 				
 				// Check for Gfycat links
-				else if ((messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) 
-							&& link.title.indexOf('gfycat.com/') > -1) {
+				else if (messageList.config.embed_gfycat && link.title.indexOf('gfycat.com/') > -1) {
 								
 					link.classList.add('media', 'gfycat');
 					mediaToEmbed = true;
 					
-					// Embed gfycat videos in quoted messages as thumbnails
 					if (messageList.config.embed_gfycat_thumbs || link.parentNode.className == 'quoted-message') {
 						link.setAttribute('name', 'gfycat_thumb');
 					}
 				}
 				
 				// Check for Imgur links
-				else if ((messageList.config.embed_gfycat || messageList.config.embed_gfycat_thumbs) 
-							&& link.title.indexOf('imgur.com/') > -1 && /.webm|.gifv|.gif/.test(link)) {
+				else if (messageList.config.embed_imgur && link.title.indexOf('imgur.com/') > -1 && /.webm|.gifv|.gif/.test(link)) {
 								
 					link.classList.add('media', 'imgur');
 					mediaToEmbed = true;
 
-					if (messageList.config.embed_imgur_thumbs || link.parentNode.className == 'quoted-message') {
+					if (messageList.config.embed_gfycat_thumbs || link.parentNode.className == 'quoted-message') {
 						link.setAttribute('name', 'imgur_thumb');
 					}					
 					
