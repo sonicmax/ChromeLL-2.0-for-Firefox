@@ -1683,9 +1683,9 @@ var messageList = {
 						
 						imgurElement.className = 'l';
 						return;
-					}
+					}									
 					
-					else if (data.nsfw === false && messageList.config.hide_nws_gfycat) {
+					else if (data.nsfw && messageList.config.hide_nws_gfycat) {
 						imgurElement.classList.remove('imgur');
 						imgurElement.classList.add('nws_imgur');
 						imgurElement.setAttribute('width', data.width);
