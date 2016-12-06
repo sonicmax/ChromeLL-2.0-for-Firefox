@@ -1832,6 +1832,11 @@ var messageList = {
 			var index = 0;
 			var imageData = this.prepareImageData(data.images[index]);
 			
+			if (data.images_count === 1) {
+				this.createPlaceholder(imgurElement, imageData);
+				return;
+			}		
+			
 			var initialWidth = imageData.width;
 			var initialHeight = imageData.height;
 			
