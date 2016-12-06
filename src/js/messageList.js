@@ -1204,7 +1204,7 @@ var messageList = {
 		mouseenter: function(evt) {
 			switch (evt.target.className) {
 				case 'like_button':
-					if (this.config.custom_like_button) {
+					if (this.config.custom_like_button && this.config.custom_like_data.length > 0) {
 						this.cachedEvent = evt;
 						this.menuDebouncer = setTimeout(this.likeButton.showOptions.bind(this.likeButton), 250);
 					}
