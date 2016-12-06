@@ -1769,39 +1769,48 @@ var messageList = {
 				callback({ status: jsonResponse.status, error: jsonResponse.data.error });
 			}
 			
-			else {
-				var data = jsonResponse.data;
-				var preparedData = {};
-				
-				preparedData.nsfw = data.nsfw;
-				preparedData.title = data.title;
-				
-				
-				if (data.images) {
+			else {			
+				if (jsonResponse.data.images) {
 					// Response from gallery/album/ request
-					preparedData.description = data.description;
-					preparedData.images = data.images;
-					preparedData.images_count = data.images_count;
+					callback(this.prepareGalleryData(jsonResponse.data));					
 				}
 				
 				else {
-					// Response from image/ request
-					preparedData.url = data.mp4;
-					
-					var width = data.width;
-					var height = data.height;
-					
-					if (messageList.config.resize_imgurs && data.width > messageList.config.imgur_max_width) {
-						width = messageList.imgur_max_width;
-						height = height / (width / messageList.config.imgur_max_width);
-					}
-					
-					preparedData.width = width;
-					preparedData.height = height;
-				}
-												
-				callback(preparedData);
+					// Response from image/ request	
+					callback(this.prepareImageData(jsonResponse.data));
+				}												
 			}
+		},
+		
+		prepareImageData: function(data) {
+			var preparedData = {};
+			preparedData.nsfw = data.nsfw;
+			preparedData.title = data.title;			
+			preparedData.url = data.mp4;
+
+			var width = data.width;
+			var height = data.height;
+
+			if (messageList.config.resize_imgurs && data.width > messageList.config.imgur_max_width) {
+				width = messageList.imgur_max_width;
+				height = height / (width / messageList.config.imgur_max_width);
+			}
+
+			preparedData.width = width;
+			preparedData.height = height;
+
+			return preparedData;
+		},
+		
+		prepareGalleryData: function(data) {
+			var preparedData = {};
+			preparedData.nsfw = data.nsfw;
+			preparedData.title = data.title;			
+			preparedData.description = data.description;
+			preparedData.images = data.images;
+			preparedData.images_count = data.images_count;
+			
+			return preparedData;
 		},
 		
 		createGallery: function(imgurElement, data) {
@@ -1859,8 +1868,8 @@ var messageList = {
 					var oldDiv = evt.target.parentNode.children[2];
 					index--;					
 					imageNumber.innerText = (index + 1) + '/' + data.images_count;
-					this.createPlaceholder(oldDiv, data.images[index]);					
-					
+					var imageData = this.prepareImageData(data.images[index]);
+					this.createPlaceholder(oldDiv, imageData);				
 				}
 				
 			});
@@ -1872,8 +1881,8 @@ var messageList = {
 					var oldDiv = evt.target.parentNode.children[2];
 					index++;
 					imageNumber.innerText = (index + 1) + '/' + data.images_count;
-					this.createPlaceholder(oldDiv, data.images[index]);
-					
+					var imageData = this.prepareImageData(data.images[index]);
+					this.createPlaceholder(oldDiv, imageData);				
 				}
 				
 			});			
