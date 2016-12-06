@@ -608,8 +608,10 @@ var options = {
 			}
 			var nodeToRemove = document.getElementById(id);
 			if (nodeToRemove.className == 'active_' + type) {
-				var nextActive = document.getElementsByClassName('inactive_' + type)[0];
-				nextActive.className = 'active_' + type;
+				var nextActive = document.getElementsByClassName('inactive_' + type);
+				if (nextActive.length > 0) {
+					nextActive[0].className = 'active_' + type;
+				}
 				nodeToRemove.className = '';
 			}
 			var closeButton = nodeToRemove.childNodes[0];
