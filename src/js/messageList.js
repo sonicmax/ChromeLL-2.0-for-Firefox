@@ -1664,8 +1664,10 @@ var messageList = {
 		debouncerId: '',
 		
 		checkLink: function(imgurElement) {
-			var splitURL = imgurElement.href.split('/').slice(-1);
-			var code = splitURL.join('/').replace(/.gifv|.webm|.gif/, '');
+			var splitURL = imgurElement.href.split('/').slice(-1);			
+			var filename = splitURL.join('/');
+			// Strip any file extensions to get code for API
+			var code = filename.split('.')[0];
 			
 			if (!imgurElement.classList.contains('checked')) {
 				imgurElement.classList.add('checked');
