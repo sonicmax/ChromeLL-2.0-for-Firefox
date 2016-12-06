@@ -2857,8 +2857,10 @@ var messageList = {
 					&& !window.location.href.match(/u=(\d+)/))
 				tc = heads[0].getElementsByTagName('a')[0].innerHTML.toLowerCase();
 			else {
-				if (!messageList.config.tcs[topic] && messageList.config.debug) {
-					console.log('Unknown TC!');
+				if (!messageList.config.tcs[topic]) {
+					if (messageList.config.debug) {
+						console.log('Unknown TC!');
+					}
 					return;
 				}
 				tc = messageList.config.tcs[topic].tc;
