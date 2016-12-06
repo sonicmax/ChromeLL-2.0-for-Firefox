@@ -1822,8 +1822,10 @@ var messageList = {
 		
 		createGallery: function(imgurElement, data) {
 			var index = 0;
-			var initialWidth = data.images[index].width;
-			var initialHeight = data.images[index].height;
+			var imageData = this.prepareImageData(data.images[index]);
+			
+			var initialWidth = imageData.width;
+			var initialHeight = imageData.height;
 			
 			var galleryDiv = document.createElement('div');
 			galleryDiv.className = 'imgur_gallery';
@@ -1842,8 +1844,15 @@ var messageList = {
 			
 			// Create element for createPlaceholder() method to replace
 			var dummyPlaceholder = document.createElement('div');
-			galleryDiv.appendChild(dummyPlaceholder);			
-			this.createPlaceholder(dummyPlaceholder, data.images[index]);
+			galleryDiv.appendChild(dummyPlaceholder);
+			
+			if (imageData.animated) {
+				this.createPlaceholder(dummyPlaceholder, imageData);
+			}
+			
+			else {
+				this.createThumbnail(dummyPlaceholder, imageData.url, imageData);
+			}
 
 			// Create navigation buttons
 			var leftButton = document.createElement('span');
