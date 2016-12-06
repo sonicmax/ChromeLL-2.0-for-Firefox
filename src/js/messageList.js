@@ -1461,11 +1461,10 @@ var messageList = {
 					var width = response.gfyItem.width;
 					var height = response.gfyItem.height;
 					
-					if (messageList.config.resize_gfys 
-							&& width > messageList.config.gfy_max_width) {
-						// scale video size to match gfy_max_width value
-						height = (height / (width / messageList.config.gfy_max_width));
+					if (messageList.config.resize_gfys && data.width > messageList.config.gfy_max_width) {					
+						var ratio = messageList.config.gfy_max_width / width;
 						width = messageList.config.gfy_max_width;
+						height *= ratio;						    
 					}
 
 					apiData.nsfw = response.gfyItem.nsfw;
@@ -1788,18 +1787,17 @@ var messageList = {
 			var preparedData = {};
 			preparedData.nsfw = data.nsfw;
 			preparedData.title = data.title;			
-			preparedData.url = data.mp4;
+			preparedData.url = data.mp4 || data.link;
+			preparedData.animated = data.animated;
 
-			var width = data.width;
-			var height = data.height;
-
-			if (messageList.config.resize_imgurs && data.width > messageList.config.imgur_max_width) {
-				width = messageList.imgur_max_width;
-				height = height / (width / messageList.config.imgur_max_width);
+			preparedData.width = data.width;
+			preparedData.height = data.height;
+			
+			if (messageList.config.resize_gfys && data.width > messageList.config.gfy_max_width) {					
+				var ratio = messageList.config.gfy_max_width / data.width;
+				preparedData.width = messageList.config.gfy_max_width;
+				preparedData.height *= ratio;					    
 			}
-
-			preparedData.width = width;
-			preparedData.height = height;
 
 			return preparedData;
 		},
@@ -1817,6 +1815,8 @@ var messageList = {
 		
 		createGallery: function(imgurElement, data) {
 			var index = 0;
+			var initialWidth = data.images[index].width;
+			var initialHeight = data.images[index].height;
 			
 			var galleryDiv = document.createElement('div');
 			galleryDiv.className = 'imgur_gallery';
@@ -1839,7 +1839,7 @@ var messageList = {
 			this.createPlaceholder(dummyPlaceholder, data.images[index]);
 
 			// Create navigation buttons
-			var leftButton = document.createElement('span');			
+			var leftButton = document.createElement('span');
 			leftButton.className = 'imgur_gallery_left';
 			leftButton.innerText = '‹';
 			
@@ -1851,10 +1851,10 @@ var messageList = {
 			galleryDiv.appendChild(rightButton);
 			
 			// Create description using API data
-			var galleryDesc = document.createElement('span');
+			/*var galleryDesc = document.createElement('span');
 			galleryDesc.className = 'imgur_gallery_desc';
 			galleryDesc.innerHTML = data.description;
-			galleryDiv.appendChild(galleryDesc);
+			galleryDiv.appendChild(galleryDesc);*/
 			
 			// Replace original Imgur anchor with gallery
 			if (imgurElement.parentNode) {
@@ -1863,15 +1863,14 @@ var messageList = {
 			
 			// Add handlers for click events. Defined here so they can access the API data
 			
-			leftButton.addEventListener('click', (evt) => {								
+			leftButton.addEventListener('click', (evt) => {
 				
 				if (index > 0) {
 					
-					var oldDiv = evt.target.parentNode.children[2];
-					index--;					
+					index--;
 					imageNumber.innerText = (index + 1) + '/' + data.images_count;
-					var imageData = this.prepareImageData(data.images[index]);
-					this.createPlaceholder(oldDiv, imageData);				
+					this.displayNewGalleryImage(index, initialWidth, initialHeight, data, evt.target.parentNode.children[2]);					
+					galleryDiv.scrollIntoView();
 				}
 				
 			});
@@ -1880,17 +1879,34 @@ var messageList = {
 												
 				if (index < data.images_count - 1) {
 					
-					var oldDiv = evt.target.parentNode.children[2];
 					index++;
 					imageNumber.innerText = (index + 1) + '/' + data.images_count;
-					var imageData = this.prepareImageData(data.images[index]);
-					this.createPlaceholder(oldDiv, imageData);				
+					this.displayNewGalleryImage(index, initialWidth, initialHeight, data, evt.target.parentNode.children[2]);					
+					galleryDiv.scrollIntoView();
 				}
 				
 			});			
 		},
 		
-		createThumbnail: function(imgurElement, thumbnailUrl, data) {			
+		displayNewGalleryImage: function(index, initialWidth, initialHeight, data, oldDiv) {
+			var imageData = this.prepareImageData(data.images[index]);
+			
+			if (imageData.width > initialWidth) {					
+				var ratio = Math.min(initialWidth / imageData.width, initialHeight / imageData.height);
+				imageData.width *= ratio;
+				imageData.height *= ratio;						    
+			}			
+			
+			if (imageData.animated) {
+				this.createPlaceholder(oldDiv, imageData);
+			}
+			
+			else {
+				this.createThumbnail(oldDiv, imageData.url, imageData);
+			}
+		},
+		
+		createThumbnail: function(imgurElement, thumbnailUrl, data) {		
 			// create placeholder element
 			var placeholder = document.createElement('div');
 			if (data.title) {
@@ -1909,45 +1925,47 @@ var messageList = {
 			if (imgurElement.parentNode) {
 				imgurElement.parentNode.replaceChild(placeholder, imgurElement);
 				
-				// add click listener to replace img with video
-				var img = placeholder.getElementsByTagName('img')[0];
-				img.title = "Click to play";
-				
-				img.addEventListener('click', (evt) => {
+				if (data.animated) {
+					// add click listener to replace img with video
+					var img = placeholder.getElementsByTagName('img')[0];
+					img.title = "Click to play";
 					
-					evt.preventDefault();
-					
-					var video = document.createElement('video');
-					video.setAttribute('width', data.width);
-					video.setAttribute('height', data.height);
-					video.setAttribute('loop', true);
-					
-					evt.target.parentNode.replaceChild(video, img);
-					
-					var video = placeholder.getElementsByTagName('video')[0];
-					placeholder.setAttribute('name', 'embedded_thumb');
-					video.src = placeholder.id;
-					video.title = "Click to pause";
-					video.play();
-					
-					video.addEventListener('click', () => {					
-						video.title = "Click to play/pause";
+					img.addEventListener('click', (evt) => {
 						
-						if (!video.paused) {
-							video.pause();
-						}
+						evt.preventDefault();
 						
-						else {
-							video.play();
-						}
+						var video = document.createElement('video');
+						video.setAttribute('width', data.width);
+						video.setAttribute('height', data.height);
+						video.setAttribute('loop', true);
 						
-					});
-					
-				});	
+						evt.target.parentNode.replaceChild(video, img);
+						
+						var video = placeholder.getElementsByTagName('video')[0];
+						placeholder.setAttribute('name', 'embedded_thumb');
+						video.src = placeholder.id;
+						video.title = "Click to pause";
+						video.play();
+						
+						video.addEventListener('click', () => {					
+							video.title = "Click to play/pause";
+							
+							if (!video.paused) {
+								video.pause();
+							}
+							
+							else {
+								video.play();
+							}
+							
+						});
+						
+					});	
+				}
 			}
 		},
 		
-		createPlaceholder: function(imgurElement, data) {
+		createPlaceholder: function(imgurElement, data) {	
 			// create placeholder
 			var placeholder = document.createElement('div');
 			if (data.title) {
