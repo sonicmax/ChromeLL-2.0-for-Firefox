@@ -1170,6 +1170,11 @@ var messageList = {
 					evt.preventDefault();
 					return;
 					
+				case 'embed_nws_imgur':
+					this.imgur.embed(evt.target.parentNode);
+					evt.preventDefault();
+					break;
+					
 				case 'embed':
 					this.youtube.embed(evt.target.parentNode);
 					evt.preventDefault();
