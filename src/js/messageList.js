@@ -1463,10 +1463,12 @@ var messageList = {
 					var width = response.gfyItem.width;
 					var height = response.gfyItem.height;
 					
-					if (messageList.config.resize_gfys && data.width > messageList.config.gfy_max_width) {					
-						var ratio = messageList.config.gfy_max_width / width;
-						width = messageList.config.gfy_max_width;
-						height *= ratio;						    
+					if (messageList.config.resize_gfys 
+							&& (data.width * messageList.zoomLevel) > messageList.config.gfy_max_width) {
+								
+						var ratio = messageList.config.gfy_max_width / (width * messageList.zoomLevel);
+						width = messageList.config.gfy_max_width / messageList.zoomLevel;
+						height *= ratio;				    
 					}
 
 					apiData.nsfw = response.gfyItem.nsfw;
@@ -1800,10 +1802,12 @@ var messageList = {
 			preparedData.width = data.width;
 			preparedData.height = data.height;
 			
-			if (messageList.config.resize_gfys && data.width > messageList.config.gfy_max_width) {					
-				var ratio = messageList.config.gfy_max_width / data.width;
-				preparedData.width = messageList.config.gfy_max_width;
-				preparedData.height *= ratio;					    
+			if (messageList.config.resize_gfys 
+					&& (data.width * messageList.zoomLevel) > messageList.config.gfy_max_width) {
+						
+				var ratio = messageList.config.gfy_max_width / (data.width * messageList.zoomLevel);
+				preparedData.width = messageList.config.gfy_max_width / messageList.zoomLevel;
+				preparedData.height *= ratio;    
 			}
 
 			return preparedData;
@@ -1905,10 +1909,10 @@ var messageList = {
 		displayNewGalleryImage: function(index, initialWidth, initialHeight, data, oldDiv) {
 			var imageData = this.prepareImageData(data.images[index]);
 			
-			if (imageData.width > initialWidth) {					
-				var ratio = Math.min(initialWidth / imageData.width, initialHeight / imageData.height);
+			if ((imageData.width * messageList.zoomLevel) > initialWidth) {
+				var ratio = Math.min(initialWidth / (imageData.width * messageList.zoomLevel), initialHeight / (imageData.height * messageList.zoomLevel));
 				imageData.width *= ratio;
-				imageData.height *= ratio;						    
+				imageData.height *= ratio;
 			}			
 			
 			if (imageData.animated) {
@@ -1920,7 +1924,7 @@ var messageList = {
 			}
 		},
 		
-		createThumbnail: function(imgurElement, thumbnailUrl, data) {		
+		createThumbnail: function(imgurElement, thumbnailUrl, data) {
 			// create placeholder element
 			var placeholder = document.createElement('div');
 			if (data.title) {
