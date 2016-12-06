@@ -1867,7 +1867,7 @@ var messageList = {
 				video.src = placeholder.id;
 				video.play();
 			}
-			else if (placeholder.className.contains('nws_imgur')) {
+			else if (placeholder.classList.contains('nws_imgur')) {
 				// create video element & embed gfycat
 				var video = document.createElement('video');
 				var width = placeholder.getAttribute('width');
