@@ -983,7 +983,7 @@ var messageList = {
 		 *  If we detect the onDisconnect event, we should save user input and reload the page.
 		 */	 
 		
-		onPortDisconnect: function(port) {			
+		onPortDisconnect: function(port) {
 			if (document.getElementsByClassName('quickpost').length > 0) {
 				var quickpost = document.getElementsByName('message')[0];
 				sessionStorage.setItem('quickpost_value', quickpost.value);
@@ -993,7 +993,9 @@ var messageList = {
 			sessionStorage.setItem('scrollx', window.scrollX);
 			sessionStorage.setItem('scrolly', window.scrollY);
 			
-			window.location.reload();				
+			setTimeout(() => { 
+				window.location.reload(); 
+			}, 1000);
 		},
 
 		
