@@ -1099,23 +1099,23 @@ var ajax = function(request, callback) {
 		}
 		
 		xhr.onload = function() {
-			if (this.status === 200) {
-				if (!request.ignoreCache) {
-					// Cache response and check again after 24 hours
-					ajaxCache[this.requestURL] = {
-						data: this.responseText,
-						refreshTime: currentTime + TWENTY_FOUR_HOURS
-					};
-				}
-				
-				callback(this.responseText);
+			switch(this.status) {
+				case 200:
+					if (!request.ignoreCache) {
+						// Cache response and check again after 24 hours
+						ajaxCache[this.requestURL] = {
+							data: this.responseText,
+							refreshTime: currentTime + TWENTY_FOUR_HOURS
+						};
+					}
+					
+					callback(this.responseText);
+					break;
+					
+				default:				
+					callback(this.responseText);
+					break;
 			}
-			
-			else {
-				// Callback with false value so we know that request failed
-				callback(false, this.status);
-			}
-			
 		};
 		
 		xhr.send();		
