@@ -2500,7 +2500,7 @@ var messageList = {
 				}
 				
 				// Check for Imgur links
-				else if (messageList.config.embed_imgur && link.title.indexOf('imgur.com/') > -1 && /.webm|.gifv|.gif/.test(link)) {
+				else if (messageList.config.embed_imgur && link.title.indexOf('imgur.com/') > -1 && /.gifv|.mp4|.gif|.webm/.test(link)) {
 								
 					link.classList.add('media', 'imgur');
 					mediaToEmbed = true;
