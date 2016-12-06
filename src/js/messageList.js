@@ -1871,8 +1871,7 @@ var messageList = {
 					
 					index--;
 					imageNumber.innerText = (index + 1) + '/' + data.images_count;
-					this.displayNewGalleryImage(index, initialWidth, initialHeight, data, evt.target.parentNode.children[2]);					
-					galleryDiv.scrollIntoView();
+					this.displayNewGalleryImage(index, initialWidth, initialHeight, data, evt.target.parentNode.children[2]);
 				}
 				
 			});
@@ -1883,8 +1882,7 @@ var messageList = {
 					
 					index++;
 					imageNumber.innerText = (index + 1) + '/' + data.images_count;
-					this.displayNewGalleryImage(index, initialWidth, initialHeight, data, evt.target.parentNode.children[2]);					
-					galleryDiv.scrollIntoView();
+					this.displayNewGalleryImage(index, initialWidth, initialHeight, data, evt.target.parentNode.children[2]);
 				}
 				
 			});			
