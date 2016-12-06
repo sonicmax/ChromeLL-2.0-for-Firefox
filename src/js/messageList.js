@@ -1732,22 +1732,9 @@ var messageList = {
 		
 		getDataFromApi: function(href, callback) {
 			// Documentation for the Imgur image data model: https://api.imgur.com/models/image
-			const API_KEY = 'Client-ID 6356976da2dad83';
+			const API_KEY = 'Client-ID 6356976da2dad83';			
 			
-			// Get last path segment and strip any file extensions to find code for API
-			var splitURL = href.split('/');
-			var code = splitURL.slice(-1).join('/');
-			code = code.split('.')[0];
-			
-			if (href.indexOf('/gallery/') > -1) {
-				apiPath = 'gallery/album/' + code;
-			}
-						
-			else {
-				apiPath = 'image/' + code;
-			}
-			
-			var url = 'https://api.imgur.com/3/' + apiPath;
+			var url = 'https://api.imgur.com/3/' + this.getApiPath(href);
 			
 			chrome.runtime.sendMessage({
 				
@@ -1761,6 +1748,21 @@ var messageList = {
 				this.handleResponse(jsonResponse, callback);				
 				
 			});	
+		},
+		
+		getApiPath: function(href) {
+			// Get last path segment and strip any file extensions to find code for API
+			var splitURL = href.split('/');
+			var code = splitURL.slice(-1).join('/');
+			code = code.split('.')[0];
+			
+			if (href.indexOf('/gallery/') > -1) {
+				return 'gallery/album/' + code;
+			}
+						
+			else {
+				return 'image/' + code;
+			}
 		},
 		
 		handleResponse: function(jsonResponse, callback) {
