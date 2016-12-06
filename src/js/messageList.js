@@ -1801,6 +1801,9 @@ var messageList = {
 		createThumbnail: function(imgurElement, thumbnailUrl, data) {			
 			// create placeholder element
 			var placeholder = document.createElement('div');
+			if (data.title) {
+				placeholder.title = data.title;
+			}
 			placeholder.classList.add('media', 'imgur');
 			placeholder.id = data.url;
 			
@@ -1852,9 +1855,12 @@ var messageList = {
 			}
 		},
 		
-		createPlaceholder: function(imgurElement, data) {		
+		createPlaceholder: function(imgurElement, data) {
 			// create placeholder
 			var placeholder = document.createElement('div');
+			if (data.title) {
+				placeholder.title = data.title;
+			}			
 			placeholder.classList.add('media', 'imgur');
 			placeholder.id = data.url;
 			placeholder.setAttribute('name', 'placeholder');
