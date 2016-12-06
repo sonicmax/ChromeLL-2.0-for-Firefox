@@ -1722,7 +1722,11 @@ var messageList = {
 							var thumbnailUrl = window.location.protocol + '//i.imgur.com/' + code + 'l.jpg';
 							
 							messageList.imgur.createThumbnail(imgurElement, thumbnailUrl, data);
-						} 
+						}
+						
+						else if (!data.animated) {
+							messageList.imgur.createThumbnail(imgurElement, data.url, data);							
+						}
 						
 						else {
 							messageList.imgur.createPlaceholder(imgurElement, data);
