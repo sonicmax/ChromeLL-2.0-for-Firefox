@@ -1,5 +1,61 @@
 /* 
 	---------------------------------------------
+	Imgur gallery classes
+	---------------------------------------------
+*/
+
+.imgur_gallery {
+	display: inline-block;
+	background-color: rgb(26, 26, 26);
+	padding: 5px;
+	text-align: center;
+}
+
+.imgur_gallery_title {
+	display: inline-block;	
+	width: 90%;
+	text-align: left;
+}
+
+.imgur_gallery_index {
+	display: inline-block;
+	width: 10%;
+	text-align: right;
+}
+
+.imgur_gallery_left, .imgur_gallery_right {
+	display: inline-block;
+	box-sizing: border-box;
+	background-color: rgb(40, 40, 40);
+	text-weight: bold;
+	width: 50%;
+	font-size: 2vw;
+	border-top: 2px solid black;
+}
+
+.imgur_gallery_left {
+	border-right: 1px solid black;	
+}
+
+.imgur_gallery_right {
+	border-left: 1px solid black;	
+}
+
+.imgur_gallery_left:hover {
+	background-color: rgb(50, 50, 50);
+}
+
+.imgur_gallery_right:hover {
+	background-color: rgb(50, 50, 50);
+}
+
+.imgur_gallery_desc {
+	display: inline-block;
+	width: 100%;
+}
+
+/* 
+	---------------------------------------------
 	Ignorator
 	---------------------------------------------
 */

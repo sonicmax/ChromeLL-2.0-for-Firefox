@@ -1666,11 +1666,6 @@ var messageList = {
 		checkLink: function(imgurElement) {
 			var href = imgurElement.href;
 			
-			if (href.indexOf('/gallery/') > -1) {
-				imgurElement.classList.remove('imgur');
-				imgurElement.classList.add('checked', 'ignore');
-			}
-			
 			if (!imgurElement.classList.contains('checked')) {
 				imgurElement.classList.add('checked');
 				
@@ -1708,6 +1703,11 @@ var messageList = {
 						imgurElement.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));					
 					}
 					
+					else if (data.images_count && data.images_count > 0) {
+						// Gallery link
+						messageList.imgur.createGallery(imgurElement, data);
+					}
+					
 					else {
 						if (imgurElement.getAttribute('name') == 'imgur_thumb') {
 							// Get last path segment and strip any file extensions to find code for API
@@ -1740,7 +1740,7 @@ var messageList = {
 			code = code.split('.')[0];
 			
 			if (href.indexOf('/gallery/') > -1) {
-				apiPath = 'gallery/image/' + code;
+				apiPath = 'gallery/album/' + code;
 			}
 						
 			else {
@@ -1766,36 +1766,117 @@ var messageList = {
 		handleResponse: function(jsonResponse, callback) {
 			// Check for errors
 			if (!jsonResponse.success) {
-				if (jsonResponse.data.error.indexOf('No image was found with the ID') > -1 && jsonResponse.data.request.indexOf('gallery/image') > -1) {
-					console.log(jsonResponse);
-				}
 				callback({ status: jsonResponse.status, error: jsonResponse.data.error });
 			}
 			
-			else {			
+			else {
 				var data = jsonResponse.data;
+				var preparedData = {};
 				
-				var url = data.mp4;
+				preparedData.nsfw = data.nsfw;
+				preparedData.title = data.title;
 				
-				var width = data.width;
-				var height = data.height;
 				
-				if (messageList.config.resize_imgurs && data.width > messageList.config.imgur_max_width) {
-					width = messageList.imgur_max_width;
-					height = height / (width / messageList.config.imgur_max_width);
+				if (data.images) {
+					// Response from gallery/album/ request
+					preparedData.description = data.description;
+					preparedData.images = data.images;
+					preparedData.images_count = data.images_count;
 				}
 				
-				var title = data.title || data.redditIdText;
-				var nsfw = data.nsfw;
-				
-				callback({
-					width: width,
-					height: height,
-					url: url,
-					title: title,
-					nsfw: nsfw
-				});
+				else {
+					// Response from image/ request
+					preparedData.url = data.mp4;
+					
+					var width = data.width;
+					var height = data.height;
+					
+					if (messageList.config.resize_imgurs && data.width > messageList.config.imgur_max_width) {
+						width = messageList.imgur_max_width;
+						height = height / (width / messageList.config.imgur_max_width);
+					}
+					
+					preparedData.width = width;
+					preparedData.height = height;
+				}
+												
+				callback(preparedData);
 			}
+		},
+		
+		createGallery: function(imgurElement, data) {
+			var index = 0;
+			
+			var galleryDiv = document.createElement('div');
+			galleryDiv.className = 'imgur_gallery';
+			
+			// Create title element using API data
+			var galleryTitle = document.createElement('span');
+			galleryTitle.className = 'imgur_gallery_title';
+			galleryTitle.innerHTML = data.title;
+			galleryDiv.appendChild(galleryTitle);
+			
+			// Display index of image in gallery
+			var imageNumber = document.createElement('span');
+			imageNumber.className = 'imgur_gallery_index';
+			imageNumber.innerText = (index + 1) + '/' + data.images_count;
+			galleryDiv.appendChild(imageNumber);
+			
+			// Create element for createPlaceholder() method to replace
+			var dummyPlaceholder = document.createElement('div');
+			galleryDiv.appendChild(dummyPlaceholder);			
+			this.createPlaceholder(dummyPlaceholder, data.images[index]);
+
+			// Create navigation buttons
+			var leftButton = document.createElement('span');			
+			leftButton.className = 'imgur_gallery_left';
+			leftButton.innerText = '‹';
+			
+			var rightButton = document.createElement('span');
+			rightButton.className = 'imgur_gallery_right';
+			rightButton.innerHTML = '›';
+			
+			galleryDiv.appendChild(leftButton);
+			galleryDiv.appendChild(rightButton);
+			
+			// Create description using API data
+			var galleryDesc = document.createElement('span');
+			galleryDesc.className = 'imgur_gallery_desc';
+			galleryDesc.innerHTML = data.description;
+			galleryDiv.appendChild(galleryDesc);
+			
+			// Replace original Imgur anchor with gallery
+			if (imgurElement.parentNode) {
+				imgurElement.parentNode.replaceChild(galleryDiv, imgurElement);
+			}
+			
+			// Add handlers for click events. Defined here so they can access the API data
+			
+			leftButton.addEventListener('click', (evt) => {								
+				
+				if (index > 0) {
+					
+					var oldDiv = evt.target.parentNode.children[2];
+					index--;					
+					imageNumber.innerText = (index + 1) + '/' + data.images_count;
+					this.createPlaceholder(oldDiv, data.images[index]);					
+					
+				}
+				
+			});
+			
+			rightButton.addEventListener('click', (evt) => {
+												
+				if (index < data.images_count - 1) {
+					
+					var oldDiv = evt.target.parentNode.children[2];
+					index++;
+					imageNumber.innerText = (index + 1) + '/' + data.images_count;
+					this.createPlaceholder(oldDiv, data.images[index]);
+					
+				}
+				
+			});			
 		},
 		
 		createThumbnail: function(imgurElement, thumbnailUrl, data) {			
@@ -1862,7 +1943,7 @@ var messageList = {
 				placeholder.title = data.title;
 			}			
 			placeholder.classList.add('media', 'imgur');
-			placeholder.id = data.url;
+			placeholder.id = data.url || data.mp4;
 			placeholder.setAttribute('name', 'placeholder');
 
 			var video = document.createElement('video');
