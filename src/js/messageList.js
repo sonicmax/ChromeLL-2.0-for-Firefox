@@ -1669,18 +1669,12 @@ var messageList = {
 			if (href.indexOf('/gallery/') > -1) {
 				imgurElement.classList.remove('imgur');
 				imgurElement.classList.add('checked', 'ignore');
-				return;
 			}
-			
-			// Get last path segment and strip any file extensions to get code for API
-			var splitURL = href.split('/').slice(-1);		
-			var lastPath = splitURL.join('/');			
-			var code = lastPath.split('.')[0];
 			
 			if (!imgurElement.classList.contains('checked')) {
 				imgurElement.classList.add('checked');
 				
-				this.getDataFromApi(code, (data) => {					
+				this.getDataFromApi(href, (data) => {
 					if (data.error) {
 						// Make sure that this is only appended once
 						if (imgurElement.classList.contains('imgur')) {
@@ -1692,7 +1686,8 @@ var messageList = {
 							notFoundSpan.style.verticalAlign = 'super'; // Superscript
 							notFoundSpan.style.fontSize = 'smaller';
 							notFoundSpan.style.color = 'red';						
-							notFoundSpan.innerHTML = '&nbsp' + data.error;
+							notFoundSpan.innerHTML = '&nbsp' + data.status;
+							notFoundSpan.title = data.error;
 							
 							// Append 404 in superscript
 							container.appendChild(notFoundSpan);
@@ -1715,8 +1710,14 @@ var messageList = {
 					
 					else {
 						if (imgurElement.getAttribute('name') == 'imgur_thumb') {
+							// Get last path segment and strip any file extensions to find code for API
+							var splitURL = href.split('/');
+							var code = splitURL.slice(-1).join('/');
+							code = code.split('.')[0];
+							
 							// Large thumbnail url
-							var thumbnailUrl = window.location.protocol + '//i.imgur.com/' + code + 'l.jpg';						
+							var thumbnailUrl = window.location.protocol + '//i.imgur.com/' + code + 'l.jpg';
+							
 							messageList.imgur.createThumbnail(imgurElement, thumbnailUrl, data);
 						} 
 						
@@ -1729,11 +1730,24 @@ var messageList = {
 			}
 		},
 		
-		getDataFromApi: function(code, callback) {
+		getDataFromApi: function(href, callback) {
 			// Documentation for the Imgur image data model: https://api.imgur.com/models/image
 			const API_KEY = 'Client-ID 6356976da2dad83';
-
-			var url = 'https://api.imgur.com/3/image/' + code;
+			
+			// Get last path segment and strip any file extensions to find code for API
+			var splitURL = href.split('/');
+			var code = splitURL.slice(-1).join('/');
+			code = code.split('.')[0];
+			
+			if (href.indexOf('/gallery/') > -1) {
+				apiPath = 'gallery/image/' + code;
+			}
+						
+			else {
+				apiPath = 'image/' + code;
+			}
+			
+			var url = 'https://api.imgur.com/3/' + apiPath;
 			
 			chrome.runtime.sendMessage({
 				
@@ -1749,16 +1763,13 @@ var messageList = {
 			});	
 		},
 		
-		handleResponse: function(jsonResponse, callback) { 
+		handleResponse: function(jsonResponse, callback) {
 			// Check for errors
-			if (!jsonResponse || !jsonResponse.success) {
-				if (!jsonResponse) {
-					// Background page returns false if 404 error is detected
-					callback({ error: 404 });
+			if (!jsonResponse.success) {
+				if (jsonResponse.data.error.indexOf('No image was found with the ID') > -1 && jsonResponse.data.request.indexOf('gallery/image') > -1) {
+					console.log(jsonResponse);
 				}
-				else if (!jsonResponse.success) {
-					callback({ error: jsonResponse.status });
-				}				
+				callback({ status: jsonResponse.status, error: jsonResponse.data.error });
 			}
 			
 			else {			
