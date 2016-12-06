@@ -1757,7 +1757,12 @@ var messageList = {
 			var code = splitURL.slice(-1).join('/');
 			code = code.split('.')[0];
 			
-			if (href.indexOf('/gallery/') > -1) {
+			if (href.indexOf('/a/') > -1) {
+				return 'album/' + code;
+				
+			}
+			
+			else if (href.indexOf('/gallery/') > -1) {
 				return 'gallery/album/' + code;
 			}
 						
