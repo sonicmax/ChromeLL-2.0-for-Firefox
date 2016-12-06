@@ -1382,6 +1382,7 @@ var messageList = {
 				if (mediaIndex > sigIndex) {
 					// Remove imgur/gfycat classes so that mediaLoader() doesn't attempt to embed this element
 					element.classList.remove('imgur', 'gfycat');
+					element.classList.add('ignore');
 				}
 				break;
 			}	
