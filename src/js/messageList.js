@@ -1664,10 +1664,18 @@ var messageList = {
 		debouncerId: '',
 		
 		checkLink: function(imgurElement) {
-			var splitURL = imgurElement.href.split('/').slice(-1);			
-			var filename = splitURL.join('/');
-			// Strip any file extensions to get code for API
-			var code = filename.split('.')[0];
+			var href = imgurElement.href;
+			
+			if (href.indexOf('/gallery/') > -1) {
+				imgurElement.classList.remove('imgur');
+				imgurElement.classList.add('checked', 'ignore');
+				return;
+			}
+			
+			// Get last path segment and strip any file extensions to get code for API
+			var splitURL = href.split('/').slice(-1);		
+			var lastPath = splitURL.join('/');			
+			var code = lastPath.split('.')[0];
 			
 			if (!imgurElement.classList.contains('checked')) {
 				imgurElement.classList.add('checked');
