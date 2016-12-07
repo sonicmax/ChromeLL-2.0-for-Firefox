@@ -298,14 +298,16 @@ var postMsgHelper = {
 	},
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
+		
 		if (chosen.files.length == 0) {
 			alert('Select files and then click "Batch Upload"');
 			return;
 		}
-		document.getElementsByTagName('form')[0].getElementsByTagName('b')[2].innerHTML += " (Uploading: 1/"
-				+ chosen.files.length + ")";
-		for (var i = 0; chosen.files[i]; i++) {
-			allPages.asyncUpload(chosen.files[i]);
+		
+		for (var i = 0, len = chosen.files.length; i < len; i++) {
+			allPages.asyncUploadHandler(chosen.files[i], (output) => {				
+				allPages.insertIntoTextarea(output);				
+			})
 		}
 	},
 	qpTagButton : function(e) {

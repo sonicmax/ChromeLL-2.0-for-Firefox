@@ -3238,14 +3238,17 @@ var messageList = {
 	
 	startBatchUpload: function(evt) {
 		var chosen = document.getElementById('batch_uploads');
+		
 		if (chosen.files.length == 0) {
 			alert('Select files and then click "Batch Upload"');
 			return;
 		}
-		document.getElementsByClassName('quickpost-body')[0]
-				.getElementsByTagName('b')[0].innerHTML += " (Uploading: 1/"
-				+ chosen.files.length + ")";
-		allPages.asyncUpload(chosen.files, 0);
+		
+		for (var i = 0, len = chosen.files.length; i < len; i++) {
+			allPages.asyncUploadHandler(chosen.files[i], (output) => {				
+				allPages.insertIntoTextarea(output);				
+			})
+		}	
 	},
 	
 	postTemplateAction: function(evt) {
