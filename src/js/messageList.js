@@ -1479,11 +1479,6 @@ var messageList = {
 		},
 		
 		createPlaceholder: function(gfycatElement, url, data) {
-			var display;
-			(messageList.config.show_gfycat_link)
-					? display = 'inline'
-					: display = 'none';	
-			
 			// create placeholder
 			var placeholder = document.createElement('div');
 			placeholder.classList.add('media', 'gfycat');
@@ -1495,13 +1490,14 @@ var messageList = {
 			video.setAttribute('height', data.height);
 			video.setAttribute('loop', true);
 
-			var linkSpan = document.createElement('a');
-			linkSpan.style.display = display;
-			linkSpan.href = url;
-			linkSpan.innerHTML = '<br><br>' + url;
-
 			placeholder.appendChild(video);
-			placeholder.appendChild(linkSpan);						
+			
+			if (messageList.config.show_gfycat_link) {
+				var linkSpan = document.createElement('a');
+				linkSpan.href = url;
+				linkSpan.innerHTML = '<br><br>' + url;
+				placeholder.appendChild(linkSpan);
+			}						
 					
 			// prevent "Cannot read property 'replaceChild' of null" error
 			if (gfycatElement.parentNode) {
@@ -1521,12 +1517,7 @@ var messageList = {
 			}
 		},
 		
-		createThumbnail: function(gfycatElement, url, thumbnailUrl, data) {
-			var display;
-			(messageList.config.show_gfycat_link)
-					? display = 'inline'
-					: display = 'none';
-			
+		createThumbnail: function(gfycatElement, url, thumbnailUrl, data) {			
 			// create placeholder element
 			var placeholder = document.createElement('div');
 			placeholder.classList.add('media', 'gfycat');
@@ -1535,15 +1526,16 @@ var messageList = {
 			var thumbnail = document.createElement('img');
 			thumbnail.setAttribute('src', thumbnailUrl);
 			thumbnail.setAttribute('width', data.width);
-			thumbnail.setAttribute('height', data.height);
-			
-			var linkSpan = document.createElement('a');
-			linkSpan.style.display = display;
-			linkSpan.href = url;
-			linkSpan.innerHTML = '<br><br>' + url;			
+			thumbnail.setAttribute('height', data.height);						
 			
 			placeholder.appendChild(thumbnail);
-			placeholder.appendChild(linkSpan);
+			
+			if (messageList.config.show_gfycat_link) {
+				var linkSpan = document.createElement('a');
+				linkSpan.href = url;
+				linkSpan.innerHTML = '<br><br>' + url;
+				placeholder.appendChild(linkSpan);
+			}	
 			
 			if (gfycatElement.parentNode) {
 				gfycatElement.parentNode.replaceChild(placeholder, gfycatElement);
@@ -1636,9 +1628,6 @@ var messageList = {
 			if (placeholder.classList.contains('gfycat')) {
 				// use placeholder element to embed gfycat video
 				var video = placeholder.getElementsByTagName('video')[0];
-				if (messageList.config.show_gfycat_link) {
-					placeholder.getElementsByTagName('span')[0].style.display = 'inline';
-				}
 				placeholder.setAttribute('name', 'embedded');
 				// placeholder id is webm url
 				video.src = placeholder.id;
@@ -1786,7 +1775,7 @@ var messageList = {
 					callback(this.prepareGalleryData(jsonResponse.data));					
 				}
 				
-				else {
+				else {					
 					// Response from image/ request	
 					callback(this.prepareImageData(jsonResponse.data));
 				}												
@@ -1942,9 +1931,16 @@ var messageList = {
 			var thumbnail = document.createElement('img');
 			thumbnail.setAttribute('src', thumbnailUrl);
 			thumbnail.setAttribute('width', data.width);
-			thumbnail.setAttribute('height', data.height);		
-			
+			thumbnail.setAttribute('height', data.height);
+
 			placeholder.appendChild(thumbnail);
+						
+			if (messageList.config.show_gfycat_link) {
+				var linkSpan = document.createElement('a');
+				linkSpan.href = data.url;
+				linkSpan.innerHTML = '<br><br>' + data.url;
+				placeholder.appendChild(linkSpan);		
+			}
 			
 			if (imgurElement.parentNode) {
 				imgurElement.parentNode.replaceChild(placeholder, imgurElement);
@@ -2002,9 +1998,16 @@ var messageList = {
 			var video = document.createElement('video');
 			video.setAttribute('width', data.width);
 			video.setAttribute('height', data.height);
-			video.setAttribute('loop', true);
+			video.setAttribute('loop', true);						
 
-			placeholder.appendChild(video);				
+			placeholder.appendChild(video);
+
+			if (messageList.config.show_gfycat_link) {
+				var linkSpan = document.createElement('a');
+				linkSpan.href = data.url;
+				linkSpan.innerHTML = '<br><br>' + data.url;
+				placeholder.appendChild(linkSpan);
+			}
 					
 			// prevent "Cannot read property 'replaceChild' of null" error
 			if (imgurElement.parentNode) {
@@ -2028,14 +2031,11 @@ var messageList = {
 			if (placeholder.classList.contains('imgur')) {
 				// use placeholder element to embed gfycat video
 				var video = placeholder.getElementsByTagName('video')[0];
-				if (messageList.config.show_gfycat_link) {
-					placeholder.getElementsByTagName('span')[0].style.display = 'inline';
-				}
 				placeholder.setAttribute('name', 'embedded');
-				// placeholder id is mp4 url
-				video.src = placeholder.id;
+				video.src = placeholder.id; // id is mp4 url
 				video.play();
 			}
+			
 			else if (placeholder.classList.contains('nws_imgur')) {
 				// create video element & embed gfycat
 				var video = document.createElement('video');
