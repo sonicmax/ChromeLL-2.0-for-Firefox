@@ -568,65 +568,52 @@ var allPages = {
 			event.preventDefault();
 		}
 	},
-	asyncUpload : function(tgt, i) {
-		if (!i) {
-			var i = 0;
-		}
-		var xh = new XMLHttpRequest();
-		xh.onreadystatechange = function() {
-			if (this.readyState === 4 && this.status === 200) {
+	
+	asyncUpload : function(file, i, callback) {
+		console.log(file, i, callback);
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', window.location.protocol + '//u.endoftheinter.net/u.php', true);		
+		xhr.withCredentials = "true";
+		
+		var formData = new FormData();
+		formData.append('file', file);
+		
+		xhr.onload = () => {
+			if (xhr.status === 200) {
 				var tmp = document.createElement('div');
-				tmp.innerHTML = this.responseText;
-				var update_ul;
-				if (window.location.href.match('postmsg')) {
-					update_ul = document.getElementsByTagName('form')[0]
-							.getElementsByTagName('b')[2];
-				} else {
-					update_ul = document
-							.getElementsByClassName('quickpost-body')[0]
-							.getElementsByTagName('b')[0];
-				}
-				var current = update_ul.innerHTML
-						.match(/Uploading: (\d+)\/(\d+)\)/);
-				var tmp_input = tmp.getElementsByClassName('img')[0]
-						.getElementsByTagName('input')[0];
+				tmp.innerHTML = xhr.responseText;
+				
+				var tmp_input = tmp.getElementsByClassName('img')[0].getElementsByTagName('input')[0];
+				
 				if (tmp_input.value) {
 					if (tmp_input.value.substring(0, 4) == '<img') {
-						allPages.quickReplyInsert(tmp_input.value);
-						if ((i + 1) == current[2]) {
-							update_ul.innerHTML = "Your Message";
-						} else {
-							update_ul.innerHTML = "Your Message (Uploading: "
-									+ (i + 2) + "/" + current[2] + ")";
-						}
+						allPages.insertIntoMessage(tmp_input.value);
+						callback();
 					}
 				}
-				i++;
-				if (i < tgt.length) {
-					allPages.asyncUpload(tgt, i);
-				}
+				
 			}
 		};
-		var http = 'https';
-		if (window.location.href.indexOf('https:') == -1)
-			http = 'http';
-		xh.open('post', http + '://u.endoftheinter.net/u.php', true);
-		var formData = new FormData();
-		formData.append('file', tgt[i]);
-		xh.withCredentials = "true";
-		xh.send(formData);
+				
+		xhr.send(formData);
 	},
-	quickReplyInsert : function(text) {
-		var quickreply = document.getElementsByTagName('textarea')[0];
-		var qrtext = quickreply.value;
+	
+	insertIntoMessage: function(text) {
+		var textarea = document.getElementById('message') || document.getElementsByTagName('textarea')[0];
+		console.log(textarea);
+
+		var qrtext = textarea.value;
 		var oldtxt = qrtext.split('---');
 		var newtxt = '';
+		
 		for ( var i = 0; i < oldtxt.length - 1; i++) {
 			newtxt += oldtxt[i];
 		}
+		
 		newtxt += text + "\n---" + oldtxt[oldtxt.length - 1];
-		quickreply.value = newtxt;
+		textarea.value = newtxt;
 	},
+	
 	init: function(config) {
 		this.config = config;
 		
@@ -641,7 +628,7 @@ var allPages = {
 			file: "src/css/allpages.css"
 		});
 		
-		if (window.location.pathname !== "/main.php") {
+		if (window.location.pathname === '/showmessages.php' || window.location.pathname === '/inboxthread.php') {
 			addPopupCSS();
 		}
 		

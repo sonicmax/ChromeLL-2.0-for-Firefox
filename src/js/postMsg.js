@@ -12,9 +12,6 @@ var postMsg = {
 		document.getElementsByTagName('form')[0].insertBefore(ulBox, null);
 		document.getElementsByTagName('form')[0].insertBefore(ulButton, ulBox);
 	},
-	foxlinks_quotes : function() {
-		commonFunctions.foxlinks_quote();
-	},
 	post_before_preview : function() {
 		var post, preview;
 		var m = document.getElementsByTagName('form')[document
@@ -37,7 +34,6 @@ var postMsg = {
 		var button = document.createElement('button');
 		var divider = document.createTextNode(' ');
 		var search = document.createElement('input');
-		console.log(lastButton);
 		button.textContent = "Browse Imagemap";					
 		button.id = "quick_image";
 		search.placeholder = "Search Imagemap...";
@@ -183,27 +179,99 @@ var postMsg = {
 		m.insertBefore(document.createElement('br'), m
 				.getElementsByTagName('textarea')[0]);
 	},
+	
 	drop_batch_uploader : function() {
-		var quickreply = document.getElementsByTagName('textarea')[0];
-		quickreply
-				.addEventListener(
-						'drop',
-						function(evt) {
-							evt.preventDefault();
-							document.getElementsByTagName('form')[0]
-									.getElementsByTagName('b')[2].innerHTML += " (Uploading: 1/"
-									+ evt.dataTransfer.files.length + ")";
-							for (var i = 0; evt.dataTransfer.files[i]; i++) {
-								commonFunctions
-										.asyncUpload(evt.dataTransfer.files[i]);
-							}
-						});
+		var textarea = document.getElementById('message') || document.getElementsByTagName('textarea')[0];
+		
+		var totalFiles = 0;
+		var currentFile = 1;
+		
+		textarea.addEventListener('drop', (evt) => {
+			var fileCount = evt.dataTransfer.files.length;
+			totalFiles += fileCount;
+			
+			// Note: it's possible for innerHTML of progress_span to be wiped, so we should check for specific element
+			if (!document.getElementById('upload_progress')) {
+							
+				var hookElement; // Element that progress updates are attached to
+				
+				if (document.getElementsByClassName('quickpost-body').length > 0) {
+					hookElement = document.getElementsByClassName('quickpost-body')[0];
+				}
+				
+				if (document.getElementById('token_desc')) {
+					// 'Your Message' element
+					hookElement = document.getElementById('token_desc').nextSibling.nextSibling.nextSibling;
+				}
+				
+				else {
+					hookElement = document.getElementsByTagName('form')[0].getElementsByTagName('b')[2];
+				}
+				
+				if (document.getElementById('progress_span')) {
+					var spanToRemove = document.getElementById('progress_span');
+					hookElement.removeChild(spanToRemove, hookElement);
+				}
+				
+				var span = document.createElement('progress_span');
+				span.id = 'progress_span';
+				
+				var text = document.createElement('span');
+				text.innerHTML = '&nbsp;(Uploading: ';
+								
+				var progress = document.createElement('span');
+				progress.id = 'upload_progress';
+				progress.innerHTML = '(' + currentFile + '/' + totalFiles + ')'										
+				
+				span.appendChild(text);
+				span.appendChild(progress);				
+				hookElement.appendChild(span);
+			}
+			
+			else {
+				document.getElementById('upload_progress').innerHTML = '(' + currentFile + '/' + totalFiles + ')';
+			}
+			
+			for (let i = 0, len = evt.dataTransfer.files.length; i < len; i++) {
+				var file = evt.dataTransfer.files[i];
+				
+				allPages.asyncUpload(file, i, () => {									
+					
+					if (currentFile === totalFiles) {
+						if (totalFiles > 1) {
+							document.getElementById('progress_span').innerHTML = '&nbsp;(Uploads complete.)';
+						}
+						
+						else {
+							document.getElementById('progress_span').innerHTML = '&nbsp;(Upload complete.)';						
+						}
+
+						totalFiles = 0;
+						currentFile = 1;
+					}
+					
+					else {
+						currentFile++;					
+						document.getElementById('upload_progress').innerHTML = '(' + currentFile + '/' + totalFiles + ')';
+					}
+					
+				});
+			}
+			
+			evt.preventDefault();
+			
+		});
 	},
+	
 	snippet_listener : function() {
-	 var ta = document.getElementById('message');
-	 var caret;
-		ta.addEventListener('keydown', function(event) {
-			if (event.keyIdentifier == 'U+0009') {
+		const TAB_KEY = 'Tab';
+		const SHIFT_KEY = 'Shift';
+		
+		var ta = document.getElementById('message');
+		var caret;
+		
+		ta.addEventListener('keydown', (event) => {
+			if (event.key === TAB_KEY) {
 				// prevent default action for tab key so we can attach our own
 				event.preventDefault();
 				caret = postMsgHelper.findCaret(ta);
@@ -215,7 +283,7 @@ var postMsg = {
 
 var postMsgHelper = {
 	create_topic_observer : function() {
-		var observer = new MutationObserver(function(mutations) {
+		var observer = new MutationObserver((mutations) => {
 			// makes sure that create_topic_buttons are visible after tags have been added/removed
 			var mutation;
 			for (var i = 0, len = mutations.length; i < len; i++) {
@@ -299,7 +367,7 @@ var postMsgHelper = {
 		document.getElementsByTagName('form')[0].getElementsByTagName('b')[2].innerHTML += " (Uploading: 1/"
 				+ chosen.files.length + ")";
 		for (var i = 0; chosen.files[i]; i++) {
-			commonFunctions.asyncUpload(chosen.files[i]);
+			allPages.asyncUpload(chosen.files[i]);
 		}
 	},
 	qpTagButton : function(e) {
@@ -341,35 +409,40 @@ var postMsgHelper = {
 	},
 	imagemapDebouncer: '',
 	imagemapHelper: function() {
-		var sheet = document.styleSheets[0];
-		sheet.insertRule("#loading_image { -webkit-animation:spin 2s linear infinite; }", 1);
-		sheet.insertRule("@-webkit-keyframes spin { 100% { -webkit-transform:rotate(360deg); } }", 1);	
 		
 		var button = document.getElementById('quick_image');
-		button.addEventListener('click', function(evt) {
+		
+		button.addEventListener('click', (evt) => {
 				// imagemap object located in imagemap.js
 				imagemap.init();
 				evt.preventDefault();
 		});
 		
 		var input = document.getElementById('image_search');
-		input.addEventListener('keyup', function() {
+		
+		input.addEventListener('keyup', () => {
+			
 			clearTimeout(postMsgHelper.imagemapDebouncer);
-			this.imagemapDebouncer = setTimeout(function() {
+			
+			this.imagemapDebouncer = setTimeout(() => {
 				// imagemap object located in imagemap.js
 				imagemap.search.init.call(imagemap.search);
 			}, 250);	
+			
 		});	
 	},
+	
 	init : function() {
-		chrome.runtime.sendMessage({
-			need : "config"
-		}, function(conf) {
-			config = conf.data;
+		chrome.runtime.sendMessage({ need : "config" }, (response) => {
+			config = response.data;
+			
 			var pm = '';
-			if (!window.location.href.match('boards'))
+			
+			if (!window.location.href.match('boards')) {
 				pm = "_pm";
-			for ( var i in postMsg) {
+			}	
+		
+			for (var i in postMsg) {
 				if (config[i + pm]) {
 					try {
 						postMsg[i]();
@@ -378,10 +451,13 @@ var postMsgHelper = {
 					}
 				}
 			}
-			if (config.create_topic_buttons) {
+			
+			if (config.create_topic_buttons && !pm) {
 				postMsgHelper.create_topic_observer();
 			}
-			if (config.quick_imagemap) {
+			
+			if (config.quick_imagemap && pm) {
+				postMsg.quick_imagemap();
 				postMsgHelper.imagemapHelper();				
 			}
 		});

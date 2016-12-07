@@ -659,31 +659,77 @@ var messageList = {
 			},
 			
 			drop_batch_uploader: function() {
-				// TODO: Fix this on postmsg.php
-				if (window.location.pathname === "/postmsg.php") {
-					return;
-				}
+				var textarea = document.getElementsByTagName('textarea')[0];
 				
-				var quickreply = document.getElementsByTagName('textarea')[0];
+				var totalFiles = 0;
+				var currentFile = 1;
 				
-				quickreply.addEventListener('drop', (evt) => {
+				textarea.addEventListener('drop', (evt) => {
 					
-					evt.preventDefault();
+					var fileCount = evt.dataTransfer.files.length;
+					totalFiles += fileCount;
 					
-					if (evt.dataTransfer.files.length == 0) {
-						console.log(evt);
-						return;
+					// Note: it's possible for innerHTML of progress_span to be wiped, so we should check for specific element
+					if (!document.getElementById('upload_progress')) {
+									
+						var hookElement = document.getElementsByClassName('quickpost-body')[0].firstChild;
+						
+						if (document.getElementById('progress_span')) {
+							var spanToRemove = document.getElementById('progress_span');
+							hookElement.removeChild(spanToRemove, hookElement);
+						}
+						
+						var span = document.createElement('progress_span');
+						span.id = 'progress_span';
+						
+						var text = document.createElement('span');
+						text.innerHTML = '&nbsp;(Uploading: ';
+										
+						var progress = document.createElement('span');
+						progress.id = 'upload_progress';
+						progress.innerHTML = '(' + currentFile + '/' + totalFiles + ')'										
+						
+						span.appendChild(text);
+						span.appendChild(progress);				
+						hookElement.appendChild(span);
 					}
 					
-					var text = " (Uploading: 1/" + evt.dataTransfer.files.length + ")";
-					document.getElementsByClassName('quickpost-body')[0].getElementsByTagName('b')[0].innerHTML += text;
+					else {
+						document.getElementById('upload_progress').innerHTML = '(' + currentFile + '/' + totalFiles + ')';
+					}
+					
+					for (let i = 0, len = evt.dataTransfer.files.length; i < len; i++) {
+						var file = evt.dataTransfer.files[i];
+						
+						allPages.asyncUpload(file, i, () => {									
 							
-					allPages.asyncUpload(evt.dataTransfer.files);
+							if (currentFile === totalFiles) {
+								if (totalFiles > 1) {
+									document.getElementById('progress_span').innerHTML = '&nbsp;(Uploads complete.)';
+								}
+								
+								else {
+									document.getElementById('progress_span').innerHTML = '&nbsp;(Upload complete.)';						
+								}
+
+								totalFiles = 0;
+								currentFile = 1;
+							}
+							
+							else {
+								currentFile++;					
+								document.getElementById('upload_progress').innerHTML = '(' + currentFile + '/' + totalFiles + ')';
+							}
+							
+						});
+					}
+					
+					evt.preventDefault();
 					
 				});
 			},
 			
-			snippet_listener: function() {			
+			snippet_listener: function() {
 				var ta = document.getElementsByName('message')[0];
 				
 				ta.addEventListener('keydown', (event) => {
