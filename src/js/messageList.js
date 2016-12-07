@@ -1694,6 +1694,7 @@ var messageList = {
 					
 					else if (data.images_count && data.images_count > 0) {
 						// Gallery link
+						imgurElement.id = href;						
 						messageList.imgur.createGallery(imgurElement, data);
 					}
 					
@@ -1828,6 +1829,7 @@ var messageList = {
 			
 			var galleryDiv = document.createElement('div');
 			galleryDiv.className = 'imgur_gallery';
+			galleryDiv.id = imgurElement.id;
 			
 			// Create title element using API data
 			var galleryTitle = document.createElement('span');
@@ -2455,6 +2457,13 @@ var messageList = {
 							this.depth++;
 							output += this.getMarkupFromQuote(node);
 							this.depth--;
+							break;													
+						
+						case 'media gfycat':
+						case 'media imgur':
+						case 'imgur_gallery':						
+							// Embedded media elements have original href stored as element id
+							output += node.id;
 							break;
 						
 						default:
