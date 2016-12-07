@@ -614,7 +614,7 @@ var allPages = {
 			// Update UI to show that image has been added to queue
 			chrome.runtime.sendMessage({ need: 'update_progress_notify', 
 					update: {						
-							title: 'Uploading image ' + (this.asyncUploadQueue.index + 1) + '/' + this.asyncUploadQueue.total,
+							title: 'Uploading image ' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total,
 							progress: 0
 					}
 			});			
@@ -636,7 +636,7 @@ var allPages = {
 		
 		chrome.runtime.sendMessage({ need: 'progress_notify',
 				data: {
-						title: 'Uploading image ' + (this.asyncUploadQueue.index) + '/' + this.asyncUploadQueue.total,
+						title: 'Uploading image ' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total,
 						progress: 0
 				}
 		});
@@ -646,7 +646,7 @@ var allPages = {
 				
 				if (this.asyncUploadQueue.index >= this.asyncUploadQueue.total) {
 					// No need to show progress anymore - change type to 'basic' and update title
-					if (this.asyncUploadQueue.index) {
+					if (this.asyncUploadQueue.index > 1) {
 						chrome.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Uploads complete' });
 					}
 					
@@ -660,7 +660,7 @@ var allPages = {
 				else {	
 					chrome.runtime.sendMessage({ need: 'update_progress_notify', 
 							update: {						
-									title: 'Uploading image ' + (this.asyncUploadQueue.index) + '/' + this.asyncUploadQueue.total,
+									title: 'Uploading image ' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total,
 									progress: 0
 							}
 					});												
