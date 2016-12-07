@@ -180,80 +180,18 @@ var postMsg = {
 				.getElementsByTagName('textarea')[0]);
 	},
 	
-	drop_batch_uploader : function() {
+	drop_batch_uploader: function() {
 		var textarea = document.getElementById('message') || document.getElementsByTagName('textarea')[0];
 		
-		var totalFiles = 0;
-		var currentFile = 1;
-		
 		textarea.addEventListener('drop', (evt) => {
-			var fileCount = evt.dataTransfer.files.length;
-			totalFiles += fileCount;
 			
-			// Note: it's possible for innerHTML of progress_span to be wiped, so we should check for specific element
-			if (!document.getElementById('upload_progress')) {
-							
-				var hookElement; // Element that progress updates are attached to
-				
-				if (document.getElementsByClassName('quickpost-body').length > 0) {
-					hookElement = document.getElementsByClassName('quickpost-body')[0];
-				}
-				
-				if (document.getElementById('token_desc')) {
-					// 'Your Message' element
-					hookElement = document.getElementById('token_desc').nextSibling.nextSibling.nextSibling;
-				}
-				
-				else {
-					hookElement = document.getElementsByTagName('form')[0].getElementsByTagName('b')[2];
-				}
-				
-				if (document.getElementById('progress_span')) {
-					var spanToRemove = document.getElementById('progress_span');
-					hookElement.removeChild(spanToRemove, hookElement);
-				}
-				
-				var span = document.createElement('progress_span');
-				span.id = 'progress_span';
-				
-				var text = document.createElement('span');
-				text.innerHTML = '&nbsp;(Uploading: ';
-								
-				var progress = document.createElement('span');
-				progress.id = 'upload_progress';
-				progress.innerHTML = '(' + currentFile + '/' + totalFiles + ')'										
-				
-				span.appendChild(text);
-				span.appendChild(progress);				
-				hookElement.appendChild(span);
-			}
-			
-			else {
-				document.getElementById('upload_progress').innerHTML = '(' + currentFile + '/' + totalFiles + ')';
-			}
+			var reader = new FileReader();
 			
 			for (let i = 0, len = evt.dataTransfer.files.length; i < len; i++) {
-				var file = evt.dataTransfer.files[i];
 				
-				allPages.asyncUpload(file, i, () => {									
+				allPages.asyncUploadHandler(evt.dataTransfer.files[i], (output) => {
 					
-					if (currentFile === totalFiles) {
-						if (totalFiles > 1) {
-							document.getElementById('progress_span').innerHTML = '&nbsp;(Uploads complete.)';
-						}
-						
-						else {
-							document.getElementById('progress_span').innerHTML = '&nbsp;(Upload complete.)';						
-						}
-
-						totalFiles = 0;
-						currentFile = 1;
-					}
-					
-					else {
-						currentFile++;					
-						document.getElementById('upload_progress').innerHTML = '(' + currentFile + '/' + totalFiles + ')';
-					}
+					allPages.insertIntoMessage(output);
 					
 				});
 			}

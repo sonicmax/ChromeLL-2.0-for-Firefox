@@ -529,6 +529,18 @@ var background = {
 						
 					});
 					
+					break;								
+					
+				case "progress_notify":
+					background.createProgressNotification(request.data);
+					break;
+					
+				case "update_progress_notify":
+					background.updateProgressNotification(request.update);
+					break;
+					
+				case "clear_progress_notify":
+					background.clearProgressNotification(request.title);
 					break;
 
 				case "copy":
@@ -659,6 +671,31 @@ var background = {
 			}
 		}
 	},
+	
+	createProgressNotification: function(data) {
+		chrome.notifications.create('progress', {
+			
+			type: 'progress',
+			title: data.title,
+			message: '',
+			progress: data.progress,						
+			requireInteraction: true,
+			iconUrl: 'src/images/lueshi_48.png'
+			
+		});
+	},
+	
+	updateProgressNotification: function(update) {
+		chrome.notifications.update('progress', update);
+	},
+	
+	clearProgressNotification: function(title) {
+		chrome.notifications.update('progress', { type: 'basic', title: title, contextMessage: '' });
+		
+		setTimeout(() => {
+			chrome.notifications.clear('progress', null);
+		}, 3000);		
+	},	
 	
 	/**
 	 *  Checks whether any users have been ignored on active tab and updates badge text

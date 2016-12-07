@@ -569,38 +569,171 @@ var allPages = {
 		}
 	},
 	
-	asyncUpload : function(file, i, callback) {
-		console.log(file, i, callback);
+	
+	/**
+	 *  Queue of files to upload to ETI
+	 */
+	
+	asyncUploadQueue: {
+		queue: [],
+		total: 0,
+		index: 0,
+		working: false,
+		
+		push: function(file) {
+			this.total++;
+			this.queue.push(file);			
+		},
+		
+		next: function() {
+			this.working = true;
+			return this.queue.shift();
+		},
+		
+		length: function() {
+			if (this.working) {
+				return this.queue.length + 1;
+			}
+			else {
+				return this.queue.length;
+			}
+		},
+		
+		clear: function() {
+			this.queue = [];
+			this.current = 0;
+			this.working = false;
+		}
+	},
+	
+	
+	/**
+	 *  Adds file to queue and handles UI update
+	 */
+	
+	asyncUploadHandler: function(file, callback) {
+		this.asyncUploadQueue.push(file);
+		
+		if (!this.asyncUploadQueue.working) {
+			this.asyncUpload(this.asyncUploadQueue.next(), callback);
+		}
+		
+		else {
+			// Update UI to show that image has been added to queue
+			chrome.runtime.sendMessage({ need: 'update_progress_notify', 
+					update: {						
+							title: 'Uploading image ' + (this.asyncUploadQueue.index + 1) + '/' + this.asyncUploadQueue.total,
+							progress: 0
+					}
+			});			
+		}
+	},
+	
+	
+	/**
+	 *  Uploads first item from asyncUploadQueue and is called recursively for any remaining files.
+	 */
+	
+	asyncUpload: function(file, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open('POST', window.location.protocol + '//u.endoftheinter.net/u.php', true);		
+		xhr.open('POST', 'https://u.endoftheinter.net/u.php', true);
 		xhr.withCredentials = "true";
 		
 		var formData = new FormData();
 		formData.append('file', file);
 		
+		chrome.runtime.sendMessage({ need: 'progress_notify',
+				data: {
+						title: 'Uploading image ' + (this.asyncUploadQueue.index + 1) + '/' + this.asyncUploadQueue.total,
+						progress: 0
+				}
+		});
+		
 		xhr.onload = () => {
 			if (xhr.status === 200) {
-				var tmp = document.createElement('div');
-				tmp.innerHTML = xhr.responseText;
 				
-				var tmp_input = tmp.getElementsByClassName('img')[0].getElementsByTagName('input')[0];
+				this.asyncUploadQueue.index++;
 				
-				if (tmp_input.value) {
-					if (tmp_input.value.substring(0, 4) == '<img') {
-						allPages.insertIntoMessage(tmp_input.value);
-						callback();
+				if (this.asyncUploadQueue.index >= this.asyncUploadQueue.total) {
+					// No need to show progress anymore - change type to 'basic' and update title
+					if (this.asyncUploadQueue.index > 1) {
+						chrome.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Uploads complete' });
 					}
+					
+					else {
+						chrome.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Upload complete' });
+					}
+					
+					this.asyncUploadQueue.clear();
 				}
 				
-			}
+				else {	
+					chrome.runtime.sendMessage({ need: 'update_progress_notify', 
+							update: {						
+									title: 'Uploading image ' + (this.asyncUploadQueue.index + 1) + '/' + this.asyncUploadQueue.total,
+									progress: 0
+							}
+					});												
+					
+					this.asyncUpload(this.asyncUploadQueue.next(), callback);
+				}		
+				
+				this.handleAsyncUploadResponse(xhr.responseText, callback);
+			}						
 		};
+		
+		xhr.upload.addEventListener('progress', (evt) => {		
+				
+				if (evt.lengthComputable) {
+					var percentage = Math.round((evt.loaded / evt.total) * 100);
+					
+					if (percentage === 100) {
+						chrome.runtime.sendMessage({ need: 'update_progress_notify', 
+								update: {																
+										contextMessage: 'Waiting for response...',
+										progress: 100
+								}
+						});
+					} 
+					
+					else {
+						chrome.runtime.sendMessage({ need: 'update_progress_notify', 
+								update: {																
+										progress: percentage
+								}
+						});						
+					}
+				}
+		});
 				
 		xhr.send(formData);
 	},
+
+	
+	/**
+	 *  Gets <img> code string from image upload response
+	 */
+	
+	handleAsyncUploadResponse: function(responseText, callback) {
+		var tmp = document.createElement('div');
+		tmp.innerHTML = responseText;
+		
+		var tmp_input = tmp.getElementsByClassName('img')[0].getElementsByTagName('input')[0];
+		
+		if (tmp_input.value) {
+			if (tmp_input.value.substring(0, 4) == '<img') {						
+				callback(tmp_input.value);
+			}
+		}	
+	},	
+	
+	
+	/**
+	 *  Inserts string into text area
+	 */
 	
 	insertIntoMessage: function(text) {
 		var textarea = document.getElementById('message') || document.getElementsByTagName('textarea')[0];
-		console.log(textarea);
 
 		var qrtext = textarea.value;
 		var oldtxt = qrtext.split('---');
