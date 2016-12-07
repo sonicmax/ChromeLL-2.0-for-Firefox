@@ -587,16 +587,8 @@ var allPages = {
 		
 		next: function() {
 			this.working = true;
+			this.index++;
 			return this.queue.shift();
-		},
-		
-		length: function() {
-			if (this.working) {
-				return this.queue.length + 1;
-			}
-			else {
-				return this.queue.length;
-			}
 		},
 		
 		clear: function() {
@@ -644,7 +636,7 @@ var allPages = {
 		
 		chrome.runtime.sendMessage({ need: 'progress_notify',
 				data: {
-						title: 'Uploading image ' + (this.asyncUploadQueue.index + 1) + '/' + this.asyncUploadQueue.total,
+						title: 'Uploading image ' + (this.asyncUploadQueue.index) + '/' + this.asyncUploadQueue.total,
 						progress: 0
 				}
 		});
@@ -652,11 +644,9 @@ var allPages = {
 		xhr.onload = () => {
 			if (xhr.status === 200) {
 				
-				this.asyncUploadQueue.index++;
-				
 				if (this.asyncUploadQueue.index >= this.asyncUploadQueue.total) {
 					// No need to show progress anymore - change type to 'basic' and update title
-					if (this.asyncUploadQueue.index > 1) {
+					if (this.asyncUploadQueue.index) {
 						chrome.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Uploads complete' });
 					}
 					
@@ -670,7 +660,7 @@ var allPages = {
 				else {	
 					chrome.runtime.sendMessage({ need: 'update_progress_notify', 
 							update: {						
-									title: 'Uploading image ' + (this.asyncUploadQueue.index + 1) + '/' + this.asyncUploadQueue.total,
+									title: 'Uploading image ' + (this.asyncUploadQueue.index) + '/' + this.asyncUploadQueue.total,
 									progress: 0
 							}
 					});												
