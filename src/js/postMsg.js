@@ -3,7 +3,6 @@ var postMsg = {
 		var ulBox = document.createElement('input');
 		ulBox.type = 'file';
 		ulBox.multiple = true;
-		ulBox.value = "Batch Upload";
 		ulBox.id = "batch_uploads";
 		var ulButton = document.createElement('input');
 		ulButton.type = "button";
