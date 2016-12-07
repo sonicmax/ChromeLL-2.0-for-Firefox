@@ -586,14 +586,15 @@ var allPages = {
 		},
 		
 		next: function() {
-			this.working = true;
 			this.index++;
+			this.working = true;			
 			return this.queue.shift();
 		},
 		
 		clear: function() {
 			this.queue = [];
-			this.current = 0;
+			this.total = 0;
+			this.index = 0;
 			this.working = false;
 		}
 	},
@@ -608,17 +609,14 @@ var allPages = {
 		
 		if (!this.asyncUploadQueue.working) {
 			this.asyncUpload(this.asyncUploadQueue.next(), callback);
-		}
-		
-		else {
-			// Update UI to show that image has been added to queue
-			chrome.runtime.sendMessage({ need: 'update_progress_notify', 
-					update: {						
-							title: 'Uploading image ' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total,
+			
+			chrome.runtime.sendMessage({ need: 'progress_notify',
+					data: {
+							title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
 							progress: 0
 					}
 			});			
-		}
+		}			
 	},
 	
 	
@@ -627,19 +625,13 @@ var allPages = {
 	 */
 	
 	asyncUpload: function(file, callback) {
+		const UPLOAD_URL = 'https://u.endoftheinter.net/u.php';
 		var xhr = new XMLHttpRequest();
-		xhr.open('POST', 'https://u.endoftheinter.net/u.php', true);
+		xhr.open('POST', UPLOAD_URL, true);
 		xhr.withCredentials = "true";
 		
 		var formData = new FormData();
 		formData.append('file', file);
-		
-		chrome.runtime.sendMessage({ need: 'progress_notify',
-				data: {
-						title: 'Uploading image ' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total,
-						progress: 0
-				}
-		});
 		
 		xhr.onload = () => {
 			if (xhr.status === 200) {
@@ -657,10 +649,10 @@ var allPages = {
 					this.asyncUploadQueue.clear();
 				}
 				
-				else {	
+				else {
 					chrome.runtime.sendMessage({ need: 'update_progress_notify', 
 							update: {						
-									title: 'Uploading image ' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total,
+									title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
 									progress: 0
 							}
 					});												
@@ -672,14 +664,15 @@ var allPages = {
 			}						
 		};
 		
-		xhr.upload.addEventListener('progress', (evt) => {		
+		xhr.upload.addEventListener('progress', (evt) => {
 				
 				if (evt.lengthComputable) {
 					var percentage = Math.round((evt.loaded / evt.total) * 100);
 					
 					if (percentage === 100) {
 						chrome.runtime.sendMessage({ need: 'update_progress_notify', 
-								update: {																
+								update: {
+										title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
 										contextMessage: 'Waiting for response...',
 										progress: 100
 								}
@@ -688,7 +681,8 @@ var allPages = {
 					
 					else {
 						chrome.runtime.sendMessage({ need: 'update_progress_notify', 
-								update: {																
+								update: {
+										title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',									
 										progress: percentage
 								}
 						});						
