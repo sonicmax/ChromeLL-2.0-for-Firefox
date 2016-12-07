@@ -1464,7 +1464,7 @@ var messageList = {
 					var height = response.gfyItem.height;
 					
 					if (messageList.config.resize_gfys 
-							&& (data.width * messageList.zoomLevel) > messageList.config.gfy_max_width) {
+							&& (width * messageList.zoomLevel) > messageList.config.gfy_max_width) {
 								
 						var ratio = messageList.config.gfy_max_width / (width * messageList.zoomLevel);
 						width = messageList.config.gfy_max_width / messageList.zoomLevel;
@@ -1475,6 +1475,7 @@ var messageList = {
 					apiData.height = height;
 					apiData.width = width;
 					apiData.webm = response.gfyItem.webmUrl;
+					
 					callback(apiData);
 				}
 			};
