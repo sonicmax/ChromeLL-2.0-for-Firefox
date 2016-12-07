@@ -682,7 +682,8 @@ var allPages = {
 					else {
 						chrome.runtime.sendMessage({ need: 'update_progress_notify', 
 								update: {
-										title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',									
+										title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
+										contextMessage: '',
 										progress: percentage
 								}
 						});						
