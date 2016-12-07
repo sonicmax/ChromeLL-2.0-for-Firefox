@@ -711,12 +711,7 @@ var allPages = {
 		}	
 	},	
 	
-	
-	/**
-	 *  Inserts string into text area
-	 */
-	
-	insertIntoMessage: function(text) {
+	insertIntoTextarea: function(text) {
 		var textarea = document.getElementById('message') || document.getElementsByTagName('textarea')[0];
 
 		var qrtext = textarea.value;

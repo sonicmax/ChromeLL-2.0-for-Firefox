@@ -669,7 +669,7 @@ var messageList = {
 						
 						allPages.asyncUploadHandler(evt.dataTransfer.files[i], (output) => {
 							
-							allPages.insertIntoMessage(output);
+							allPages.insertIntoTextarea(output);
 							
 						});
 					}
