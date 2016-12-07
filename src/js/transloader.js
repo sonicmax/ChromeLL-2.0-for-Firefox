@@ -219,14 +219,20 @@ function uploadToImgur(blob) {
 	xhr.upload.addEventListener('progress', (evt) => {
 		if (imgurNotificationId) {
 			
+			var update = {};
+			
 			if (evt.lengthComputable) {
-				var percentage = Math.round((evt.loaded / evt.total) * 100) + '%';
+				var percentage = Math.round((evt.loaded / evt.total) * 100);
 				
 				if (percentage === '100%') {
-					percentage = 'Waiting for response...';
+					update.type = 'basic';
+					update.contextMessage = 'Waiting for response...';
+				}
+				else {
+					update.progress = percentage;
 				}
 				
-				chrome.notifications.update(imgurNotificationId, { contextMessage: percentage });
+				chrome.notifications.update(imgurNotificationId, update);
 			}
 		}	
 	});
@@ -239,10 +245,10 @@ function uploadToImgur(blob) {
 function showImgurNotification(xhr) {
 	chrome.notifications.create('fail', {
 		
-		type: 'basic',
+		type: 'progress',
 		title: 'Too big to fail',
 		message: 'This gif is too big (>2MB) - uploading to Imgur...',
-		contextMessage: '0%',
+		progress: 0,
 		buttons: [{
 			title: 'Cancel'
 		}],
