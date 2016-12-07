@@ -2629,6 +2629,7 @@ var messageList = {
 	},
 	
 	links: {
+		youtubeIndex: 0, // See https://github.com/sonicmax/ChromeLL-2.0/issues/80
 		
 		/**
 		 *  Iterates over any posted links in topic so we can check for media that should be embedded
@@ -2655,8 +2656,11 @@ var messageList = {
 				// Check for YouTube links and make sure they are videos
 				if (messageList.config.embed_on_hover && ytRegex.test(link.href) && videoCodeRegex.test(link.href)) {
 					link.className = 'youtube';
-					// give each video link a unique id for embed/hide dom
-					link.id = link.href + '&' + i;
+					
+					// give each video link a unique id for embed/hide functions
+					link.id = link.href + '&' + this.youtubeIndex;
+					this.youtubeIndex++;
+					
 					link.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
 					link.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));
 				}
