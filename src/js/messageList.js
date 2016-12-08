@@ -682,7 +682,7 @@ var messageList = {
 					var pholds = message.getElementsByClassName('img-placeholder');
 					for (var j = 0; j < pholds.length; j++) {
 						var phold = pholds[j];
-						messageList.image.observer.observe(phold, {
+					messageList.thumbnails.observer.observe(phold, {
 							attributes: true,
 							childList: true
 						});
@@ -2413,8 +2413,7 @@ var messageList = {
 		
 	},
 	
-	image: {
-		
+	thumbnails: {
 		// originally rewritten by xdrvonscottx
 		
 		expand: function(evt) {
@@ -2475,7 +2474,7 @@ var messageList = {
 			for (var i = 0; i < mutations.length; i++) {
 				var mutation = mutations[i];
 				if (messageList.config.resize_imgs) {
-					messageList.image.resize(mutation.target.childNodes[0]);
+					messageList.thumbnails.resize(mutation.target.childNodes[0]);
 				}
 				if (mutation.type === 'attributes') {
 					// once they're loaded, thumbnails have /i/t/ in their
@@ -2489,7 +2488,7 @@ var messageList = {
 						 * actually matters
 						 */
 						mutation.target.parentNode.addEventListener('click',
-								messageList.image.expand);
+								messageList.thumbnails.expand);
 						mutation.target.parentNode.setAttribute('class',
 								'thumbnailed_image');
 						mutation.target.parentNode
