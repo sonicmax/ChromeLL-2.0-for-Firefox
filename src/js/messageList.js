@@ -1011,7 +1011,7 @@ var messageList = {
 			this.links.check(container);
 			
 			if (this.config.click_expand_thumbnail) {
-				this.dom.misc.click_expand_thumbnail(container);
+				this.miscMethods.click_expand_thumbnail(container);
 			}
 			
 			var usernameElement = top.getElementsByTagName('a')[0];
@@ -3500,8 +3500,8 @@ var messageList = {
 			this.quote.addButtons();
 			
 			// Delete unusable methods
-			delete this.dom.messagecontainer.like_button;
-			delete this.dom.messagecontainer.post_templates;			
+		delete this.messageContainerMethods.like_button;
+		delete this.messageContainerMethods.post_templates;			
 	},
 		
 	/**
