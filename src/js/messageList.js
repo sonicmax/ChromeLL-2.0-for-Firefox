@@ -57,441 +57,334 @@ var messageList = {
 		}
 	},
 	
-	
-	/**
-	 *  Methods which modify DOM
-	 */
-	
-	dom: {
-		messagecontainer: {
-			ignorator_messagelist: function(msg) {
-				if (!messageList.config.ignorator) {
-					// User enabled ignorator, but didn't populate list with usernames
-					return;
-				}
+	messageContainerMethods: {
+		ignorator_messagelist: function(msg) {
+			if (!messageList.config.ignorator) {
+				// User enabled ignorator, but didn't populate list with usernames
+				return;
+			}
+			
+			var tops = msg.getElementsByClassName('message-top');
 				
-				var tops = msg.getElementsByClassName('message-top');
+			// Note: don't cache length property, it will break
+			for (var j = 0; j < tops.length; j++) {
+				var top = tops[j];
+								
+				var username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+				
+				for (var f = 0, len = messageList.ignoredUsers.length; f < len; f++) {
+					var ignoredUser = messageList.ignoredUsers[f];
 					
-				// Note: don't cache length property, it will break
-				for (var j = 0; j < tops.length; j++) {
-					var top = tops[j];
-									
-					var username = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-					
-					for (var f = 0, len = messageList.ignoredUsers.length; f < len; f++) {
-						var ignoredUser = messageList.ignoredUsers[f];
+					if (username == ignoredUser.toLowerCase()) {
 						
-						if (username == ignoredUser.toLowerCase()) {
-							
-							top.parentNode.classList.add('ignorated');
-							
-							messageList.ignorated.total_ignored++;
-							
-							// Keep track of any users that have been ignored (and the number of posts they made)
-							if (!messageList.ignorated.data.users[ignoredUser]) {
-								messageList.ignorated.data.users[ignoredUser] = {};
-								messageList.ignorated.data.users[ignoredUser].total = 1;
-							} 
-							
-							else {
-								messageList.ignorated.data.users[ignoredUser].total++;
-							}
-							
-							if (!messageList.config.hide_ignorator_badge) {
-								messageList.globalPort.postMessage({
-									action: 'ignorator_update',
-									ignorator: messageList.ignorated,
-									scope: "messageList"
-								});
-							}
+						top.parentNode.classList.add('ignorated');
+						
+						messageList.ignorated.total_ignored++;
+						
+						// Keep track of any users that have been ignored (and the number of posts they made)
+						if (!messageList.ignorated.data.users[ignoredUser]) {
+							messageList.ignorated.data.users[ignoredUser] = {};
+							messageList.ignorated.data.users[ignoredUser].total = 1;
+						} 
+						
+						else {
+							messageList.ignorated.data.users[ignoredUser].total++;
+						}
+						
+						if (!messageList.config.hide_ignorator_badge) {
+							messageList.globalPort.postMessage({
+								action: 'ignorator_update',
+								ignorator: messageList.ignorated,
+								scope: "messageList"
+							});
 						}
 					}
 				}
-			},
+			}
+		},
+		
+		user_notes: function(msg, top) {
+			// Unlikely, but still possible that usernote_notes hasn't been populated
+			if (!messageList.config.usernote_notes) {
+				messageList.config.usernote_notes = {};
+			}	
+							
+			// Anon topic - ignore
+			if (!/user=(\d+)$/i.test(top.getElementsByTagName('a')[0].href)) {
+				return;
+			}
 			
-			user_notes: function(msg, top) {			
-				// Unlikely, but still possible that usernote_notes hasn't been populated
-				if (!messageList.config.usernote_notes) {
-					messageList.config.usernote_notes = {};
-				}	
-								
-				// Anon topic - ignore
-				if (!/user=(\d+)$/i.test(top.getElementsByTagName('a')[0].href)) {
-					return;
-				}
-				
-				var notebook = document.createElement('a');	
-				notebook.id = 'notebook';
-				
-				var userId = top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[1];
-				
-				notebook.innerHTML = (messageList.config.usernote_notes[userId] != undefined 
-						&& messageList.config.usernote_notes[userId] != '')
-								? 'Notes*' : 'Notes';
-								
-				notebook.href = "##note" + userId;
-				
-								
-				top.appendChild(document.createTextNode(' | '));
-				top.appendChild(notebook);
-			},
+			var notebook = document.createElement('a');	
+			notebook.id = 'notebook';
 			
-			like_button: function(msg, top, index) {											
-				var anchor = document.createElement('a');
-				var divider = document.createTextNode(" | ");
-				anchor.innerHTML = 'Like';
-				anchor.className = 'like_button';
-				anchor.href = '##like';
-				top.appendChild(divider);
-				top.appendChild(anchor);
-				anchor.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
-				anchor.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));				
-			},
+			var userId = top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[1];
 			
-			number_posts: function(msg, top, index) {
-				var page;
-				
-				if (!window.location.href.match(/page=/)) {
-					page = 1;
-				}
-				
-				else {
-					page = window.location.href.match(/page=(\d+)/)[1];
-				}
-				
-				var id = (index + (50 * (page - 1)));
-				
-				// Pad id with zeros so we always have a 4 digit number (0001, 0010, etc)
-				if (id < 1000)
-					id = "0" + id;
-				if (id < 100)
-					id = "0" + id;
-				if (id < 10)
-					id = "0" + id;
-				
-				var postNumber = document.createTextNode(' | #' + id);
-				top.appendChild(postNumber);
-			},
+			notebook.innerHTML = (messageList.config.usernote_notes[userId] != undefined 
+					&& messageList.config.usernote_notes[userId] != '')
+							? 'Notes*' : 'Notes';
+							
+			notebook.href = "##note" + userId;
 			
-			post_templates: function(msg, top, index) {
-				var cDiv = document.createElement('div');
-				cDiv.style.display = 'none';
-				cDiv.id = 'cdiv';
-				document.body.appendChild(cDiv, null);
-				messageList.postEvent = document.createEvent('Event');
-				messageList.postEvent.initEvent('postTemplateInsert', true, true);
-				var sep = document.createElement('span');
-				sep.innerHTML = " | ";
-				sep.className = "post_template_holder";
-				var sepIns = document.createElement('span');
-				sepIns.className = 'post_template_opts';
-				sepIns.innerHTML = '[';
-				var qr = document.createElement('a');
-				qr.href = "##" + index;
-				qr.innerHTML = "&gt;"
-				qr.className = "expand_post_template";
-				sepIns.appendChild(qr);
-				sepIns.innerHTML += ']';
-				sep.appendChild(sepIns);
-				top.appendChild(sep);
-			},
+							
+			top.appendChild(document.createTextNode(' | '));
+			top.appendChild(notebook);
+		},
+		
+		like_button: function(msg, top, index) {
+			var anchor = document.createElement('a');
+			var divider = document.createTextNode(" | ");
+			anchor.innerHTML = 'Like';
+			anchor.className = 'like_button';
+			anchor.href = '##like';
+			top.appendChild(divider);
+			top.appendChild(anchor);
+			anchor.addEventListener('mouseenter', messageList.handleEvent.mouseenter.bind(messageList));
+			anchor.addEventListener('mouseleave', messageList.handleEvent.mouseleave.bind(messageList));				
+		},
+		
+		number_posts: function(msg, top, index) {
+			var page;
 			
-			userhl_messagelist: function(msg, firstTop, index, live) {
-				if (!messageList.config.enable_user_highlight) {
-					return;
-				}
+			if (!window.location.href.match(/page=/)) {
+				page = 1;
+			}
+			
+			else {
+				page = window.location.href.match(/page=(\d+)/)[1];
+			}
+			
+			var id = (index + (50 * (page - 1)));
+			
+			// Pad id with zeros so we always have a 4 digit number (0001, 0010, etc)
+			if (id < 1000)
+				id = "0" + id;
+			if (id < 100)
+				id = "0" + id;
+			if (id < 10)
+				id = "0" + id;
+			
+			var postNumber = document.createTextNode(' | #' + id);
+			top.appendChild(postNumber);
+		},
+		
+		post_templates: function(msg, top, index) {
+			var cDiv = document.createElement('div');
+			cDiv.style.display = 'none';
+			cDiv.id = 'cdiv';
+			document.body.appendChild(cDiv, null);
+			messageList.postEvent = document.createEvent('Event');
+			messageList.postEvent.initEvent('postTemplateInsert', true, true);
+			var sep = document.createElement('span');
+			sep.innerHTML = " | ";
+			sep.className = "post_template_holder";
+			var sepIns = document.createElement('span');
+			sepIns.className = 'post_template_opts';
+			sepIns.innerHTML = '[';
+			var qr = document.createElement('a');
+			qr.href = "##" + index;
+			qr.innerHTML = "&gt;"
+			qr.className = "expand_post_template";
+			sepIns.appendChild(qr);
+			sepIns.innerHTML += ']';
+			sep.appendChild(sepIns);
+			top.appendChild(sep);
+		},
+		
+		userhl_messagelist: function(msg, firstTop, index, live) {
+			if (!messageList.config.enable_user_highlight) {
+				return;
+			}
+			
+			var tops = msg.getElementsByClassName('message-top');
+			
+			if (!messageList.config.no_user_highlight_quotes) {
 				
-				var tops = msg.getElementsByClassName('message-top');
-				
-				if (!messageList.config.no_user_highlight_quotes) {
+				// Note: don't cache length property, it will break
+				for (var k = 0; k < tops.length; k++) {
+					var top = tops[k];			
+					var user = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
 					
-					// Note: don't cache length property, it will break
-					for (var k = 0; k < tops.length; k++) {
-						var top = tops[k];			
-						var user = top.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-						
-						if (messageList.config.user_highlight_data[user]) {
-							
-							top.setAttribute('highlighted', true);								
-							top.style.background = '#' + messageList.config.user_highlight_data[user].bg;
-							top.style.color = '#' + messageList.config.user_highlight_data[user].color;
-									
-							var anchors = top.getElementsByTagName('a');
-							
-							for (var j = 0, len = anchors.length; j < len; j++) {
-								var anchor = anchors[j];
-								anchor.style.color = '#' + messageList.config.user_highlight_data[user].color;
-							}
-							
-							if (live && messageList.config.notify_userhl_post && k === 0
-									&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[1] != messageList.config.user_id) {
-								
-								messageList.sendMessage({
-									need: "notify",
-									title: "Post by " + top.getElementsByTagName('a')[0].innerHTML,
-									message: document.title.replace(/End of the Internet - /i, '')									
-								});
-								
-							}					
-						}
-					}				
-				}
-				
-				else {
-					user = firstTop.getElementsByTagName('a')[0].innerHTML.toLowerCase();
-							
 					if (messageList.config.user_highlight_data[user]) {
 						
-						firstTop.style.background = '#'
-								+ messageList.config.user_highlight_data[user].bg;
-						firstTop.style.color = '#'
-								+ messageList.config.user_highlight_data[user].color;
+						top.setAttribute('highlighted', true);								
+						top.style.background = '#' + messageList.config.user_highlight_data[user].bg;
+						top.style.color = '#' + messageList.config.user_highlight_data[user].color;
 								
-						anchors = firstTop.getElementsByTagName('a');
+						var anchors = top.getElementsByTagName('a');
 						
 						for (var j = 0, len = anchors.length; j < len; j++) {
-							anchor = anchors[j];
-							anchor.style.color = '#'
-									+ messageList.config.user_highlight_data[user].color;
+							var anchor = anchors[j];
+							anchor.style.color = '#' + messageList.config.user_highlight_data[user].color;
 						}
 						
-						if (live && messageList.config.notify_userhl_post
-								&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[0] != messageList.config.user_id) {
+						if (live && messageList.config.notify_userhl_post && k === 0
+								&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[1] != messageList.config.user_id) {
 							
 							messageList.sendMessage({
 								need: "notify",
-								title: "Post by " + user,
-								message: document.title.replace(/End of the Internet - /i, '')
+								title: "Post by " + top.getElementsByTagName('a')[0].innerHTML,
+								message: document.title.replace(/End of the Internet - /i, '')									
 							});
-						}				
+							
+						}					
 					}
-				}
-			},
+				}				
+			}
 			
-			foxlinks_quotes: function(msg) {
-				var color = "#" + messageList.config['foxlinks_quotes_color'];
-				var quotes = msg.getElementsByClassName('quoted-message');
-				
-				if (!quotes) {
-					return;
-				}
-
-				for (var i = 0, len = quotes.length; i < len; i++) {
-					var quote = quotes[i];
-					quot_msg_style = quote.style;
-					quot_msg_style.borderStyle = 'solid';
-					quot_msg_style.borderWidth = '2px';
-					quot_msg_style.borderRadius = '5px';
-					quot_msg_style.marginRight = '30px';
-					quot_msg_style.marginLeft = '10px';
-					quot_msg_style.paddingBottom = '10px';
-					quot_msg_style.marginTop = '0px';
-					quot_msg_style.borderColor = color;
-					
-					var top = quote.getElementsByClassName('message-top')[0];
-					
-					if (top) {
-						if (top.style.background == '') {
-							top.style.background = color;
-						} else {
-							quot_msg_style.borderColor = top.style.background;
-						}
-						top.style.marginTop = '0px';
-						top.style.paddingBottom = '2px';
-						top.style.marginLeft = '-6px';
-					}
-				}
-			},
-			
-			label_self_anon: function(msg) {
-				var tagList = document.getElementsByTagName('h2')[0];
-				if (tagList.innerHTML.indexOf('href="/topics/Anonymous"') > -1) {
-					// We can only get human number from topics that we can post in
-					var quickpostBody = document.getElementsByClassName('quickpost-body')[0];
-					
-					if (quickpostBody) {					
-						var tops = msg.getElementsByClassName('message-top');
-						var userRegex = /user=(\d+)$/;
+			else {
+				user = firstTop.getElementsByTagName('a')[0].innerHTML.toLowerCase();
 						
-						if (!userRegex.test(tops[0].getElementsByTagName('a')[0])) {	
-							var self = quickpostBody.getElementsByTagName('a')[0].innerHTML;
+				if (messageList.config.user_highlight_data[user]) {
+					
+					firstTop.style.background = '#'
+							+ messageList.config.user_highlight_data[user].bg;
+					firstTop.style.color = '#'
+							+ messageList.config.user_highlight_data[user].color;
 							
-							if (self.indexOf('Human #') == -1) {
-								// User hasn't posted in topic yet
-								return;
-							}
-							
-							else {
-								for (var i = 0, len = tops.length; i < len; i++) {
-									var top = tops[i];
-									var element = top.getElementsByTagName('a')[0];
-									
-									if (element.innerHTML.indexOf('Filter') > -1) {
-										element = top.getElementsByTagName('b')[0].nextSibling;	
-										// trim nodeValue so that we can check for equality with self variable
-										var humanToCheck = element.nodeValue.substring(1, element.nodeValue.length);
-										humanToCheck = humanToCheck.replace(' | ', '');
-										if (humanToCheck == self) {											
-											var span = document.createElement('span');
-											span.innerHTML = '<b>(Me)</b> | ';
-											top.insertBefore(span, element.nextSibling);		
-										}
+					anchors = firstTop.getElementsByTagName('a');
+					
+					for (var j = 0, len = anchors.length; j < len; j++) {
+						anchor = anchors[j];
+						anchor.style.color = '#'
+								+ messageList.config.user_highlight_data[user].color;
+					}
+					
+					if (live && messageList.config.notify_userhl_post
+							&& top.getElementsByTagName('a')[0].href.match(/user=(\d+)$/i)[0] != messageList.config.user_id) {
+						
+						messageList.sendMessage({
+							need: "notify",
+							title: "Post by " + user,
+							message: document.title.replace(/End of the Internet - /i, '')
+						});
+					}				
+				}
+			}
+		},
+		
+		foxlinks_quotes: function(msg) {
+			var color = "#" + messageList.config['foxlinks_quotes_color'];
+			var quotes = msg.getElementsByClassName('quoted-message');
+			
+			if (!quotes) {
+				return;
+			}
+
+			for (var i = 0, len = quotes.length; i < len; i++) {
+				var quote = quotes[i];
+				quot_msg_style = quote.style;
+				quot_msg_style.borderStyle = 'solid';
+				quot_msg_style.borderWidth = '2px';
+				quot_msg_style.borderRadius = '5px';
+				quot_msg_style.marginRight = '30px';
+				quot_msg_style.marginLeft = '10px';
+				quot_msg_style.paddingBottom = '10px';
+				quot_msg_style.marginTop = '0px';
+				quot_msg_style.borderColor = color;
+				
+				var top = quote.getElementsByClassName('message-top')[0];
+				
+				if (top) {
+					if (top.style.background == '') {
+						top.style.background = color;
+					} else {
+						quot_msg_style.borderColor = top.style.background;
+					}
+					top.style.marginTop = '0px';
+					top.style.paddingBottom = '2px';
+					top.style.marginLeft = '-6px';
+				}
+			}
+		},
+		
+		label_self_anon: function(msg) {
+			var tagList = document.getElementsByTagName('h2')[0];
+			if (tagList.innerHTML.indexOf('href="/topics/Anonymous"') > -1) {
+				// We can only get human number from topics that we can post in
+				var quickpostBody = document.getElementsByClassName('quickpost-body')[0];
+				
+				if (quickpostBody) {					
+					var tops = msg.getElementsByClassName('message-top');
+					var userRegex = /user=(\d+)$/;
+					
+					if (!userRegex.test(tops[0].getElementsByTagName('a')[0])) {	
+						var self = quickpostBody.getElementsByTagName('a')[0].innerHTML;
+						
+						if (self.indexOf('Human #') == -1) {
+							// User hasn't posted in topic yet
+							return;
+						}
+						
+						else {
+							for (var i = 0, len = tops.length; i < len; i++) {
+								var top = tops[i];
+								var element = top.getElementsByTagName('a')[0];
+								
+								if (element.innerHTML.indexOf('Filter') > -1) {
+									element = top.getElementsByTagName('b')[0].nextSibling;	
+									// trim nodeValue so that we can check for equality with self variable
+									var humanToCheck = element.nodeValue.substring(1, element.nodeValue.length);
+									humanToCheck = humanToCheck.replace(' | ', '');
+									if (humanToCheck == self) {											
+										var span = document.createElement('span');
+										span.innerHTML = '<b>(Me)</b> | ';
+										top.insertBefore(span, element.nextSibling);		
 									}
-									
-									else if (element.innerHTML == self) {
-											var span = document.createElement('span');
-											span.innerHTML = ' | <b>(Me)</b>';
-											top.insertBefore(span, element.nextSibling);
-									}
+								}
+								
+								else if (element.innerHTML == self) {
+										var span = document.createElement('span');
+										span.innerHTML = ' | <b>(Me)</b>';
+										top.insertBefore(span, element.nextSibling);
 								}
 							}
 						}
 					}
 				}
-			},
-			
-			autoscroll_livelinks: function(mutation, top, index, live) {
-				if (live && document.hidden 
-						&& messageList.autoscrollCheck(mutation) ) {
-						
-					mutation.scrollIntoView();					
+			}
+		}
+	},
+	
+	infobarMethods: {
+		imagemap_on_infobar: function() {
+			// Adds link to imagemap for current topic on infobar
+			var regex = window.location.search.match(/(topic=)([0-9]+)/);
+			if (regex) {
+				var topicNumber = regex[0];			
+				var infobar = document.getElementsByClassName("infobar")[0];
+				var pageRegex = window.location.search.match(/(page=)([0-9]+)/);
+				var currentPage = ''
+				if (pageRegex) {
+					// Keep track of current page in case user decides to navigate back
+					currentPage = '&oldpage=' + pageRegex[2];
 				}
-			},
-			
-			autoscroll_livelinks_active: function(mutation, top, index, live) {
-				if (live && !document.hidden 
-						&& messageList.autoscrollCheck(mutation)) {
-							
-					// trigger after 10ms delay to prevent undesired behaviour in post_title_notification
-					setTimeout(() => {						
-						// set autoscrolling to true to prevent clearUnreadPostsFromTitle from being triggered
-						messageList.autoscrolling = true;
-						$.scrollTo((mutation), 800);						
-					}, 10);
-					
-					setTimeout(() => {
-						messageList.autoscrolling = false;	
-					}, 850);
-				}
-			},
-			
-			post_title_notification: function(mutation, top, index, live) {
-				if (live) {
-					if (mutation.style.display === "none") {
-						if (messageList.config.debug) {
-							console.log('not updating for ignorated post');
-						}
-						return;
-					}
-					if (mutation.getElementsByClassName('message-top')[0]
-							.getElementsByTagName('a')[0].innerHTML == document
-							.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
-							.replace(/ \((\d+)\)$/, "")) {
-						return;
-					}
-					var posts = 1;
-					var ud = '';
-					if (document.getElementsByClassName('message-container')[49]) {
-						ud = ud + "+";
-					}
-					
-					if (/\(\d+\)/.test(document.title)) {
-						posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
-						document.title = "(" + (posts + 1) + ud + ") "
-								+ document.title.replace(/\(\d+\) /, "");
-					} 
-					
-					else {
-						document.title = "(" + posts + ud + ") " + document.title;
-					}
-				}
-			},
-			
-			notify_quote_post: function(mutation, top, index, live) {
-				if (live) {
-					
-					if (!mutation.getElementsByClassName('quoted-message')) {
-						return;
-					}
-					
-					if (top.getElementsByTagName('a')[0].innerHTML == document
-							.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
-							.replace(/ \((\d+)\)$/, "")) {
-						// dont notify when quoting own posts
-						return;
-					}
-					
-					var shouldNotify = false;
-					
-					var quotedMessages = mutation.getElementsByClassName('quoted-message');
-					var currentUser = document.getElementsByClassName('userbar')[0]
-							.getElementsByTagName('a')[0].innerHTML.replace(/ \((.*)\)$/, "");
-							
-					for (var i = 0; i < quotedMessages.length; i++) {					
-						if (quotedMessages[i].getElementsByClassName('message-top')[0]
-								.getElementsByTagName('a')[0].innerHTML == currentUser) {
-									
-							if (quotedMessages[i].parentNode.className != 'quoted-message') {
-								// only display notification if user has been directly quoted
-								shouldNotify = true;
-							}
-						}
-					}
-					
-					if (shouldNotify) {					
-						var user = mutation.getElementsByClassName('message-top')[0].getElementsByTagName('a')[0].innerHTML;
-						
-						messageList.sendMessage({
-							need: "notify",
-							title: "Quoted by " + user,
-							message: document.title.replace(/End of the Internet - /i, '')
-						});						
-					}
-					
-				}	
+				var anchor = document.createElement('a');
+				var divider = document.createTextNode(" | ");
+				anchor.href = '/imagemap.php?' + topicNumber + currentPage;
+				anchor.innerHTML = 'Imagemap';
+				infobar.appendChild(divider);
+				infobar.appendChild(anchor);
 			}
 		},
 		
-		infobar: {
-			imagemap_on_infobar: function() {
-				// Adds link to imagemap for current topic on infobar
-				var regex = window.location.search.match(/(topic=)([0-9]+)/);
-				if (regex) {
-					var topicNumber = regex[0];			
-					var infobar = document.getElementsByClassName("infobar")[0];
-					var pageRegex = window.location.search.match(/(page=)([0-9]+)/);
-					var currentPage = ''
-					if (pageRegex) {
-						// Keep track of current page in case user decides to navigate back
-						currentPage = '&oldpage=' + pageRegex[2];
-					}
-					var anchor = document.createElement('a');
-					var divider = document.createTextNode(" | ");
-					anchor.href = '/imagemap.php?' + topicNumber + currentPage;
-					anchor.innerHTML = 'Imagemap';
-					infobar.appendChild(divider);
-					infobar.appendChild(anchor);
-				}
-			},
+		filter_me: function() {
+			var tops = document.getElementsByClassName('message-top');
 			
-			filter_me: function() {				
-				var tops = document.getElementsByClassName('message-top');
-				
-				// Handle anonymous topics
-				var userRegex = /user=(\d+)$/;
-				if (!userRegex.test(tops[0].getElementsByTagName('a')[0].href)) {
-					var quickpostElement = document.getElementsByClassName('quickpost-body')[0];					
-										
-					if (quickpostElement && quickpostElement.getElementsByTagName('a')) {
-						var human = quickpostElement.getElementsByTagName('a')[0]
-								.innerHTML.replace('Human #', '');
-								
-						if (isNaN(human)) {
-							// User hasn't posted in topic yet
-							return;					
-						} 
-						
-						else {
+			// Handle anonymous topics
+			var userRegex = /user=(\d+)$/;
+			if (!userRegex.test(tops[0].getElementsByTagName('a')[0].href)) {
+				var quickpostElement = document.getElementsByClassName('quickpost-body')[0];					
+									
+				if (quickpostElement && quickpostElement.getElementsByTagName('a')) {
+					var human = quickpostElement.getElementsByTagName('a')[0]
+							.innerHTML.replace('Human #', '');
+							
+					if (isNaN(human)) {
+						// User hasn't posted in topic yet
+						return;					
+					} 
+					
+					else {
 							var me = '&u=-' + human;
 						}
 						
@@ -541,7 +434,7 @@ var messageList = {
 			}
 		},
 		
-		quickpostbody: {		
+	quickpostMethods: {		
 			quick_imagemap: function() {
 				var quickpost = document.getElementsByClassName('quickpost-body')[0];
 				var button = document.createElement('button');
@@ -707,7 +600,7 @@ var messageList = {
 			}
 		},
 		
-		misc: {
+	miscMethods: {
 			highlight_tc: function() {
 				var tcs = messageList.tcs.getMessages();
 				var tc;
@@ -935,6 +828,99 @@ var messageList = {
 				}
 				var interval = window.setInterval(checkMssgs, 1000);
 			}
+	},
+	
+	livelinksMethods: {	
+		autoscroll_livelinks: function(mutation, top) {
+			if (document.hidden && messageList.autoscrollCheck(mutation)) {				
+				mutation.scrollIntoView();					
+			}
+		},
+		
+		autoscroll_livelinks_active: function(mutation, top) {
+			if (!document.hidden && messageList.autoscrollCheck(mutation)) {
+						
+				// trigger after 10ms delay to prevent undesired behaviour in post_title_notification
+				setTimeout(() => {						
+					// set autoscrolling to true to prevent clearUnreadPostsFromTitle from being triggered
+					messageList.autoscrolling = true;
+					$.scrollTo((mutation), 800);						
+				}, 10);
+				
+				setTimeout(() => {
+					messageList.autoscrolling = false;	
+				}, 850);
+			}
+		},
+		
+		post_title_notification: function(mutation, top) {
+			if (mutation.style.display === "none") {
+				if (messageList.config.debug) {
+					console.log('not updating for ignorated post');
+				}
+				return;
+			}
+			if (mutation.getElementsByClassName('message-top')[0]
+					.getElementsByTagName('a')[0].innerHTML == document
+					.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
+					.replace(/ \((\d+)\)$/, "")) {
+				return;
+			}
+			var posts = 1;
+			var ud = '';
+			if (document.getElementsByClassName('message-container')[49]) {
+				ud = ud + "+";
+			}
+			
+			if (/\(\d+\)/.test(document.title)) {
+				posts = parseInt(document.title.match(/\((\d+)\)/)[1]);
+				document.title = "(" + (posts + 1) + ud + ") "
+						+ document.title.replace(/\(\d+\) /, "");
+			} 
+			
+			else {
+				document.title = "(" + posts + ud + ") " + document.title;
+			}
+		},
+		
+		notify_quote_post: function(mutation, top) {
+			if (!mutation.getElementsByClassName('quoted-message')) {
+				return;
+			}
+			
+			if (top.getElementsByTagName('a')[0].innerHTML == document
+					.getElementsByClassName('userbar')[0].getElementsByTagName('a')[0].innerHTML
+					.replace(/ \((\d+)\)$/, "")) {
+				// dont notify when quoting own posts
+				return;
+			}
+			
+			var shouldNotify = false;
+			
+			var quotedMessages = mutation.getElementsByClassName('quoted-message');
+			var currentUser = document.getElementsByClassName('userbar')[0]
+					.getElementsByTagName('a')[0].innerHTML.replace(/ \((.*)\)$/, "");
+					
+			for (var i = 0; i < quotedMessages.length; i++) {					
+				if (quotedMessages[i].getElementsByClassName('message-top')[0]
+						.getElementsByTagName('a')[0].innerHTML == currentUser) {
+							
+					if (quotedMessages[i].parentNode.className != 'quoted-message') {
+						// only display notification if user has been directly quoted
+						shouldNotify = true;
+					}
+				}
+			}
+			
+			if (shouldNotify) {					
+				var user = mutation.getElementsByClassName('message-top')[0].getElementsByTagName('a')[0].innerHTML;
+				
+				messageList.sendMessage({
+					need: "notify",
+					title: "Quoted by " + user,
+					message: document.title.replace(/End of the Internet - /i, '')
+				});						
+			}
 		}
 	},
 	
@@ -1008,11 +994,16 @@ var messageList = {
 				pm = "_pm";
 			}
 			
-			for (var i in this.dom.messagecontainer) {
+			for (var i in this.messageContainerMethods) {
 				if (this.config[i + pm]) {
 						// Fourth parameter signifies that we are dealing with livelinks post
-						// TODO: Refactor this
-						this.dom.messagecontainer[i](container, top, index, true);
+						this.messageContainerMethods[i](container, top, index, true);
+				}
+			}
+			
+			for (var i in this.livelinksMethods) {
+				if (this.config[i+ pm]) {
+					this.livelinksMethods[i](container, top);
 				}
 			}
 			
@@ -3308,6 +3299,7 @@ var messageList = {
 			// do nothing
 			return;
 		}
+		
 		else if (/\(\d+\+?\)/.test(document.title)) {
 			var newTitle = document.title.replace(/\(\d+\+?\) /, "");
 			document.title = newTitle;
@@ -3475,75 +3467,76 @@ var messageList = {
 	
 	
 	/**
-	 *  The main loop for this script - called after DOMContentLoaded has fired (or otherwise once DOM is ready)
-	 *  Applies various types of DOM modifications to the message list, adds listeners for ChromeLL features, etc
+	 *  Converts ignorator string to array and removes any whitelisted users
 	 */
 	
-	applyDomModifications: function(pm) {	
-		// Call methods which modify infobar element
-		for (var k in this.dom.infobar) {
-			if (this.config[k + pm]) {
-				this.dom.infobar[k]();
-			}
+	prepareIgnoratorArray: function() {
+		this.ignoredUsers = this.config.ignorator_list.split(',').map((user) => {
+			return user.trim();
+		});
+		
+		if (this.config.ignorator_allow_posts && this.config.ignorator_post_whitelist) {
+			
+			var whitelist = this.config.ignorator_post_whitelist.split(',').map((user) => {
+				return user.trim().toLowerCase(); 
+			});
+			
+			this.ignoredUsers = this.ignoredUsers.filter((user) => {
+				return (whitelist.indexOf(user.toLowerCase()) === -1);				
+			});
 		}
+	},
 		
-		// Check whether user can post in topic
-		var topicOpen = (document.getElementsByClassName('quickpost').length > 0);
+	appendDramalinksTicker: function() {
+		var titleElement = document.getElementsByTagName('h2')[0];
+		dramalinks.appendTo(titleElement);
 		
-		if (!topicOpen) {
-			// Add ChromeLL quote buttons before highlights/post numbers are added
+		// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
+		var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
+		document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);		
+	},
+	
+	handleArchivedAndLockedTopics: function() {
 			this.quote.addButtons();
 			
 			// Delete unusable methods
 			delete this.dom.messagecontainer.like_button;
 			delete this.dom.messagecontainer.post_templates;			
-		}	
+	},
 		
-		// Iterate over first 5 message-containers.
-		// TODO: do we really need to unroll this loop
-		var msgs = document.getElementsByClassName('message-container');
-		var len;
+	/**
+	 *  The main loop for this script - called after DOMContentLoaded has fired (or otherwise once DOM is ready)
+	 *  Applies various types of DOM modifications to the message list, adds listeners for ChromeLL features, etc
+	 */
 		
-		if (msgs.length < 4) {
-			len = msgs.length;
+	applyDomModifications: function(pm) {		
+		if (this.config.dramalinks && !this.config.hide_dramalinks_topiclist) {
+			this.appendDramalinksTicker();
 		}
 		
-		else {
-			len = 4;
-		}
-		
-		// Iterate over message-containers, check config value and pass elements to each function
-		for (var j = 0; j < len; j++) {
-			var msg = msgs[j];
-			var top = msg.getElementsByClassName('message-top')[0];
-
-			for (var k in this.dom.messagecontainer) {			
-				if (this.config[k + pm]) {
-					this.dom.messagecontainer[k](msg, top, j + 1);
-				}
+		for (var i in this.infobarMethods) {
+			if (this.config[i + pm]) {
+				this.infobarMethods[i]();
 			}
 		}
 		
-		// Append dramalinks ticker to page
-		var titleElement = document.getElementsByTagName('h2')[0];	
-		if (this.config.dramalinks && !this.config.hide_dramalinks_topiclist) {
-			dramalinks.appendTo(titleElement);
-			
-			// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
-			var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
-			document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);			
+		// Check whether user can post in topic
+		var topicOpen = (document.getElementsByClassName('quickpost').length > 0);
+
+		if (!topicOpen) {
+			this.handleArchivedAndLockedTopics();
 		}
 		
-		// Iterate over rest of messages
-		if (len == 4) {			
-			for (var j = 4, len = msgs.length; j < len; j++) {
-				var msg = msgs[j];
+			
+		var msgs = document.getElementsByClassName('message-container');
+		
+		for (var i = 0, len = msgs.length; i < len; i++) {
+			var msg = msgs[i];
 				var top = msg.getElementsByClassName('message-top')[0];
 				
-				for (var k in this.dom.messagecontainer) {
+			for (var k in this.messageContainerMethods) {
 					if (this.config[k + pm]) {
-						this.dom.messagecontainer[k](msg, top, j + 1);
-					}
+					this.messageContainerMethods[k](msg, top, i + 1);
 				}
 			}
 		}
@@ -3558,17 +3551,17 @@ var messageList = {
 		}
 		
 		// Finish modifying visible DOM
-		for (var i in this.dom.misc) {
+		for (var i in this.miscMethods) {
 			if (this.config[i + pm]) {
-				this.dom.misc[i]();
+				this.miscMethods[i]();
 			}
 		}
 		
 		if (topicOpen) {
 			// Call methods which modify quickpost area (user probably won't see this)
-			for (var i in this.dom.quickpostbody) {
+			for (var i in this.quickpostMethods) {
 				if (this.config[i + pm]) {
-					this.dom.quickpostbody[i]();
+					this.quickpostMethods[i]();
 				}
 			}
 			
@@ -3612,29 +3605,11 @@ var messageList = {
 					attributes: true
 			});
 		}
-	},
-
-	/**
-	 *  Converts ignorator string to array and removes any whitelisted users
-	 */
-	
-	prepareIgnoratorArray: function() {
-		this.ignoredUsers = this.config.ignorator_list.split(',').map((user) => {
-			return user.trim();
-		});
-		
-		if (this.config.ignorator_allow_posts && this.config.ignorator_post_whitelist) {
 			
-			var whitelist = this.config.ignorator_post_whitelist.split(',').map((user) => {
-				return user.trim().toLowerCase(); 
-			});
-			
-			this.ignoredUsers = this.ignoredUsers.filter((user) => {
-				return (whitelist.indexOf(user.toLowerCase()) === -1);				
-			});
-		}
 	}
 };
+
+
 
 // Entry point
 chrome.runtime.sendMessage({
