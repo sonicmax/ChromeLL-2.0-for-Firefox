@@ -1113,7 +1113,7 @@ var messageList = {
 					return;					
 			
 				case 'like_button':
-					this.likeButton.buildMarkup(evt.target);
+					this.likeButton.buildText(evt.target);
 					evt.preventDefault();
 					return;
 				
@@ -1122,7 +1122,7 @@ var messageList = {
 					for (var i = 0, len = evt.path.length; i < len; i++) {
 						var pathNode = evt.path[i];
 						if (pathNode.className == 'like_button') {
-							this.likeButton.buildMarkup(pathNode, templateNumber);			
+							this.likeButton.buildText(pathNode, templateNumber);			
 							break;
 						}
 					}
@@ -1130,7 +1130,7 @@ var messageList = {
 					return;
 					
 				case 'archivequote':
-					this.quote.handler(evt);
+					this.archiveQuotes.handler(evt);
 					evt.preventDefault();
 					return;
 					
@@ -2295,110 +2295,15 @@ var messageList = {
 		}
 	},
 	
-	quote: {
+	markupBuilder: {
 		depth: 0,
-		
-		/**
-		 *  Called after user uses feature which requires ETI markup to be generated
-		 *  (archive quote buttons, like button, etc)
-		 */
-		
-		handler: function(evt) {
-			
-			if (evt.likeButton) {
-				var msgId = evt.id;
-			}
-			else {
-				var msgId = evt.target.id;
-			}
-			
-			var messageContainer = document.querySelector('[msgid="' + msgId + '"]');
-			
-			var markup = '<quote msgid="' + msgId + '">' + this.getMarkup(messageContainer) + '</quote>';
-			
-			if (this.depth !== 0) {
-				console.log('Warning: quote depth not reset to 0');
-				this.depth = 0;
-			}
-			
-			
-			if (evt.likeButton) {
-				// Return output to likeButton.handler
-				return markup;	
-			}
-			
-			else {
-				// Send markup to background page to be copied to clipboard				
-				messageList.sendMessage({
-					need: "copy",
-					data: markup
-				});
-								
-				this.showNotification(evt.target);
-			}
-		},
-		
-		showNotification: function(node) {
-			// Create hidden notification so we can use fadeIn() later
-			var span = document.createElement('span');
-			span.id = 'copied';
-			span.style.display = 'none';
-			span.style.position = 'absolute';
-			span.style.zIndex = 1;
-			span.style.left = 100;
-			span.style.backgroundColor = window.getComputedStyle(node.parentNode).backgroundColor;
-			span.style.fontWeight = 'bold';
-			span.innerHTML = '&nbsp[copied to clipboard]';
-			
-			node.appendChild(span);
-						
-			$("#copied").fadeIn(200);
-				
-			setTimeout(() => {
-				
-				$(node).find("span:last")
-						.fadeOut(400);
-						
-			}, 1500);
-			
-			setTimeout(() => {
-				
-				node.removeChild(span);				
-						
-			}, 2000);
-		},
-		
-		addButtons: function() {
-			var hostname = window.location.hostname;
-			var topicId = window.location.search.replace("?topic=", "");
-			var container;
-			var tops = [];
-			var links = document.getElementsByTagName("a");
-			var msgs = document.getElementsByClassName("message");
-			var containers = document.getElementsByClassName("message-container");
-			for (var i = 0, len = containers.length; i < len; i++) {
-				var container = containers[i];
-				tops[i] = container.getElementsByClassName("message-top")[0];
-				var msgID = msgs[i].getAttribute("msgid");
-				var quote = document.createElement("a");
-				var quoteText = document.createTextNode("Quote");
-				var space = document.createTextNode(" | ");
-				quote.appendChild(quoteText);
-				quote.href = "#";
-				quote.id = msgID;
-				quote.className = "archivequote";
-				tops[i].appendChild(space);
-				tops[i].appendChild(quote);
-			}
-		},				
-		
 		
 		/**
 		 *  Iterates of children of message element and generates markup.
 		 *  Called recursively to handle quoted-message and spoiler elements.
 		 */
 		
-		getMarkup: function(parentElement) {
+		build: function(parentElement) {
 			var output = '';
 			var childNodes = parentElement.childNodes;
 			
@@ -2439,14 +2344,14 @@ var messageList = {
 							break;
 							
 						case 'spoiler_closed':
-							output += this.getMarkupFromSpoiler(node);
+							output += this.buildSpoiler(node);
 							break;
 							
 						case 'quoted-message':
 							// getMarkup() is called recursively from inside getMarkupFromQuote(),
 							// so this.depth can increase beyond 1 (depending on the level of nesting)
 							this.depth++;
-							output += this.getMarkupFromQuote(node);
+							output += this.buildQuote(node);
 							this.depth--;
 							break;													
 						
@@ -2467,7 +2372,7 @@ var messageList = {
 			return output;
 		},
 		
-		getMarkupFromQuote: function(node) {
+		buildQuote: function(node) {
 			var openQuote = '<quote>';
 			var closeQuote = '</quote>';
 			var msgId = node.attributes.msgid.value;
@@ -2482,11 +2387,11 @@ var messageList = {
 			}
 			
 			else {
-				return openQuote + this.getMarkup(node) + closeQuote;	
+				return openQuote + this.build(node) + closeQuote;	
 			}						
 		},
 				
-		getMarkupFromSpoiler: function(node) {
+		buildSpoiler: function(node) {
 			var openSpoiler = '<spoiler>';
 			var closeSpoiler = '</spoiler>';					
 			var spoiler = node.getElementsByClassName('spoiler_on_open')[0];					
@@ -2503,7 +2408,7 @@ var messageList = {
 			spoiler.removeChild(spoiler.firstChild);
 			spoiler.removeChild(spoiler.lastChild);
 			
-			return openSpoiler + this.getMarkup(spoiler) + closeSpoiler;
+			return openSpoiler + this.build(spoiler) + closeSpoiler;
 		}		
 		
 	},
@@ -3079,12 +2984,12 @@ var messageList = {
 	likeButton: {
 		
 		/**
-		 *  Checks whether user is posting in anonymous topic and builds markup for given post
+		 *  Checks whether user is posting in anonymous topic and builds text for given post
 		 *  after user clicks like button. The markup is either inserted at the start of the
 		 *  quickpost area or at caret position, depending on whether user has typed anything or not
 		 */
 		
-		buildMarkup: function(likeButtonElement, templateNumber) {
+		buildText: function(likeButtonElement, templateNumber) {
 			var anonymous;
 			var container = likeButtonElement.parentNode.parentNode;
 			var message = likeButtonElement.parentNode.parentNode.getElementsByClassName('message')[0];
@@ -3130,9 +3035,9 @@ var messageList = {
 			}
 			
 			// Generate markup from selected post and format text to insert
-			var msgID = message.getAttribute('msgid');
-			var quotedMessage = messageList.quote.handler({'id': msgID, 'likeButton': true});								
-			var textToInsert = quotedMessage + '\n' + likeMessage;
+			var msgId = message.getAttribute('msgid');
+			var markup = '<quote msgid="' + msgId + '">' + messageList.markupBuilder.build(message) + '</quote>';
+			var textToInsert = markup + '\n' + likeMessage;
 			
 			// If no other text has been added before sig belt, always insert text at beginning of textarea.
 			// Fixes https://github.com/sonicmax/ChromeLL-2.0/issues/74
@@ -3212,6 +3117,76 @@ var messageList = {
 				menu.remove();
 			}
 		}
+	},
+	
+	archiveQuotes: {
+		addQuoteElements: function() {
+			var hostname = window.location.hostname;
+			var topicId = window.location.search.replace("?topic=", "");
+			var container;
+			var tops = [];
+			var links = document.getElementsByTagName("a");
+			var msgs = document.getElementsByClassName("message");
+			var containers = document.getElementsByClassName("message-container");
+			for (var i = 0, len = containers.length; i < len; i++) {
+				var container = containers[i];
+				tops[i] = container.getElementsByClassName("message-top")[0];
+				var msgID = msgs[i].getAttribute("msgid");
+				var quote = document.createElement("a");
+				var quoteText = document.createTextNode("Quote");
+				var space = document.createTextNode(" | ");
+				quote.appendChild(quoteText);
+				quote.href = "#";
+				quote.id = msgID;
+				quote.className = "archivequote";
+				tops[i].appendChild(space);
+				tops[i].appendChild(quote);
+			}
+		},		
+		
+		handler: function(evt) {
+			var msgId = evt.target.id;
+			var messageContainer = document.querySelector('[msgid="' + msgId + '"]');
+			var markup = '<quote msgid="' + msgId + '">' + messageList.markupBuilder.build(messageContainer) + '</quote>';					
+			
+			// Send markup to background page to be copied to clipboard				
+			messageList.sendMessage({
+				need: "copy",
+				data: markup
+			});
+			
+			this.showNotification(evt.target);
+		},
+		
+		showNotification: function(node) {
+			// Create hidden notification so we can use fadeIn() later
+			var span = document.createElement('span');
+			span.id = 'copied';
+			span.style.display = 'none';
+			span.style.position = 'absolute';
+			span.style.zIndex = 1;
+			span.style.left = 100;
+			span.style.backgroundColor = window.getComputedStyle(node.parentNode).backgroundColor;
+			span.style.fontWeight = 'bold';
+			span.innerHTML = '&nbsp[copied to clipboard]';
+			
+			node.appendChild(span);
+						
+			$("#copied").fadeIn(200);
+				
+			setTimeout(() => {
+				
+				$(node).find("span:last")
+						.fadeOut(400);
+						
+			}, 1500);
+			
+			setTimeout(() => {
+				
+				node.removeChild(span);				
+						
+			}, 2000);
+		}		
 	},
 	
 	
@@ -3497,7 +3472,7 @@ var messageList = {
 	},
 	
 	handleArchivedAndLockedTopics: function() {
-			this.quote.addButtons();
+		this.archiveQuotes.addQuoteElements();
 			
 			// Delete unusable methods
 		delete this.messageContainerMethods.like_button;
