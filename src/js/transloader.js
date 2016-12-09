@@ -64,6 +64,11 @@ function getFilename(url) {
 		}
 	}
 	
+	// We have to trim .webp extension from wikiHow image URLs
+	if (/whstatic.com\/images/.test(url)) {
+		filename = filename.replace('.webp', '');		
+	}
+	
 	return filename;
 }
 
