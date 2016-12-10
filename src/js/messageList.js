@@ -2062,34 +2062,24 @@ var messageList = {
 			var startX = 0;
 			var startY = 0;
 									
-			var minWidth = element.width / 3;			
+			var minWidth = 100;
 			var minHeight = element.height * (minWidth / element.width);
 			
 			element.setAttribute('original_width', element.width);
 			element.setAttribute('original_height', element.height);
 						
-			var startPoint = messageList.config.gfy_max_width || document.documentElement.clientWidth;			
-			var maxWidth = startPoint;
-			var maxHeight = element.height * (startPoint / element.width);
-			
-			
 			element.addEventListener('mousedown', (evt) => {
 				shouldDrag = true;
 				startX = evt.clientX;
 				startY = evt.clientY;				
 			});						
 			
-			element.addEventListener('mouseup', (evt) => {
+			document.body.addEventListener('mouseup', (evt) => {
 				shouldDrag = false;				
 			});	
 			
 			document.body.addEventListener('mousemove', (evt) => {
 				if (shouldDrag) {
-					
-					if (!evt.target.isEqualNode(element)) {
-						shouldDrag = false;
-						return;
-					}
 					
 					var width = evt.target.width;
 					var height = evt.target.height;
@@ -2101,11 +2091,11 @@ var messageList = {
 
 					var newWidth = width + offset;
 									
-					if (newWidth <= maxWidth && newWidth >= minWidth) {
+					if (newWidth >= minWidth) {
 						var ratio = newWidth / width;
 						var newHeight = height * ratio;
 						
-						if (newHeight <= maxHeight && newHeight >= minHeight) {
+						if (newHeight >= minHeight) {
 							evt.target.width = newWidth * ratio;
 							evt.target.height = newHeight * ratio;
 						}
