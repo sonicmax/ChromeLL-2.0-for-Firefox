@@ -1815,9 +1815,6 @@ var messageList = {
 				return;
 			}		
 			
-			var initialWidth = imageData.width;
-			var initialHeight = imageData.height;
-			
 			var galleryDiv = document.createElement('div');
 			galleryDiv.className = 'imgur_gallery';
 			galleryDiv.id = imgurElement.id;
@@ -1877,7 +1874,7 @@ var messageList = {
 					
 					index--;
 					imageNumber.innerText = (index + 1) + '/' + data.images_count;
-					this.displayNewGalleryImage(index, initialWidth, initialHeight, data, evt.target.parentNode.children[2]);
+					this.displayNewGalleryImage(index, data, evt.target.parentNode.children[2]);
 				}
 				
 			});
@@ -1888,17 +1885,28 @@ var messageList = {
 					
 					index++;
 					imageNumber.innerText = (index + 1) + '/' + data.images_count;
-					this.displayNewGalleryImage(index, initialWidth, initialHeight, data, evt.target.parentNode.children[2]);
+					this.displayNewGalleryImage(index, data, evt.target.parentNode.children[2]);
 				}
 				
 			});			
 		},
 		
-		displayNewGalleryImage: function(index, initialWidth, initialHeight, data, oldDiv) {
+		displayNewGalleryImage: function(index, data, oldDiv) {
 			var imageData = this.prepareImageData(data.images[index]);
 			
+			var initialWidth = oldDiv.firstChild.width;
+			var initialHeight = oldDiv.firstChild.height;
+			
+			var startPoint = messageList.config.gfy_max_width || document.documentElement.clientWidth;
+			var ratio = startPoint / (initialWidth * messageList.zoomLevel);
+			var maxWidth = startPoint / messageList.zoomLevel;
+			
+			startPoint = document.documentElement.clientHeight;
+			ratio = startPoint / (initialHeight * messageList.zoomLevel);
+			var maxHeight = startPoint / messageList.zoomLevel;		
+			
 			if ((imageData.width * messageList.zoomLevel) > initialWidth) {
-				var ratio = Math.min(initialWidth / (imageData.width * messageList.zoomLevel), initialHeight / (imageData.height * messageList.zoomLevel));
+				var ratio = initialWidth / (imageData.width * messageList.zoomLevel);
 				imageData.width *= ratio;
 				imageData.height *= ratio;
 			}			
@@ -1934,6 +1942,8 @@ var messageList = {
 				linkSpan.innerHTML = '<br><br>' + data.url;
 				placeholder.appendChild(linkSpan);		
 			}
+			
+			this.addDragToResizeListener(thumbnail);
 			
 			if (imgurElement.parentNode) {
 				imgurElement.parentNode.replaceChild(placeholder, imgurElement);
@@ -1995,6 +2005,8 @@ var messageList = {
 
 			placeholder.appendChild(video);
 
+			this.addDragToResizeListener(video);
+
 			if (messageList.config.show_gfycat_link) {
 				var linkSpan = document.createElement('a');
 				linkSpan.href = data.url;
@@ -2006,6 +2018,7 @@ var messageList = {
 			if (imgurElement.parentNode) {
 				
 				imgurElement.parentNode.replaceChild(placeholder, imgurElement);
+				
 				// check if placeholder is visible (some placeholders will be off screen)
 				var position = placeholder.getBoundingClientRect();
 				
@@ -2042,6 +2055,75 @@ var messageList = {
 				placeholder.parentNode.replaceChild(video, placeholder);			
 				video.play();
 			}
+		},
+		
+		addDragToResizeListener: function(element) {
+			var shouldDrag = false;
+			var startX = 0;
+			var startY = 0;
+									
+			var minWidth = element.width / 3;			
+			var minHeight = element.height * (minWidth / element.width);
+			
+			element.setAttribute('original_width', element.width);
+			element.setAttribute('original_height', element.height);
+						
+			var startPoint = messageList.config.gfy_max_width || document.documentElement.clientWidth;			
+			var maxWidth = startPoint;
+			var maxHeight = element.height * (startPoint / element.width);
+			
+			
+			element.addEventListener('mousedown', (evt) => {
+				shouldDrag = true;
+				startX = evt.clientX;
+				startY = evt.clientY;				
+			});						
+			
+			element.addEventListener('mouseup', (evt) => {
+				shouldDrag = false;				
+			});	
+			
+			document.body.addEventListener('mousemove', (evt) => {
+				if (shouldDrag) {
+					
+					if (!evt.target.isEqualNode(element)) {
+						shouldDrag = false;
+						return;
+					}
+					
+					var width = evt.target.width;
+					var height = evt.target.height;
+					
+					// Resize element using difference between current coords and original coords
+					var offsetX = evt.clientX - startX;
+					var offsetY = evt.clientY - startY;				
+					var offset = (offsetX + offsetY) / 2;
+
+					var newWidth = width + offset;
+									
+					if (newWidth <= maxWidth && newWidth >= minWidth) {
+						var ratio = newWidth / width;
+						var newHeight = height * ratio;
+						
+						if (newHeight <= maxHeight && newHeight >= minHeight) {
+							evt.target.width = newWidth * ratio;
+							evt.target.height = newHeight * ratio;
+						}
+					}
+					
+					// Update startX/startY after resizing
+					startX = evt.clientX;
+					startY = evt.clientY;
+					
+					evt.preventDefault();
+				}
+			});
+			
+			element.addEventListener('dblclick', (evt) => {
+				// Reset to original width/height
+				element.width = element.getAttribute('original_width');
+				element.height = element.getAttribute('original_height');			
+			});
 		},
 		
 		showEmbedLink: function(evt) {
