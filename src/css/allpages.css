@@ -21,6 +21,7 @@
 	display: inline-block;
 	width: 10%;
 	text-align: right;
+	user-select: none;
 }
 
 .imgur_gallery_left, .imgur_gallery_right {
@@ -30,15 +31,16 @@
 	text-weight: bold;
 	width: 50%;
 	font-size: 2vw;
-	border-top: 2px solid black;
+	border-top: 5px solid black;
+	user-select: none;
 }
 
 .imgur_gallery_left {
-	border-right: 1px solid black;	
+	border-right: 2px solid black;
 }
 
 .imgur_gallery_right {
-	border-left: 1px solid black;	
+	border-left: 2px solid black;	
 }
 
 .imgur_gallery_left:hover {
