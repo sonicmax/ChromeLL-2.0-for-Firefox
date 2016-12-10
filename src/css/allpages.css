@@ -1,8 +1,14 @@
 /* 
 	---------------------------------------------
-	Imgur gallery classes
+	Imgur classes
 	---------------------------------------------
 */
+
+.imgur {
+	display: inline-block;
+	/* Prevent gallery buttons from wrapping around div */
+	min-width: 51%; 
+}
 
 .imgur_gallery {
 	display: inline-block;
