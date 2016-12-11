@@ -4,10 +4,13 @@
 	---------------------------------------------
 */
 
-.imgur {
-	display: inline-block;
-	/* Prevent gallery buttons from wrapping around div */
-	min-width: 51%; 
+.media {	
+	user-select: none;
+}
+
+.media video {
+	/* Set height to auto to prevent weird behaviour when resizing video element. */
+	height: auto;
 }
 
 .imgur_gallery {
