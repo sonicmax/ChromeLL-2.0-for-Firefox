@@ -1,16 +1,28 @@
 /* 
 	---------------------------------------------
+	Drag-to-resize classes
+	---------------------------------------------
+*/
+
+/* Set height to auto on resizable elements to prevent weird behaviour */
+
+.media video {
+	height: auto;
+}
+
+.img-loaded img {
+	height: auto;
+}
+
+
+/* 
+	---------------------------------------------
 	Imgur classes
 	---------------------------------------------
 */
 
 .media {	
 	user-select: none;
-}
-
-.media video {
-	/* Set height to auto to prevent weird behaviour when resizing video element. */
-	height: auto;
 }
 
 .imgur_gallery {
