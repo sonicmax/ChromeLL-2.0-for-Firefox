@@ -2508,13 +2508,13 @@ var messageList = {
 		}),
 		
 		addDragToResizeListener: function(element) {
+			const minWidth = Math.min(100, element.width);
+			const minHeight = element.height * (minWidth / element.width);						
+			
 			var shouldDrag = false;
 			var startX = 0;
 			var startY = 0;
 									
-			var minWidth = 100;
-			var minHeight = element.height * (minWidth / element.width);
-			
 			element.setAttribute('original_width', element.width);
 			element.setAttribute('original_height', element.height);
 			
