@@ -1146,13 +1146,6 @@ var messageList = {
 					}
 					return;
 				
-				case 'gfycat':
-					if (evt.target.tagName === 'DIV') {
-						// Prevent clicks on div from bubbling up to parent
-						evt.preventDefault();
-					}
-					return;
-					
 				case 'embed_nws_gfy':
 					var gfycatID = evt.target.parentNode.id.replace('_embed', '');
 					this.gfycat.embed(document.getElementById(gfycatID));
