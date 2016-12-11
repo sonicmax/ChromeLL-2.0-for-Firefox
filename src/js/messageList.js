@@ -1179,6 +1179,15 @@ var messageList = {
 					evt.preventDefault();
 					return;
 			}
+			
+			// Prevent default anchor of img anchors while shift key is held down for image resizing
+			if (evt.target.parentNode && evt.target.parentNode.className === 'img-loaded') {
+				if (evt.shiftKey) {					
+					evt.preventDefault();
+					return;
+				}
+			}
+			
 		},		
 		
 		mouseenter: function(evt) {
@@ -2484,24 +2493,33 @@ var messageList = {
 		imgPlaceholderObserver: new MutationObserver((mutations) => {
 			for (var i = 0; i < mutations.length; i++) {
 				var mutation = mutations[i];
+				
 				if (messageList.config.resize_imgs) {
 					messageList.media.resize(mutation.target.childNodes[0]);
 				}
+				
 				if (mutation.type === 'attributes') {
-					// once they're loaded, thumbnails have /i/t/ in their
-					// url where fullsize have /i/n/
-					if (mutation.attributeName == "class"
-							&& mutation.target.getAttribute('class') == "img-loaded"
-							&& /.*\/i\/t\/.*/.test(mutation.target.childNodes[0].src)) {
+					// once they're loaded, thumbnails have /i/t/ in their url where fullsize have /i/n/
+					if (mutation.attributeName == "class" && mutation.target.getAttribute('class') == "img-loaded") {
+						
+						var imgLoadedSpan = mutation.target;
+							
+						if (/.*\/i\/t\/.*/.test(imgLoadedSpan.firstChild.src)) {
 						/*
 						 * set up the onclick and do some dom manip that the
 						 * script originally did - i think only removing href
 						 * actually matters
 						 */
-						mutation.target.parentNode.addEventListener('click', messageList.media.expandThumbnail);				
-						mutation.target.parentNode.setAttribute('class', 'thumbnailed_image');
-						mutation.target.parentNode.setAttribute('oldHref', mutation.target.parentNode.getAttribute('href'));
-						mutation.target.parentNode.removeAttribute('href');
+							imgLoadedSpan.parentNode.addEventListener('click', messageList.media.expandThumbnail);				
+							imgLoadedSpan.parentNode.setAttribute('class', 'thumbnailed_image');
+							imgLoadedSpan.parentNode.setAttribute('oldHref', mutation.target.parentNode.getAttribute('href'));
+							imgLoadedSpan.parentNode.removeAttribute('href');							
+						}
+						
+						var img = imgLoadedSpan.firstChild;
+						imgLoadedSpan.style = '';
+						
+						messageList.media.addDragToResizeListener(img);
 					}
 				}
 			}
@@ -2518,24 +2536,46 @@ var messageList = {
 			element.setAttribute('original_width', element.width);
 			element.setAttribute('original_height', element.height);
 			
+			// We initiate the drag event when mousedown fires on the element,
+			// and cancel it once mouseup fires on document.body
 			element.addEventListener('mousedown', (evt) => {
+				if (evt.target.parentNode.className === 'img-loaded' && !evt.shiftKey) {
+					return;
+				}
+				
 				shouldDrag = true;
 				startX = evt.clientX;
 				startY = evt.clientY;				
 			});						
 			
 			document.body.addEventListener('mouseup', (evt) => {
-				shouldDrag = false;				
 				// For some reason, the height property doesn't increase correctly after being decreased (???)
 				// It's not noticeable because of the height: "auto" CSS rule, but it makes further resizing
 				// impossible as height is always < the minHeight value. We can fix this using getBoundingClientRect()
-				// to get the real height and make sure it's accurate.
+				// to get the real height and make sure it's accurate. It won't have too much of a performance impact
+				// if we do it after the mouseup event fires
+				
 				if (element.height < element.getBoundingClientRect().height) {
 					element.height = element.getBoundingClientRect().height;
 				}
+				
+				shouldDrag = false;
+				evt.preventDefault();			
+			});
+			
+			// Reset to original size on doubleclick
+			element.addEventListener('dblclick', (evt) => {				
+				element.width = element.getAttribute('original_width');
+				element.height = element.getAttribute('original_height');			
+			});
+			
+			// Cancel default event if dragstart fires
+			element.addEventListener('dragstart', (evt) => {
 				evt.preventDefault();
 			});
 			
+			// Add handler to mousemove event which resizes element based on the
+			// difference between evt.clientX/evt.clientY and startX/startY.
 			document.body.addEventListener('mousemove', (evt) => {
 				if (shouldDrag) {
 					
@@ -2547,12 +2587,13 @@ var messageList = {
 					var width = evt.target.width;
 					var height = evt.target.height;
 					
-					// Resize element using difference between current coords and original coords
+					if (width && height) {
 					var offsetX = evt.clientX - startX;
 					var offsetY = evt.clientY - startY;		
 						
 						var average = (offsetX + offsetY) / 2;
 						var offset;
+						
 						if (offsetX > 0 || offsetY > 0) {
 							offset = Math.max(offsetX, offsetY, average);
 						}
@@ -2560,7 +2601,6 @@ var messageList = {
 							offset = Math.min(offsetX, offsetY, average);
 						}
 						
-
 					var newWidth = width + offset;
 									
 					if (newWidth >= minWidth) {
@@ -2570,21 +2610,15 @@ var messageList = {
 						if (newHeight >= minHeight) {
 							evt.target.width = newWidth;
 							evt.target.height = newHeight;
-						}
-					}
-					
 					// Update startX/startY after resizing
 					startX = evt.clientX;
 					startY = evt.clientY;
+							}
+						}
 					
 					evt.preventDefault();
 				}
-			});
-			
-			element.addEventListener('dblclick', (evt) => {
-				// Reset to original width/height
-				element.width = element.getAttribute('original_width');
-				element.height = element.getAttribute('original_height');			
+				}
 			});
 		}		
 		
