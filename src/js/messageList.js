@@ -2537,7 +2537,10 @@ var messageList = {
 					// Resize element using difference between current coords and original coords
 					var offsetX = evt.clientX - startX;
 					var offsetY = evt.clientY - startY;		
-					var offset = (offsetX + offsetY) / 2;
+						
+						var average = (offsetX + offsetY) / 2;
+						
+						var offset = Math.max(offsetX, offsetY, average);
 
 					var newWidth = width + offset;
 									
