@@ -1305,9 +1305,11 @@ var messageList = {
 				
 				if (link.classList.contains('gfycat')) {
 					messageList.gfycat.checkLink(link);
+					messageList.replaceQuoteOnclick(link.parentNode);
 				}
 				else if (link.classList.contains('imgur')) {
 					messageList.imgur.checkLink(link);
+					messageList.replaceQuoteOnclick(link.parentNode);
 				}
 				else if (link.classList.contains('ignore')) {
 					linksToIgnore.push(link);
@@ -1380,6 +1382,47 @@ var messageList = {
 				break;
 			}	
 		}
+	},
+	
+	
+	/**
+	 *  The getLLMLFromMarkup() method in base.js on ETI messes up when quoting embedded media.
+	 *  We should replace the onclick attribute of the "Quote" anchor and handle this ourselves
+	 */
+	
+	replaceQuoteOnclick: function(element) {
+		var container = element.closest('.message-container');
+		var top = container.firstChild;
+		
+		if (!top.classList.contains('checked')) {
+						
+			var newQuote = document.createElement('span');
+			newQuote.innerHTML = 'Quote';
+			newQuote.style.cursor = 'pointer';
+			newQuote.style.textDecoration = 'underline';
+			
+			newQuote.addEventListener('click', (evt) => {
+				var container = evt.target.parentNode.parentNode;
+				var message = container.getElementsByClassName('message')[0];
+				var markup = '<quote msgid="' + message.getAttribute('msgid') + '">' + this.markupBuilder.build(message) + '</quote>';
+				allPages.insertIntoTextarea(markup);
+				
+				if (document.getElementsByClassName('regular quickpost-expanded').length == 0) {
+					// quickpost area is hidden - click nub element to open
+					document.getElementsByClassName('quickpost-nub')[0].click();
+				}				
+			});
+			
+			for (var i = 0, len = top.children.length; i < len; i++) {
+				var child = top.children[i];
+				if (child.innerHTML === 'Quote') {
+					top.replaceChild(newQuote, child);
+					break;
+				}
+			}
+			
+			top.classList.add('checked');
+		}				
 	},
 	
 	gfycat: {
