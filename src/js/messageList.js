@@ -2096,8 +2096,8 @@ var messageList = {
 						var newHeight = height * ratio;
 						
 						if (newHeight >= minHeight) {
-							evt.target.width = newWidth * ratio;
-							evt.target.height = newHeight * ratio;
+							evt.target.width = newWidth;
+							evt.target.height = newHeight;
 						}
 					}
 					
