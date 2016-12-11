@@ -2573,6 +2573,14 @@ var messageList = {
 			var startX = 0;
 			var startY = 0;
 									
+			// Expanded thumbnails don't appear to have width/height property, which prevents us from
+			// being able to resize them. We can fix this by using getBoundingClientRect() to get the 
+			// actual size of the image
+			if (!element.width || !element.height) {
+				element.width = element.getBoundingClientRect().width;
+				element.height = element.getBoundingClientRect().height;
+			}
+						
 			element.setAttribute('original_width', element.width);
 			element.setAttribute('original_height', element.height);
 			
