@@ -2479,6 +2479,10 @@ var messageList = {
 		
 	media: {
 		expandThumbnail: function(evt) {
+			if (evt.shiftKey) {
+				return;
+			}
+			
 			// originally rewritten by xdrvonscottx			
 			var num_children = evt.target.parentNode.parentNode.childNodes.length;
 			// first time expanding - only span
@@ -2499,6 +2503,8 @@ var messageList = {
 				var newimg = document.createElement('img');				
 				newimg.src = fullsize;
 				newspan.insertBefore(newimg, null);
+				
+				messageList.media.addDragToResizeListener(newimg);
 				
 				evt.target.parentNode.parentNode.insertBefore(newspan, evt.target.parentNode);
 				evt.target.parentNode.style.display = "none"; // hide old img
@@ -2589,6 +2595,7 @@ var messageList = {
 				shouldDrag = true;
 				startX = evt.clientX;
 				startY = evt.clientY;				
+				evt.preventDefault();
 			});						
 			
 			document.body.addEventListener('mouseup', (evt) => {
