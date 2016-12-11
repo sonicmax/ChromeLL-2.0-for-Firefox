@@ -1482,6 +1482,7 @@ var messageList = {
 			video.setAttribute('loop', true);
 
 			placeholder.appendChild(video);
+			messageList.media.addDragToResizeListener(video);
 			
 			if (messageList.config.show_gfycat_link) {
 				var linkSpan = document.createElement('a');
@@ -1520,6 +1521,8 @@ var messageList = {
 			thumbnail.setAttribute('height', data.height);						
 			
 			placeholder.appendChild(thumbnail);
+			
+			messageList.media.addDragToResizeListener(thumbnail);
 			
 			if (messageList.config.show_gfycat_link) {
 				var linkSpan = document.createElement('a');
