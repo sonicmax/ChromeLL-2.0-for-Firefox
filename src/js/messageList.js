@@ -1942,21 +1942,12 @@ var messageList = {
 		displayNewGalleryImage: function(index, data, oldDiv) {
 			var imageData = this.prepareImageData(data.images[index]);
 			
-			var initialWidth = oldDiv.firstChild.width;
 			var initialHeight = oldDiv.firstChild.height;
 			
-			var startPoint = messageList.config.gfy_max_width || document.documentElement.clientWidth;
-			var ratio = startPoint / (initialWidth * messageList.zoomLevel);
-			var maxWidth = startPoint / messageList.zoomLevel;
-			
-			startPoint = document.documentElement.clientHeight;
-			ratio = startPoint / (initialHeight * messageList.zoomLevel);
-			var maxHeight = startPoint / messageList.zoomLevel;		
-			
-			if ((imageData.width * messageList.zoomLevel) > initialWidth) {
-				var ratio = initialWidth / (imageData.width * messageList.zoomLevel);
+			if (imageData.height !== initialHeight) {
+				var ratio = initialHeight / imageData.height;				
 				imageData.width *= ratio;
-				imageData.height *= ratio;
+				imageData.height = initialHeight;
 			}			
 			
 			if (imageData.animated) {
