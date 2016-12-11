@@ -347,17 +347,16 @@ var allPages = {
 		
 		clickHandler: function(evt) {
 				var user = allPages.popup.username.toLowerCase();
+				var functions;
 				
 				if (window.messageList) {
 					var containers = document.getElementsByClassName('message-container');
-					var container;
-					var functions = messageList.functions.messagecontainer;
+					functions = messageList.messageContainerMethods;
 				}
 				
 				else if (window.topicList) {	
 					var trs = document.getElementsByTagName('tr');
-					var tr;
-					var functions = topicList.functions;
+					functions = topicList.functions;
 				}
 				
 				var target = allPages.popup.currentPost;
@@ -367,29 +366,35 @@ var allPages = {
 					case "IGNORATE?":
 						if (!allPages.config.ignorator_list || allPages.config.ignorator_list == '') {
 							allPages.config.ignorator_list = allPages.popup.username;
-						} else {
-							allPages.ignorator_list += ", " + allPages.popup.username;
 						}
+						else {
+							allPages.config.ignorator_list += ", " + allPages.popup.username;
+						}
+						
 						chrome.runtime.sendMessage({
 							need : "save",
 							name : "ignorator_list",
 							data : allPages.config.ignorator_list
 						});
+						
 						if (window.messageList) {
 							messageList.config.ignorator_list = allPages.config.ignorator_list;
+							messageList.prepareIgnoratorArray();
 							for (var i = 0, len = containers.length; i < len; i++) {
-								container = containers[i];
+								var container = containers[i];
 								functions.ignorator_messagelist(container);
 							}
 						}
+						
 						else {
 							topicList.config.ignorator_list = allPages.config.ignorator_list;
 							topicList.createArrays();
 							for (var i = 1, len = trs.length; i < len; i++) {
-								tr = trs[i];
+								var tr = trs[i];
 								functions.ignorator_topiclist(tr, i);
 							}
 						}
+						
 						evt.target.innerHTML = "IGNORATE";
 						allPages.popup.hide();
 						break;
