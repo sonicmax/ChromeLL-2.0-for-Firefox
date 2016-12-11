@@ -2526,6 +2526,14 @@ var messageList = {
 			
 			document.body.addEventListener('mouseup', (evt) => {
 				shouldDrag = false;				
+				// For some reason, the height property doesn't increase correctly after being decreased (???)
+				// It's not noticeable because of the height: "auto" CSS rule, but it makes further resizing
+				// impossible as height is always < the minHeight value. We can fix this using getBoundingClientRect()
+				// to get the real height and make sure it's accurate.
+				if (element.height < element.getBoundingClientRect().height) {
+					element.height = element.getBoundingClientRect().height;
+				}
+				evt.preventDefault();
 			});
 			
 			document.body.addEventListener('mousemove', (evt) => {
