@@ -682,7 +682,7 @@ var messageList = {
 					var pholds = message.getElementsByClassName('img-placeholder');
 					for (var j = 0; j < pholds.length; j++) {
 						var phold = pholds[j];
-					messageList.thumbnails.observer.observe(phold, {
+					messageList.media.imgPlaceholderObserver.observe(phold, {
 							attributes: true,
 							childList: true
 						});
@@ -1943,7 +1943,7 @@ var messageList = {
 				placeholder.appendChild(linkSpan);		
 			}
 			
-			this.addDragToResizeListener(thumbnail);
+			messageList.media.addDragToResizeListener(thumbnail);
 			
 			if (imgurElement.parentNode) {
 				imgurElement.parentNode.replaceChild(placeholder, imgurElement);
@@ -2005,7 +2005,7 @@ var messageList = {
 
 			placeholder.appendChild(video);
 
-			this.addDragToResizeListener(video);
+			messageList.media.addDragToResizeListener(video);
 
 			if (messageList.config.show_gfycat_link) {
 				var linkSpan = document.createElement('a');
@@ -2030,7 +2030,6 @@ var messageList = {
 					// pass placeholder video element to embed function
 					messageList.imgur.embed(placeholder);
 				}
-			}
 		},
 		
 		embed: function(placeholder) {
@@ -2055,65 +2054,6 @@ var messageList = {
 				placeholder.parentNode.replaceChild(video, placeholder);			
 				video.play();
 			}
-		},
-		
-		addDragToResizeListener: function(element) {
-			var shouldDrag = false;
-			var startX = 0;
-			var startY = 0;
-									
-			var minWidth = 100;
-			var minHeight = element.height * (minWidth / element.width);
-			
-			element.setAttribute('original_width', element.width);
-			element.setAttribute('original_height', element.height);
-						
-			element.addEventListener('mousedown', (evt) => {
-				shouldDrag = true;
-				startX = evt.clientX;
-				startY = evt.clientY;				
-			});						
-			
-			document.body.addEventListener('mouseup', (evt) => {
-				shouldDrag = false;				
-			});	
-			
-			document.body.addEventListener('mousemove', (evt) => {
-				if (shouldDrag) {
-					
-					var width = evt.target.width;
-					var height = evt.target.height;
-					
-					// Resize element using difference between current coords and original coords
-					var offsetX = evt.clientX - startX;
-					var offsetY = evt.clientY - startY;				
-					var offset = (offsetX + offsetY) / 2;
-
-					var newWidth = width + offset;
-									
-					if (newWidth >= minWidth) {
-						var ratio = newWidth / width;
-						var newHeight = height * ratio;
-						
-						if (newHeight >= minHeight) {
-							evt.target.width = newWidth;
-							evt.target.height = newHeight;
-						}
-					}
-					
-					// Update startX/startY after resizing
-					startX = evt.clientX;
-					startY = evt.clientY;
-					
-					evt.preventDefault();
-				}
-			});
-			
-			element.addEventListener('dblclick', (evt) => {
-				// Reset to original width/height
-				element.width = element.getAttribute('original_width');
-				element.height = element.getAttribute('original_height');			
-			});
 		},
 		
 		showEmbedLink: function(evt) {
@@ -2485,10 +2425,13 @@ var messageList = {
 		
 	},
 	
-	thumbnails: {
-		// originally rewritten by xdrvonscottx
+	/**
+	 *  General purpose media utilities
+	 */
 		
-		expand: function(evt) {
+	media: {
+		expandThumbnail: function(evt) {
+			// originally rewritten by xdrvonscottx			
 			var num_children = evt.target.parentNode.parentNode.childNodes.length;
 			// first time expanding - only span
 			if (num_children == 1) {
@@ -2542,11 +2485,11 @@ var messageList = {
 			}
 		},
 				
-		observer: new MutationObserver((mutations) => {
+		imgPlaceholderObserver: new MutationObserver((mutations) => {
 			for (var i = 0; i < mutations.length; i++) {
 				var mutation = mutations[i];
 				if (messageList.config.resize_imgs) {
-					messageList.thumbnails.resize(mutation.target.childNodes[0]);
+					messageList.media.resize(mutation.target.childNodes[0]);
 				}
 				if (mutation.type === 'attributes') {
 					// once they're loaded, thumbnails have /i/t/ in their
@@ -2559,19 +2502,74 @@ var messageList = {
 						 * script originally did - i think only removing href
 						 * actually matters
 						 */
-						mutation.target.parentNode.addEventListener('click',
-								messageList.thumbnails.expand);
-						mutation.target.parentNode.setAttribute('class',
-								'thumbnailed_image');
-						mutation.target.parentNode
-								.setAttribute('oldHref',
-										mutation.target.parentNode
-												.getAttribute('href'));
+						mutation.target.parentNode.addEventListener('click', messageList.media.expandThumbnail);				
+						mutation.target.parentNode.setAttribute('class', 'thumbnailed_image');
+						mutation.target.parentNode.setAttribute('oldHref', mutation.target.parentNode.getAttribute('href'));
 						mutation.target.parentNode.removeAttribute('href');
 					}
 				}
 			}
-		})
+		}),
+		
+		addDragToResizeListener: function(element) {
+			var shouldDrag = false;
+			var startX = 0;
+			var startY = 0;
+									
+			var minWidth = 100;
+			var minHeight = element.height * (minWidth / element.width);
+			
+			element.setAttribute('original_width', element.width);
+			element.setAttribute('original_height', element.height);
+			
+			element.addEventListener('mousedown', (evt) => {
+				shouldDrag = true;
+				startX = evt.clientX;
+				startY = evt.clientY;				
+			});						
+			
+			document.body.addEventListener('mouseup', (evt) => {
+				shouldDrag = false;				
+			});
+			
+			document.body.addEventListener('mousemove', (evt) => {
+				if (shouldDrag) {
+					
+					var width = evt.target.width;
+					var height = evt.target.height;
+					
+					// Resize element using difference between current coords and original coords
+					var offsetX = evt.clientX - startX;
+					var offsetY = evt.clientY - startY;		
+					var offset = (offsetX + offsetY) / 2;
+
+					var newWidth = width + offset;
+									
+					if (newWidth >= minWidth) {
+						var ratio = newWidth / width;
+						var newHeight = height * ratio;
+						
+						if (newHeight >= minHeight) {
+							evt.target.width = newWidth;
+							evt.target.height = newHeight;
+						}
+					}
+					
+					// Update startX/startY after resizing
+					startX = evt.clientX;
+					startY = evt.clientY;
+					
+					evt.preventDefault();
+				}
+			});
+			
+			element.addEventListener('dblclick', (evt) => {
+				// Reset to original width/height
+				element.width = element.getAttribute('original_width');
+				element.height = element.getAttribute('original_height');			
+			});
+		}		
+		
 	},
 	
 	spoilers: {
