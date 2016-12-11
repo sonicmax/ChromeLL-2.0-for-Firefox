@@ -2539,6 +2539,11 @@ var messageList = {
 			document.body.addEventListener('mousemove', (evt) => {
 				if (shouldDrag) {
 					
+					if (evt.clientX < evt.target.getBoundingClientRect().left) {						
+						shouldDrag = false;
+						return;
+					}
+					
 					var width = evt.target.width;
 					var height = evt.target.height;
 					
