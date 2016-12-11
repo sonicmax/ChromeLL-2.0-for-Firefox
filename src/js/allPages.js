@@ -712,19 +712,46 @@ var allPages = {
 		}	
 	},	
 	
-	insertIntoTextarea: function(text) {
+	/**
+	 *  Method which copies ETI quoting behaviour when inserting text into textarea
+	 */ 
+	
+	insertIntoTextarea: function(textToInsert) {
 		var textarea = document.getElementById('message') || document.getElementsByTagName('textarea')[0];
 
-		var qrtext = textarea.value;
-		var oldtxt = qrtext.split('---');
-		var newtxt = '';
+		// If no other text has been added before sig belt, always insert text at beginning of textarea.
+		// Fixes https://github.com/sonicmax/ChromeLL-2.0/issues/74
+		var caret;
 		
-		for ( var i = 0; i < oldtxt.length - 1; i++) {
-			newtxt += oldtxt[i];
+		// Check whether any text has been inserted before sig belt.
+		// If user doesn't have a sig, it will always be inserted at caret position
+		if (textarea.value) {
+			var message = textarea.value.split('\n---')[0];
+			if (message[0] === undefined) {
+				// Insert at 0
+				caret = 0;
+		}
 		}
 		
-		newtxt += text + "\n---" + oldtxt[oldtxt.length - 1];
-		textarea.value = newtxt;
+		if (caret !== 0) {
+			// We can insert like message at caret position
+			caret = textarea.selectionStart;
+			// Match ETI behaviour for quotes by inserting two linebreaks
+			textToInsert = '\n\n' + textToInsert;
+		}			
+		
+		textarea.value = textarea.value.substring(0, caret) 
+				+ textToInsert 
+				+ textarea.value.substring(caret, textarea.value.length);						
+		
+		// Move caret to end of inserted text.
+		var endOfInsertion = caret + textToInsert.length;
+		
+		// We have to call setSelectionRange from inside setTimeout because of weird Chrome bug
+		setTimeout(() => {
+			textarea.focus();
+			textarea.setSelectionRange(endOfInsertion, endOfInsertion);
+		}, 0);
 	},
 	
 	init: function(config) {

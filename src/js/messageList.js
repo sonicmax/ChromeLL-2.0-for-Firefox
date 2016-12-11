@@ -3203,37 +3203,7 @@ var messageList = {
 			var markup = '<quote msgid="' + msgId + '">' + messageList.markupBuilder.build(message) + '</quote>';
 			var textToInsert = markup + '\n' + likeMessage;
 			
-			// If no other text has been added before sig belt, always insert text at beginning of textarea.
-			// Fixes https://github.com/sonicmax/ChromeLL-2.0/issues/74
-			var caret;
-						
-			// Check whether any text has been inserted before sig belt.
-			// If user doesn't have a sig, it will always be inserted at caret position
-			if (quickreply.value) {
-				var message = quickreply.value.split('\n---')[0];
-				if (message[0] === undefined) {
-					// Insert at 0
-					caret = 0;
-				}								
-			}
-			
-			if (caret !== 0) {
-				// We can insert like message at caret position
-				caret = quickreply.selectionStart;
-			}			
-			
-			quickreply.value = quickreply.value.substring(0, caret) 
-					+ textToInsert 
-					+ quickreply.value.substring(caret, quickreply.value.length);						
-			
-			// Move caret to end of inserted text.
-			var endOfInsertion = caret + textToInsert.length;
-			
-			// We have to call setSelectionRange from inside setTimeout because of weird Chrome bug
-			setTimeout(() => {
-				quickreply.focus();
-				quickreply.setSelectionRange(endOfInsertion, endOfInsertion);
-			}, 0);
+			allPages.insertIntoTextarea(textToInsert);
 			
 			if (document.getElementsByClassName('regular quickpost-expanded').length == 0) {
 				// quickpost area is hidden - click nub element to open
