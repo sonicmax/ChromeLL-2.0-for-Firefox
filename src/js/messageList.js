@@ -2539,8 +2539,14 @@ var messageList = {
 					var offsetY = evt.clientY - startY;		
 						
 						var average = (offsetX + offsetY) / 2;
+						var offset;
+						if (offsetX > 0 || offsetY > 0) {
+							offset = Math.max(offsetX, offsetY, average);
+						}
+						else {
+							offset = Math.min(offsetX, offsetY, average);
+						}
 						
-						var offset = Math.max(offsetX, offsetY, average);
 
 					var newWidth = width + offset;
 									
