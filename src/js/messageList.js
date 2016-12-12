@@ -2622,7 +2622,9 @@ var messageList = {
 			
 			// Cancel default event if dragstart fires
 			element.addEventListener('dragstart', (evt) => {
+				if (evt.shiftKey) {
 				evt.preventDefault();
+				}
 			});
 			
 			// Add handler to mousemove event which resizes element based on the
