@@ -2495,7 +2495,9 @@ var messageList = {
 				newimg.src = fullsize;
 				newspan.insertBefore(newimg, null);
 				
-				messageList.media.addDragToResizeListener(newimg);
+				newimg.onload = function() {
+					messageList.media.addDragToResizeListener(this);					
+				};				
 				
 				evt.target.parentNode.parentNode.insertBefore(newspan, evt.target.parentNode);
 				evt.target.parentNode.style.display = "none"; // hide old img
