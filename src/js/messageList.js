@@ -2567,82 +2567,29 @@ var messageList = {
 			}
 		}),
 		
-		addDragToResizeListener: function(element) {
-			const minWidth = Math.min(100, element.width);
-			const minHeight = element.height * (minWidth / element.width);						
-			
-			var shouldDrag = false;
-			var startX = 0;
-			var startY = 0;
+		imageDataArray: [],		
+		shouldDrag: false,
+		lastResized: undefined,		
 									
-			// Expanded thumbnails don't appear to have width/height property, which prevents us from
-			// being able to resize them. We can fix this by using getBoundingClientRect() to get the 
-			// actual size of the image
-			if (!element.width || !element.height) {
-				element.width = element.getBoundingClientRect().width;
-				element.height = element.getBoundingClientRect().height;
-			}
+		initDragToResize: function() {
 						
-			element.setAttribute('original_width', element.width);
-			element.setAttribute('original_height', element.height);
-			
-			// We initiate the drag event when mousedown fires on the element,
-			// and cancel it once mouseup fires on document.body
-			element.addEventListener('mousedown', (evt) => {
-				if (evt.target.parentNode.className === 'img-loaded' && !evt.shiftKey) {
-					return;
-				}
-				
-				shouldDrag = true;
-				startX = evt.clientX;
-				startY = evt.clientY;				
-				evt.preventDefault();
-			});						
-			
-			document.body.addEventListener('mouseup', (evt) => {
-				// For some reason, the height property doesn't increase correctly after being decreased (???)
-				// It's not noticeable because of the height: "auto" CSS rule, but it makes further resizing
-				// impossible as height is always < the minHeight value. We can fix this using getBoundingClientRect()
-				// to get the real height and make sure it's accurate. It won't have too much of a performance impact
-				// if we do it after the mouseup event fires
-				
-				if (element.height < element.getBoundingClientRect().height) {
-					element.height = element.getBoundingClientRect().height;
-				}
-				
-				shouldDrag = false;
-				evt.preventDefault();			
-			});
-			
-			// Reset to original size on doubleclick
-			element.addEventListener('dblclick', (evt) => {				
-				element.width = element.getAttribute('original_width');
-				element.height = element.getAttribute('original_height');			
-			});
-			
-			// Cancel default event if dragstart fires
-			element.addEventListener('dragstart', (evt) => {
-				if (evt.shiftKey) {
-				evt.preventDefault();
-				}
-			});
-			
-			// Add handler to mousemove event which resizes element based on the
-			// difference between evt.clientX/evt.clientY and startX/startY.
 			document.body.addEventListener('mousemove', (evt) => {
-				if (shouldDrag) {
+				if (this.shouldDrag) {					
 					
 					if (evt.clientX < evt.target.getBoundingClientRect().left) {						
-						shouldDrag = false;
+						this.shouldDrag = false;
 						return;
 					}
 					
+					var imageData = this.imageDataArray[evt.target.getAttribute('image_index')];
+
 					var width = evt.target.width;
 					var height = evt.target.height;
 					
 					if (width && height) {
-					var offsetX = evt.clientX - startX;
-					var offsetY = evt.clientY - startY;		
+						
+						var offsetX = evt.clientX - imageData.startX;
+						var offsetY = evt.clientY - imageData.startY;
 						
 						var average = (offsetX + offsetY) / 2;
 						var offset;
@@ -2656,25 +2603,94 @@ var messageList = {
 						
 					var newWidth = width + offset;
 									
-					if (newWidth >= minWidth) {
+						if (newWidth >= imageData.minWidth) {							
 						var ratio = newWidth / width;
 						var newHeight = height * ratio;
 						
-						if (newHeight >= minHeight) {
+							if (newHeight >= imageData.minHeight) {					
 							evt.target.width = newWidth;
 							evt.target.height = newHeight;
-					// Update startX/startY after resizing
-					startX = evt.clientX;
-					startY = evt.clientY;
+
+								imageData.startX = evt.clientX;
+								imageData.startY = evt.clientY;								
 							}
 						}
-					
-					evt.preventDefault();
-				}
+					}
 				}
 			});
+					
+			// For some reason, the height property doesn't increase correctly after being decreased (???)
+			// It's not noticeable because of the height: "auto" CSS rule, but it makes further resizing
+			// impossible as height is always < the minHeight value. We can fix this using getBoundingClientRect()
+			// to get the real height and make sure it's accurate. It won't have too much of a performance impact
+			// if we do it after the mouseup event fires
+			
+			document.body.addEventListener('mouseup', (evt) => {			
+				
+				if (this.lastResized 
+						&& this.lastResized.height < this.lastResized.getBoundingClientRect().height) {
+							
+					this.lastResized.height = this.lastResized.getBoundingClientRect().height;
+				}
+				
+				this.shouldDrag = false;
+			});
+			
+		},
+		
+		addDragToResizeListener: function(element) {
+			var minWidth = Math.min(100, element.width);
+			var minHeight = element.height * (minWidth / element.width);				
+				
+			// Expanded thumbnails don't appear to have width/height property, which prevents us from
+			// being able to resize them. We can fix this by using getBoundingClientRect() to get the 
+			// actual size of the image
+			if (!element.width || !element.height) {
+				element.width = element.getBoundingClientRect().width;
+				element.height = element.getBoundingClientRect().height;
+				}
+			
+			element.setAttribute('image_index', this.imageDataArray.length);
+			
+			this.imageDataArray.push({
+				minWidth: minWidth,
+				minHeight: minHeight,
+				originalWidth: element.width,
+				originalHeight: element.height,
+				startX: 0,
+				startY: 0
+			});
+			
+			// We initiate the drag event when mousedown fires on the element,
+			// and cancel it once mouseup fires on document.body
+			element.addEventListener('mousedown', (evt) => {
+				if (evt.target.parentNode.className === 'img-loaded' && !evt.shiftKey) {
+					return;
 		}		
 		
+				var imageData = this.imageDataArray[evt.target.getAttribute('image_index')];								
+				imageData.startX = evt.clientX;
+				imageData.startY = evt.clientY;
+				
+				this.lastResized = evt.target;
+				
+				this.shouldDrag = true;
+			});		
+			
+			// Reset to original size on doubleclick
+			element.addEventListener('dblclick', (evt) => {
+				var imageData = this.imageDataArray[evt.target.getAttribute('image_index')];
+				element.width = imageData.originalWidth;
+				element.height = imageData.originalHeight;
+			});
+			
+			// Cancel default event if dragstart fires and user is holding shift key
+			element.addEventListener('dragstart', (evt) => {
+				if (evt.shiftKey) {
+					evt.preventDefault();
+				}
+			});						
+		}
 	},
 	
 	spoilers: {
@@ -3483,6 +3499,8 @@ var messageList = {
 				searchBox.addEventListener('keyup', this.handleEvent.search.bind(this));		
 				document.addEventListener('keydown', this.handleEvent.keydown.bind(this));
 			}
+			
+			this.media.initDragToResize();
 		}
 		// these listeners should be added to every new post
 		if (this.config.user_info_popup) {
