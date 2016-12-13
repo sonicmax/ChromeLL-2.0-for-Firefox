@@ -2574,7 +2574,7 @@ var messageList = {
 		initDragToResize: function() {
 						
 			document.body.addEventListener('mousemove', (evt) => {
-				if (this.shouldDrag) {					
+				if (this.shouldDrag && evt.target.isEqualNode(this.lastResized)) {
 					
 					if (evt.clientX < evt.target.getBoundingClientRect().left) {						
 						this.shouldDrag = false;
