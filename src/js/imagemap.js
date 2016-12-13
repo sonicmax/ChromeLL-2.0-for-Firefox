@@ -33,8 +33,12 @@ var imagemap = function() {
 		var url = window.location.protocol + '//images.endoftheinter.net/imagemap.php' + page;
 		
 		chrome.runtime.sendMessage({
+			
 				need: "xhr",
-				url: url
+				url: url,
+				ignoreCache: true,
+				withCredentials: true
+				
 		}, (response) => {
 				var html = document.createElement('html');
 				html.innerHTML = response;		
