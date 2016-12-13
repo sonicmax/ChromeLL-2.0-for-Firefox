@@ -480,14 +480,14 @@ var background = {
 				
 				case "config":
 					// page script needs extension config.
-					background.cfg = JSON.parse(localStorage['ChromeLL-Config']);
+					background.config = JSON.parse(localStorage['ChromeLL-Config']);
 					if (request.sub) {
-						sendResponse({"data": background.cfg[request.sub]});
+						sendResponse({"data": background.config[request.sub]});
 					} else if (request.tcs) {
 						var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
-						sendResponse({"data": background.cfg, "tcs": tcs});
+						sendResponse({"data": background.config, "tcs": tcs});
 					} else {
-						sendResponse({"data": background.cfg});
+						sendResponse({"data": background.config});
 					}
 					break;
 					
@@ -496,11 +496,11 @@ var background = {
 					if (request.name === "tcs") {
 						localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
 					} else {
-						background.cfg[request.name] = request.data;
-						background.cfg.last_saved = new Date().getTime();
-						localStorage['ChromeLL-Config'] = JSON.stringify(background.cfg);
+						background.config[request.name] = request.data;
+						background.config.last_saved = new Date().getTime();
+						localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
 					}
-					if (background.cfg.debug) {
+					if (background.config.debug) {
 						console.log('saving ', request.name, request.data);
 					}
 					break;
@@ -515,17 +515,17 @@ var background = {
 					
 					(id) => {
 						
-						if (!background.cfg.clear_notify) {
-							this.cfg.clear_notify = "5";
+						if (!background.config.clear_notify) {
+							this.config.clear_notify = "5";
 						}
 						
-						if (background.cfg.clear_notify === "0") {
+						if (background.config.clear_notify === "0") {
 							return;
 						}
 						
 						setTimeout(() => {
 							chrome.notifications.clear(id, null);
-						}, parseInt(background.cfg.clear_notify, 10) * 1000);
+						}, parseInt(background.config.clear_notify, 10) * 1000);
 						
 					});
 					
@@ -565,14 +565,14 @@ var background = {
 					break;
 					
 				case "insertcss":
-					if (background.cfg.debug) {
+					if (background.config.debug) {
 						console.log('inserting css ', request.file);
 					}
 					chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
 					break;
 					
 				case "opentab":
-					if (background.cfg.debug) {
+					if (background.config.debug) {
 						console.log('opening tab ', request.url);
 					}
 					chrome.tabs.create({url: request.url});
@@ -608,7 +608,7 @@ var background = {
 				case "options":
 					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 							// check whether bg script can send messages to current tab
-							if (background.tabPorts[tabs[0].id] && !background.cfg.options_window) {
+							if (background.tabPorts[tabs[0].id] && !background.config.options_window) {
 								// Open options page in iframe
 								chrome.tabs.sendMessage(tabs[0].id, {
 									action: "showOptions"
@@ -664,9 +664,7 @@ var background = {
 					return true;						
 					
 				default:
-					if (background.cfg.debug) {
 						console.log("Error in request listener - undefined parameter?", request);
-					}
 					break;
 			}
 		}
@@ -1095,6 +1093,7 @@ var database = (function() {
 			};
 			
 			transaction.onerror = (err) => {
+				// Callback with value of -1MB (to make it obvious that something went wrong without breaking anything)
 				callback(-1048576);
 			};
 		},
