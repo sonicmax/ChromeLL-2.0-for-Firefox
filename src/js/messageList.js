@@ -46,6 +46,10 @@ var messageList = {
 		
 		this.getZoomLevel();
 		
+		if (window.location.search.indexOf('thread=') > -1) {
+			this.handleRepliesPage();			
+		}		
+		
 		if (document.readyState == 'loading') {
 			// wait for DOMContentLoaded to fire before attempting to modify DOM
 			document.addEventListener('DOMContentLoaded', () => {
@@ -3631,6 +3635,17 @@ var messageList = {
 		// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
 		var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
 		document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);		
+	},
+	
+	handleRepliesPage: function() {
+		// No infobar on replies page
+		this.infobarMethods = {};
+		
+		// Can't get accurate post count
+		delete this.messageContainerMethods.number_posts;		
+		
+		// Replace newPageObserver.observe() with an empty function
+		this.newPageObserver.observe = () => {};
 	},
 	
 	handleArchivedAndLockedTopics: function() {

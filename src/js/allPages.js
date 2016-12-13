@@ -796,7 +796,8 @@ var getCustomColors = function() {
 	var titleText = document.getElementsByTagName('h1')[0];
 	var anchor = document.getElementsByTagName('a')[0];
 	var userbar = document.getElementsByClassName('userbar')[0];
-	var infobar = document.getElementsByClassName('infobar')[0];
+	// Infobar is not displayed on reply threads, so use message instead
+	var infobar = document.getElementsByClassName('infobar')[0] || document.getElementsByClassName('message')[0];
 	var message = document.getElementsByClassName('message')[0] || document.getElementsByTagName('th')[0];			
 
 	var customColors = {};
