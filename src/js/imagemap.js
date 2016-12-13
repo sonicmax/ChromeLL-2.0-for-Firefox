@@ -342,10 +342,6 @@ var imagemap = function() {
 		// Remove event listeners
 		document.removeEventListener('click', clickHandler);
 		document.removeEventListener('mousewheel', preventScroll);
-				
-		// Close database connection
-		chrome.runtime.sendMessage({ need: 'closeDatabase' });		
-		
 	};
 	
 	var preventScroll = function(evt) {
