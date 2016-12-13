@@ -692,77 +692,13 @@ var messageList = {
 						});
 					}
 				}
-			},				
-			
-			loadquotes: function() {
-				function getElementsByClass(searchClass, node, tag) {
-					var classElements = new Array();
-					if (node == null)
-						node = document;
-					if (tag == null)
-						tag = '*';
-					var els = node.getElementsByTagName(tag);
-					var elsLen = els.length;
-					for (var i = 0, j = 0; i < elsLen; i++) {
-						if (els[i].className == searchClass) {
-							classElements[j] = els[i];
-							j++;
-						}
-					}
-					return classElements;
 				}
+	},
 
-				function imagecount() {
-					var imgs = document.getElementsByTagName('img').length;
-					return imgs;
-				}
+	omittedQuoteLoader: {
 
-				if (document.location.href.indexOf("https") == -1) {
-					var url = "http";
-				} else {
-					var url = "https";
-				}
-
-				function coolCursor() {
-					this.style.cursor = 'pointer';
-				}
-
-				function processPage(XML, element) {
-					var newPage = document.createElement("div");
-					newPage.innerHTML = XML;
-					var newmessage = getElementsByClass('message', newPage, null)[0];
-					var scripttags = newmessage.getElementsByTagName('script');
-					for (var i = 0; i < scripttags.length; i++) {
-						var jsSource = scripttags[i].innerHTML
-								.replace(
-										/onDOMContentLoaded\(function\(\)\{new ImageLoader\(\$\("u0_1"\), "\\\/\\\//gi,
-										'').replace(/\\/gi, '').replace(/\)\}\)/gi, '')
-								.split(',');
-						var replacement = new Image();
-						replacement.src = url + '://' + jsSource[0].replace(/"$/gi, '');
-						replacement.className = 'expandimagesLOL';
-						scripttags[i].parentNode.replaceChild(replacement,
-								scripttags[i]);
-						i--;
-					}
-					if (newmessage.innerHTML.indexOf('---') != -1) {
-						var j = 0;
-						while (newmessage.childNodes[j]) {
-							if (newmessage.childNodes[j].nodeType == 3
-									&& newmessage.childNodes[j].nodeValue
-											.indexOf('---') != -1) {
-								while (newmessage.childNodes[j]) {
-									newmessage.removeChild(newmessage.childNodes[j]);
-								}
-							}
-							j++;
-						}
-					}
-					element.parentNode.appendChild(newmessage);
-				}
-
-				function loadMessage() {
-					var mssgurl = this.id;
+		loadMessage: function(anchor) {
+			var mssgurl = anchor.id;
 					var newSpan = document.createElement('span');
 					newSpan.innerHTML = 'Loading message...';
 					var loadingImg = new Image();
@@ -779,58 +715,105 @@ var messageList = {
 							+ 'Mgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAA'
 							+ 'LAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsR'
 							+ 'kAAAOwAAAAAAAAAAAA==';
-					this.parentNode.insertBefore(newSpan, this);
-					this.parentNode.replaceChild(loadingImg, this);
+			anchor.parentNode.insertBefore(newSpan, anchor);
+			anchor.parentNode.replaceChild(loadingImg, anchor);
 					var ajax = new XMLHttpRequest();
-					ajax.open('GET', url + '://boards.endoftheinter.net/message.php?'
-							+ mssgurl, true);
+			ajax.open('GET', window.location.protocol + '//boards.endoftheinter.net/message.php?' + mssgurl, true);
 					ajax.send(null);
-					ajax.onreadystatechange = function() {
-						if (ajax.readyState == 4) {
+			
+			ajax.onload = () => {
 							if (ajax.status == 200) {
-								processPage(ajax.responseText, newSpan);
+					messageList.omittedQuoteLoader.processPage(ajax.responseText, newSpan);
 								loadingImg.parentNode.removeChild(loadingImg);
 								newSpan.parentNode.removeChild(newSpan);
 							} else {
 								alert("An error occurred loading the message. Fuck shit.");
 							}
-						}
+			};
+			
+		},
+		
+		processPage: function(response, element) {
+			var newPage = document.createElement("div");
+			newPage.innerHTML = response;
+			var newMessage = newPage.getElementsByClassName('message')[0];
+			var scripts = newMessage.getElementsByTagName('script');
+
+			// Find ImageLoader scripts and replace them with images
+			for (var i = scripts.length - 1; i >= 0; i--) {
+				var script = scripts[i];				
+				
+				if (/ImageLoader/.test(script.text)) {
+					// Create img element using parameters for ImageLoader constructor. 
+					// (we can discard 1st parameter)
+					var parameters = script.text.replace(')})', '').split(',');
+					parameters.shift();
+					
+					var imageUrl = parameters[0].replace(/\\/g, '');
+					imageUrl = imageUrl.replace('"//', window.location.protocol + '//');
+					imageUrl = imageUrl.substring(0, imageUrl.length - 1);
+					// Make sure that we load thumbnails, not fullsize images. Note that thumbnails always have .jpg extension
+					imageUrl = imageUrl.replace('i/n', 'i/t').substr(0, imageUrl.lastIndexOf(".")) + ".jpg";					
+					
+					var img = document.createElement('img');
+					img.src = imageUrl;
+					
+					img.onload = function() {
+						// Need to set width/height properties for drag-resizing to work
+						this.width = this.getBoundingClientRect().width;
+						this.height = this.getBoundingClientRect().height;
+						messageList.media.addDragToResizeListener(this);
+						this.parentNode.className = 'img-loaded';
+					};
+					
+					var placeholder = script.previousSibling;
+					// Clear style properties (because it could refer to size of fullsize image)
+					placeholder.style = '';
+					placeholder.appendChild(img);
+					
+					// Enable click-to-expand thumbnails for this image
+					messageList.media.imgPlaceholderObserver.observe(placeholder, {
+						attributes: true,
+						childList: true
+					});
+					
+					// We don't need this anymore
+					script.remove();									
 					}
 				}
 
-				function findQuotes() {
-					var quotes = getElementsByClass('quoted-message', document, 'div');
-					for (var i = 0; i < quotes.length; i++) {
-						var anchors = quotes[i].getElementsByTagName('a');
-						for (var j = 0; j < anchors.length; j++) {
-							if (anchors[j].innerHTML == '[quoted text omitted]') {
-								anchors[j].removeAttribute('href');
-								var parts = anchors[j].parentNode.getAttribute('msgid')
-										.split(',');
-								var secondsplit = parts[2].split('@');
-								anchors[j].id = 'id=' + secondsplit[0] + '&topic='
-										+ parts[1] + '&r=' + secondsplit[1];
-								anchors[j].addEventListener('click', loadMessage, true);
-								anchors[j].style.textDecoration = 'underline';
-								anchors[j].title = 'Click to load the omitted message';
-								anchors[j].addEventListener('mouseover', coolCursor,
-										true);
+			// Find spoiler tags and attach click listeners to handle open/closing action
+			var spoilers = newMessage.getElementsByClassName('spoiler_on_close');
+			for (var i = 0, len = spoilers.length; i < len; i++) {
+				var spoiler = spoilers[i];
+				
+				spoiler.addEventListener('click', (evt) => {
+					messageList.spoilers.toggle(evt.target);
+					evt.preventDefault();
+				});
+				
+				spoiler.nextSibling.addEventListener('click', (evt) => {
+					messageList.spoilers.toggle(evt.target);
+					evt.preventDefault();
+				});				
+				
+			}
+			
+			if (newMessage.innerHTML.indexOf('---') != -1) {
+				var j = 0;
+				while (newMessage.childNodes[j]) {
+					if (newMessage.childNodes[j].nodeType == 3
+							&& newMessage.childNodes[j].nodeValue
+									.indexOf('---') != -1) {
+						while (newMessage.childNodes[j]) {
+							newMessage.removeChild(newMessage.childNodes[j]);
 							}
 						}
+					j++;
 					}
 				}
 
-				var currentMessages = 0;
-
-				function checkMssgs() {
-					var mssgs = getElementsByClass('message-container', document
-							.getElementById('u0_1'), 'div').length;
-					if (mssgs > currentMessages) {
-						findQuotes();
-						currentMessages = mssgs;
-					}
-				}
-				var interval = window.setInterval(checkMssgs, 1000);
+			element.parentNode.appendChild(newMessage);			
 			}
 	},
 	
@@ -1192,6 +1175,15 @@ var messageList = {
 				}
 			}
 			
+			// Capture [Quoted text omitted] clicks so we can use quote loader instead of redirecting to anchor href
+			if (messageList.config.loadquotes && evt.target.tagName === 'A' && evt.target.innerHTML === '[quoted text omitted]') {
+				var parts = evt.target.parentNode.getAttribute('msgid').split(',');
+				var secondsplit = parts[2].split('@');
+				evt.target.id = 'id=' + secondsplit[0] + '&topic=' + parts[1] + '&r=' + secondsplit[1];
+				messageList.omittedQuoteLoader.loadMessage(evt.target);
+				evt.preventDefault();
+				return;
+			}
 		},		
 		
 		mouseenter: function(evt) {
@@ -2707,13 +2699,18 @@ var messageList = {
 			}
 		},
 		
-		toggle: function(obj) {
-			while (!/spoiler_(?:open|close)/.test(obj.className)) {
-				obj = obj.parentNode;
+		toggle: function(element) {
+			while (!/spoiler_(?:open|close)/.test(element.className)) {				
+				element = element.parentNode;				
 			}
-			obj.className = obj.className.indexOf('closed') != -1 ? obj.className
-					.replace('closed', 'opened'): obj.className.replace('opened',
-					'closed');
+			
+			if (element.className.indexOf('closed') > -1) {
+				element.className = element.className.replace('closed', 'opened');
+			}
+			else {
+				element.className = element.className.replace('opened', 'closed');
+			}
+			
 			return false;
 		}
 	},
