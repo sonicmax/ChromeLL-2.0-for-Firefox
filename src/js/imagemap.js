@@ -8,7 +8,7 @@ var imagemap = function() {
 	 */
 	var init = function() {
 	
-		openDatabase(function() {
+		openDatabase(() => {
 				getImagemap(processResponse);		
 		});
 	};
@@ -35,7 +35,7 @@ var imagemap = function() {
 		chrome.runtime.sendMessage({
 				need: "xhr",
 				url: url
-		}, function(response) {
+		}, (response) => {
 				var html = document.createElement('html');
 				html.innerHTML = response;		
 				callback.call(imagemap, html);
@@ -44,7 +44,7 @@ var imagemap = function() {
 		
 	var processResponse = function(imagemap) {
 
-		scrapeImagegrid(imagemap, function(imageGrid) {		
+		scrapeImagegrid(imagemap, (imageGrid) => {		
 			var infobar = imagemap.getElementsByClassName('infobar')[1];
 			var anchors = infobar.getElementsByTagName('a');
 			
@@ -62,7 +62,7 @@ var imagemap = function() {
 		var imageGrid = imagemap.getElementsByClassName('image_grid')[0];
 		var imgs = imageGrid.getElementsByTagName('img')
 
-		loadImagesFromCache(imgs, function() {
+		loadImagesFromCache(imgs, () => {
 			var blockDescs = imageGrid.getElementsByClassName('block_desc');
 			
 			for (var i = 0, len = blockDescs.length; i < len; i++) {
@@ -90,7 +90,7 @@ var imagemap = function() {
 			chrome.runtime.sendMessage({
 					need: 'queryDb',
 					src: img.src
-			}, function(result) {
+			}, (result) => {
 				
 				if (result.data) {
 					img.dataset.oldsrc = img.src;
@@ -177,7 +177,7 @@ var imagemap = function() {
 		// Add click listeners to close popup/copy img code to clipboard when appropriate
 		bodyClass.addEventListener('click', closePopup);
 		
-		div.addEventListener('click', function(evt) {
+		div.addEventListener('click', (evt) => {
 			clickHandler(evt);
 			evt.preventDefault();
 		});
@@ -267,27 +267,31 @@ var imagemap = function() {
 	
 	var debouncerId = '';
 	
-	var debouncer = function() {
+	var debouncer = function(evt) {
 		clearTimeout(debouncerId);
-		debouncerId = setTimeout(scrollHandler, 250);
+		debouncerId = setTimeout(() => {			
+			scrollHandler(evt);			
+		}, 250);
 	};
 	
-	var scrollHandler = function(imageGrid) {
-		var imageGrid = document.getElementsByClassName('image_grid')[0]
+	var scrollHandler = function(evt) {
+		var scrollTarget = evt.target;
 		// Check whether user is at end of current page - subtract 5 pixels from clientHeight 
 		// to account for large zoom levels)
-		if (imageGrid.scrollTop >= imageGrid.scrollHeight - imageGrid.clientHeight - 5) {			
+		if (scrollTarget.scrollTop >= scrollTarget.scrollHeight - scrollTarget.clientHeight - 5) {
+			
 			if (currentPage === lastPage) {
 				// No more pages to load
 				return;
 			}
+			
 			else {
 				// Load next page and append to current grid 
 				currentPage++;
-				getImagemap(function(imagemap) {
+				getImagemap((imagemap) => {
 					
-					scrapeImagegrid(imagemap, function(newGrid) {
-						imageGrid.appendChild(newGrid);
+					scrapeImagegrid(imagemap, (newGrid) => {
+						document.getElementsByClassName('image_grid')[0].appendChild(newGrid);
 						sendToEncoder(newGrid);
 					});
 					
@@ -341,7 +345,7 @@ var imagemap = function() {
 		
 		// Remove event listeners
 		document.removeEventListener('click', clickHandler);
-		document.removeEventListener('mousewheel', preventScroll);
+		document.removeEventListener('mousewheel', preventScroll);	
 	};
 	
 	var preventScroll = function(evt) {
@@ -370,7 +374,7 @@ var imagemap = function() {
 					document.getElementById('loading_image').style.display = 'block';							
 				}
 				
-				lookupInDb(query, function(results) {
+				lookupInDb(query, (results) => {
 					processResults(results, query);				
 				});
 			}
@@ -390,7 +394,7 @@ var imagemap = function() {
 					query: query			
 			};
 			
-			openDatabase(function() {
+			openDatabase(() => {
 				chrome.runtime.sendMessage(request, callback);
 			});									
 		};
