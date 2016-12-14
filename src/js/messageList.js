@@ -2682,9 +2682,11 @@ var messageList = {
 			
 			// Cancel default event if dragstart fires and user is holding shift key
 			element.addEventListener('dragstart', (evt) => {
-				if (evt.shiftKey) {
-					evt.preventDefault();
+				if (evt.target.parentNode.className === 'img-loaded' && !evt.shiftKey) {
+					return;
 				}
+				
+				evt.preventDefault();
 			});						
 		}
 	},
