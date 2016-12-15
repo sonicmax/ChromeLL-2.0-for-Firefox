@@ -855,7 +855,7 @@ var database = (function() {
 	
 	var getStorageApiCache = function(callback) {
 		chrome.storage.local.get("imagemap", (cache) => {
-			if (typeof cache !== "object" && Object.keys(cache.imagemap).length === 0) {
+			if (typeof cache !== "object" || Object.keys(cache.imagemap).length === 0) {
 				callback();
 			}
 			
@@ -865,8 +865,7 @@ var database = (function() {
 		});
 	};		
 	
-	return {
-		open: function(callback) {
+	var open = function(callback) {
 			var request = window.indexedDB.open(DB_NAME, DB_VERSION);
 			
 			request.onsuccess = (event) => {
@@ -883,9 +882,9 @@ var database = (function() {
 				// Create an index to search by filename.
 				objectStore.createIndex("filename", "filename", { unique: false, multiEntry: true });	
 			};						
-		},
+	};
 		
-		clear: function(callback) {
+	var clear = function(callback) {
 		
 			this.open(() => {
 				
@@ -893,13 +892,13 @@ var database = (function() {
 				callback();
 				
 			});
-			
-		},
+	};
 		
 		/**
-		 *	Adds objects from chrome.storage cache to current database.
+	 *	Converts old cache to new cache which uses IndexedDB API instead of chrome.storage API
 		 */
-		convertCache: function(callback) {
+	
+	var convertCache = function(callback) {
 			
 			getStorageApiCache((imagemap) => {
 				
@@ -919,9 +918,9 @@ var database = (function() {
 				}
 				
 			});
-		},	
+	};
 		
-		query: function(src, callback) {
+	var query = function(src, callback) {
 			var request = db.transaction(IMAGE_DB)
 					.objectStore(IMAGE_DB)
 					.get(src);		
@@ -939,13 +938,13 @@ var database = (function() {
 				// Couldn't find src in database.
 				callback(false);
 			};
-		},
+	};
 		
-		add: function(data) {
+	var add = function(data) {
 			var transaction = db.transaction([IMAGE_DB], READ_WRITE);
 
 			transaction.onerror = (event) => {
-				// Can't use add() method if src already exists in databse. 
+			// Can't use add() method if src already exists in database.
 				console.log(event.target.error.message);
 			};
 
@@ -954,9 +953,9 @@ var database = (function() {
 			for (var src in data) {
 				var request = objectStore.add(data[src]);
 			}
-		},
+	};
 			
-		updateFilename: function(src, newFilename) {
+	var updateFilename = function(src, newFilename) {
 			var transaction = db.transaction([IMAGE_DB], READ_WRITE);
 			
 			transaction.onerror = (event) => {
@@ -967,15 +966,14 @@ var database = (function() {
 			
 			var record = objectStore.get(src);
 			
-			record.onsuccess = function() {
+		record.onsuccess = () => {
 				var data = record.result;				
 				data.filename = newFilename;				
 				var updateTitleRequest = objectStore.put(data);
 			};		
+	};
 			
-		},
-		
-		search: function(query, callback) {
+	var search = function(query, callback) {
 			var results = [];
 			var transaction = db.transaction(IMAGE_DB);
 			var objectStore = transaction.objectStore(IMAGE_DB);							
@@ -1023,9 +1021,9 @@ var database = (function() {
 						}
 				};			
 			}
-		},
+	};
 		
-		getAll: function(callback) {
+	var getAll = function(callback) {
 			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
 			// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
 			if (objectStore.getAll != null) {
@@ -1054,9 +1052,9 @@ var database = (function() {
 					}
 				};								
 			}
-		},
+	};
 		
-		getSize: function(callback) {
+	var getSize = function(callback) {
 			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
 			var size = 0;
 			// TODO: Maybe it would be faster to use a key cursor here
@@ -1070,9 +1068,9 @@ var database = (function() {
 					callback(cache);
 				}
 			};			
-		},
+	};
 		
-		getSizeInBytes: function(callback) {
+	var getSizeInBytes = function(callback) {
 			var size = 0;
 
 			var transaction = db.transaction([IMAGE_DB])
@@ -1096,10 +1094,20 @@ var database = (function() {
 				// Callback with value of -1MB (to make it obvious that something went wrong without breaking anything)
 				callback(-1048576);
 			};
-		},
+	};
 		
+	return {
+		open: open,
+		clear: clear,
+		convertCache: convertCache,
+		query: query,
+		add: add,
+		updateFilename: updateFilename,
+		search: search,
+		getAll: getAll,
+		getSize: getSize,
+		getSizeInBytes: getSizeInBytes,
 		db: db
-	
 	};
 	
 })();
