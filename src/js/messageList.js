@@ -2601,7 +2601,7 @@ var messageList = {
 									
 						if (newWidth >= imageData.minWidth) {							
 						var ratio = newWidth / width;
-						var newHeight = height * ratio;
+							var newHeight = Math.round(height * ratio);
 						
 							if (newHeight >= imageData.minHeight) {					
 							evt.target.width = newWidth;
