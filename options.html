@@ -1183,9 +1183,13 @@
 								</select>							
 							</h3>
 							
-							<input type="button" id="open_cache" value="View cache" />
+							<input type="button" id="open_cache" value="View cache" style="display: none;" />
 							
-							<div id="cache_table" style="display: none;">
+							<div id="cache_table">
+								<div id="pagination">
+									<span>Page: </span>
+								</div>
+								<br>
 								<img class="loading" id="loading_img" src='/src/images/loading.png' width="50px" height="50px"/>					
 								<table id="cache_contents" style="display:none;">
 									<tr>

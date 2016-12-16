@@ -436,3 +436,23 @@ tr {
 .cache_filenames {
 	width: 400px;
 }
+.image_cache_page {
+	margin-right: 5px;
+	cursor: pointer;
+	text-decoration: underline;
+	user-select: none;
+}
+
+.image_cache_page:hover {
+	color: green;
+}
+
+.image_cache_page.selected {
+	color: white;
+	background-color: #8faad9;	
+}
+
+.cache_url_original, .cache_url_thumbnail {
+	cursor: pointer;
+	text-decoration: underline;
+}

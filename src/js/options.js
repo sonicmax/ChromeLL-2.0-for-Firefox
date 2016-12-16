@@ -150,6 +150,7 @@ var options = {
 				options.addListeners.keyup();
 				
 				options.ui.populateCacheSize();
+				options.ui.populateCacheTable();
 				
 				options.ui.displayLBContent();
 				
@@ -167,6 +168,7 @@ var options = {
 			options.addListeners.keyup();			
 			
 			options.ui.populateCacheSize();
+			options.ui.populateCacheTable();
 			
 			options.ui.displayLBContent();
 			
@@ -467,6 +469,7 @@ var options = {
 		emptyCache: function() {
 			chrome.runtime.sendMessage({ need: 'clearDatabase' }, function() {
 				// Update UI
+				options.ui.clearCacheTable();
 				options.ui.populateCacheSize();
 				options.ui.populateCacheTable();			
 			});
@@ -736,13 +739,47 @@ var options = {
 					}
 				}
 				
-				if (elementID === 'open_cache') {
+				/*if (elementID === 'open_cache') {
 					
 					document.getElementById('open_cache').style.display = 'none';
 					document.getElementById('cache_table').style.display = 'block';
 					options.ui.populateCacheTable();										
 					
-				};
+				};*/
+				
+				if (evt.target.className === 'cache_url_original') {
+					
+					options.imageCache.open(() => {
+						
+						chrome.runtime.sendMessage({
+						
+							need: 'queryDb',
+							src: evt.target.id
+							
+						}, (result) => {
+							
+							window.open(result.fullsize);
+							
+						});
+					});
+				}
+				
+				if (evt.target.className === 'cache_url_thumbnail') {
+					
+					options.imageCache.open(() => {
+						
+						chrome.runtime.sendMessage({
+						
+							need: 'queryDb',
+							src: evt.target.id
+							
+						}, (result) => {
+							
+							window.open(result.data);
+							
+						});			
+					});
+				}
 				
 				if (evt.target.parentNode.id.match(/_list/) && evt.target.className != 'delete') {
 					var parent = evt.target.parentNode.id;
@@ -912,9 +949,9 @@ var options = {
 			}
 			
 			else {
-				options.imageCache.open(function() {
-					// TODO: Get all keys, split into pages and display 1 page at a time (with option to show all)
-					chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {
+				options.imageCache.open(() => {
+					
+					chrome.runtime.sendMessage({ need: 'getSearchDb' }, (images) => {
 						
 						var table = document.getElementById('cache_contents');
 						var loadingImage = document.getElementById('loading_img');
@@ -940,9 +977,39 @@ var options = {
 								options.ui.clearCacheTable();
 							}
 							
-							for (var i in images) {
+							// Populate page with first 50 images from database
+							for (var i = 0, len = 49; i < len; i++) {
+								var image = images[i];
+								if (image) {
 								options.ui.createTableRow(images[i]);
 							}
+							}
+							
+							options.ui.paginateImageCache(images.length);
+							
+							document.getElementById('pagination').addEventListener('click', (evt) => {
+								
+								if (evt.target.className === 'image_cache_page') {
+									
+									document.getElementsByClassName('selected')[0].classList.remove('selected');
+									evt.target.classList.add('selected');
+									
+									options.ui.clearCacheTable();
+									
+									var page = evt.target.innerHTML;
+									var pageStart = page * 50 - 50 - 1;
+									var pageEnd = page * 50 - 1;
+									
+									// Populate page with first 50 images from database
+									for (var i = pageStart; i < pageEnd; i++) {
+										var image = images[i];
+										if (image) {
+											options.ui.createTableRow(images[i]);
+										}
+									}
+								}
+								
+							});
 							
 							loadingImage.style.display = "none";
 							table.style.display = "block";
@@ -950,6 +1017,19 @@ var options = {
 					});
 				});
 			}
+		},
+		
+		paginateImageCache: function(length) {
+			var pages = Math.round(length / 50) + 1;
+			var fragment = document.createDocumentFragment();
+			for (var i = 0; i < pages; i++) {
+				var page = document.createElement('span');
+				page.innerHTML = i + 1;
+				page.className = 'image_cache_page';
+				fragment.appendChild(page);
+			}			
+			document.getElementById('pagination').appendChild(fragment);
+			document.getElementsByClassName('image_cache_page')[0].classList.add('selected');
 		},
 		
 		createTableRow: function(result) {
@@ -967,20 +1047,20 @@ var options = {
 				input.id = result.src;
 				filenameData.appendChild(input);
 				
-				anchor = document.createElement('a');
-				anchor.className = 'cache_url';
-				anchor.href = result.fullsize;
-				anchor.innerHTML = "View original";
-				urlData.appendChild(anchor);				
+				var original = document.createElement('span');
+				original.className = 'cache_url_original';
+				original.id = result.src;
+				original.innerHTML = "View original";
+				urlData.appendChild(original);	
 				
 				var space = document.createTextNode("  ");			
 				urlData.appendChild(space);
 										
-				var anchor = document.createElement('a');
-				anchor.className = 'cache_url';
-				anchor.href = result.data;
-				anchor.innerHTML = "View cached thumbnail";
-				urlData.appendChild(anchor);				
+				var thumbnail = document.createElement('span');
+				thumbnail.className = 'cache_url_thumbnail';
+				thumbnail.id = result.src;
+				thumbnail.innerHTML = "View cached thumbnail";
+				urlData.appendChild(thumbnail);				
 				
 				table.appendChild(tableRow);
 				tableRow.appendChild(filenameData);
