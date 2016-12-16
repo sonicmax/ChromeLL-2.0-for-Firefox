@@ -1053,9 +1053,10 @@ var database = (function() {
 			imageStore.add(data[src]);
 			
 			// Delete base64 thumbnail and fullsize URL and add to SEARCH_DB
-			delete data.data;
-			delete data.fullsize;
-			searchStore.add(data[src]);
+			var trimmedData = data[src];
+			delete trimmedData.data;
+			delete trimmedData.fullsize;			
+			searchStore.add(trimmedData);
 			}
 	};
 			
