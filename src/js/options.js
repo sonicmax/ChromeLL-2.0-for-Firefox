@@ -150,6 +150,7 @@ var options = {
 				options.addListeners.keyup();
 				
 				options.ui.populateCacheSize();
+				options.ui.populateCacheTable();	
 				
 				options.ui.displayLBContent();
 				
@@ -167,6 +168,7 @@ var options = {
 			options.addListeners.keyup();			
 			
 			options.ui.populateCacheSize();
+			options.ui.populateCacheTable();	
 			
 			options.ui.displayLBContent();
 			
