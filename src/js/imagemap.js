@@ -375,6 +375,11 @@ var imagemap = function() {
 						oldGrid.remove();					
 					}
 					
+					var infoSpan = document.getElementById('info_span');
+					if (infoSpan) {
+						infoSpan.remove();
+					}
+					
 					document.getElementById('loading_image').style.display = 'block';							
 				}
 				
@@ -433,7 +438,7 @@ var imagemap = function() {
 				grid.appendChild(block);						
 			}
 			
-			updatePopup(grid, query);
+			updatePopup(grid, Object.keys(data).length, query);
 		};
 		
 		var createPopup = function(query) {
@@ -481,7 +486,7 @@ var imagemap = function() {
 			document.addEventListener('click', clickHandler);
 		};
 		
-		var updatePopup = function(results, query) {
+		var updatePopup = function(results, count, query) {
 			document.getElementById('loading_image').style.display = 'none';
 			var popup = document.getElementById('search_results');
 			var oldGrid = document.getElementById('results_grid') || document.getElementById('no_results_grid');
@@ -515,6 +520,20 @@ var imagemap = function() {
 				}
 			}
 			else {
+				var info = document.createElement('span');
+				info.id = 'info_span';
+				
+				if (count > 1) {
+					info.innerHTML = 'found ' + count + ' results';
+				} else {
+					info.innerHTML = 'found ' + count + ' result';
+				}
+				
+				info.style.color = 'grey';
+				info.style.marginLeft = '10px';
+				info.style.fontStyle = 'italic';				
+				header.appendChild(info);
+				
 				results.style.maxHeight = ((height * 0.95) / 2) - 51 + 'px';
 				results.style.maxWidth = (width * 0.95) - 21 + 'px';
 				results.style.position = 'relative';
