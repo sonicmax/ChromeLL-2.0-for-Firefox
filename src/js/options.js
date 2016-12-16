@@ -150,7 +150,6 @@ var options = {
 				options.addListeners.keyup();
 				
 				options.ui.populateCacheSize();
-				options.ui.populateCacheTable();
 				
 				options.ui.displayLBContent();
 				
@@ -168,7 +167,6 @@ var options = {
 			options.addListeners.keyup();			
 			
 			options.ui.populateCacheSize();
-			options.ui.populateCacheTable();
 			
 			options.ui.displayLBContent();
 			
@@ -739,13 +737,13 @@ var options = {
 					}
 				}
 				
-				/*if (elementID === 'open_cache') {
+				if (elementID === 'open_cache') {
 					
 					document.getElementById('open_cache').style.display = 'none';
 					document.getElementById('cache_table').style.display = 'block';
 					options.ui.populateCacheTable();										
 					
-				};*/
+				};
 				
 				if (evt.target.className === 'cache_url_original') {
 					
@@ -1030,6 +1028,8 @@ var options = {
 			}			
 			document.getElementById('pagination').appendChild(fragment);
 			document.getElementsByClassName('image_cache_page')[0].classList.add('selected');
+			document.getElementById('pagination').style.display = 'block';
+			
 		},
 		
 		createTableRow: function(result) {
