@@ -948,14 +948,15 @@ var options = {
 			
 			else {
 				options.imageCache.open(() => {
-					
-					chrome.runtime.sendMessage({ need: 'getSearchDb' }, (images) => {
+					chrome.runtime.sendMessage({ need: 'getDbSize' }, (size) => {
 						
 						var table = document.getElementById('cache_contents');
 						var loadingImage = document.getElementById('loading_img');
+						var countElement = document.getElementById('cache_count');
 						
-						if (!images || images.length === 0) {
+						if (!size || size === 0) {
 							// There was a problem loading database, or it was empty
+							countElement.innerHTML = 0 + ' images';
 							options.ui.clearCacheTable();
 							
 							var empty = document.createElement('tr');
@@ -969,21 +970,21 @@ var options = {
 						}
 						
 						else {
+							if (size > 1) {
+								countElement.innerHTML = size + ' images';
+							} else {
+								countElement.innerHTML = size + ' image';
+							}
+							
 							if (sortedImages == 'default') {
 								table.style.display = "none";
 								loadingImage.style.display = "block";								
 								options.ui.clearCacheTable();
 							}
 							
-							// Populate page with first 50 images from database
-							for (var i = 0, len = 49; i < len; i++) {
-								var image = images[i];
-								if (image) {
-								options.ui.createTableRow(images[i]);
-							}
-							}
+							options.ui.paginateImageCache(size);
 							
-							options.ui.paginateImageCache(images.length);
+							options.ui.displayPageFromCache(1);
 							
 							document.getElementById('pagination').addEventListener('click', (evt) => {
 								
@@ -991,20 +992,7 @@ var options = {
 									
 									document.getElementsByClassName('selected')[0].classList.remove('selected');
 									evt.target.classList.add('selected');
-									
-									options.ui.clearCacheTable();
-									
-									var page = evt.target.innerHTML;
-									var pageStart = page * 50 - 50 - 1;
-									var pageEnd = page * 50 - 1;
-									
-									// Populate page with first 50 images from database
-									for (var i = pageStart; i < pageEnd; i++) {
-										var image = images[i];
-										if (image) {
-											options.ui.createTableRow(images[i]);
-										}
-									}
+									options.ui.displayPageFromCache(evt.target.innerHTML);
 								}
 								
 							});
@@ -1015,6 +1003,27 @@ var options = {
 					});
 				});
 			}
+		},
+		
+		displayPageFromCache: function(page) {
+			options.ui.clearCacheTable();
+			
+			chrome.runtime.sendMessage({
+			
+					need: 'getPaginatedObjectStore',
+					page: page,
+					type: 'search'
+					
+			}, (images) => {
+				
+				for (var i = 0, len = images.length; i < len; i++) {
+					var image = images[i];
+					if (image) {
+						options.ui.createTableRow(image);
+					}
+				}
+				
+			});
 		},
 		
 		paginateImageCache: function(length) {

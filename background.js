@@ -681,6 +681,10 @@ var background = {
 					database.getSizeInBytes(sendResponse);
 					return true;						
 					
+				case "getPaginatedObjectStore":
+					database.getPaginatedObjectStore(request.page, request.type, sendResponse);
+					return true;
+					
 				default:
 						console.log("Error in request listener - undefined parameter?", request);
 					break;
@@ -949,7 +953,6 @@ var database = (function() {
 			// Remove thumbnail data, add index and add to SEARCH_DB
 			for (let i = 0, len = imageData.length; i < len; i++) {
 				var data = imageData[i];
-				data.index = i;				
 				delete data.data;
 				delete data.fullsize;
 				var request = objectStore.add(data);
@@ -990,6 +993,32 @@ var database = (function() {
 		}
 	};
 		
+	var getPaginatedObjectStore = function(page, type, callback) {
+		var objectStore = db.transaction(type).objectStore(type);
+		var rangeStart = page * 50 - 50;
+		var rangeEnd = page * 50;
+		var results = [];
+		var index = 0;
+		
+		objectStore.openCursor().onsuccess = (event) => {
+			var cursor = event.target.result;
+			
+			if (cursor && index < rangeEnd) {
+				
+				if (index > rangeStart) {
+					results.push(cursor.value);
+				}
+				
+				index++;				
+				cursor.continue();
+			}
+			
+			else {
+				callback(results);
+			}
+		};
+	};
+	
 	
 		/**
 	 *	Converts old cache to new cache which uses IndexedDB API instead of chrome.storage API
@@ -1226,6 +1255,7 @@ var database = (function() {
 		clear: clear,
 		convertCache: convertCache,
 		populateSearchObjectStore: populateSearchObjectStore,
+		getPaginatedObjectStore: getPaginatedObjectStore,
 		get: get,
 		add: add,
 		updateFilename: updateFilename,
