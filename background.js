@@ -82,14 +82,26 @@ var background = {
 			delete background.config.tcs;
 		}				
 		
-		if (this.config.image_cache_version === 1) {
+		/**
+		 *  Version 1 of imagemap cache used chrome.storage API.
+		 *  Version 2 updated the cache to use IndexedDB API.
+		 *  Version 3 added a lightweight version of the database (excluding thumbnails)
+		 *  	to improve performance.
+		 */
+		
 			// Move image cache from chrome.storage API to indexedDB.
+		if (this.config.image_cache_version === 1) {			
 			database.open(database.convertCache);
-			
-			// Save the config, in case it was updated.
 			background.config.image_cache_version = 2;
 			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);	
 		}
+		
+		// Create lightweight version of existing database for search purposes
+		if (this.config.image_cache_version === 2) {			
+			database.open(database.populateSearchObjectStore);
+			// background.config.image_cache_version = 3
+			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
+		}				
 		
 		else {		
 			// save the config, in case it was updated
@@ -623,6 +635,8 @@ var background = {
 					});
 					break;
 					
+				// Database handlers
+					
 				case "openDatabase":
 					database.open(sendResponse);					
 					return true;					
@@ -632,7 +646,7 @@ var background = {
 					return true;
 					
 				case "queryDb":
-					database.query(request.src, sendResponse);
+					database.get(request.src, sendResponse);
 					return true;
 					
 				case "clearDatabase":
@@ -649,6 +663,10 @@ var background = {
 					
 				case "searchDatabase":
 					database.search(request.query, sendResponse);
+					return true;
+					
+				case "getSearchDb":
+					database.getSearchObjectStore(sendResponse);
 					return true;
 					
 				case "getAllFromDb":
@@ -847,11 +865,56 @@ background.getDefaultConfig(function(config) {
 
 var database = (function() {
 	const DB_NAME = 'ChromeLL-Imagemap';
-	const DB_VERSION = 1;
+	const DB_VERSION = 2;
 	const IMAGE_DB = 'images';
+	const SEARCH_DB = 'search';
 	const READ_WRITE = 'readwrite';
 	var debouncerId;
 	var db;	
+	
+	var open = function(callback) {
+		var request = window.indexedDB.open(DB_NAME, DB_VERSION);
+		
+		request.onsuccess = (event) => {
+			db = event.target.result;
+			callback();
+		};
+		
+		// Make sure that object stores are up-to-date
+		request.onupgradeneeded = (event) => {
+			var created = [];
+			db = event.target.result;
+			
+			if (!db.objectStoreNames.contains(IMAGE_DB)) {
+				var imageStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
+				imageStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
+				created.push(IMAGE_DB);
+			}
+			
+			if (!db.objectStoreNames.contains(SEARCH_DB)) {
+				var imageStore = db.createObjectStore(SEARCH_DB, { keyPath: ["src"] });
+				imageStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
+				created.push(SEARCH_DB);
+			}
+			
+			if (created.length > 0) {
+				console.log('Created new object stores:', created);
+			}
+			
+			chrome.runtime.reload();
+		};
+	};
+	
+	var clear = function(callback) {
+		
+		this.open(() => {
+			var transaction = db.transaction([IMAGE_DB, SEARCH_DB], READ_WRITE)
+			transaction.objectStore(IMAGE_DB).clear();
+			transaction.objectStore(SEARCH_DB).clear();
+			callback();
+			
+		});
+	};	
 	
 	var getStorageApiCache = function(callback) {
 		chrome.storage.local.get("imagemap", (cache) => {
@@ -865,35 +928,69 @@ var database = (function() {
 		});
 	};		
 	
-	var open = function(callback) {
-			var request = window.indexedDB.open(DB_NAME, DB_VERSION);
 			
-			request.onsuccess = (event) => {
-				db = event.target.result;
-				callback();
+	/**
+	 *  Creates a new object store (SEARCH_DB) which clones IMAGE_DB, but only includes the 
+	 *  filenames and image src attributes. This greatly increases the performance of the 
+	 *  search() method (up to 5x faster)
+	 */
+	 
+	var populateSearchObjectStore = function() {
+		var transaction = db.transaction([SEARCH_DB], READ_WRITE);
+
+		transaction.onerror = (event) => {
+			console.log(event.target.error.message);
 			};
 			
-			request.onupgradeneeded = (event) => {
-				var db = event.target.result;
+		transaction.onsuccess = getAll((imageData) => {
+			var transaction = db.transaction([SEARCH_DB], READ_WRITE);
+			var objectStore = transaction.objectStore(SEARCH_DB);	
 				
-				// Use src for keyPath
-				var objectStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
+			// Remove thumbnail data, add index and add to SEARCH_DB
+			for (let i = 0, len = imageData.length; i < len; i++) {
+				var data = imageData[i];
+				data.index = i;				
+				delete data.data;
+				delete data.fullsize;
+				var request = objectStore.add(data);
+			}
+			
+		});
 
-				// Create an index to search by filename.
-				objectStore.createIndex("filename", "filename", { unique: false, multiEntry: true });	
-			};						
 	};
 		
-	var clear = function(callback) {
+	var getSearchObjectStore = function(callback) {
+		var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
+		// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
+		if (objectStore.getAll != null) {
+			var request = objectStore.getAll();
 		
-			this.open(() => {
+			request.onsuccess = (event) => {
+				// TODO: Need to test what happens if database exists but is empty
+				callback(event.target.result);
+			};
 				
-				var request = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB).clear();
-				callback();
+			request.onerror = (event) => {
+				callback(false);
+			};
+		}
 				
-			});
+		else {				
+			var cache = [];
+			objectStore.openCursor().onsuccess = (event) => {
+				var cursor = event.target.result;
+				if (cursor) {
+					cache.push(cursor.value);
+					cursor.continue();
+				}
+				else {
+					callback(cache);
+				}
+			};								
+		}
 	};
 		
+	
 		/**
 	 *	Converts old cache to new cache which uses IndexedDB API instead of chrome.storage API
 		 */
@@ -920,7 +1017,7 @@ var database = (function() {
 			});
 	};
 		
-	var query = function(src, callback) {
+	var get = function(src, callback) {
 			var request = db.transaction(IMAGE_DB)
 					.objectStore(IMAGE_DB)
 					.get(src);		
@@ -941,17 +1038,24 @@ var database = (function() {
 	};
 		
 	var add = function(data) {
-			var transaction = db.transaction([IMAGE_DB], READ_WRITE);
+		var transaction = db.transaction([IMAGE_DB, SEARCH_DB], READ_WRITE);
 
 			transaction.onerror = (event) => {
 			// Can't use add() method if src already exists in database.
 				console.log(event.target.error.message);
 			};
 
-			var objectStore = transaction.objectStore(IMAGE_DB);
+		var imageStore = transaction.objectStore(IMAGE_DB);
+		var searchStore = transaction.objectStore(SEARCH_DB);
 			
 			for (var src in data) {
-				var request = objectStore.add(data[src]);
+			// Add full image data to IMAGE_DB
+			imageStore.add(data[src]);
+			
+			// Delete base64 thumbnail and fullsize URL and add to SEARCH_DB
+			delete data.data;
+			delete data.fullsize;
+			searchStore.add(data[src]);
 			}
 	};
 			
@@ -973,10 +1077,15 @@ var database = (function() {
 			};		
 	};
 			
+	
+	/**
+	 *  Iterates through SEARCH_DB object store and calls back with an array containing any matches.
+	 */ 
+	
 	var search = function(query, callback) {
 			var results = [];
-			var transaction = db.transaction(IMAGE_DB);
-			var objectStore = transaction.objectStore(IMAGE_DB);							
+		var transaction = db.transaction(SEARCH_DB);
+		var objectStore = transaction.objectStore(SEARCH_DB);							
 			
 			// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
 			var request = objectStore.openCursor();
@@ -998,7 +1107,7 @@ var database = (function() {
 						
 						else {
 							// Reached end of db
-							callback(results, query);
+						retrieveImageData(results, query, callback);
 						}
 				};								
 			}
@@ -1017,12 +1126,34 @@ var database = (function() {
 						
 						else {
 							// Reached end of db
-							callback(results, query);
+						retrieveImageData(results, query, callback);
 						}
 				};			
 			}
 	};
 		
+	
+	/**
+	 *  Returns image data from IMAGE_DB for given search results	 
+	 */
+	
+	var retrieveImageData = function(results, query, callback) {
+		var imageData = [];
+		
+		for (let i = 0, len = results.length; i < len; i++) {
+			var result = results[i];
+			get(result.src, (data) => {
+				
+				imageData.push(data);
+				
+				if (imageData.length === results.length) {
+					callback(imageData, query);
+				}
+				
+			});
+		}
+	};
+	
 	var getAll = function(callback) {
 			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
 			// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
@@ -1100,10 +1231,12 @@ var database = (function() {
 		open: open,
 		clear: clear,
 		convertCache: convertCache,
-		query: query,
+		populateSearchObjectStore: populateSearchObjectStore,
+		get: get,
 		add: add,
 		updateFilename: updateFilename,
 		search: search,
+		getSearchObjectStore: getSearchObjectStore,
 		getAll: getAll,
 		getSize: getSize,
 		getSizeInBytes: getSizeInBytes,
