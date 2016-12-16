@@ -466,13 +466,27 @@ var options = {
 			}
 			return JSON.parse(Base64.decode(config));
 		},
+		
 		emptyCache: function() {
-			chrome.runtime.sendMessage({ need: 'clearDatabase' }, function() {
+			
+			$.confirm({
+				text: "Clear image cache?",
+				
+				confirm: () => {	
+					chrome.runtime.sendMessage({ need: 'clearDatabase' }, () => {
 				// Update UI
 				options.ui.clearCacheTable();
 				options.ui.populateCacheSize();
 				options.ui.populateCacheTable();			
 			});
+		},
+		
+				cancel: () => {
+					// Do nothing
+				}
+				
+			});
+
 		},
 		
 		newLike: function() {
