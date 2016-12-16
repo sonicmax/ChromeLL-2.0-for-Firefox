@@ -1186,18 +1186,11 @@ var database = (function() {
 	};
 		
 	var getSize = function(callback) {
-			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
-			var size = 0;
-			// TODO: Maybe it would be faster to use a key cursor here
-			objectStore.openCursor().onsuccess = (event) => {
-				var cursor = event.target.result;
-				if (cursor) {					
-					size++;
-					cursor.continue();
-				}
-				else {
-					callback(cache);
-				}
+		var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
+		var count = objectStore.count();
+		
+		count.onsuccess = () => {
+			callback(count.result);
 			};			
 	};
 		
