@@ -1247,24 +1247,14 @@ var messageList = {
 			if (document.activeElement.id === 'image_search') {
 				if (evt.keyCode === RETURN_KEY) {
 					imagemap.search.init.call(imagemap.search);
+					clearTimeout(this.searchDebouncer);
 					evt.preventDefault();
 				}
-				else if (messageList.config.auto_image_search) {
-					this.searchDebouncer = setTimeout(this.likeButton.showOptions.call(this.likeButton), 400);
-				}
-			}
-		},
-		
-		search: function() {
-			clearTimeout(this.imagemapDebouncer);
-			
-			this.imagemapDebouncer = setTimeout(() => {
 								
-				if (document.getElementById('search_results')) {			
-					imagemap.search.init.call(imagemap.search);
+				if (this.config.auto_image_search) {
+					this.searchDebouncer = setTimeout(imagemap.search.init.call(imagemap.search), 400);
 				}
-				
-			}, 250);
+				}
 		}
 	},
 
@@ -3499,7 +3489,6 @@ var messageList = {
 			
 			var searchBox = document.getElementById('image_search');			
 			if (searchBox) {
-				searchBox.addEventListener('keyup', this.handleEvent.search.bind(this));		
 				document.addEventListener('keydown', this.handleEvent.keydown.bind(this));
 			}
 			
