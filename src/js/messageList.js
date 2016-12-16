@@ -446,7 +446,7 @@ var messageList = {
 				var search = document.createElement('input');
 				button.textContent = "Browse Imagemap";					
 				button.id = "quick_image";
-				search.placeholder = "Search Imagemap...";
+			search.placeholder = "Press enter to search";
 				search.id = "image_search";
 				quickpost.appendChild(divider);
 				quickpost.appendChild(button);
