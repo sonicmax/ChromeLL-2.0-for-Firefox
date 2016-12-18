@@ -329,47 +329,34 @@ var background = {
 	},
 	
 	getDrama: function(callback) {
-		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
-		const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
-				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
-				+ 'DVmAAAAAElFTkSuQmCC';
-				
 		const dramalinksRawUrl = 'https://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30';
 				
-		var dramas;
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", dramalinksRawUrl, true);
 		xhr.withCredentials = "true";
 		
 		xhr.onload = function() {
-			if (this.status == 200) {
-				var t = this.responseText;
-				
-				t = t.replace(/\[\[(.+?)(\|(.+?))\]\]/g, "<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$3</a>");
-				t = t.replace(/\[\[(.+?)\]\]/g, "<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$1</a>");
-				t = t.replace(/\[(.+?)\]/g, "<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + png + "\"></a>");
-				t = t.replace(/href="\/index\.php/g, "href=\"http://wiki.endoftheinter.net/index.php");
-				
-				t = t.replace(/style=/gi, "");
-				t = t.replace(/<script/gi, "<i");
-				t = t.replace(/(on)([A-Za-z]*)(=)/gi, "");
-				
-				t = t.slice(t.indexOf("<!--- NEW STORIES GO HERE --->") + 29);
-				dramas = t.slice(0, t.indexOf("<!--- NEW STORIES END HERE --->"));
-				t = t.slice(t.indexOf("<!--- CHANGE DRAMALINKS COLOR CODE HERE --->"));
-				t = t.slice(t.indexOf("{{") + 2);
-				
-				var bgcol = t.slice(0, t.indexOf("}}")).toLowerCase();
-				var stories = dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
-
-				background.drama.txt = background.buildDramalinksHtml(bgcol, stories);
+			switch (this.status) {		
+				case 200:
+				var scrapedData = background.scrapeDramalinks(this.responseText);
+				background.drama.txt = background.buildDramalinksHtml(scrapedData.bgcol, scrapedData.stories);
 				background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));		
-			}
+					break;
 			
-			else if (this.status == 404) {
-				// 404 error occurs if user has logged into ETI using multiple IP addresses
+				case 404:
+					// Usually indicates that user was not logged in. The wiki website redirects to the login page on the old ETI domain (luelinks.net), 
+					// and the r query parameter contains the URL encoded to base64. As the luelinks.net domain isn't active anymore, we get a 404.
+					// If we've already got some scraped dramalinks to display, keep it - otherwise, display error message
+					if (!background.drama.txt) {
 				background.drama.txt = 'Error while loading dramalinks';
-			}
+					}
+					break;
+					
+				default:
+					console.log('Unexpected HTTP status code in dramalinks XHR: ' + this.status);
+					console.log(this);
+					break;
+			};
 			
 			if (callback) {
 				callback(background.drama);
@@ -381,7 +368,6 @@ var background = {
 	
 	buildDramalinksHtml: function(level, stories) {
 		switch (level) {
-			
 					case "kermit":
 				return "Current Dramalinks Level: <font color='white'>CODE KERMIT</font><div style='background-color: black; color: white;'>" + stories + "</div>";
 					
@@ -409,6 +395,37 @@ var background = {
 				return "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + level + "'>" + level 
 					+ "</font></span><div>" + stories + "</div>";
 				} 
+	},
+	
+	
+	/**
+	 *  Scrapes stories from raw dramalinks HTML.
+	 */
+	 
+	scrapeDramalinks: function(responseText) {
+		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
+		const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
+				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
+				+ 'DVmAAAAAElFTkSuQmCC';
+		
+		var scrapedData = {};
+		
+		responseText = responseText.replace(/\[\[(.+?)(\|(.+?))\]\]/g, "<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$3</a>");
+		responseText = responseText.replace(/\[\[(.+?)\]\]/g, "<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$1</a>");
+		responseText = responseText.replace(/\[(.+?)\]/g, "<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + png + "\"></a>");
+		responseText = responseText.replace(/href="\/index\.php/g, "href=\"http://wiki.endoftheinter.net/index.php");			
+		responseText = responseText.replace(/style=/gi, "");
+		responseText = responseText.replace(/<script/gi, "<i");			
+		responseText = responseText.replace(/(on)([A-Za-z]*)(=)/gi, "");			
+		responseText = responseText.slice(responseText.indexOf("<!--- NEW STORIES GO HERE --->") + 29);		
+		scrapedData.stories = responseText.slice(0, responseText.indexOf("<!--- NEW STORIES END HERE --->"));
+		scrapedData.stories = scrapedData.stories.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+		
+		responseText = responseText.slice(responseText.indexOf("<!--- CHANGE DRAMALINKS COLOR CODE HERE --->"));
+		responseText = responseText.slice(responseText.indexOf("{{") + 2);		
+		scrapedData.bgcol = responseText.slice(0, responseText.indexOf("}}")).toLowerCase();
+		
+		return scrapedData;
 	},
 	
 	notificationData: {},
