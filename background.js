@@ -327,98 +327,89 @@ var background = {
 			});			
 		}
 	},
+	
 	getDrama: function(callback) {
-		if (background.config.debug) {
-			console.log('fetching dramalinks from wiki...');
-		}
 		// use base64 string instead of external URL to avoid insecure content warnings for HTTPS users
-		var png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
+		const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAMAAAC67D+PAAAAFVBMVEVmmcwzmcyZzP8AZswAZv////////'
 				+ '9E6giVAAAAB3RSTlP///////8AGksDRgAAADhJREFUGFcly0ESAEAEA0Ei6/9P3sEcVB8kmrwFyni0bOeyyDpy9JTLEaOhQq7Ongf5FeMhHS/4AVnsAZubx'
 				+ 'DVmAAAAAElFTkSuQmCC';
+				
+		const dramalinksRawUrl = 'https://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30';
+				
 		var dramas;
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", "http://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30", true);
+		xhr.open("GET", dramalinksRawUrl, true);
 		xhr.withCredentials = "true";
-		xhr.send();
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var t = xhr.responseText;
-				t = t.replace(/\[\[(.+?)(\|(.+?))\]\]/g, 
-						"<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$3</a>");
-				t = t.replace(/\[\[(.+?)\]\]/g, 
-						"<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$1</a>");
-				t = t.replace(/\[(.+?)\]/g, 
-						"<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + png + "\"></a>");
-				t = t.replace(/href="\/index\.php/g, 
-						"href=\"http://wiki.endoftheinter.net/index.php");
+		
+		xhr.onload = function() {
+			if (this.status == 200) {
+				var t = this.responseText;
+				
+				t = t.replace(/\[\[(.+?)(\|(.+?))\]\]/g, "<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$3</a>");
+				t = t.replace(/\[\[(.+?)\]\]/g, "<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$1</a>");
+				t = t.replace(/\[(.+?)\]/g, "<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + png + "\"></a>");
+				t = t.replace(/href="\/index\.php/g, "href=\"http://wiki.endoftheinter.net/index.php");
+				
 				t = t.replace(/style=/gi, "");
 				t = t.replace(/<script/gi, "<i");
 				t = t.replace(/(on)([A-Za-z]*)(=)/gi, "");
+				
 				t = t.slice(t.indexOf("<!--- NEW STORIES GO HERE --->") + 29);
 				dramas = t.slice(0, t.indexOf("<!--- NEW STORIES END HERE --->"));
 				t = t.slice(t.indexOf("<!--- CHANGE DRAMALINKS COLOR CODE HERE --->"));
 				t = t.slice(t.indexOf("{{") + 2);
-				var bgcol = t.slice(0, t.indexOf("}}"));
-				var col;
-				var kermit = false;
-				var other = false;
-				var error = false;
-				switch (bgcol.toLowerCase()) {
+				
+				var bgcol = t.slice(0, t.indexOf("}}")).toLowerCase();
+				var stories = dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+
+				background.drama.txt = background.buildDramalinksHtml(bgcol, stories);
+				background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));		
+			}
+			
+			else if (this.status == 404) {
+				// 404 error occurs if user has logged into ETI using multiple IP addresses
+				background.drama.txt = 'Error while loading dramalinks';
+			}
+			
+			if (callback) {
+				callback(background.drama);
+			}			
+		};
+		
+		xhr.send();
+	},
+	
+	buildDramalinksHtml: function(level, stories) {
+		switch (level) {
+			
 					case "kermit":
-						bgcol = "black";
-						col = "white";
-						kermit = true;
+				return "Current Dramalinks Level: <font color='white'>CODE KERMIT</font><div style='background-color: black; color: white;'>" + stories + "</div>";
+					
 					case "black":
 					case "blue":
 					case "green":
-						col = "white";
-						break;
+				return "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + level + "'>" + level 
+						+ "</font></span><div style='background-color: " + level + "; color: white;'>" + stories + "</div>";
+				
 					case "lovelinks":
 					case "yellow":
 					case "orange":
 					case "red":
-						col = "black";
-						break;
+				return "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + level + "'>" + level 
+						+ "</font></span><div style='background-color: " + level + "; color: black;'>" + stories + "</div>";
+				
 					case "errorlinks":
-						bgcol = "blue";
-						col = "white";
-						error = true;
-						break;
-					default:
-						other = true;
-						break;
-				}
-				if (kermit) {
-					dramas = "Current Dramalinks Level: <font color='" + col
-							+ "'>CODE KERMIT</font><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
-							+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";			
-				}
-				else if (error) {
-					dramas = "<font face='Lucida Console'>"
-							+ "<div style='background-color: " + bgcol + "; color: " + col + ";'>" 
+				return "<font face='Lucida Console'>"
+						+ "<div style='background-color: blue; color: white;'>" 
 							+ "A problem has been detected and ETI has been shut down to prevent damage to your computer."
-							+ "<br><br> Technical information: </font>" + dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") 
+						+ "<br><br> Technical information: </font>" + stories 
 							+ "</div></font>";	
+				
+			default:		
+				return "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + level + "'>" + level 
+					+ "</font></span><div>" + stories + "</div>";
 				} 
-				else if (other) {
-					dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
-							+ "</font></span><div>" + dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";				
-				} else {
-					dramas = "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + bgcol + "'>" + bgcol 
-						+ "</font></span><div style='background-color: " + bgcol + "; color: " + col + ";'>" 
-						+ dramas.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;") + "</div>";	
-				}	
-				background.drama.txt = dramas;
-				background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));
-				if (callback) {
-					callback(background.drama);
-				}
-			}
-			if (xhr.readyState == 4 && xhr.status == 404) {
-				// 404 error occurs if user has logged into ETI using multiple IP addresses
-				background.drama.txt = '<a id="retry" href="#">Error loading Dramalinks. Click to retry...</a>';
-			}
-		}
+	},
 	
 	notificationData: {},
 	
