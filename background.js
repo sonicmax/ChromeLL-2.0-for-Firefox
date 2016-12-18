@@ -35,7 +35,7 @@ var background = {
 		}
 		allBg.init_listener(this.config);	
 		this.messagePassing.addListeners();
-		chrome.notifications.onClicked.addListener(this.notificationEventHandler.bind(this));
+		chrome.notifications.onClicked.addListener(this.makeNotificationOriginActive.bind(this));
 		this.checkVersion();
 		this.omniboxSearch();
 		this.createClipboardElement();	
@@ -422,9 +422,21 @@ var background = {
 	
 	notificationData: {},
 	
-	notificationEventHandler: function(notificationId) {
-		var tabId = this.notificationData[notificationId].tab.id;
-		chrome.tabs.update(tabId, { active: true }, () => {
+	/** 
+	 *  After notification onclick fires, get the stored window/tab id from
+	 *  notificationData and focus the window/make the tab active.
+	 */
+	 
+	makeNotificationOriginActive: function(notificationId) {
+		if (!this.notificationData[notificationId]) {
+			return;
+		}
+		
+		var originatingTab = this.notificationData[notificationId].tab;
+		
+		chrome.windows.update(originatingTab.windowId, { focused: true }, () => {
+			
+			chrome.tabs.update(originatingTab.id, { active: true }, () => {
 		
 			chrome.notifications.clear(notificationId, () => {
 				delete this.notificationData[notificationId];
