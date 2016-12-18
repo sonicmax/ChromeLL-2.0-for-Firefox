@@ -35,6 +35,7 @@ var background = {
 		}
 		allBg.init_listener(this.config);	
 		this.messagePassing.addListeners();
+		chrome.notifications.onClicked.addListener(this.notificationEventHandler.bind(this));
 		this.checkVersion();
 		this.omniboxSearch();
 		this.createClipboardElement();	
@@ -418,6 +419,18 @@ var background = {
 				background.drama.txt = '<a id="retry" href="#">Error loading Dramalinks. Click to retry...</a>';
 			}
 		}
+	
+	notificationData: {},
+	
+	notificationEventHandler: function(notificationId) {
+		var tabId = this.notificationData[notificationId].tab.id;
+		chrome.tabs.update(tabId, { active: true }, () => {
+		
+			chrome.notifications.clear(notificationId, () => {
+				delete this.notificationData[notificationId];
+			});
+			
+		});		
 	},
 	
 	/**
@@ -518,7 +531,14 @@ var background = {
 					break;
 					
 				case "notify":
-					chrome.notifications.create('popup', {
+					// Generate unique ID for each tab so we can perform tab-specific actions later
+					var id = "notify_" + sender.tab.id;
+					
+					background.notificationData[id] = {
+						tab: sender.tab
+					};
+					
+					chrome.notifications.create(id, {
 						type: "basic",
 						title: request.title,
 						message: request.message,
@@ -537,6 +557,7 @@ var background = {
 						
 						setTimeout(() => {
 							chrome.notifications.clear(id, null);
+							delete background.notificationData[id];
 						}, parseInt(background.config.clear_notify, 10) * 1000);
 						
 					});
