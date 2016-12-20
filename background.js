@@ -410,17 +410,27 @@ var background = {
 		
 		var scrapedData = {};
 		
+		// Replace wiki-formatted anchors with absolute URLs
 		responseText = responseText.replace(/\[\[(.+?)(\|(.+?))\]\]/g, "<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$3</a>");
 		responseText = responseText.replace(/\[\[(.+?)\]\]/g, "<a href=\"http://wiki.endoftheinter.net/index.php/$1\">$1</a>");
+		
+		// Add arrow image to anchors
 		responseText = responseText.replace(/\[(.+?)\]/g, "<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + png + "\"></a>");
+		
+		// Fix relative URLs
 		responseText = responseText.replace(/href="\/index\.php/g, "href=\"http://wiki.endoftheinter.net/index.php");			
+		
+		// Remove script tags, style attributes and inline event handlers
 		responseText = responseText.replace(/style=/gi, "");
 		responseText = responseText.replace(/<script/gi, "<i");			
 		responseText = responseText.replace(/(on)([A-Za-z]*)(=)/gi, "");			
+		
+		// Scrape stories from response
 		responseText = responseText.slice(responseText.indexOf("<!--- NEW STORIES GO HERE --->") + 29);		
 		scrapedData.stories = responseText.slice(0, responseText.indexOf("<!--- NEW STORIES END HERE --->"));
 		scrapedData.stories = scrapedData.stories.slice(2).replace(/\*/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
 		
+		// Scrape dramalinks code from response
 		responseText = responseText.slice(responseText.indexOf("<!--- CHANGE DRAMALINKS COLOR CODE HERE --->"));
 		responseText = responseText.slice(responseText.indexOf("{{") + 2);		
 		scrapedData.bgcol = responseText.slice(0, responseText.indexOf("}}")).toLowerCase();
