@@ -1,111 +1,57 @@
 var lovelinks = {
+	
+	/** 
+	 *  Combining CSS and JS in this manner is pretty awful - but chrome.tabs.insertCSS() 
+	 *  causes a flash of unstyled content, and we have to wait for DOMContentLoaded to fire 
+	 *  before we can use the addRule() method. Appending a style element to document.head
+	 *  is much faster. The unminified version of minifiedCssString can be found in src/css/lovelinks.css
+	 */ 
+	 
+	minifiedCssString: 'a:link{color:#661733!important}a:visited{color:#330433!important}a:hover{color:#BA239C!important}div{border-radius:6px}body{background-color:#AC8E8E;background-image:url(http://i4.endoftheinter.net/i/n/378c1d4b824ecaf13e99f1bbdbac35fd/heart_tiles.png)}.quoted-message{background-color:#EDCAE6!important;color:#0D030B!important;border-left:0!important}.quoted-message div:not(.message-top):not(.imgs){background-color:#D4ABCC!important;color:#0D030B!important;border-left:0!important}.quoted-message div:not(.message-top):not(.imgs) div:not(.message-top):not(.imgs){background-color:#B593AE!important;color:#0D030B!important;border-left:0!important}.message-top,.quickpost-canvas{background-color:#EDB4E2!important;color:#0D030B!important}.quickpost-body{ackground-color:#EDB4E2!important;color:#0D030B!important}.quickpost-canvas a{color:purple!important}.block_desc,.infobar,.userbar{color:#0D030B!important}.quickpost-nub{background-color:#fff!important}.userbar{background:linear-gradient(to bottom,rgba(255,179,218,1) 0,rgba(255,129,194,1) 55%)!important}.infobar{background:linear-gradient(to bottom,rgba(255,217,237,1) 0,rgba(255,191,224,1) 55%)!important}.block_desc{background-color:#BFA6BA!important;border-left:0!important}#hold_menu,.menubar span,.tag-div{background-color:#fff!important}.block_desc a,small{color:#000!important}td,th,tr{border-radius:6px;color:#0D030B!important}th{background:linear-gradient(to bottom,rgba(255,217,237,1) 0,rgba(255,191,224,1) 55%)!important}td,tr{background:linear-gradient(to bottom,rgba(255,233,244,1) 0,rgba(255,219,238,1) 55%)!important}[highlighted]:not(a){background:linear-gradient(to bottom,rgba(255,165,212,1) 13%,rgba(254,108,183,1) 55%,rgba(255,165,212,1) 87%,rgba(255,165,212,1) 100%)!important}.menubar a:link{color:#6E155D!important}.menubar a:visited{color:#1C0618!important}.menubar a:hover,h2 a:hover{color:#BA239C!important}#hold_menu,.tag-div a{color:purple!important}h1,h2,h2 a:visited,span{color:#1C0618!important}h2 a:link{color:#6E155D!important}form{color:#000!important}#cozpop{content:url(http://i2.endoftheinter.net/i/n/d8c28f3337f428fc7b119617ba8ce2fc/my%20fox.jpg)}img[style*="position: absolute; right: 10px; margin-top: -45px;"]{content:url(http://i4.endoftheinter.net/i/n/7757cbfaa8e20594a92bd86fcefa7896/heart__free_avatar_by_thedeathofsen-d3lb5q8.gif)}#nextpage{background-color:#D1A3F0!important;color:#4B2A82!important}.control span{background:linear-gradient(to bottom,rgba(255,233,244,1) 0,rgba(255,219,238,1) 55%)!important;color:#0D030B!important}',	
+	
 	init: function(config) {
 		if (config.user_id == 13547 || config.user_id == 5599) {
+			
 			if (config.fun_css) {
+				this.addStyle();
+				
 				if (document.readyState == 'loading') {
-					document.addEventListener('DOMContentLoaded', function() {
-						lovelinks.addCSSRules();
+					document.addEventListener('DOMContentLoaded', () => {
+						this.addDongerToTitle();
 					});
+					
 				}
 				else {
-					lovelinks.addCSSRules();
+					this.addDongerToTitle();
 				}
 			}
 		}
 	},
-	addCSSRules: function() {
-		var sheet = document.styleSheets[0];
-		var cssSelectors = ['.message-top', '.infobar', '.userbar', 'tr', 'td', 'th'];
-		for (var i = 0, len = cssSelectors.length; i < len; i++) {
-			var selector = cssSelectors[i];
-			sheet.insertRule(selector + ' a:link { color: #661733 !important; }', 1);
-			sheet.insertRule(selector + ' a:visited { color: #330433 !important; }', 1);
-			sheet.insertRule(selector + ' a:hover { color: #BA239C !important; }', 1);
-		}
-		sheet.insertRule('div { border-radius: 6px; }', 1);
-		sheet.insertRule('body { background-image: url("http://i4.endoftheinter.net/i/n/378c1d4b824ecaf13e99f1bbdbac35fd/heart_tiles.png")', 1);
-		sheet.insertRule('.quoted-message { background-color: #EDCAE6 !important; color: #0D030B !important; border-left: 0px !important; }', 1);
-		sheet.insertRule('.quoted-message div:not(.message-top):not(.imgs) { background-color: #D4ABCC !important; color: #0D030B !important; border-left: 0px !important; }', 1);
-		sheet.insertRule('.quoted-message div:not(.message-top):not(.imgs) div:not(.message-top):not(.imgs) { background-color: #B593AE !important; color: #0D030B !important; border-left: 0px !important; }', 1);			
-		sheet.insertRule('.message-top { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('.quickpost-body { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('.quickpost-canvas { background-color: #EDB4E2 !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('.quickpost-canvas a { color: purple !important; }', 1);
-		sheet.insertRule('.userbar { background: linear-gradient(to bottom, rgba(255,179,218,1) 0%,rgba(255,129,194,1) 55%) !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('.block_desc { background-color: #BFA6BA !important; color: #0D030B !important; border-left: 0px !important; }', 1);
-		sheet.insertRule('.block_desc a { color: black !important; }', 1);
-		sheet.insertRule('.infobar { background: linear-gradient(to bottom, rgba(255,217,237,1) 0%,rgba(255,191,224,1) 55%) !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('.userpic { background: linear-gradient(135deg, rgba(252,199,240,1) 8%,rgba(229,139,205,1) 100%,rgba(168,0,119,1) 100%,rgba(219,54,164,1) 100%) !important; color: #0D030B !important; color: F74F4F !important; border-left: 0px !important; }', 1);
-		sheet.insertRule('th { border-radius: 6px; background: linear-gradient(to bottom, rgba(255,217,237,1) 0%,rgba(255,191,224,1) 55%) !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('tr { border-radius: 6px; background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('td { border-radius: 6px; background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; color: #0D030B !important; }', 1);
-		sheet.insertRule('small { color: black !important; }', 1);
-		sheet.insertRule('[highlighted]:not(a) { background: linear-gradient(to bottom, rgba(255,165,212,1) 13%,rgba(254,108,183,1) 55%,rgba(255,165,212,1) 87%,rgba(255,165,212,1) 100%) !important; }', 1);
-		sheet.insertRule('.menubar a:link { color: #6E155D !important; }', 1);
-		sheet.insertRule('.menubar a:visited { color: #1C0618 !important; }', 1);
-		sheet.insertRule('.menubar a:hover { color: #BA239C !important; }', 1);
-		sheet.insertRule('.menubar span { background-color: white !important; }', 1);
-		sheet.insertRule('h1 { color: #1C0618 !important; }', 1);
-		sheet.insertRule('h2 { color: #1C0618 !important; }', 1);
-		sheet.insertRule('h2 a:link { color: #6E155D !important; }', 1);
-		sheet.insertRule('h2 a:visited { color: #1C0618 !important; }', 1);
-		sheet.insertRule('h2 a:hover { color: #BA239C !important; }', 1);
-		sheet.insertRule('span { color: #1C0618 !important; }', 1);
-		sheet.insertRule('.quickpost-nub { background-color: white !important; }', 1);
-		sheet.insertRule('form { color: black !important; }', 1);	
-		sheet.insertRule('.tag-div { background-color: white !important; }', 1);
-		sheet.insertRule('.tag-div a { color: purple !important; }', 1);
-		sheet.insertRule('#cozpop { content: url(http://i2.endoftheinter.net/i/n/d8c28f3337f428fc7b119617ba8ce2fc/my%20fox.jpg); }', 1);
-		sheet.insertRule('img[style*="position: absolute; right: 10px; margin-top: -45px;"] { content: url(http://i4.endoftheinter.net/i/n/7757cbfaa8e20594a92bd86fcefa7896/heart__free_avatar_by_thedeathofsen-d3lb5q8.gif); }', 1);
-		sheet.insertRule('#hold_menu { background-color: white !important; color: purple !important; }', 1);
-		sheet.insertRule('#nextpage { background-color: #D1A3F0 !important; color: #4B2A82 !important; }', 1);
-		sheet.insertRule('.control span { background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; color: #0D030B !important; }', 1);
+	
+	/**
+	 *  Creates style element using minifiedCssString as the innerHTML.
+	 *  Appending to document.head means that we don't have to wait for DOMContentLoaded to fire
+	 */
+	
+	addStyle: function() {
+    var node = document.createElement('style');
+    node.innerHTML = this.minifiedCssString;
+    document.head.appendChild(node);
+	},	
+	
+	addDongerToTitle: function() {
+		const dongers = ['( ˘ ³˘)♥ ', '(＾・ω・＾)♥ ', 'ƪ(♥ﻬ♥)ʃ ', '(✿ ♥‿♥) ',  '(´❤‿❤`)*ﾟ✲*☆❤ ', '(ღ˘³˘ღ) ', 'ʕ　❤ᴥ❤ʔ ', '(▰˘◡˘▰)❤ ', '(づ｡❤‿‿❤｡)づ ', '(≖ˇωˇ≖)♥ '];		
 		
 		var title = document.getElementsByTagName('h1')[0] || document.getElementsByTagName('h2')[0];
-		var rnd = Math.floor(Math.random() * 10) + 1;
-		var donger;
-		switch(rnd) {
-				case 1:
-						donger = '( ˘ ³˘)♥ ';
-						break;
-				case 2:
-						donger = '(＾・ω・＾)♥ ';
-						break;
-				case 3:
-						donger = 'ƪ(♥ﻬ♥)ʃ ';
-						break;								
-				case 4:
-						donger = '(✿ ♥‿♥) ';
-						break;								
-				case 5:
-						donger = '(´❤‿❤`)*ﾟ✲*☆❤ ';
-						break;			
-				case 6:
-						donger = '(ღ˘³˘ღ) ';
-						break;
-				case 7:
-						donger = 'ʕ　❤ᴥ❤ʔ ';
-						break;
-				case 8:
-						donger = '(▰˘◡˘▰)❤ ';
-						break;
-				case 9:
-						donger = '(づ｡❤‿‿❤｡)づ ';
-						break;
-				case 10:
-						donger = '(≖ˇωˇ≖)♥ ';
-						break;								
-				default:
-						donger = '( ˘ ³˘)♥ ';
-						break;
-		}			
-		title.innerHTML = donger + '&nbsp' + title.innerHTML + '~';				
+		var rnd = Math.floor(Math.random() * 10);		
+		
+		title.innerHTML = dongers[rnd] + '&nbsp' + title.innerHTML + '~';
 		document.title = '♥ ' + document.title + ' ♥';
 	}
 };
 
 chrome.runtime.sendMessage({
 	need: "config"
-}, function(config) {
-	lovelinks.init(config.data);
+}, (config) => {
+	lovelinks.init.call(lovelinks, config.data);
 });
