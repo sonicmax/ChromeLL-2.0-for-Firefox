@@ -189,3 +189,6 @@ img[style*="position: absolute; right: 10px; margin-top: -45px;"] {
 	background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; 
 	color: #0D030B !important; 
 }
+.loading-placeholder {
+	background: none !important;
+}
