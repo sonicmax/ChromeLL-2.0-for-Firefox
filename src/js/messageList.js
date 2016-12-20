@@ -50,6 +50,12 @@ var messageList = {
 			this.handleRepliesPage();			
 		}		
 		
+		// Replace with empty function to prevent Christmas CSS from being added.
+		// I'll probably remove this manually before that happens
+		if (new Date().getMonth() !== 11) {	
+			this.addChristmasCss = () => {};
+		}		
+		
 		if (document.readyState == 'loading') {
 			// wait for DOMContentLoaded to fire before attempting to modify DOM
 			document.addEventListener('DOMContentLoaded', () => {
@@ -3644,6 +3650,22 @@ var messageList = {
 		delete this.messageContainerMethods.post_templates;			
 	},
 		
+	addChristmasCss: function() {
+		var title = document.getElementsByTagName('h1')[0];
+		
+		if (/christmas|xmas|santa|snow|holida[a-z]+/i.test(title.innerHTML)) {			
+			document.body.classList.add('snow');
+			
+			// Fill gaps between message list divs (to prevent annoying visual effect where snow passing behind u0_1
+			// can be seen briefly in the gaps between other elements as it floats down screen)	
+			var backgroundColor = window.getComputedStyle(document.body).getPropertyValue('background-color');
+			document.getElementById('u0_1').style.backgroundColor = backgroundColor;
+			var styleSheet = document.styleSheets[0];
+			styleSheet.addRule('div.menubar, div.userbar, div.infobar, .message, div.message-top', 'margin: 0px !important');
+			styleSheet.addRule('div.menubar, div.userbar, div.infobar, .message, div.message-top', 'border: 1px solid ' + backgroundColor);			
+		}
+	},
+	
 	/**
 	 *  The main loop for this script - called after DOMContentLoaded has fired (or otherwise once DOM is ready)
 	 *  Applies various types of DOM modifications to the message list, adds listeners for ChromeLL features, etc
@@ -3746,6 +3768,7 @@ var messageList = {
 			});
 		}
 			
+		this.addChristmasCss();
 	}
 };
 
