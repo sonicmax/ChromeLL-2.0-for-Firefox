@@ -13,7 +13,18 @@ var lovelinks = {
 		if (config.user_id == 13547 || config.user_id == 5599) {
 			
 			if (config.fun_css) {
+
+				if (config.debug) {
+					// Use lovelinks.css for easier debugging
+					chrome.runtime.sendMessage({
+						need: "insertcss",
+						file: "src/css/lovelinks.css"
+					});					
+				}
+				
+				else {
 				this.addStyle();
+				}
 				
 				if (document.readyState == 'loading') {
 					document.addEventListener('DOMContentLoaded', () => {
