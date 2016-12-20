@@ -109,7 +109,7 @@ small {
 }
 
 .menubar {
-	border: 0px !important!;
+	border: 0 !important;
 }
 
 .menubar a:link, #bookmarks a:link { 
