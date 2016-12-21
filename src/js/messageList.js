@@ -3661,8 +3661,18 @@ var messageList = {
 			var backgroundColor = window.getComputedStyle(document.body).getPropertyValue('background-color');
 			document.getElementById('u0_1').style.backgroundColor = backgroundColor;
 			var styleSheet = document.styleSheets[0];
-			styleSheet.addRule('div.menubar, div.userbar, div.infobar, .message, div.message-top', 'margin: 0px !important');
-			styleSheet.addRule('div.menubar, div.userbar, div.infobar, .message, div.message-top', 'border: 1px solid ' + backgroundColor);			
+			styleSheet.addRule('div.menubar, div.userbar, div.infobar, #u0_2', 'margin: 0px !important');
+			styleSheet.addRule('div.menubar, div.userbar', 'border: 1px solid ' + backgroundColor);
+			styleSheet.addRule('div.userbar', 'border-bottom: 2px solid ' + backgroundColor);
+			
+			document.getElementsByClassName('message-top')[0].style.marginTop = 0;
+			document.getElementsByClassName('message-top')[0].style.borderTop = '1px solid ' + backgroundColor;
+			
+			styleSheet.addRule('#u0_2', 'border-bottom: 1px solid ' + backgroundColor);
+			styleSheet.addRule('#u0_3', 'border-top: 2px solid ' + backgroundColor);
+			styleSheet.addRule('#u0_3', 'border-bottom: 1px solid ' + backgroundColor);
+			styleSheet.addRule('#u0_4', 'border-top: 1px solid ' + backgroundColor);
+			styleSheet.addRule('#u0_4', 'border-bottom: 2px solid ' + backgroundColor);
 		}
 	},
 	
