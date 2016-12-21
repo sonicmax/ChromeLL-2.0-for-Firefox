@@ -423,12 +423,6 @@ div.youtube {
 
 .snow {
 	background-image: url('https://i4.dealtwith.it/i/n/f5fada07bef29b1d00bc68ae5d5de98f/s1.png'), url('https://i1.dealtwith.it/i/n/c36b4f7b2444b95fb0e02d1c5dd2706b/s2.png'), url('https://i1.dealtwith.it/i/n/03f8b2fb92f8101dbf30829d025dd193/s3.png') !important;
-	height: 100%;
-	left: 0;
-	position: absolute;
-	top: 0;
-	width: 100%;
-	z-index:1;
 	animation: snow 10s linear infinite;
 }
 
