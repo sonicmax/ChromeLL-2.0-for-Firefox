@@ -22,8 +22,12 @@ body {
 	background-image: url("https://i4.endoftheinter.net/i/n/378c1d4b824ecaf13e99f1bbdbac35fd/heart_tiles.png") !important;
 }
 
-body.snow {
+body.snow, body.hup_hup {
 	background-color: #ccccff !important;
+}
+
+.hup_hup .menubar {
+	background-color: none !important;
 }
 
 .quoted-message {
@@ -128,7 +132,7 @@ small {
 	background-color: white !important; 
 }
 
-.snow .menubar, .snow #bookmarks span, .snow span.menubar {
+.snow .menubar, .snow #bookmarks span, .snow span.menubar, .hup_hup .menubar a, .hup_hup #bookmarks span, .hup_hup span.menubar, .hup_hup h2 a {
 	background-color: #ccccff !important;
 }
 
@@ -189,6 +193,7 @@ img[style*="position: absolute; right: 10px; margin-top: -45px;"] {
 	background: linear-gradient(to bottom, rgba(255,233,244,1) 0%,rgba(255,219,238,1) 55%) !important; 
 	color: #0D030B !important; 
 }
+
 .loading-placeholder {
 	background: none !important;
 }

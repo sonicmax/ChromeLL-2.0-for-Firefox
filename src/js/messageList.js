@@ -3653,20 +3653,28 @@ var messageList = {
 		var title = document.getElementsByTagName('h1')[0];
 		
 		if (/christmas|xmas|santa|snow|holida[a-z]+/i.test(title.innerHTML)) {			
+			if (title.innerHTML.indexOf('hup hups') > -1) {
+				document.body.classList.add('hup_hup');
+			}
+			else {
 			document.body.classList.add('snow');
+			}			
 			
-			// Fill gaps between message list divs (to prevent annoying visual effect where snow passing behind u0_1
-			// can be seen briefly in the gaps between other elements as it floats down screen)	
+			// Fill gaps between message-list divs (to prevent annoying visual effect 
+			// where snow can be seen in the gaps between other elements as it floats down screen)
+			
+			var styleSheet = document.styleSheets[0];
+			
 			var backgroundColor = window.getComputedStyle(document.body).getPropertyValue('background-color');
 			document.getElementById('u0_1').style.backgroundColor = backgroundColor;
-			var styleSheet = document.styleSheets[0];
-			styleSheet.addRule('div.menubar, div.userbar, div.infobar, #u0_2', 'margin: 0px !important');
-			styleSheet.addRule('div.menubar, div.userbar', 'border: 1px solid ' + backgroundColor);
-			styleSheet.addRule('div.userbar', 'border-bottom: 2px solid ' + backgroundColor);
 			
+			// Replace the margin with a border which matches the background color of document.body
 			document.getElementsByClassName('message-top')[0].style.marginTop = 0;
 			document.getElementsByClassName('message-top')[0].style.borderTop = '1px solid ' + backgroundColor;
 			
+			styleSheet.addRule('div.userbar, div.infobar, #u0_2', 'margin: 0px !important');
+			styleSheet.addRule('div.userbar', 'border: 1px solid ' + backgroundColor);
+			styleSheet.addRule('div.userbar', 'border-bottom: 2px solid ' + backgroundColor);									
 			styleSheet.addRule('#u0_2', 'border-bottom: 1px solid ' + backgroundColor);
 			styleSheet.addRule('#u0_3', 'border-top: 2px solid ' + backgroundColor);
 			styleSheet.addRule('#u0_3', 'border-bottom: 1px solid ' + backgroundColor);
