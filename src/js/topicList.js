@@ -340,25 +340,101 @@ var topicList = {
 		});
 	},
 	addListeners: function() {
+		const LEFT_CLICK = 0;
+		const MIDDLE_CLICK = 1;
+		
 		document.addEventListener('click', (evt) => {
-			if (evt.target.id.match(/(jump)([Last|Window])/)) {
-				evt.preventDefault();
-				var url = topicList.handle.pageJump(evt);
-				if (url === 0) {
-					return;
-				}
-				if (evt.which == 1) {
+
+			if (evt.target.id === 'jumpWindow') {
+				var url = topicList.createPageJumpUrl(evt.target);
+				
+				if (url) {
+					if (evt.button === LEFT_CLICK) {
 					// left click - open in same tab
 					window.location.href = url;
 				}
-				else if (evt.which == 2) {
-					// middle click - open new tab
-					window.open(url);
 				}
+				
+				evt.preventDefault();
 			}
 		});
+	
+		var mousemoveDebouncerId;
+	
+		// Populate href with last page url after user mouses over element
+		document.addEventListener('mousemove', (evt) => {
+			clearTimeout(mousemoveDebouncerId);
+			mousemoveDebouncerId = setTimeout(() => {
+				topicList.handle.mousemove(evt);		
+			}, 150);
+		});
+		
 	},
+	
+	createPageJumpUrl: function(target) {
+		var td, history, inbox;
+		
+		if (window.location.href.indexOf('history.php') > -1) {
+			history = true;
+			td = target.parentNode.parentNode.parentNode.parentNode
+					.parentNode.getElementsByTagName('td')[2];
+		}
+		
+		else if (window.location.href.indexOf('inbox.php') > -1) {
+			inbox = true;
+			td = target.parentNode.parentNode.nextSibling.nextSibling;
+		}
+		
+		else {
+			td = target.parentNode.parentNode.parentNode.parentNode
+					.getElementsByTagName('td')[2];
+		}
+		
+		// Remove unread messages count and work out position of last page
+		var postCount = td.innerHTML.split('(')[0];
+		postCount = postCount.split('<')[0];
+		var lastPage = Math.ceil(postCount / 50);
+		
+		
+		if (target.id == 'jumpWindow') {
+			page = prompt("Page Number (" + lastPage + " total)", "Page");
+			if (page == undefined || page == "Page") {
+				return 0;
+			}
+		} else {
+			page = lastPage;
+		}
+		
+		
+		if (history) {
+			var topic = target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0];
+			return topic.href + '&page=' + page;
+		}
+		
+		else if (inbox) {						
+			var thread = target.parentNode.parentNode.firstChild;
+			
+			// Threads with new posts are wrapped in b tags
+			if (thread.tagName === 'B') {
+				thread = thread.firstChild;
+			}
+							
+			return thread.href + '&page=' + page;
+		}
+		
+		else {
+			var topic = target.parentNode.parentNode.parentNode.parentNode.getElementsByTagName('td')[0].getElementsByTagName('a')[0];
+			return topic.href + '&page=' + page;
+		}
+	},
+	
 	handle: {
+		mousemove: function(evt) {
+			if (evt.target.id === 'jumpLast') {
+				evt.target.href = topicList.createPageJumpUrl(evt.target);
+			}
+		},
+		
 		message: function(msg) {
 			if (msg.action !== 'ignorator_update') {
 				switch (msg.action) {
@@ -424,62 +500,6 @@ var topicList = {
 						break;
 				}
 			}
-		},
-		pageJump: function(evt) {
-			var td, history, inbox;
-			
-			if (window.location.href.indexOf('history.php') > -1) {
-				history = true;
-				td = evt.target.parentNode.parentNode.parentNode.parentNode
-						.parentNode.getElementsByTagName('td')[2];
-			}
-			
-			else if (window.location.href.indexOf('inbox.php') > -1) {
-				inbox = true;
-				td = evt.target.parentNode.parentNode.nextSibling.nextSibling;
-			}
-			
-			else {
-				td = evt.target.parentNode.parentNode.parentNode.parentNode
-						.getElementsByTagName('td')[2];
-			}
-			
-			// Remove unread messages count and work out position of last page
-			var postCount = td.innerHTML.split('(')[0];
-			postCount = postCount.split('<')[0];
-			var lastPage = Math.ceil(postCount / 50);
-			
-			
-			if (evt.target.id == 'jumpWindow') {
-				page = prompt("Page Number (" + lastPage + " total)", "Page");
-				if (page == undefined || page == "Page") {
-					return 0;
-				}
-			} else {
-				page = lastPage;
-			}
-			
-			
-			if (history) {
-				var topic = evt.target.parentNode.parentNode.parentNode.getElementsByTagName('a')[0];
-				return topic.href + '&page=' + page;
-			}
-			
-			else if (inbox) {						
-				var thread = evt.target.parentNode.parentNode.firstChild;
-				
-				// Threads with new posts are wrapped in b tags
-				if (thread.tagName === 'B') {
-					thread = thread.firstChild;
-				}
-								
-				return thread.href + '&page=' + page;
-			}
-			
-			else {
-				var topic = evt.target.parentNode.parentNode.parentNode.parentNode.getElementsByTagName('td')[0].getElementsByTagName('a')[0];
-				return topic.href + '&page=' + page;
-			}
 		}
 	},
 	applyDomModifications: function(pm) {
@@ -516,7 +536,7 @@ var topicList = {
 			document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);
 		}
 		
-		if (this.config['page_jump_buttons' + this.pm]) {
+		if (this.config['page_jump_buttons' + pm]) {
 			this.addListeners();
 		}		
 		
