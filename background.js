@@ -392,7 +392,7 @@ var background = {
 							+ "</div></font>";	
 				
 			default:		
-				return "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + level + "'>" + level 
+				return "<span style='text-transform:capitalize'>Current Dramalinks Level: " + level 
 					+ "</font></span><div>" + stories + "</div>";
 				} 
 	},
