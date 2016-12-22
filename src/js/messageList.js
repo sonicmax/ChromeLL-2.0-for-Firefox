@@ -3652,8 +3652,8 @@ var messageList = {
 	addChristmasCss: function() {
 		var title = document.getElementsByTagName('h1')[0];
 		
-		if (/christmas|xmas|santa|snow|holida[a-z]+/i.test(title.innerHTML)) {			
-			if (title.innerHTML.indexOf('hup hups') > -1) {
+		if (/winter|christmas|xmas|santa|snow|holida[a-z]+/i.test(title.innerHTML)) {
+			if (/hup hup/.test(title.innerHTML)) {
 				document.body.classList.add('hup_hup');
 			}
 			else {
