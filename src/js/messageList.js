@@ -50,9 +50,8 @@ var messageList = {
 			this.handleRepliesPage();			
 		}		
 		
-		// Replace with empty function to prevent Christmas CSS from being added.
-		// I'll probably remove this manually before that happens
-		if (new Date().getMonth() !== 11) {	
+		// Replace with empty function to prevent seasonal CSS from being added.
+		if (!this.config.seasonal_css || new Date().getMonth() !== 11) {
 			this.addChristmasCss = () => {};
 		}		
 		
