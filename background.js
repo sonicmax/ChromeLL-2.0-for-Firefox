@@ -100,7 +100,7 @@ var background = {
 		// Create lightweight version of existing database for search purposes
 		if (this.config.image_cache_version === 2) {			
 			database.open(database.populateSearchObjectStore);
-			// background.config.image_cache_version = 3
+			background.config.image_cache_version = 3;
 			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
 		}				
 		
