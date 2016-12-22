@@ -112,7 +112,7 @@ var topicList = {
 				jumpWindow.innerHTML = '#';
 				
 				var jumpLast = document.createElement('a');
-				jumpLast.href = '##' + i;
+				jumpLast.href = '#';
 				jumpLast.id = 'jumpLast';
 				jumpLast.innerHTML = '&gt;';
 				
@@ -428,7 +428,7 @@ var topicList = {
 	
 	handle: {
 		mousemove: function(evt) {
-			if (evt.target.id === 'jumpLast') {
+			if (evt.target.id === 'jumpLast' && evt.target.href !== '#') {
 				evt.target.href = topicList.createPageJumpUrl(evt.target);
 			}
 		},
