@@ -105,8 +105,9 @@ var topicList = {
 					insert.style.cssFloat = 'right';
 				}
 				
-				var jumpWindow = document.createElement('a');
-				jumpWindow.href = '##' + i;
+				var jumpWindow = document.createElement('span');
+				jumpWindow.style.cursor = 'pointer';
+				jumpWindow.style.textDecoration = 'underline';
 				jumpWindow.id = 'jumpWindow';
 				jumpWindow.innerHTML = '#';
 				
@@ -349,10 +350,7 @@ var topicList = {
 				var url = topicList.createPageJumpUrl(evt.target);
 				
 				if (url) {
-					if (evt.button === LEFT_CLICK) {
-					// left click - open in same tab
 					window.location.href = url;
-				}
 				}
 				
 				evt.preventDefault();
