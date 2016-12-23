@@ -3651,13 +3651,16 @@ var messageList = {
 		
 	addChristmasCss: function() {
 		var title = document.getElementsByTagName('h1')[0];
+		var className;
 		
 		if (/winter|christmas|xmas|santa|snow|holida[a-z]+/i.test(title.innerHTML)) {
-			if (/hup hup/.test(title.innerHTML)) {
-				document.body.classList.add('hup_hup');
+			if (/hup hup/i.test(title.innerHTML)) {
+				className = 'hup_hup';
+				document.body.classList.add(className);
 			}
 			else {
-			document.body.classList.add('snow');
+				className = 'snow';
+				document.body.classList.add(className);
 			}			
 			
 			// Fill gaps between message-list divs (to prevent annoying visual effect 
@@ -3680,6 +3683,17 @@ var messageList = {
 			styleSheet.addRule('#u0_3', 'border-bottom: 1px solid ' + backgroundColor);
 			styleSheet.addRule('#u0_4', 'border-top: 1px solid ' + backgroundColor);
 			styleSheet.addRule('#u0_4', 'border-bottom: 2px solid ' + backgroundColor);
+			
+			document.addEventListener('visibilitychange', () => {
+					if (document.hidden) {
+						document.body.classList.remove(className);
+					}
+					
+					else {
+						document.body.classList.add(className);
+					}
+				
+			});
 		}
 	},
 	
