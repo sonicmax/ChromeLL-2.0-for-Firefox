@@ -3651,17 +3651,18 @@ var messageList = {
 		
 	addChristmasCss: function() {
 		var title = document.getElementsByTagName('h1')[0];
-		var className;
+		var christmasClassName;
 		
 		if (/winter|christmas|xmas|santa|snow|holida[a-z]+/i.test(title.innerHTML)) {
+			
 			if (/hup hup/i.test(title.innerHTML)) {
-				className = 'hup_hup';
-				document.body.classList.add(className);
+				christmasClassName = 'hup_hup';
 			}
 			else {
-				className = 'snow';
-				document.body.classList.add(className);
+				christmasClassName = 'snow';
 			}			
+			
+			document.body.classList.add(christmasClassName);	
 			
 			// Fill gaps between message-list divs (to prevent annoying visual effect 
 			// where snow can be seen in the gaps between other elements as it floats down screen)
@@ -3686,11 +3687,11 @@ var messageList = {
 			
 			document.addEventListener('visibilitychange', () => {
 					if (document.hidden) {
-						document.body.classList.remove(className);
+						document.body.classList.remove(christmasClassName);
 					}
 					
 					else {
-						document.body.classList.add(className);
+						document.body.classList.add(christmasClassName);
 					}
 				
 			});
