@@ -3732,10 +3732,14 @@ var messageList = {
 		for (var i = 0, len = msgs.length; i < len; i++) {
 			var msg = msgs[i];
 				var top = msg.getElementsByClassName('message-top')[0];
+			var user = top.getElementsByTagName('a')[0].innerHTML;
 				
 			for (var k in this.messageContainerMethods) {
 					if (this.config[k + pm]) {
 					this.messageContainerMethods[k](msg, top, i + 1);
+					if (user !== 'Antigone') {
+						this.links.check(msg);
+					}
 				}
 			}
 		}
@@ -3788,8 +3792,6 @@ var messageList = {
 			sessionStorage.removeItem('scrolly');
 		}
 		
-		// Check anchors for media links to embed, etc
-		this.links.check();
 		this.addListeners();
 		this.appendScripts();
 		
