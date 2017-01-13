@@ -1240,7 +1240,7 @@ var messageList = {
 			else if (evt.target.className === 'nws_gfycat') {
 				this.gfycat.hideEmbedLink();
 			}
-			else if (evt.target.className === 'nws_imgur') {
+			else if (evt.target.classList.contains('nws_imgur')) {
 				this.imgur.hideEmbedLink();
 			}
 			
@@ -1712,7 +1712,7 @@ var messageList = {
 						return;
 					}									
 					
-					else if (data.nsfw && messageList.config.hide_nws_gfycat) {
+					else if (messageList.config.hide_nws_gfycat && (data.nsfw || messageList.imgur.postContainsNsfw(imgurElement))) {
 						imgurElement.classList.remove('imgur');
 						imgurElement.classList.add('nws_imgur');
 						imgurElement.setAttribute('width', data.width);
@@ -1752,6 +1752,11 @@ var messageList = {
 					
 				});		
 			}
+		},
+		
+		postContainsNsfw: function(imgurElement) {
+			// Matches nws with any whitespace (eg. n w s, nw s)
+			return /(n(\s*?)[wl](\s*?)s)/i.test(imgurElement.parentNode.innerHTML);
 		},
 		
 		getDataFromApi: function(href, callback) {
