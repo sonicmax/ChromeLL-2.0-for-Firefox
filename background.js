@@ -825,6 +825,7 @@ var background = {
 		}
 		xhr.send();
 	},
+	
 	scrapeUserProfile: function(userID) {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
 		var url = "http://endoftheinter.net/profile.php?user=" + userID;
@@ -834,36 +835,45 @@ var background = {
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
 				var adminTags, modTags, isAdmin, isMod;
+				
 				var html = document.createElement('html');
 				html.innerHTML = xhr.responseText;
-				var adminArray = [];
-				var modArray = [];
-				var tagArray = [];
+				
+				var adminArray, modArray, creationDate;
 				var tds = html.getElementsByTagName("td");
+				
 				for (var i = 0; i < tds.length; i++) {
 					var td = tds[i];
 					if (td.innerText.indexOf("Administrator of") > -1) {
-						var adminTags = tds[i + 1].getElementsByTagName('a');
+						adminTags = tds[i + 1].getElementsByTagName('a');
 						isAdmin = true;
 					}
 					if (td.innerText.indexOf("Moderator of") > -1) {
-						var modTags = tds[i + 1].getElementsByTagName('a');
+						modTags = tds[i + 1].getElementsByTagName('a');
 						isMod = true;
 					}
+					if (td.innerText.indexOf("Account Created") > -1) {
+						creationDate = tds[i + 1].innerHTML;
+					}
 				}
+				
 				if (isAdmin) {
 					adminArray = Array.prototype.slice.call(adminTags);
 				}
 				if (isMod) {
 					modArray = Array.prototype.slice.call(modTags);
 				}
-				tagArray = adminArray.concat(modArray);
+				
+				var tagArray = adminArray.concat(modArray);
+				
 				for (var i = 0, len = tagArray.length; i < len; i++) {
 					var tag = tagArray[i].innerText;
 					tagArray[i] = tag;
 				}
 				
 				config.tag_admin = tagArray;
+				config.creation_date = creationDate;
+				
 				localStorage['ChromeLL-Config'] = JSON.stringify(config);
 				
 				if (config.debug) {

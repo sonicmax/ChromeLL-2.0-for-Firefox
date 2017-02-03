@@ -552,6 +552,63 @@ var topicList = {
 				scope: "topicList"
 			});
 		}
+		
+		this.createDatePicker();
+	},
+	
+	createDatePicker: function() {
+		var infobar = document.getElementsByClassName('infobar')[0];
+		var pickerButton = document.createElement('span');
+		pickerButton.className = 'clickable_span';
+		pickerButton.id = 'picker_button';
+		pickerButton.innerHTML = 'Browse From Date';
+		
+		infobar.appendChild(document.createTextNode(' | '));
+		infobar.appendChild(pickerButton);
+
+		// ETI dates are in MM/DD/YYYY format
+		var accountCreationDate = this.config.creation_date.split('/');
+		var month = '0' + (accountCreationDate[0] - 1); // Month in Date constructor is zero-based
+		var day = accountCreationDate[1];
+		var year = accountCreationDate[2];
+		
+		var picker = new Pikaday({
+			field: pickerButton,
+			firstDay: 1,
+			minDate: new Date(year, month, day),
+			maxDate: new Date(),
+			yearRange: [year, new Date().getFullYear()],
+			onSelect: function() {
+				topicList.handleDateSelection(this.getMoment());
+			}
+		});
+	},
+	
+	handleDateSelection: function(date) {
+		const DATE_CONSTRUCTOR_FORMAT = 'YYYY/MM/DD';
+		const MILLISECONDS_IN_ONE_SECOND = 1000;
+		const TIMESTAMP_PARAM = '?ts=';
+		const SEARCH_PARAM = '&q=';
+		
+		var formattedDateArray = date.format(DATE_CONSTRUCTOR_FORMAT).split('/');
+		
+		var year = dateArray[0];
+		var month = dateArray[1] - 1;	// Month in Date constructor is zero-based
+		var day = dateArray[2];
+		
+		// Messages are displayed in reverse order, so we want to start from the latest possible time on the provided date
+		var dateToView = new Date(Date.UTC(year, month, day, 23, 59, 59));
+		var timestamp = dateToView.getTime() / MILLISECONDS_IN_ONE_SECOND;
+		
+		var newParams = TIMESTAMP_PARAM + timestamp;
+		
+		// Preserve search query parameter. We can ignore everything else
+		var oldParams = new URLSearchParams(window.location.search);
+		if (oldParams.has('q')) {
+			queryParams += SEARCH_PARAM + oldParams.get('q');
+		}
+		
+		window.location.href = window.location.origin + window.location.pathname + newParams;
 	},
 	
 	waitForAsyncContent: function() {

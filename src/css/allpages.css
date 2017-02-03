@@ -1,5 +1,16 @@
 /*
 	---------------------------------------------
+	Clickable spans (imitates anchor element)
+	---------------------------------------------
+*/
+
+.clickable_span {
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/*
+	---------------------------------------------
 	Drag-to-resize classes
 	---------------------------------------------
 */
