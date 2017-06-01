@@ -1,4 +1,7 @@
 // Original code by Milan
+
+const UPLOAD_SIZE_LIMIT = 4096000; // 4MB
+
 var imgurNotificationId;
 
 function imageTransloader(info, rename) {
@@ -16,8 +19,8 @@ function imageTransloader(info, rename) {
 	}
 	
 	fetchImage(url, (filesize, mimetype, blob) => {
-		// GIFs larger than 2MB will not upload to ETI correctly. Use Imgur instead
-		if (filesize > (1024 * 1024 * 2) && mimetype === 'image/gif') {			
+		// GIFs larger than UPLOAD_SIZE_LIMIT will not upload to ETI correctly. Use Imgur instead
+		if (filesize > UPLOAD_SIZE_LIMIT && mimetype === 'image/gif') {
 			uploadToImgur(blob);
 		}
 		
