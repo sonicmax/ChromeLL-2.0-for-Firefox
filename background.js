@@ -12,20 +12,27 @@ var background = {
 	
 	init: function(defaultConfig) {
 		this.updateConfig(defaultConfig);
+		
 		if (this.config.history_menubar_classic) {
 			this.boards['Misc.'] = {"ChromeLL Options":"%extension%options.html"};
+			
 			if (this.config.sort_history) {				
 				this.boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php?b';
-			} else {
+			} 
+			
+			else {
 				this.boards['Misc.']['Message History'] = 'http://boards.endoftheinter.net/history.php';
 			}
 		}
+		
 		if (this.config.saved_tags) {
 			this.boards['Tags'] = this.config.saved_tags;
 		}
+		
 		if (this.config.context_menu) {
 			this.buildContextMenu();
 		}
+		
 		for (var i in allBg.activeListeners) {
 			// sets listeners for force_https, batch_uploader, etc
 			allBg.activeListeners[i] = this.config[i];
@@ -33,7 +40,9 @@ var background = {
 				console.log('setting listener: ' + i + " " + allBg.activeListeners[i]);
 			}
 		}
-		allBg.init_listener(this.config);	
+		
+		allBg.init_listener(this.config);
+		
 		this.messagePassing.addListeners();
 		chrome.notifications.onClicked.addListener(this.makeNotificationOriginActive.bind(this));
 		this.checkVersion();
@@ -54,6 +63,7 @@ var background = {
 		};
 		xhr.send();
 	},
+	
 	updateConfig: function(defaultConfig) {
 		if (localStorage['ChromeLL-Config'] === undefined) {
 			localStorage['ChromeLL-Config'] = JSON.stringify(defaultConfig);
@@ -90,13 +100,13 @@ var background = {
 		 *  	to improve performance.
 		 */
 		
-			// Move image cache from chrome.storage API to indexedDB.
+		// Move image cache from chrome.storage API to indexedDB.
 		if (this.config.image_cache_version === 1) {			
 			database.open(database.convertCache);
 			background.config.image_cache_version = 2;
 			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);	
 		}
-		
+				
 		// Create lightweight version of existing database for search purposes
 		if (this.config.image_cache_version === 2) {			
 			database.open(database.populateSearchObjectStore);
@@ -109,6 +119,7 @@ var background = {
 			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
 		}
 	},
+	
 	checkVersion: function() {
 		var app = chrome.app.getDetails();
 		// notify user if chromeLL has been updated
@@ -152,6 +163,7 @@ var background = {
 			localStorage['ChromeLL-Version'] = app.version;
 		}
 	},
+	
 	checkSync: function() {
 		chrome.storage.sync.get('config', function(syncData) {
 			if (syncData.config && syncData.config.last_saved > background.config.last_saved) {
@@ -220,7 +232,7 @@ var background = {
 		// imageTransloader method is located in transloader.js
 		chrome.contextMenus.create({
 			"title": "Transload image",
-			"onclick": function(info) {
+			"onclick": (info)  => {
 				imageTransloader(info);
 			},
 			"contexts": ["image"]
@@ -229,7 +241,7 @@ var background = {
 		if (this.config.enable_image_rename) {
 			chrome.contextMenus.create({
 				"title": "Rename and transload image",
-				"onclick": function(info) {
+				"onclick": (info) => {
 					imageTransloader(info, true);
 				},
 				"contexts": ["image"]
@@ -279,6 +291,7 @@ var background = {
 			
 		}
 	},
+	
 	contextMenu: {
 		imageMap: function(info) {
 			var str = info.srcUrl;
@@ -330,25 +343,25 @@ var background = {
 	
 	getDrama: function(callback) {
 		const dramalinksRawUrl = 'https://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30';
-				
+		
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", dramalinksRawUrl, true);
 		xhr.withCredentials = "true";
 		
 		xhr.onload = function() {
-			switch (this.status) {		
+			switch (this.status) {
 				case 200:
-				var scrapedData = background.scrapeDramalinks(this.responseText);
-				background.drama.txt = background.buildDramalinksHtml(scrapedData.bgcol, scrapedData.stories);
-				background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));		
+					var scrapedData = background.scrapeDramalinks(this.responseText);
+					background.drama.txt = background.buildDramalinksHtml(scrapedData.bgcol, scrapedData.stories);
+					background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));
 					break;
-			
+					
 				case 404:
 					// Usually indicates that user was not logged in. The wiki website redirects to the login page on the old ETI domain (luelinks.net), 
 					// and the r query parameter contains the URL encoded to base64. As the luelinks.net domain isn't active anymore, we get a 404.
 					// If we've already got some scraped dramalinks to display, keep it - otherwise, display error message
 					if (!background.drama.txt) {
-				background.drama.txt = 'Error while loading dramalinks';
+						background.drama.txt = 'Error while loading dramalinks';
 					}
 					break;
 					
@@ -368,33 +381,33 @@ var background = {
 	
 	buildDramalinksHtml: function(level, stories) {
 		switch (level) {
-					case "kermit":
+			case "kermit":			
 				return "Current Dramalinks Level: <font color='white'>CODE KERMIT</font><div style='background-color: black; color: white;'>" + stories + "</div>";
 					
-					case "black":
-					case "blue":
-					case "green":
+			case "black":
+			case "blue":
+			case "green":
 				return "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + level + "'>" + level 
 						+ "</font></span><div style='background-color: " + level + "; color: white;'>" + stories + "</div>";
 				
-					case "lovelinks":
-					case "yellow":
-					case "orange":
-					case "red":
+			case "lovelinks":
+			case "yellow":
+			case "orange":
+			case "red":
 				return "<span style='text-transform:capitalize'>Current Dramalinks Level: <font color='" + level + "'>" + level 
 						+ "</font></span><div style='background-color: " + level + "; color: black;'>" + stories + "</div>";
 				
-					case "errorlinks":
+			case "errorlinks":
 				return "<font face='Lucida Console'>"
 						+ "<div style='background-color: blue; color: white;'>" 
-							+ "A problem has been detected and ETI has been shut down to prevent damage to your computer."
+						+ "A problem has been detected and ETI has been shut down to prevent damage to your computer."
 						+ "<br><br> Technical information: </font>" + stories 
-							+ "</div></font>";	
+						+ "</div></font>";
 				
-			default:		
+			default:
 				return "<span style='text-transform:capitalize'>Current Dramalinks Level: " + level 
 					+ "</font></span><div>" + stories + "</div>";
-				} 
+		}
 	},
 	
 	
@@ -418,12 +431,12 @@ var background = {
 		responseText = responseText.replace(/\[(.+?)\]/g, "<a href=\"$1\" style=\"padding-left: 0px\"><img src=\"" + png + "\"></a>");
 		
 		// Fix relative URLs
-		responseText = responseText.replace(/href="\/index\.php/g, "href=\"http://wiki.endoftheinter.net/index.php");			
+		responseText = responseText.replace(/href="\/index\.php/g, "href=\"http://wiki.endoftheinter.net/index.php");
 		
 		// Remove script tags, style attributes and inline event handlers
 		responseText = responseText.replace(/style=/gi, "");
 		responseText = responseText.replace(/<script/gi, "<i");			
-		responseText = responseText.replace(/(on)([A-Za-z]*)(=)/gi, "");			
+		responseText = responseText.replace(/(on)([A-Za-z]*)(=)/gi, "");
 		
 		// Scrape stories from response
 		responseText = responseText.slice(responseText.indexOf("<!--- NEW STORIES GO HERE --->") + 29);		
@@ -455,13 +468,15 @@ var background = {
 		chrome.windows.update(originatingTab.windowId, { focused: true }, () => {
 			
 			chrome.tabs.update(originatingTab.id, { active: true }, () => {
-		
-			chrome.notifications.clear(notificationId, () => {
-				delete this.notificationData[notificationId];
-			});
 			
-		});		
+				chrome.notifications.clear(notificationId, () => {
+					delete this.notificationData[notificationId];
+				});
+				
+			});
+		});			
 	},
+	
 	
 	/**
 	 *  Handles message passing between content scripts and background page
@@ -592,7 +607,7 @@ var background = {
 						
 					});
 					
-					break;								
+					break;				
 					
 				case "progress_notify":
 					background.createProgressNotification(request.data);
@@ -730,14 +745,14 @@ var background = {
 				
 				case "getSizeInBytes":
 					database.getSizeInBytes(sendResponse);
-					return true;						
-					
+					return true;
+				
 				case "getPaginatedObjectStore":
 					database.getPaginatedObjectStore(request.page, request.type, sendResponse);
 					return true;
 					
 				default:
-						console.log("Error in request listener - undefined parameter?", request);
+					console.log("Error in request listener - undefined parameter?", request);
 					break;
 			}
 		}
@@ -808,15 +823,17 @@ var background = {
 			if (xhr.readyState == 4 && xhr.status == 200) {
 				var html = document.createElement('html');
 				html.innerHTML = xhr.responseText;
-				if (html.getElementsByTagName('title')[0]
-						.innerText.indexOf("Das Ende des Internets") > -1) {
+				
+				if (html.getElementsByTagName('title')[0].innerText.indexOf("Das Ende des Internets") > -1) {
 					// user is logged out
 					return;
-				} 
+				}
+				
 				else {
 					var userID = html.getElementsByClassName('userbar')[0]
 						.getElementsByTagName('a')[0].href
 						.match(/\?user=([0-9]+)/)[1];
+						
 					config.user_id = userID;
 					localStorage['ChromeLL-Config'] = JSON.stringify(config);
 					background.scrapeUserProfile(userID);
@@ -923,8 +940,8 @@ var background = {
 		});
 	}
 };
-
-background.getDefaultConfig(function(config) {
+	
+background.getDefaultConfig((config) => {
 	background.init.call(background, config);
 });
 
@@ -935,7 +952,7 @@ var database = (function() {
 	const SEARCH_DB = 'search';
 	const READ_WRITE = 'readwrite';
 	var debouncerId;
-	var db;	
+	var db;			
 	
 	var open = function(callback) {
 		var request = window.indexedDB.open(DB_NAME, DB_VERSION);
@@ -991,9 +1008,9 @@ var database = (function() {
 				callback(cache.imagemap);
 			}				
 		});
-	};		
+	};
 	
-			
+	
 	/**
 	 *  Creates a new object store (SEARCH_DB) which clones IMAGE_DB, but only includes the 
 	 *  filenames and image src attributes. This greatly increases the performance of the 
@@ -1005,40 +1022,40 @@ var database = (function() {
 
 		transaction.onerror = (event) => {
 			console.log(event.target.error.message);
-			};
-			
+		};
+		
 		transaction.onsuccess = getAll((imageData) => {
 			var transaction = db.transaction([SEARCH_DB], READ_WRITE);
 			var objectStore = transaction.objectStore(SEARCH_DB);	
-				
+						
 			// Remove thumbnail data, add index and add to SEARCH_DB
 			for (let i = 0, len = imageData.length; i < len; i++) {
-				var data = imageData[i];
+				var data = imageData[i];	
 				delete data.data;
 				delete data.fullsize;
 				var request = objectStore.add(data);
 			}
 			
 		});
-
-	};
 		
+	};
+	
 	var getSearchObjectStore = function(callback) {
 		var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
 		// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
 		if (objectStore.getAll != null) {
 			var request = objectStore.getAll();
-		
+			
 			request.onsuccess = (event) => {
 				// TODO: Need to test what happens if database exists but is empty
 				callback(event.target.result);
 			};
-				
+			
 			request.onerror = (event) => {
 				callback(false);
 			};
 		}
-				
+		
 		else {				
 			var cache = [];
 			objectStore.openCursor().onsuccess = (event) => {
@@ -1053,7 +1070,7 @@ var database = (function() {
 			};								
 		}
 	};
-		
+	
 	var getPaginatedObjectStore = function(page, type, callback) {
 		var objectStore = db.transaction(type).objectStore(type);
 		var rangeStart = page * 50 - 50;
@@ -1081,64 +1098,64 @@ var database = (function() {
 	};
 	
 	
-		/**
+	/**
 	 *	Converts old cache to new cache which uses IndexedDB API instead of chrome.storage API
-		 */
+	 */	
 	
 	var convertCache = function(callback) {
+	
+		getStorageApiCache((imagemap) => {
 			
-			getStorageApiCache((imagemap) => {
+			if (imagemap && Object.keys(imagemap).length > 0) {
+				var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
 				
-				if (imagemap && Object.keys(imagemap).length > 0) {
-					var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
+				for (var src in imagemap) {
+					var record = imagemap[src];
 					
-					for (var src in imagemap) {
-						var record = imagemap[src];
-						
-						// We need to manually add src property to object before adding to database
-						record.src = src;
-						imageObjectStore.add(record);
-					}
-																
-					// At this point we can safely clear chrome.storage
-					chrome.storage.local.clear();
+					// We need to manually add src property to object before adding to database
+					record.src = src;
+					imageObjectStore.add(record);
 				}
-				
-			});
-	};
-		
-	var get = function(src, callback) {
-			var request = db.transaction(IMAGE_DB)
-					.objectStore(IMAGE_DB)
-					.get(src);		
-						
-			request.onsuccess = (event) => {
-				if (event.target.result) {
-					callback(event.target.result);
-				}
-				else {				
-					callback(false);
-				}
-			};
+															
+				// At this point we can safely clear chrome.storage
+				chrome.storage.local.clear();
+			}
 			
-			request.onerror = (event) => {
-				// Couldn't find src in database.
-				callback(false);
-			};
+		});	
 	};
+	
+	var get = function(src, callback) {
+		var request = db.transaction(IMAGE_DB)
+				.objectStore(IMAGE_DB)
+				.get(src);		
+					
+		request.onsuccess = (event) => {
+			if (event.target.result) {
+				callback(event.target.result);
+			}
+			else {				
+				callback(false);
+			}
+		};
 		
+		request.onerror = (event) => {
+			// Couldn't find src in database.
+			callback(false);
+		};
+	};
+	
 	var add = function(data) {
 		var transaction = db.transaction([IMAGE_DB, SEARCH_DB], READ_WRITE);
 
-			transaction.onerror = (event) => {
+		transaction.onerror = (event) => {
 			// Can't use add() method if src already exists in database.
-				console.log(event.target.error.message);
-			};
+			console.log(event.target.error.message);
+		};
 
 		var imageStore = transaction.objectStore(IMAGE_DB);
 		var searchStore = transaction.objectStore(SEARCH_DB);
-			
-			for (var src in data) {
+		
+		for (var src in data) {
 			// Add full image data to IMAGE_DB
 			imageStore.add(data[src]);
 			
@@ -1147,82 +1164,82 @@ var database = (function() {
 			delete trimmedData.data;
 			delete trimmedData.fullsize;			
 			searchStore.add(trimmedData);
-			}
+		}		
 	};
-			
+	
 	var updateFilename = function(src, newFilename) {
-			var transaction = db.transaction([IMAGE_DB], READ_WRITE);
-			
-			transaction.onerror = (event) => {
-				console.log(event.target.error.message);
-			};
+		var transaction = db.transaction([IMAGE_DB], READ_WRITE);
+		
+		transaction.onerror = (event) => {
+			console.log(event.target.error.message);
+		};
 
-			var objectStore = transaction.objectStore(IMAGE_DB);
-			
-			var record = objectStore.get(src);
-			
+		var objectStore = transaction.objectStore(IMAGE_DB);
+		
+		var record = objectStore.get(src);
+		
 		record.onsuccess = () => {
-				var data = record.result;				
-				data.filename = newFilename;				
-				var updateTitleRequest = objectStore.put(data);
-			};		
+			var data = record.result;				
+			data.filename = newFilename;				
+			var updateTitleRequest = objectStore.put(data);
+		};
 	};
-			
+	
 	
 	/**
 	 *  Iterates through SEARCH_DB object store and calls back with an array containing any matches.
 	 */ 
 	
 	var search = function(query, callback) {
-			var results = [];
+		var results = [];
 		var transaction = db.transaction(SEARCH_DB);
 		var objectStore = transaction.objectStore(SEARCH_DB);							
-			
-			// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
-			var request = objectStore.openCursor();
-			
-			// Check first characters if query length < 3, otherwise look for matches anywhere
-			if (query.length < 3) {
-				
-				request.onsuccess = (event) => {
-						var cursor = event.target.result;
-						
-						if (cursor) {
-								// Only check first character
-								if (cursor.value.filename.indexOf(query) === 0) {
-										results.push(cursor.value);
-								}
-
-								cursor.continue();          
-						}
-						
-						else {
-							// Reached end of db
-						retrieveImageData(results, query, callback);
-						}
-				};								
-			}
-			
-			else {			
-				request.onsuccess = (event) => {
-						var cursor = event.target.result;
-						
-						if (cursor) {			
-								if (cursor.value.filename.indexOf(query) !== -1) {
-										results.push(cursor.value);
-								}
-
-								cursor.continue();          
-						}
-						
-						else {
-							// Reached end of db
-						retrieveImageData(results, query, callback);
-						}
-				};			
-			}
-	};
 		
+		// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
+		var request = objectStore.openCursor();
+		
+		// Check first characters if query length < 3, otherwise look for matches anywhere
+		if (query.length < 3) {
+			
+			request.onsuccess = (event) => {
+					var cursor = event.target.result;
+					
+					if (cursor) {
+							// Only check first character
+							if (cursor.value.filename.indexOf(query) === 0) {
+									results.push(cursor.value);
+							}
+
+							cursor.continue();          
+					}
+					
+					else {
+						// Reached end of db
+						retrieveImageData(results, query, callback);
+					}
+			};								
+		}
+		
+		else {
+			request.onsuccess = (event) => {
+					var cursor = event.target.result;
+					
+					if (cursor) {			
+							if (cursor.value.filename.indexOf(query) !== -1) {
+									results.push(cursor.value);
+							}
+
+							cursor.continue();          
+					}
+					
+					else {
+						// Reached end of db
+						retrieveImageData(results, query, callback);
+					}
+			};			
+		}
+	};
+	
 	
 	/**
 	 *  Returns image data from IMAGE_DB for given search results	 
@@ -1246,71 +1263,71 @@ var database = (function() {
 	};
 	
 	var getAll = function(callback) {
-			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
-			// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
-			if (objectStore.getAll != null) {
-				var request = objectStore.getAll();
-				
-				request.onsuccess = (event) => {
-					// TODO: Need to test what happens if database exists but is empty
-					callback(event.target.result);
-				};
-				
-				request.onerror = (event) => {
-					callback(false);
-				};
-			}
+		var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
+		// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
+		if (objectStore.getAll != null) {
+			var request = objectStore.getAll();
 			
-			else {				
-				var cache = [];
-				objectStore.openCursor().onsuccess = (event) => {
-					var cursor = event.target.result;
-					if (cursor) {
-						cache.push(cursor.value);
-						cursor.continue();
-					}
-					else {
-						callback(cache);
-					}
-				};								
-			}
-	};
+			request.onsuccess = (event) => {
+				// TODO: Need to test what happens if database exists but is empty
+				callback(event.target.result);
+			};
+			
+			request.onerror = (event) => {
+				callback(false);
+			};
+		}
 		
+		else {				
+			var cache = [];
+			objectStore.openCursor().onsuccess = (event) => {
+				var cursor = event.target.result;
+				if (cursor) {
+					cache.push(cursor.value);
+					cursor.continue();
+				}
+				else {
+					callback(cache);
+				}
+			};								
+		}
+	};
+	
 	var getSize = function(callback) {
 		var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
 		var count = objectStore.count();
 		
 		count.onsuccess = () => {
 			callback(count.result);
-			};			
+		};
 	};
-		
+	
 	var getSizeInBytes = function(callback) {
-			var size = 0;
+		var size = 0;
 
-			var transaction = db.transaction([IMAGE_DB])
-					.objectStore(IMAGE_DB)
-					.openCursor();
+		var transaction = db.transaction([IMAGE_DB])
+				.objectStore(IMAGE_DB)
+				.openCursor();
 
-			transaction.onsuccess = (event) => {
-				var cursor = event.target.result;
-				if (cursor) {
-					var storedObject = cursor.value;
-					var json = JSON.stringify(storedObject);
-					size += json.length;
-					cursor.continue();
-				}
-				else {
-					callback(size);
-				}
-			};
-			
-			transaction.onerror = (err) => {
-				// Callback with value of -1MB (to make it obvious that something went wrong without breaking anything)
-				callback(-1048576);
-			};
-	};
+		transaction.onsuccess = (event) => {
+			var cursor = event.target.result;
+			if (cursor) {
+				var storedObject = cursor.value;
+				var json = JSON.stringify(storedObject);
+				size += json.length;
+				cursor.continue();
+			}
+			else {
+				callback(size);
+			}
+		};
 		
+		transaction.onerror = (err) => {
+			// Callback with value of -1MB (to make it obvious that something went wrong without breaking anything)
+			callback(-1048576);
+		};
+	};
+	
 	return {
 		open: open,
 		clear: clear,
@@ -1325,7 +1342,7 @@ var database = (function() {
 		getAll: getAll,
 		getSize: getSize,
 		getSizeInBytes: getSizeInBytes,
-		db: db
+		db: db	
 	};
 	
 })();
@@ -1338,7 +1355,7 @@ var ajax = function(request, callback) {
 	var currentTime = new Date().getTime();
 	
 	if (!request.ignoreCache && ajaxCache[url]
-			&& currentTime < ajaxCache[url].refreshTime ) {
+			&& currentTime < ajaxCache[url].refreshTime) {
 				
 		// Return cached response
 		callback(ajaxCache[url].data);
