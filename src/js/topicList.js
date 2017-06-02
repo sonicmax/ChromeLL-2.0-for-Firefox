@@ -551,6 +551,12 @@ var topicList = {
 	},
 	
 	createDatePicker: function() {
+		if (window.location.pathname === '/history.php' || window.location.pathname === '/main.php') {
+			// ts parameter doesn't affect these pages
+			return;
+		}
+		
+		else {
 		var infobar = document.getElementsByClassName('infobar')[0];
 		var pickerButton = document.createElement('span');
 		pickerButton.className = 'clickable_span';
@@ -560,11 +566,23 @@ var topicList = {
 		infobar.appendChild(document.createTextNode(' | '));
 		infobar.appendChild(pickerButton);
 
-		// ETI dates are in MM/DD/YYYY format
+			// Note: ETI dates are in MM/DD/YYYY format
+			var month, day, year;
+			
+			if (window.location.pathname.indexOf('Posted') > -1) {
+				// Searching user's own posts - use account creation date as minimum date for picker
 		var accountCreationDate = this.config.creation_date.split('/');
-		var month = '0' + (accountCreationDate[0] - 1); // Month in Date constructor is zero-based
-		var day = accountCreationDate[1];
-		var year = accountCreationDate[2];
+				month = '0' + (accountCreationDate[0] - 1); // Month in Date constructor is zero-indexed
+				day = accountCreationDate[1];
+				year = accountCreationDate[2];
+			}
+			
+			else {
+				// First topic on ETI was made on May 11th 2004				
+				month = 4; // Zero-indexed
+				day = 11;
+				year = 2004;
+			}
 		
 		var picker = new Pikaday({
 			field: pickerButton,
@@ -576,30 +594,33 @@ var topicList = {
 				topicList.handleDateSelection(this.getMoment());
 			}
 		});
+		}
 	},
 	
 	handleDateSelection: function(date) {
 		const DATE_CONSTRUCTOR_FORMAT = 'YYYY/MM/DD';
 		const MILLISECONDS_IN_ONE_SECOND = 1000;
 		const TIMESTAMP_PARAM = '?ts=';
-		const SEARCH_PARAM = '&q=';
 		
 		var formattedDateArray = date.format(DATE_CONSTRUCTOR_FORMAT).split('/');
 		
-		var year = dateArray[0];
-		var month = dateArray[1] - 1;	// Month in Date constructor is zero-based
-		var day = dateArray[2];
+		var year = formattedDateArray[0];
+		var month = formattedDateArray[1] - 1;	// Month in Date constructor is zero-based
+		var day = formattedDateArray[2];
 		
-		// Messages are displayed in reverse order, so we want to start from the latest possible time on the provided date
+		// Topics are displayed in reverse order, so we want to start from the latest possible time on the provided date
 		var dateToView = new Date(Date.UTC(year, month, day, 23, 59, 59));
 		var timestamp = dateToView.getTime() / MILLISECONDS_IN_ONE_SECOND;
 		
+		var oldParams = new URLSearchParams(window.location.search);
 		var newParams = TIMESTAMP_PARAM + timestamp;
 		
-		// Preserve search query parameter. We can ignore everything else
-		var oldParams = new URLSearchParams(window.location.search);
+		// Make sure we preserve any search parameters.
 		if (oldParams.has('q')) {
-			queryParams += SEARCH_PARAM + oldParams.get('q');
+			newParams += '&q=' + oldParams.get('q');
+		}
+		else if (oldParams.has('qt')) {
+			newParams += '&qt=' + oldParams.get('qt');
 		}
 		
 		window.location.href = window.location.origin + window.location.pathname + newParams;
