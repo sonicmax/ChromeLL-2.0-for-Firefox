@@ -357,14 +357,13 @@ var topicList = {
 			}
 		});
 	
-		var mousemoveDebouncerId;
-	
 		// Populate href with last page url after user mouses over element
-		document.addEventListener('mousemove', (evt) => {
-			clearTimeout(mousemoveDebouncerId);
-			mousemoveDebouncerId = setTimeout(() => {
-				topicList.handle.mousemove(evt);		
-			}, 150);
+		document.addEventListener('mouseover', (evt) => {
+			
+			if (evt.target.id === 'jumpLast' && evt.target.href !== '#') {
+				evt.target.href = topicList.createPageJumpUrl(evt.target);
+			}
+			
 		});
 		
 	},
@@ -427,11 +426,6 @@ var topicList = {
 	},
 	
 	handle: {
-		mousemove: function(evt) {
-			if (evt.target.id === 'jumpLast' && evt.target.href !== '#') {
-				evt.target.href = topicList.createPageJumpUrl(evt.target);
-			}
-		},
 		
 		message: function(msg) {
 			if (msg.action !== 'ignorator_update') {
