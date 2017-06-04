@@ -3752,11 +3752,10 @@ var messageList = {
 			for (var k in this.messageContainerMethods) {
 				if (this.config[k + pm]) {
 					this.messageContainerMethods[k](msg, top, i + 1);					
-					if (user !== 'Antigone') {
-						this.links.check(msg);
-					}
 				}
 			}
+			
+			this.links.check(msg);
 		}
 		
 		// Pass updated ignorator data to background page so we can update badge and popup menu
