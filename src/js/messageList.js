@@ -11,6 +11,7 @@ var messageList = {
 			users: {}
 		}
 	},
+	topicCreator: '',
 	pm: '',
 	
 	
@@ -20,7 +21,15 @@ var messageList = {
 	
 	init: function(config) {
 		this.config = config.data;
-		this.config.tcs = config.tcs;		
+
+		if (!config.tcs) {
+			this.config.tcs = {};
+		}
+		
+		else {
+			this.config.tcs = config.tcs
+		}
+		
 		this.prepareIgnoratorArray();
 		
 		// set up globalPort so we can interact with background page
@@ -351,6 +360,73 @@ var messageList = {
 					}
 				}
 			}
+		},
+		
+		highlight_tc: function(msg) {
+			var tops = msg.getElementsByClassName('message-top');
+			
+			for (var i = 0, len = tops.length; i < len; i++) {
+				var top = tops[i];
+				var usernameElement = top.getElementsByTagName('a')[0];
+				
+				if (usernameElement.innerHTML.toLowerCase() == messageList.topicCreator) {
+					
+					if (messageList.config.tc_highlight_color) {
+						usernameElement.style.color = '#' + messageList.config.tc_highlight_color;
+					}				
+				}
+			}
+		},
+		
+		label_tc: function(msg) {
+			var isAnonymous;
+			var color;
+			
+			if (messageList.config.tc_label_color && messageList.config.tc_label_color != '') {
+				color = messageList.config.tc_label_color;
+			}
+			
+			var tops = msg.getElementsByClassName('message-top');
+			
+			for (var i = 0, len = tops.length; i < len; i++) {
+				var top = tops[i];
+				var usernameElement = top.firstChild.nextSibling;
+				var username = usernameElement.nodeValue;
+				
+				if (!username || username == ' ') {
+					usernameElement = top.getElementsByTagName('a')[0];
+					username = usernameElement.innerHTML;
+				}
+				
+				else {
+					isAnonymous = true;
+					username = username.replace(" | ", "").trim();
+				}
+				
+				if (username.toLowerCase() == messageList.topicCreator) {
+					var span = document.createElement('span');
+					var b = document.createElement('b');
+					var text = document.createTextNode('TC');
+					var divider = document.createTextNode(' | ');
+					
+					b.appendChild(text);
+					
+					if (color) {
+						b.style.color = '#' + color;
+					}
+					
+					if (isAnonymous) {											
+						span.appendChild(b);
+						span.appendChild(divider);
+					}
+					else {
+						span.appendChild(divider);
+						span.appendChild(b);
+					}
+					
+					top.insertBefore(span, usernameElement.nextSibling);				
+				}	
+			}
 		}
 	},
 	
@@ -610,48 +686,6 @@ var messageList = {
 	},
 		
 	miscMethods: {
-		highlight_tc: function() {
-			var tcs = messageList.tcs.getMessages();
-			var tc;
-			if (!tcs) {
-				return;
-			}
-			for (var i = 0, len = tcs.length; i < len; i++) {
-				tc = tcs[i];
-				if (messageList.config.tc_highlight_color) {
-					tc.getElementsByTagName('a')[0].style.color = '#'
-							+ messageList.config.tc_highlight_color;
-				}
-			}
-		},
-		
-		label_tc: function() {
-			var tcs = messageList.tcs.getMessages();
-			if (!tcs) {
-				return;
-			}
-			var color = false;
-			if (messageList.config.tc_label_color 
-					&& messageList.config.tc_label_color != '') {
-				color = true;
-			}
-			for (var i = 0, len = tcs.length; i < len; i++) {
-				var tc = tcs[i];
-				var span = document.createElement('span');
-				var b = document.createElement('b');
-				var text = document.createTextNode('TC');
-				var divider = document.createTextNode(' | ');
-				b.appendChild(text);
-				if (color) {
-					b.style.color = '#' + messageList.config.tc_label_color;
-				}
-				span.appendChild(divider);
-				span.appendChild(b);			
-				username = tc.getElementsByTagName('a')[0];
-				username.outerHTML += span.innerHTML;
-			}
-		},
-		
 		pm_title: function() {
 			if (window.location.href.indexOf('inboxthread.php') == -1) {
 				return;
@@ -3095,47 +3129,43 @@ var messageList = {
 	},
 	
 	tcs: {
-		getMessages: function() {
-			if (!messageList.config.tcs)
-				messageList.config.tcs = {};
-			var tcs = [];
-			var topic = window.location.href.match(/topic=(\d+)/)[1];
-			var heads = document.getElementsByClassName('message-top');
-			var tc;
-			var haTopic;
-			if (document.getElementsByClassName('message-top')[0].innerHTML
-					.indexOf("> Human") !== -1) {
-				haTopic = true;
-				tc = "human #1";
-			} else if ((!window.location.href.match('page') || window.location.href
-					.match('page=1($|&)'))
-					&& !window.location.href.match(/u=(\d+)/))
-				tc = heads[0].getElementsByTagName('a')[0].innerHTML.toLowerCase();
-			else {
-				if (!messageList.config.tcs[topic]) {
-					if (messageList.config.debug) {
-						console.log('Unknown TC!');
+		getTopicCreator: function() {				
+			var params = new URLSearchParams(window.location.search);
+			var topic = params.get("topic");
+			var creator;
+			
+			if (messageList.config.tcs[topic]) {
+				return messageList.config.tcs[topic].tc;
 					}
+			
+			else {
+				if (params.has("u")) {
+					// Ignore filtered user view when caching topic creator.
 					return;
 				}
-				tc = messageList.config.tcs[topic].tc;
+				
+				var tops = document.getElementsByClassName('message-top');									
+				var tagsHtml = document.getElementsByTagName('h2')[0].innerHTML;
+				
+				if (tagsHtml.indexOf(">Anonymous</a>") > -1) {
+					creator = "human #1";
 			}
-			if (!messageList.config.tcs[topic]) {
+				
+				else if ((!params.has("page") || params.get("page") == 1)) {
+					creator = tops[0].getElementsByTagName('a')[0].innerHTML.toLowerCase();
+				}
+				
+				else {
+					return;
+				}
+				
 				messageList.config.tcs[topic] = {};
-				messageList.config.tcs[topic].tc = tc;
+				messageList.config.tcs[topic].tc = creator;
 				messageList.config.tcs[topic].date = new Date().getTime();
+				this.save();
+
+				return creator;					
 			}
-			for (var i = 0; i < heads.length; i++) {
-				if (haTopic && heads[i].innerHTML.indexOf("\">Human") == -1) {
-					heads[i].innerHTML = heads[i].innerHTML.replace(/Human #(\d+)/,
-							"<a href=\"#" + i + "\">Human #$1</a>");
-				}
-				if (heads[i].getElementsByTagName('a')[0].innerHTML.toLowerCase() == tc) {
-					tcs.push(heads[i]);
-				}
-			}
-			messageList.tcs.save();
-			return tcs;
 		},
 		
 		save: function() {
@@ -3154,6 +3184,7 @@ var messageList = {
 			
 			if (numTcs > max) {
 				delete messageList.config.tcs[lowestTc];
+			}
 				
 				messageList.sendMessage({
 					need: "save",
@@ -3161,7 +3192,6 @@ var messageList = {
 					data: messageList.config.tcs
 				});
 			}
-		}	
 	},
 	
 	likeButton: {
@@ -3710,6 +3740,7 @@ var messageList = {
 			this.handleArchivedAndLockedTopics();
 		}
 		
+		this.topicCreator = this.tcs.getTopicCreator();
 
 		var msgs = document.getElementsByClassName('message-container');
 		
