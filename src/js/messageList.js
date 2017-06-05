@@ -3530,7 +3530,7 @@ var messageList = {
 				var top = tops[i];				
 				var anchor = top.getElementsByTagName('a')[0];
 				// ignore users in anon topics
-				if (anchor.href.indexOf('http://endoftheinter.net/profile.php?user=') > -1) {
+				if (anchor.href.indexOf('endoftheinter.net/profile.php?user=') > -1) {
 					anchor.className = 'username_anchor';
 					anchor.addEventListener('mouseenter', this.handleEvent.mouseenter.bind(this));
 					anchor.addEventListener('mouseleave', this.handleEvent.mouseleave.bind(this));
