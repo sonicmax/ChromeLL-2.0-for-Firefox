@@ -3148,7 +3148,7 @@ var messageList = {
 				var tagsHtml = "";
 								
 				// We don't need to check PM threads for tags
-				if (window.location.href.pathname !== "/inboxthread.php") {
+				if (window.location.pathname !== "/inboxthread.php") {
 					tagsHtml = document.getElementsByTagName('h2')[0].innerHTML;
 				}
 				
