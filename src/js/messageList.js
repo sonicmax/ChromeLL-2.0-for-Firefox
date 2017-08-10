@@ -967,19 +967,16 @@ var messageList = {
 			}
 
 			else {
-				// Scrape text nodes and bold/italic/underline/preformatted tagged content
-				// This will ignore quoted messages and spoiler tagged content
+				// Scrape text nodes and bold/italic/underline/preformatted content
+				// This will ignore quoted messages, links, and spoilers
 				
 				if (child.nodeType === 3) {
 					speech += child.nodeValue;
 				}
 				
 				else if (child.tagName) {
-					if (child.tagName == 'B' || child.tagName == 'I' || child.tagName == 'U') {
+					if (child.tagName === 'B' || child.tagName === 'I' || child.tagName === 'U') {
 						speech += child.innerText;
-					}
-					else if (child.tagName == 'A') {
-						speech += child.href;
 					}
 				}
 				
