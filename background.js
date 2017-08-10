@@ -342,24 +342,34 @@ var background = {
 	},
 	
 	getDrama: function(callback) {
-		const dramalinksRawUrl = 'https://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30';
+		const DRAMALINKS_RAW_URL = 'https://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30';
 		
 		var xhr = new XMLHttpRequest();
-		xhr.open("GET", dramalinksRawUrl, true);
+		xhr.open("GET", DRAMALINKS_RAW_URL, true);
 		xhr.withCredentials = "true";
 		
 		xhr.onload = function() {
 			switch (this.status) {
 				case 200:
+					// Make sure that user was logged in & not redirected
+					if (this.responseURL === DRAMALINKS_RAW_URL) {
 					var scrapedData = background.scrapeDramalinks(this.responseText);
 					background.drama.txt = background.buildDramalinksHtml(scrapedData.bgcol, scrapedData.stories);
 					background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));
+					}
+					else {
+						// If we have old drama to display, use that. Otherwise display error message
+						if (!background.drama.txt) {
+							background.drama.txt = 'Error while loading dramalinks';
+						}
+					}
 					break;
 					
 				case 404:
+					// 10th August 2017 update - seems like Llamaguy fixed the broken redirect. Leaving just in case
+					
 					// Usually indicates that user was not logged in. The wiki website redirects to the login page on the old ETI domain (luelinks.net), 
 					// and the r query parameter contains the URL encoded to base64. As the luelinks.net domain isn't active anymore, we get a 404.
-					// If we've already got some scraped dramalinks to display, keep it - otherwise, display error message
 					if (!background.drama.txt) {
 						background.drama.txt = 'Error while loading dramalinks';
 					}
