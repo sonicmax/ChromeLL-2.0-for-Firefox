@@ -976,15 +976,15 @@ var messageList = {
 				
 				else if (child.tagName) {
 					if (child.tagName == 'B' || child.tagName == 'I' || child.tagName == 'U') {
-						output += child.innerText;
+						speech += child.innerText;
 					}
 					else if (child.tagName == 'A') {
-						output += child.href;
+						speech += child.href;
 					}
 				}
 				
 				else if (child.className && child.className === 'pr') {
-					output += child.innerText;
+					speech += child.innerText;
 				}
 			}
 		}
