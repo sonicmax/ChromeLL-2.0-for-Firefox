@@ -13,6 +13,7 @@ var messageList = {
 	},
 	topicCreator: '',
 	pm: '',
+	tags: [],
 	
 	
 	/**
@@ -951,6 +952,46 @@ var messageList = {
 		}
 	},
 	
+	readPost: function(container) {
+		var msg = container.getElementsByClassName('message')[0];
+		var speech = '';
+		var children = msg.childNodes;
+		
+		// Scrape post content from message element.		
+		for (var i = 0, len = children.length; i < len; i++) {
+			var child = children[i];
+			
+			// Stop scraping once we reach sig belt
+			if (child.nodeValue && child.nodeValue.replace(/^\s+|\s+$/g, "") === '---') {
+				break;
+			}
+
+			else {
+				// Scrape text nodes and bold/italic/underline/preformatted tagged content
+				// This will ignore quoted messages and spoiler tagged content
+				
+				if (child.nodeType === 3) {
+					speech += child.nodeValue;
+				}
+				
+				else if (child.tagName) {
+					if (child.tagName == 'B' || child.tagName == 'I' || child.tagName == 'U') {
+						output += child.innerText;
+					}
+					else if (child.tagName == 'A') {
+						output += child.href;
+					}
+				}
+				
+				else if (child.className && child.className === 'pr') {
+					output += child.innerText;
+				}
+			}
+		}
+		
+		window.speechSynthesis.speak(new SpeechSynthesisUtterance(speech));
+	},	
+	
 	handleEvent: {
 		
 		/**
@@ -1007,7 +1048,6 @@ var messageList = {
 			}, 2000);
 		},
 
-		
 		/**
 		 *  Recieves new livelinks posts and applies any required modifications
 		 */
@@ -1019,6 +1059,10 @@ var messageList = {
 			
 			if (window.location.pathname === '/inboxthread.php') {			
 				pm = "_pm";
+			}
+			
+			if (this.tags.includes('Microsoft Sam') && window.speechSynthesis) {
+				this.readPost(container);	
 			}
 			
 			for (var i in this.messageContainerMethods) {
@@ -3722,6 +3766,23 @@ var messageList = {
 		}
 	},
 	
+	scrapeTags: function() {
+		var tagHeader = document.getElementsByTagName('h2');
+		
+		if (tagHeader && tagHeader[0] && tagHeader[0].firstChild) {
+			var children = tagHeader[0].firstChild.childNodes;
+			
+			for (var i = 0, len = children.length; i < len; i++) {
+				var child = children[i];
+				// Child nodes will include anchors and spans - we just want the anchors.
+				// Spans are used for tag relationship stuff
+				if (child.tagName === 'A') {
+					this.tags.push(child.innerHTML);
+				}
+			}
+		}
+	},
+	
 	/**
 	 *  The main loop for this script - called after DOMContentLoaded has fired (or immediately if DOM is ready)
 	 *  Applies various types of DOM modifications to the message list, adds listeners for ChromeLL features, etc
@@ -3737,6 +3798,8 @@ var messageList = {
 				this.infobarMethods[i]();
 			}
 		}
+		
+		this.scrapeTags();
 		
 		// Check whether user can post in topic
 		var topicOpen = (document.getElementsByClassName('quickpost').length > 0);
