@@ -121,6 +121,8 @@
 	"emoji_history":[],
 	"reload_on_update": false,
 	"image_cache_version": 3,
+	"highlight_serious": true,
+	"serious_color": "FF0000",
 	"seasonal_css": true,
 	"last_clean":0,
 	"last_saved":0

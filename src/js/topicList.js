@@ -210,7 +210,7 @@ var topicList = {
 			var tagsToCheck = tr.getElementsByTagName('td')[0]
 					.getElementsByClassName('fr')[0].getElementsByTagName('a');			
 			for (var j = 0, len = tagsToCheck.length; j < len; j++) {
-				tagToCheck = tagsToCheck[j];		
+				var tagToCheck = tagsToCheck[j];		
 				for (var k = 0; highlightTags[k]; k++) {
 					for (var l = 0; highlightTags[k].match[l]; l++) {
 						var highlightTag = highlightTags[k].match[l];
@@ -274,8 +274,27 @@ var topicList = {
 					}
 				}
 			}
+		},
+		
+		highlight_serious: function(tr) {
+			var frElement = tr.getElementsByTagName('td')[0].getElementsByClassName('fr')[0];
+			
+			if (frElement.innerHTML.indexOf('Serious') === -1) {
+				return;
+			}
+			
+			var tagsToCheck = frElement.getElementsByTagName('a');
+			
+			for (var i = 0, len = tagsToCheck.length; i < len; i++) {
+				var tagToCheck = tagsToCheck[i];
+				if (tagToCheck.innerHTML === 'Serious') {
+					tagToCheck.style.color = '#' + topicList.config.serious_color;
+					break;
+				}
+			}
 		}
 	},
+	
 	prepareArrays: function() {
 		if (this.config.ignorator_list) {
 			this.ignoredUsers = this.config.ignorator_list.split(',').map((user) => {
