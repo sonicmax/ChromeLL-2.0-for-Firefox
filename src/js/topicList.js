@@ -607,7 +607,9 @@ var topicList = {
 			});
 		}				
 		
+		if (this.config.browse_from_date) {	
 		this.createDatePicker();
+		}
 	},
 	
 	createDatePicker: function() {

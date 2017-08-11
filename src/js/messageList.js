@@ -1058,7 +1058,7 @@ var messageList = {
 				pm = "_pm";
 			}
 			
-			if (this.tags.includes('Microsoft Sam') && window.speechSynthesis) {
+			if (this.config.microsoft_sam && this.tags.includes('Microsoft Sam') && window.speechSynthesis) {
 				this.readPost(container);	
 			}
 			

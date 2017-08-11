@@ -120,9 +120,11 @@
 	"emoji_menu":true,
 	"emoji_history":[],
 	"reload_on_update": false,
+	"browse_from_date": true,
 	"image_cache_version": 3,
 	"highlight_serious": true,
 	"serious_color": "FF0000",
+	"microsoft_sam": true,
 	"seasonal_css": true,
 	"last_clean":0,
 	"last_saved":0
