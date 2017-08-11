@@ -1,6 +1,6 @@
 // Original code by Milan
 
-const UPLOAD_SIZE_LIMIT = 4096000; // 4MB
+const UPLOAD_SIZE_LIMIT = 4000000; // 4MB
 
 var imgurNotificationId;
 
