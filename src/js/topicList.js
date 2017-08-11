@@ -2,8 +2,8 @@ var topicList = {
 	config: {},
 	ignoredUsers: [],
 	ignoredKeywords: [],
-	highlightedKeywords: {},
-	highlightedTags: {},		
+	highlightedKeywords: [],
+	highlightedTags: [],		
 	ignorated: {
 		total_ignored: 0,
 		data: {
@@ -11,11 +11,9 @@ var topicList = {
 			keywords: {}
 		}
 	},
-	index: 1,
 	pm: '',
 	
-	functions: {
-		
+	functions: {		
 		ignorator_topiclist: function(tr) {
 			if (!topicList.ignoredUsers) {
 				return;
@@ -105,9 +103,8 @@ var topicList = {
 					insert.style.cssFloat = 'right';
 				}
 				
-				var jumpWindow = document.createElement('span');
-				jumpWindow.style.cursor = 'pointer';
-				jumpWindow.style.textDecoration = 'underline';
+				var jumpWindow = document.createElement('a');
+				jumpWindow.href = '#';
 				jumpWindow.id = 'jumpWindow';
 				jumpWindow.innerHTML = '#';
 				
@@ -162,92 +159,103 @@ var topicList = {
 				}
 			}
 		},
+		
 		enable_keyword_highlight: function(tr) {
-			var title;
-			var keys = topicList.highlightedKeywords;
-			if (!keys) {
+			var highlights = topicList.highlightedKeywords;
+			if (!highlights || highlights.length === 0) {
 				return;
 			}
-			var re = false;
-				title = tr.getElementsByTagName('td')[0]
-						.getElementsByClassName('fl')[0].getElementsByTagName('a')[0].innerHTML;
-				for (var j = 0; keys[j]; j++) {
-					for (var k = 0; keys[j].match[k]; k++) {
-						if (keys[j].match[k].substring(0, 1) == '/') {
-							var reg = new RegExp(keys[j].match[k].substring(1,
-									keys[j].match[k].lastIndexOf('/')),
-									keys[j].match[k].substring(keys[j].match[k]
-											.lastIndexOf('/') + 1,
-											keys[j].match[k].length));
-							match = title.match(reg);
-						} else {
-							reg = keys[j].match[k].toLowerCase();
-							var match = title.toLowerCase().indexOf(reg) != -1;
-						}
-						if (match) {
-							var node = tr.getElementsByTagName('td')[0];
-							var nodeAnchors = node.getElementsByTagName('a');
-							node.setAttribute('highlighted', true);
-							node.style.background = '#' + keys[j].bg;
-							node.style.color = '#' + keys[j].color;
-							for (var m = 0, anchorLen = nodeAnchors.length; m < anchorLen; m++) {
-								var nodeAnchor = nodeAnchors[m];
-								nodeAnchor.style.color = '#' + keys[j].color;
-							}
-							if (topicList.config.debug) {
-								console.log('highlight topic ' + title
-										+ ' keyword ' + reg);
-							}
-						}
+			
+			var td = tr.getElementsByTagName('td')[0];
+			var topicTitle = td.getElementsByClassName('fl')[0].innerText.toLowerCase();
+					
+			for (var i = 0, len = highlights.length; i < len; i++) {
+				var highlight = highlights[i];
+				var keyword = highlight.match; 
+				var match;
+								
+				// Check for regex (do people even use this??)
+				if (keyword.substring(0, 1) == '/') {
+					var reg = new RegExp(keys[j].match[k].substring(1, keyword.lastIndexOf('/')), 
+							keyword.substring(keyword.lastIndexOf('/') + 1, keyword.length)
+					);
+					
+					match = topicTitle.match(reg);				
+				}
+				
+				else {
+					match = topicTitle.toLowerCase().indexOf(keyword.toLowerCase()) != -1;
+				}
+				
+				if (match) {
+					var nodeAnchors = td.getElementsByTagName('a');
+					td.setAttribute('highlighted', true);
+					td.style.background = '#' + highlight.bg;
+					td.style.color = '#' + highlight.color;
+					
+					for (var m = 0, anchorLen = nodeAnchors.length; m < anchorLen; m++) {
+						nodeAnchors[m].style.color = '#' + highlight.color;
 					}
 				}
+			}
 		},
+		
 		enable_tag_highlight: function(tr) {
 			var highlightTags = topicList.highlightedTags;
-			if (!highlightTags) {
+			
+			if (highlightTags.length === 0) {
 				return;
 			}
-			var tagsToCheck = tr.getElementsByTagName('td')[0]
-					.getElementsByClassName('fr')[0].getElementsByTagName('a');			
-			for (var j = 0, len = tagsToCheck.length; j < len; j++) {
-				var tagToCheck = tagsToCheck[j];		
-				for (var k = 0; highlightTags[k]; k++) {
-					for (var l = 0; highlightTags[k].match[l]; l++) {
-						var highlightTag = highlightTags[k].match[l];
-						if (tagToCheck.innerHTML.toLowerCase()
-								.match(highlightTag)) {
+			
+			var frElement = tr.getElementsByTagName('td')[0].getElementsByClassName('fr')[0];
+			var htmlString = frElement.innerHTML.toLowerCase();		
+			var needsHighlight = false;
+						
+			for (var i = 0, len = highlightTags.length; i < len; i++) {
+				var keyword = highlightTags[i].match;
+				if (htmlString.indexOf(keyword) > -1) {
+					needsHighlight = true;
+					break;
+				}
+			}
+			
+			if (needsHighlight) {
+				var tagsToCheck = frElement.getElementsByTagName('a');
+					
+				for (var i = 0, len = tagsToCheck.length; i < len; i++) {
+					var tagToCheck = tagsToCheck[i];	
+					for (var j = 0, highlightLen = highlightTags.length; j < highlightLen; j++) {
+						var highlight = highlightTags[j];
+						
+						if (tagToCheck.innerHTML.toLowerCase() === highlight.match) {
 							var node = tr.getElementsByTagName('td')[0];
 							var nodeAnchors = node.getElementsByTagName('a');
+							
 							node.setAttribute('highlighted', true);
-							node.style.background = '#' + highlightTags[k].bg;
-							node.style.color = '#' + highlightTags[k].color;							
+							node.style.background = '#' + highlight.bg;
+							node.style.color = '#' + highlight.color;
+							
 							for (var n = 0, anchorLen = nodeAnchors.length; n < anchorLen; n++) {
 								nodeAnchor = nodeAnchors[n];
-								nodeAnchor.style.color = '#' + highlightTags[k].color;
+								nodeAnchor.style.color = '#' + highlight.color;
 							}
-							if (topicList.config.debug) {
-								console.log('highlight topic ' + tr
-										+ ' tag ' + highlightTags[k].match[l]);
-							}					
 						}
 					}
 				}
 			}
 		},
+		
 		userhl_topiclist: function(tr) {
 			if (!topicList.config.enable_user_highlight) {
 				return;
 			}
-			var user;
+
 			var highlightData = topicList.config.user_highlight_data;
-			if (tr.getElementsByTagName('td')[1]
-					.getElementsByTagName('a')[0]) {
-				user = tr.getElementsByTagName('td')[1]
-						.getElementsByTagName('a')[0].innerHTML.toLowerCase();
+			var userElement = tr.getElementsByTagName('td')[1].getElementsByTagName('a')[0];
+			
+			if (userElement) {
+				var user = userElement.innerHTML.toLowerCase();
 				if (highlightData[user]) {
-					if (topicList.config.debug) {
-						console.log('highlighting topic by ' + user);
-					}
 					tr.setAttribute('highlighted', true);					
 					var tds = tr.getElementsByTagName('td');
 					for (var j = 0, tdsLen = tds.length; j < tdsLen; j++) {
@@ -265,6 +273,7 @@ var topicList = {
 				}
 			}
 		},
+		
 		zebra_tables: function(tr, i) {
 			if (i % 2 === 0) {
 				for (var j = 0; tr.getElementsByTagName('td')[j]; j++) {
@@ -295,10 +304,14 @@ var topicList = {
 		}
 	},
 	
+	/**
+	 *  Prepares arrays for ignorator/highlighter methods.	 
+	 */ 
+	
 	prepareArrays: function() {
 		if (this.config.ignorator_list) {
 			this.ignoredUsers = this.config.ignorator_list.split(',').map((user) => {
-				return user.trim(); 
+				return user.trim();
 			});
 			
 			if (this.config.ignorator_allow_topics && this.config.ignorator_topic_whitelist) {
@@ -325,40 +338,50 @@ var topicList = {
 			}
 		}
 		
+		// Convert weird keyword_highlight_data object to plain array.
+		// TODO: modify way that keyword highlights are stored
+		
 		for (var i = 0; this.config.keyword_highlight_data[i]; i++) {
-			this.highlightedKeywords[i] = {};
-			this.highlightedKeywords[i].bg = this.config.keyword_highlight_data[i].bg;
-			this.highlightedKeywords[i].color = this.config.keyword_highlight_data[i].color;
-			this.highlightedKeywords[i].match = this.config.keyword_highlight_data[i].match.split(',');
+			var highlight = {};			
+			highlight.bg = this.config.keyword_highlight_data[i].bg;
+			highlight.color = this.config.keyword_highlight_data[i].color;
+			highlight.match = this.config.keyword_highlight_data[i].match;
+			this.highlightedKeywords.push(highlight);
 		}
 		
+		// Convert weird tag_highlight_data object to plain array.
+		// TODO: modify way that tag highlights are stored
+		
 		for (var i = 0; this.config.tag_highlight_data[i]; i++) {
-			this.highlightedTags[i] = {};	
-			this.highlightedTags[i].bg = this.config.tag_highlight_data[i].bg;
-			this.highlightedTags[i].color = this.config.tag_highlight_data[i].color;	
-			this.highlightedTags[i].match = this.config.tag_highlight_data[i].match.split(',');
+			var highlight = {};			
+			highlight.bg = this.config.tag_highlight_data[i].bg;
+			highlight.color = this.config.tag_highlight_data[i].color;
+			highlight.match = this.config.tag_highlight_data[i].match.toLowerCase();
+			this.highlightedTags.push(highlight);
 		}
 	},
+	
 	checkTags: function() {
-		var atags = document.getElementById('bookmarks')
-				.getElementsByTagName('span');
-		var ctags = {};
-		var tag, name;
-		for (var i = 0, len = atags.length; i < len; i++) {
-			tag = atags[i];
-			if (!atags[i].className) {
-				name = atags[i].getElementsByTagName('a')[0].innerHTML;
-				tag = atags[i].getElementsByTagName('a')[0].href
-						.match('\/topics\/(.*)$')[1];
-				ctags[name] = tag;
+		var bookmarks = document.getElementById('bookmarks').getElementsByTagName('span');
+		var savedTags = {};
+		
+		for (var i = 0, len = bookmarks.length; i < len; i++) {
+			var bookmark = bookmarks[i];
+			if (!bookmark.className) {
+				var anchor = bookmark.getElementsByTagName('a')[0];
+				var name = anchor.innerHTML;
+				var tag = anchor.href.match('\/topics\/(.*)$')[1];
+				savedTags[name] = tag;
 			}
 		}
+		
 		chrome.runtime.sendMessage({
 			need: "save",
 			name: "saved_tags",
-			data: ctags
+			data: savedTags
 		});
 	},
+	
 	addListeners: function() {
 		const LEFT_CLICK = 0;
 		const MIDDLE_CLICK = 1;
@@ -368,8 +391,8 @@ var topicList = {
 			if (evt.target.id === 'jumpWindow') {
 				var url = topicList.createPageJumpUrl(evt.target);
 				
-				if (url) {
-					window.location.href = url;
+				if (url) {										
+					window.location.href = url;					
 				}
 				
 				evt.preventDefault();
@@ -442,9 +465,9 @@ var topicList = {
 			var topic = target.parentNode.parentNode.parentNode.parentNode.getElementsByTagName('td')[0].getElementsByTagName('a')[0];
 			return topic.href + '&page=' + page;
 		}
-	},
+	},	
 	
-	handle: {
+	handle: {	
 		
 		message: function(msg) {
 			if (msg.action !== 'ignorator_update') {
@@ -513,10 +536,28 @@ var topicList = {
 			}
 		}
 	},
-	applyDomModifications: function(pm) {
+	
+	/**
+	 *  Kludgy fix for missing PM inbox config flags.
+	 *  Need to fix this properly in future update
+	 */
+	
+	fixPmConfigFlags: function() {
+		if (this.config.ignorator_topiclist) {
+			this.config.ignorator_topiclist_pm = true;
+		}
+		
+		if (this.config.ignore_keyword) {
+			this.config.ignore_keyword_pm = true;
+		}
+		
+		if (this.config.enable_keyword_highlight) {
+			this.config.enable_keyword_highlight_pm = true;
+		}
+	},
+	
+	applyDomModifications: function(pm) {	
 		var grids = document.getElementsByClassName('grid');
-		var functions = this.functions;
-		var config = this.config;
 								
 		for (var i = 0, gridLen = grids.length; i < gridLen; i++) {
 			var trs = grids[i].getElementsByTagName('tr');
@@ -528,10 +569,10 @@ var topicList = {
 					// ignore these elements (found only on main.php)					
 				}
 				else {
-					for (var k in functions) {
+					for (var k in this.functions) {
 						
-						if (config[k + pm]) {
-							functions[k](tr, j);
+						if (this.config[k + pm]) {
+							this.functions[k](tr, j);
 						}
 					}
 				}
@@ -564,7 +605,7 @@ var topicList = {
 				ignorator: this.ignorated,
 				scope: "topicList"
 			});
-		}
+		}				
 		
 		this.createDatePicker();
 	},
@@ -576,21 +617,21 @@ var topicList = {
 		}
 		
 		else {
-		var infobar = document.getElementsByClassName('infobar')[0];
-		var pickerButton = document.createElement('span');
-		pickerButton.className = 'clickable_span';
-		pickerButton.id = 'picker_button';
-		pickerButton.innerHTML = 'Browse From Date';
-		
-		infobar.appendChild(document.createTextNode(' | '));
-		infobar.appendChild(pickerButton);
-
+			var infobar = document.getElementsByClassName('infobar')[0];
+			var pickerButton = document.createElement('span');
+			pickerButton.className = 'clickable_span';
+			pickerButton.id = 'picker_button';
+			pickerButton.innerHTML = 'Browse From Date';
+			
+			infobar.appendChild(document.createTextNode(' | '));
+			infobar.appendChild(pickerButton);
+			
 			// Note: ETI dates are in MM/DD/YYYY format
 			var month, day, year;
 			
 			if (window.location.pathname.indexOf('Posted') > -1) {
 				// Searching user's own posts - use account creation date as minimum date for picker
-		var accountCreationDate = this.config.creation_date.split('/');
+				var accountCreationDate = this.config.creation_date.split('/');			
 				month = '0' + (accountCreationDate[0] - 1); // Month in Date constructor is zero-indexed
 				day = accountCreationDate[1];
 				year = accountCreationDate[2];
@@ -602,17 +643,17 @@ var topicList = {
 				day = 11;
 				year = 2004;
 			}
-		
-		var picker = new Pikaday({
-			field: pickerButton,
-			firstDay: 1,
-			minDate: new Date(year, month, day),
-			maxDate: new Date(),
-			yearRange: [year, new Date().getFullYear()],
-			onSelect: function() {
-				topicList.handleDateSelection(this.getMoment());
-			}
-		});
+			
+			var picker = new Pikaday({
+				field: pickerButton,
+				firstDay: 1,
+				minDate: new Date(year, month, day),
+				maxDate: new Date(),
+				yearRange: [year, new Date().getFullYear()],
+				onSelect: function() {
+					topicList.handleDateSelection(this.getMoment());
+				}
+			});
 		}
 	},
 	
@@ -632,10 +673,10 @@ var topicList = {
 		var timestamp = dateToView.getTime() / MILLISECONDS_IN_ONE_SECOND;
 		
 		var oldParams = new URLSearchParams(window.location.search);
-		var newParams = TIMESTAMP_PARAM + timestamp;
-		
+		var newParams = TIMESTAMP_PARAM + timestamp;						
+	
 		// Make sure we preserve any search parameters.
-		if (oldParams.has('q')) {
+		if (oldParams.has('q')) {			
 			newParams += '&q=' + oldParams.get('q');
 		}
 		else if (oldParams.has('qt')) {
@@ -665,7 +706,7 @@ var topicList = {
 			topicList.applyDomModifications(topicList.pm);
 		}
 	},
-	
+			
 	init: function(config) {
 		this.config = config.data;	
 		this.prepareArrays();
@@ -687,6 +728,8 @@ var topicList = {
 		else if (window.location.href.match(/inbox.php/)) {
 			this.pm = "_pm";
 		}
+		
+		this.fixPmConfigFlags();
 		
 		if (document.readyState == 'loading') {
 			document.addEventListener('DOMContentLoaded', () => {
