@@ -129,7 +129,7 @@ var messageList = {
 			}	
 							
 			// Anon topic - ignore
-			if (!/user=(\d+)$/i.test(top.getElementsByTagName('a')[0].href)) {
+			if (messageList.tags.includes('Anonymous')) {
 				return;
 			}
 			
@@ -317,8 +317,7 @@ var messageList = {
 		},
 		
 		label_self_anon: function(msg) {
-			var tagList = document.getElementsByTagName('h2')[0];
-			if (tagList.innerHTML.indexOf('href="/topics/Anonymous"') > -1) {
+			if (messageList.tags.includes('Anonymous')) {
 				// We can only get human number from topics that we can post in
 				var quickpostBody = document.getElementsByClassName('quickpost-body')[0];
 				
@@ -1513,9 +1512,9 @@ var messageList = {
 					}						
 					
 					else {
-						messageList.gfycat.checkWorkSafe(gfycatElement, data.nsfw, (isWorkSafe) => {
+						messageList.gfycat.checkWorkSafe(gfycatElement, data.nsfw, (safeForWork) => {
 							
-							if (!isWorkSafe && messageList.config.hide_nws_gfycat && !/N[WL]S/.test(document.getElementsByTagName('h2')[0].innerHTML)) {
+							if (!safeForWork && messageList.config.hide_nws_gfycat && !messageList.tags.includes('NWS') && !messageList.tags.includes('NLS')) {
 								gfycatElement.classList.remove('gfycat');
 								gfycatElement.classList.add('nws_gfycat');
 								gfycatElement.setAttribute('w', data.width);
@@ -1688,6 +1687,7 @@ var messageList = {
 				
 				var post = gfycatElement.parentNode;
 				
+				// Either API returned nsfw status, or message body includes "nws"/"nls"
 				if (nsfw === '1' || post && /(n[wl]s)/i.test(post.innerHTML)) {
 					gfycatElement.classList.remove('gfycat');
 					gfycatElement.classList.add('nws_gfycat');
@@ -3186,14 +3186,8 @@ var messageList = {
 				}
 				
 				var tops = document.getElementsByClassName('message-top');									
-				var tagsHtml = "";
 								
-				// We don't need to check PM threads for tags
-				if (window.location.pathname !== "/inboxthread.php") {
-					tagsHtml = document.getElementsByTagName('h2')[0].innerHTML;
-				}
-				
-				if (tagsHtml.indexOf(">Anonymous</a>") > -1) {
+				if (messageList.tags.includes('Anonymous')) {
 					creator = "human #1";
 			}
 				
@@ -3251,7 +3245,7 @@ var messageList = {
 			
 			
 			// Get names of user and quoted poster
-			if (document.getElementsByTagName('h2')[0].innerHTML.indexOf('href="/topics/Anonymous"') > -1) {
+			if (messageList.tags.includes('Anonymous')) {
 				anonymous = true;
 				var user = "Human";
 				var poster = "this";
