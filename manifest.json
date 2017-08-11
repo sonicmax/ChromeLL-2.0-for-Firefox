@@ -1,6 +1,6 @@
 {
   "name": "ChromeLL",
-  "version": "2.65",
+  "version": "2.67",
   "manifest_version": 2,
   "description": "Enhancements for the forums at the End of the Internet",
   "options_page": "options.html",
@@ -37,18 +37,19 @@
   },	
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
-    "js": ["lib/jquery.js", "src/js/messageList.js", "src/js/imagemap.js"],
+    "js": ["src/js/messageList.js", "src/js/imagemap.js"],
 		"run_at" : "document_start"
   },
   {
     "matches": ["*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/showfavorites.php*", "*://endoftheinter.net/inbox.php*", "*://*.endoftheinter.net/history.php*", "*://endoftheinter.net/main.php*", "*://*.endoftheinter.net/search.php*"],
-    "js": ["src/js/topicList.js"],
+		"css": ["lib/pikaday/pikaday.css"],
+    "js": ["lib/moment.min.js", "lib/pikaday/pikaday.js", "src/js/topicList.js"],
 		"run_at" : "document_start"
   },
   {
     "matches": ["*://*.endoftheinter.net/*"],
     "js": ["lib/jquery.js", "src/js/allPages.js"],
-    "run_at": "document_end"
+    "run_at": "document_start"
   },	
   {
     "matches": ["*://*.endoftheinter.net/postmsg.php*"],
@@ -62,7 +63,7 @@
 	},
   {
     "matches": ["*://endoftheinter.net/profile.php*"],
-    "js": ["lib/jquery.js", "src/js/profile.js"] 
+    "js": ["src/js/profile.js"] 
   },
   {
     "matches": ["*://*.endoftheinter.net/search.php*"],
