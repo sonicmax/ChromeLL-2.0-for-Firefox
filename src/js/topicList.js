@@ -167,7 +167,7 @@ var topicList = {
 			}
 			
 			var td = tr.getElementsByTagName('td')[0];
-			var topicTitle = td.getElementsByClassName('fl')[0].innerText.toLowerCase();
+			var topicTitle = td.getElementsByTagName('a')[0].innerText.toLowerCase();
 					
 			for (var i = 0, len = highlights.length; i < len; i++) {
 				var highlight = highlights[i];
