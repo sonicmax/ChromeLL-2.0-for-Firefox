@@ -124,6 +124,8 @@
 	"image_cache_version": 3,
 	"highlight_serious": true,
 	"serious_color": "FF0000",
+	"use_custom_serious_color": false,
+	"serious_banner_color": "BB2639",
 	"microsoft_sam": true,
 	"seasonal_css": true,
 	"last_clean":0,

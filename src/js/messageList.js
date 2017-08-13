@@ -60,6 +60,10 @@ var messageList = {
 			this.handleRepliesPage();			
 		}
 		
+		if (this.config.use_custom_serious_color) {
+			this.addCustomSeriousStyle();
+		}		
+		
 		// Replace with empty function to prevent seasonal CSS from being added.
 		if (!this.config.seasonal_css || new Date().getMonth() !== 11) {
 			this.addChristmasCss = () => {};
@@ -3687,6 +3691,18 @@ var messageList = {
 		// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
 		var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
 		document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);		
+	},
+	
+	/**
+	 *  Adds custom background-color rule for [Serious] warning banner.
+	 *  Using an attribute selector and appending to document.head before DOMContentLoaded fires
+	 *  ensures that the custom colour is applied before the original colour is rendered.
+	 */
+	
+	addCustomSeriousStyle: function() {
+		var node = document.createElement('style');
+		node.innerHTML = 'div[style*="background:#bb2639;color:white;padding:2px 5px;"] { background-color: #' + this.config.serious_banner_color + ' !important }';
+		document.head.appendChild(node);
 	},
 	
 	handleRepliesPage: function() {
