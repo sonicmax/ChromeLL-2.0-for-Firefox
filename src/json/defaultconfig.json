@@ -126,6 +126,7 @@
 	"serious_color": "FF0000",
 	"use_custom_serious_color": false,
 	"serious_banner_color": "BB2639",
+	"serious_banner_text_color": "FFFFFF",
 	"microsoft_sam": true,
 	"seasonal_css": true,
 	"last_clean":0,

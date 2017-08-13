@@ -3694,14 +3694,19 @@ var messageList = {
 	},
 	
 	/**
-	 *  Adds custom background-color rule for [Serious] warning banner.
+	 *  Adds custom style for [Serious] warning banner.
 	 *  Using an attribute selector and appending to document.head before DOMContentLoaded fires
-	 *  ensures that the custom colour is applied before the original colour is rendered.
+	 *  ensures that the custom colours are applied before the original colours are rendered.
 	 */
 	
 	addCustomSeriousStyle: function() {
 		var node = document.createElement('style');
-		node.innerHTML = 'div[style*="background:#bb2639;color:white;padding:2px 5px;"] { background-color: #' + this.config.serious_banner_color + ' !important }';
+		var selector = 'div[style*="background:#bb2639;color:white;padding:2px 5px;"]';
+		
+		var rule = 'background-color: #' + this.config.serious_banner_color + ' !important;' 
+				+ 'color: #' + this.config.serious_banner_text_color + ' !important;';
+		
+		node.innerHTML = selector + ', ' + selector + ' a { ' + rule + ' }';
 		document.head.appendChild(node);
 	},
 	
