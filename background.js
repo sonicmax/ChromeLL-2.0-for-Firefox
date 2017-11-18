@@ -121,9 +121,9 @@ var background = {
 	},
 	
 	checkVersion: function() {
-		var app = chrome.app.getDetails();
+		var manifest = chrome.runtime.getManifest();
 		// notify user if chromeLL has been updated
-		if (localStorage['ChromeLL-Version'] != app.version 
+		if (localStorage['ChromeLL-Version'] != manifest.version 
 				&& localStorage['ChromeLL-Version'] != undefined 
 				&& this.config.sys_notifications) {
 					
@@ -132,7 +132,7 @@ var background = {
 					type: "basic",
 					title: "ChromeLL has been updated",
 					message: "Old v: " + localStorage['ChromeLL-Version'] 
-							+ ", New v: " + app.version,
+							+ ", New v: " + manifest.version,
 					buttons: [{
 						title: "Click for more info",
 					}],
@@ -156,11 +156,11 @@ var background = {
 				}
 			);
 			
-			localStorage['ChromeLL-Version'] = app.version;
+			localStorage['ChromeLL-Version'] = manifest.version;
 		}
 
 		if (localStorage['ChromeLL-Version'] == undefined) {
-			localStorage['ChromeLL-Version'] = app.version;
+			localStorage['ChromeLL-Version'] = manifest.version;
 		}
 	},
 	
@@ -353,9 +353,9 @@ var background = {
 				case 200:
 					// Make sure that user was logged in & not redirected
 					if (this.responseURL === DRAMALINKS_RAW_URL) {
-					var scrapedData = background.scrapeDramalinks(this.responseText);
-					background.drama.txt = background.buildDramalinksHtml(scrapedData.bgcol, scrapedData.stories);
-					background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));
+						var scrapedData = background.scrapeDramalinks(this.responseText);
+						background.drama.txt = background.buildDramalinksHtml(scrapedData.bgcol, scrapedData.stories);
+						background.drama.time = parseInt(new Date().getTime() + (1800 * 1000));						
 					}
 					else {
 						// If we have old drama to display, use that. Otherwise display error message

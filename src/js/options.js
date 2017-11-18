@@ -130,8 +130,8 @@ var options = {
 		}
 		document.getElementById('clear_notify').value = config.clear_notify;		
 		// show version
-		var app = chrome.app.getDetails();
-		document.getElementById('version').innerText = app.version;
+		var manifest = chrome.runtime.getManifest();
+		document.getElementById('version').innerText = manifest.version;
 		document.getElementById('downloadcfg').href = options.download();
 
 		var cssBox = document.getElementById('fun_css_div');
