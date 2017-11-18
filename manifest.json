@@ -3,7 +3,6 @@
   "version": "2.67",
   "manifest_version": 2,
   "description": "Enhancements for the forums at the End of the Internet",
-  "options_page": "options.html",
   "options_ui": {
 		"page": "options.html",
     "chrome_style": false
