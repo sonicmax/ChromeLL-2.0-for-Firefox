@@ -41,7 +41,7 @@ var background = {
 			}
 		}
 		
-		allBg.init_listener(this.config);
+		this.addWebRequestListeners(this.config);
 		
 		this.messagePassing.addListeners();
 		chrome.notifications.onClicked.addListener(this.makeNotificationOriginActive.bind(this));
@@ -52,8 +52,46 @@ var background = {
 		this.getDrama();
 	},
 	
+	addWebRequestListeners: function() {
+		// Use try...catch statement as options iframe causes problems with webRequest listeners
+		try {
+			if (this.config.force_https) {
+				allBg.activeListeners.force_https = true;
+				browser.webRequest.onBeforeRequest.addListener(
+						allBg.handle_redirect, {
+							"urls" : ["http://*.endoftheinter.net/*"]
+						}, ['blocking']);
+			}
+			
+			// Todo: why is this here?
+			if (!this.config.force_https && allBg.activeListeners.force_https) {
+				browser.webRequest.onBeforeRequest
+						.removeListener(allBg.handle_redirect);
+				allBg.activeListeners.force_https = false;
+			}
+			
+			if (this.config.drop_batch_uploader) {
+				browser.webRequest.onBeforeSendHeaders.addListener(
+						allBg.handle_batch_uploader, {
+							"urls" : ["http://u.endoftheinter.net/*", "https://u.endoftheinter.net/*"]
+						}, ['blocking', 'requestHeaders']);
+				allBg.activeListeners.batch_uploader = true;
+			}
+
+			// Todo: why is this here?
+			if (!this.config.batch_uploader && allBg.activeListeners.batch_uploader) {
+				browser.webRequest.onBeforeSendHeaders
+						.removeListener(allBg.handle_batch_uploader);
+				allBg.activeListeners.batch_uploader = false;
+			}
+			
+		} catch (e) {
+			console.log(e);
+		}		
+	},
+	
 	getDefaultConfig: function(callback) {
-		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
+		var defaultURL = browser.extension.getURL('/src/json/defaultconfig.json');
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", defaultURL, true);
 		xhr.onload = function() {

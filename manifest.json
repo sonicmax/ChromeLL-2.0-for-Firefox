@@ -49,7 +49,7 @@
     "matches": ["*://*.endoftheinter.net/*"],
     "js": ["lib/jquery.js", "src/js/allPages.js"],
     "run_at": "document_start"
-  },	
+  },
   {
     "matches": ["*://*.endoftheinter.net/postmsg.php*"],
     "js": ["src/js/postMsg.js", "src/js/imagemap.js"],
@@ -74,5 +74,5 @@
 		"run_at": "document_end"
 	}],
 	
-  "permissions": [ "tabs", "clipboardWrite", "notifications", "http://*/*", "https://*/*", "contextMenus", "webRequest", "webRequestBlocking", "storage", "unlimitedStorage"]
+  "permissions": [ "tabs", "clipboardWrite", "notifications", "http://*/*", "https://*/*", "contextMenus", "webRequest", "webRequestBlocking", "<all_urls>", "storage", "unlimitedStorage"]
 }
