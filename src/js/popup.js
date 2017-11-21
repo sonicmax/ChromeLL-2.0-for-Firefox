@@ -62,18 +62,6 @@ function populateMenus() {
 }
 
 function addListeners() {
-	document.getElementById('worksafe').addEventListener('change', (ev) => {
-		if (ev.path[0].checked) {
-			cfg.hide_nws_gfycat = true;
-			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
-			return;
-		}
-		else if (!ev.path[0].checked) {
-			cfg.hide_nws_gfycat = false;
-			localStorage['ChromeLL-Config'] = JSON.stringify(cfg);
-			return;
-		}
-	});
 	document.getElementById('bookmarks').addEventListener('change', openBookmark);
 	document.getElementById('tags').addEventListener('change', openControl);
 	document.getElementById('options').addEventListener('click', openOptions);
@@ -144,9 +132,8 @@ function handleIgnorator() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-	var slider = document.getElementById('worksafe');
 	var history = document.getElementById('a_msg_history');
-	cfg.hide_nws_gfycat ? slider.checked = true : slider.checked = false;
+	
 	if (cfg.sort_history) {
 		history.href = 'http://boards.endoftheinter.net/history.php?b';
 	}		
