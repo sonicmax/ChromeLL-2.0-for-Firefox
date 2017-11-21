@@ -1,5 +1,5 @@
 var profile = {
-	sort_history : function() {
+	sort_history: function() {
 		var el = document.getElementsByTagName('table')[0]
 				.getElementsByTagName('a');
 		for (var i = 0; el[i]; i++) {
@@ -8,10 +8,13 @@ var profile = {
 			}
 		}
 	},
-	/*history_expand_search : function() {
-		document.getElementById('search_bar').style.display = 'block';
-	},*/
-	addControlPanel : function () {
+	
+	// Todo: what did this method actually do? And why doesn't it work lol
+	history_expand_search: function() {
+		// document.getElementById('search_bar').style.display = 'block';
+	},
+	
+	addControlPanel: function() {
 		var tds, td, adminTags, modTags, isAdmin, isMod;
 		var adminArray = [];
 		var modArray = [];
@@ -52,29 +55,29 @@ var profile = {
 							+ "'>&nbsp<b>[Edit Tag]</b></a></span>"));
 				},
 				function () {
-					$(this).find("span:last").remove();
+				$(this).find("span:last").remove();				
 				}
 			);
 		}
+		}
 	}
-}
 var profileHelper = {
 	init : function() {
 		chrome.runtime.sendMessage({
 			need : "config"
 		}, function(conf) {
 			config = conf.data;
-			for (var i in profile) {
-				if (config[i]) {
+	for (var i in profile) {
+		if (config[i]) {
 					try {
-						profile[i]();
+			profile[i]();
 					} catch (err) {
 						console.log("error in " + i + ":", err);
 					}
-				}
-			}
-			profile.addControlPanel();			
-		});
+		}
+	}
+	profile.addControlPanel();	
+});
 	}
 }
 profileHelper.init();
