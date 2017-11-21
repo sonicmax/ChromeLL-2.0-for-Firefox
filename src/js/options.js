@@ -47,10 +47,6 @@ $(document).ready(() => {
 		});					
 	}
 	
-	else if (localStorage['chromeLL_userhighlight'] && 
-			localStorage['chromeLL_userhighlight'] != '') {		
-		options.restoreV1();
-	}
 	else {
 		options.init();
 	}
@@ -375,8 +371,6 @@ var options = {
 				localStorage['ChromeLL-Config'] = JSON.stringify(myCfg);
 			} catch (e) {
 				console.log('This doesnt look like a config', e);
-				base64 = options.utils.decodeBase64(document.getElementById('cfg_ta').value);
-				options.restoreV1(base64);
 			}
 			location.reload();
 		},
@@ -1469,38 +1463,6 @@ var options = {
 			}
 			reader.readAsText(file);
 		}
-	},
-	restoreV1: function(oC) {
-		var config = JSON.parse(localStorage['ChromeLL-Config']);
-		var hls = oC.conf['chromeLL_userhighlight'].split(';');
-		var hl = Array();
-		config.user_highlight_data = {};
-		for (var i = 0; hls[i]; i++) {
-			hl = hls[i].split(':');
-			console.log(hl[0]);
-			config.user_highlight_data[hl[0]] = {};
-			config.user_highlight_data[hl[0]].bg = hl[1];
-			config.user_highlight_data[hl[0]].color = hl[3];
-		}
-		var boolSettings = {
-			"force_https" : "chromeLL_forcehttps",
-			"short_title" : "chromeLL_shorttitle",
-			"float_userbar" : "chromeLL_floatbars",
-			"ignorator" : "chromeLL_ignoretopicsbyon",
-			"ignorator_list" : "chromeLL_ignoretopicsby",
-			"enable_user_highlight" : "chromeLL_userhighlighton",
-			"number_posts" : "chromeLL_numberposts",
-			"enable_user_highlight" : "chromeLL_userhighlighton"
-		}
-		for ( var i in boolSettings) {
-			if (oC.conf[i] == "true")
-				config[i] = true;
-		}
-		config.ignorator_list = oC.conf['chromeLL_ignoretopicsby'];
-		config.ignore_keyword_list = oC.conf['chromeLL_ignoretopics'];
-		config.last_saved = new Date().getTime();
-		console.log(config);
-		localStorage['ChromeLL-Config'] = JSON.stringify(config);	
 	},
 	show: function() {
 		document.getElementById('cfg_ta').value = localStorage['ChromeLL-Config'];
