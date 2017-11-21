@@ -583,9 +583,17 @@ var topicList = {
 			var element = document.getElementsByTagName('h1')[0];
 			dramalinks.appendTo(element);
 			
-			// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
+			// Modify existing margin-top value (-39px) of pascal so that it appears above ticker.
+			
+			// The Chrome version appends to the existing ETI stylesheet - this throws a DOMException (insecure operation)
+			// in Firefox, so we have to create the rule from scratch
+			
+			var style = document.createElement("style");
+			document.head.append(style);
+			
 			var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
-			document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);
+			var cssString = "img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }";
+			style.sheet.insertRule(cssString, 0);
 		}
 		
 		if (this.config['page_jump_buttons' + pm]) {
