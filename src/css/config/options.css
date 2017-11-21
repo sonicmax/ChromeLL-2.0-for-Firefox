@@ -170,7 +170,7 @@ section > div:only-of-type {
 }
 #mainview {
 	-webkit-box-align: stretch;
-	-webkit-padding-start: 150px;
+	padding-inline-start: 150px;
 	margin: 0;
 	position: absolute;
 	left: 0;
