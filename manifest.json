@@ -18,7 +18,7 @@
     "default_title": "ChromeLL",
     "default_popup": "src/html/popup.html"
   },
-	"omnibox": { "keyword" : "searcheti" },
+	
   "background": {
     "scripts": ["src/js/allBg.js", "src/js/transloader.js", "background.js"]
   },
