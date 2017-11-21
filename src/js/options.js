@@ -130,10 +130,6 @@ var options = {
 		document.getElementById('version').innerText = manifest.version;
 		document.getElementById('downloadcfg').href = options.download();
 
-		var cssBox = document.getElementById('fun_css_div');
-		if (config.user_id == 13547 || config.user_id == 5599) {
-			cssBox.style.display = 'block';			
-		}		
 		if (document.readyState == 'loading') {
 			
 			document.addEventListener('DOMContentLoaded', function() {
