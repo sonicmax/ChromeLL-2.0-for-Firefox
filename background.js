@@ -567,10 +567,7 @@ var background = {
 			switch(request.need) {
 				
 				case "xhr":		
-					ajax(request, sendResponse);
-					// Return true so that we can use sendResponse asynchronously 
-					// (See: https://developer.chrome.com/extensions/runtime#event-onMessage)
-					return true;
+					return ajax(request);
 				
 				case "config":
 					// page script needs extension config.
@@ -1300,7 +1297,10 @@ var database = (function() {
 
 var ajaxCache = {};
 
-var ajax = function(request, callback) {
+var ajax = function(request) {
+	
+  return new Promise((resolve, reject) => {
+			
 	// Check xhrCache before creating new XHR.
 	var url = request.url;
 	var currentTime = new Date().getTime();
@@ -1309,7 +1309,7 @@ var ajax = function(request, callback) {
 			&& currentTime < ajaxCache[url].refreshTime) {
 				
 		// Return cached response
-		callback(ajaxCache[url].data);
+			resolve(ajaxCache[url].data);
 	}
 	
 	else {
@@ -1330,8 +1330,7 @@ var ajax = function(request, callback) {
 		}
 		
 		xhr.onload = function() {
-			switch(this.status) {
-				case 200:
+				if (this.status >= 200 && this.status < 300) {			
 					if (!request.ignoreCache) {
 						// Cache response and check again after 24 hours
 						ajaxCache[this.requestURL] = {
@@ -1340,15 +1339,26 @@ var ajax = function(request, callback) {
 						};
 					}
 					
-					callback(this.responseText);
-					break;
+					resolve(xhr.responseText);					
+				} 
 					
-				default:				
-					callback(this.responseText);
-					break;
+				else {				
+					reject({
+						status: this.status,
+						statusText: xhr.statusText
+					});
 			}
 		};
 		
+			xhr.onerror = function() {
+				reject({
+					status: this.status,
+					statusText: xhr.statusText
+				});
+			};
+			
 		xhr.send();		
 	}
+		
+	});
 };
