@@ -34,12 +34,17 @@ var messageList = {
 		this.prepareIgnoratorArray();
 		
 		// set up globalPort so we can interact with background page
-		this.globalPort = chrome.runtime.connect();
+		this.globalPort = browser.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handleEvent.onReceiveMessage);
 		
 		if (this.config.reload_on_update) {
 			this.globalPort.onDisconnect.addListener(this.handleEvent.onPortDisconnect);
 		}
+		
+		browser.runtime.sendMessage({
+			need: "insertcss",
+			file: "src/css/allpages.css"
+		});
 		
 		if (window.location.pathname === '/inboxthread.php') {
 			this.pm = "_pm";
@@ -990,7 +995,7 @@ var messageList = {
 		}
 		
 		window.speechSynthesis.speak(new SpeechSynthesisUtterance(speech));
-	},	
+	},
 	
 	handleEvent: {
 		
@@ -998,7 +1003,7 @@ var messageList = {
 		 *  Takes message containing name user, and unhides any currently ignorated posts by that user
 		 */
 		
-		onReceiveMessage: function(msg) {
+		onReceiveMessage: function(msg) {	
 			if (msg.action === 'showIgnorated') {
 				var ignoratedPosts = document.getElementsByClassName('ignorated');
 				var postsToShow = [];
@@ -1023,6 +1028,10 @@ var messageList = {
 						$.scrollTo(postToShow);
 					}
 				}
+			}
+			
+			else if (msg.action === 'showOptions') {	
+				allPages.optionsMenu.show();
 			}
 		},
 
@@ -1106,7 +1115,7 @@ var messageList = {
 					
 				} catch(e) {
 					// We should attempt to reinitialise the connections to background page
-					this.globalPort = chrome.runtime.connect();
+					this.globalPort = browser.runtime.connect();
 					
 					if (this.globalPort) {
 						this.globalPort.onMessage.addListener(this.handleEvent.ignoratorUpdate);
@@ -1146,7 +1155,11 @@ var messageList = {
 					
 				case 'quick_image':
 					// Note: imagemap object located in imagemap.js
+					try {
 					imagemap.init();
+					} catch (e) {
+						console.log(e);
+					}
 					evt.preventDefault();
 					return;
 			}
@@ -1842,7 +1855,7 @@ var messageList = {
 			
 			var url = 'https://api.imgur.com/3/' + this.getApiPath(href);
 			
-			chrome.runtime.sendMessage({
+			browser.runtime.sendMessage({
 				
 				need: "xhr",
 				url: url,
@@ -3589,7 +3602,7 @@ var messageList = {
 		if (messageList.config.post_templates) {
 			var templates = document.createElement('script');
 			templates.type = 'text/javascript';
-			templates.src = chrome.extension.getURL('src/js/topicPostTemplate.js');
+			templates.src = browser.extension.getURL('src/js/topicPostTemplate.js');
 			head.appendChild(templates);
 		}
 	},
@@ -3602,7 +3615,7 @@ var messageList = {
 	sendMessage: function(message, callback) {
 		
 		try {		
-			chrome.runtime.sendMessage(message, callback);
+			browser.runtime.sendMessage(message, callback);
 		} catch (e) {
 			// Maybe there was an error in background page, or extension was updated and 
 			// user hasn't refreshed page yet. We can't really do anything but log the error
@@ -3905,14 +3918,8 @@ var messageList = {
 	}
 };
 
-
-
-// Entry point
-chrome.runtime.sendMessage({
-	
-	need: "config",
-	tcs: true
-	
-}, (config) => {
+browser.runtime.sendMessage({need: "config", tcs: true}).then(config => {
 	messageList.init.call(messageList, config);
-});
+}, error => {
+	console.log(error);
+});	

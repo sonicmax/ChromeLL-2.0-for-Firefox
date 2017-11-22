@@ -41,10 +41,10 @@ var background = {
 			}
 		}
 		
-		this.addWebRequestListeners(this.config);
+		this.addWebRequestListeners();
 		
 		this.messagePassing.addListeners();
-		chrome.notifications.onClicked.addListener(this.makeNotificationOriginActive.bind(this));
+		browser.notifications.onClicked.addListener(this.makeNotificationOriginActive.bind(this));
 		this.checkVersion();
 		this.createClipboardElement();	
 		this.getUserID();
@@ -130,42 +130,39 @@ var background = {
 			delete background.config.tcs;
 		}				
 		
-			// save the config, in case it was updated
-			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
+		// save the config, in case it was updated
+		localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
 	},
 	
 	checkVersion: function() {
-		var manifest = chrome.runtime.getManifest();
+		var manifest = browser.runtime.getManifest();
 		// notify user if chromeLL has been updated
 		if (localStorage['ChromeLL-Version'] != manifest.version 
 				&& localStorage['ChromeLL-Version'] != undefined 
 				&& this.config.sys_notifications) {
 					
-			chrome.notifications.create('popup', {
+			browser.notifications.create('popup', {
 				
 					type: "basic",
+					iconUrl: "src/images/lueshi_48.png",
 					title: "ChromeLL has been updated",
-					message: "Old v: " + localStorage['ChromeLL-Version'] 
-							+ ", New v: " + manifest.version,
-					buttons: [{
-						title: "Click for more info",
-					}],
-					iconUrl: "src/images/lueshi_48.png"
+					message: "Old: " + localStorage['ChromeLL-Version'] + ", New: " + manifest.version,
+					buttons: [{ title: "Click for more info" }]
 					
 				}, (id) => {
 					
-					chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+					browser.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
 						
 						if (notifId === id && btnIdx === 0) {
 							// link user to topic containing changelog and other info
 							window.open("http://boards.endoftheinter.net/showmessages.php?topic=9458231");
-							chrome.notifications.clear(id, null);
+							browser.notifications.clear(id, null);
 						}
 						
 					});
 					
 					setTimeout(function() {
-						chrome.notifications.clear(id, null);
+						browser.notifications.clear(id, null);
 					}, 5000);
 				}
 			);
@@ -179,7 +176,7 @@ var background = {
 	},
 	
 	checkSync: function() {
-		chrome.storage.sync.get('config', function(syncData) {
+		browser.storage.sync.get('config', function(syncData) {
 			if (syncData.config && syncData.config.last_saved > background.config.last_saved) {
 				// synced config file is more recent than version on computer
 				for (var keyName in syncData.config) {					
@@ -192,7 +189,7 @@ var background = {
 						bSplit.push(k);
 					}
 				}
-				chrome.storage.sync.get(bSplit, function(syncConfig) {
+				browser.storage.sync.get(bSplit, function(syncConfig) {
 					for (var l in syncConfig) {
 						background.config[l] = syncConfig[l];
 					}
@@ -212,8 +209,8 @@ var background = {
 				toSet.config = localConfig;
 				for (var i in toSet) {
 					var f = function(v) {
-						chrome.storage.sync.getBytesInUse(v, function(use) {
-							// chrome.storage api allows 8,192 bytes per item
+						browser.storage.sync.getBytesInUse(v, function(use) {
+							// browser.storage api allows 8,192 bytes per item
 							if (use > 8192) {
 								var sp = Math.ceil(use / 8192);
 								var c = 0;
@@ -230,13 +227,13 @@ var background = {
 					}
 					f(i);
 				}
-				chrome.storage.sync.set(toSet);				
+				browser.storage.sync.set(toSet);				
 			}
 		});
 	},
 	
 	createClipboardElement: function() {
-		var backgroundPage = chrome.extension.getBackgroundPage();
+		var backgroundPage = browser.extension.getBackgroundPage();
 		var textArea = backgroundPage.document.createElement("textarea");
 		textArea.id = "clipboard";
 		backgroundPage.document.body.appendChild(textArea);	
@@ -244,7 +241,7 @@ var background = {
 	
 	buildContextMenu: function() {
 		// imageTransloader method is located in transloader.js
-		chrome.contextMenus.create({
+		browser.contextMenus.create({
 			"title": "Transload image",
 			"onclick": (info)  => {
 				imageTransloader(info);
@@ -253,7 +250,7 @@ var background = {
 		});
 		
 		if (this.config.enable_image_rename) {
-			chrome.contextMenus.create({
+			browser.contextMenus.create({
 				"title": "Rename and transload image",
 				"onclick": (info) => {
 					imageTransloader(info, true);
@@ -262,7 +259,7 @@ var background = {
 			});
 		}		
 		
-		chrome.contextMenus.create({
+		browser.contextMenus.create({
 			"title": "Search LUE",
 			"onclick": this.contextMenu.searchLUE,
 			"contexts": ["selection"]
@@ -271,7 +268,7 @@ var background = {
 		if (!this.config.simple_context_menu) {					
 			
 			if (this.config.copy_in_context) {
-				chrome.contextMenus.create({
+				browser.contextMenus.create({
 					"title": "Copy img code",
 					"onclick": this.contextMenu.imageCopy,
 					"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
@@ -279,7 +276,7 @@ var background = {
 				});
 			}			
 			
-			chrome.contextMenus.create({
+			browser.contextMenus.create({
 				"title": "View image map",
 				"onclick": this.contextMenu.imageMap,
 				"documentUrlPatterns": ["*://boards.endoftheinter.net/*", "*://endoftheinter.net/inboxthread.php?*"],
@@ -288,13 +285,13 @@ var background = {
 			
 			for (var i in this.boards) {
 				if (this.boards[i] != this.boards[0]) {
-					chrome.contextMenus.create({
+					browser.contextMenus.create({
 						"type": "separator",
 						"contexts": ["page", "image"]
 					});
 				}
 				for (var j in this.boards[i]) {
-					var id = chrome.contextMenus.create({
+					var id = browser.contextMenus.create({
 						"title": j,
 						"onclick": this.contextMenu.handleContext,
 						"contexts": ["page", "image"]
@@ -313,11 +310,11 @@ var background = {
 			var imageURL = tokens.join('/');
 			var imageMap = "http://images.endoftheinter.net/imap/" + imageURL;
 			if (background.config.imagemap_new_tab) {
-				chrome.tabs.create({
+				browser.tabs.create({
 						url: imageMap
 				});
 			} else {
-				chrome.tabs.update({
+				browser.tabs.update({
 						url: imageMap
 				});
 			}
@@ -331,7 +328,7 @@ var background = {
 			document.execCommand("copy");
 		},
 		searchLUE: function(info) {
-			chrome.tabs.create({
+			browser.tabs.create({
 					url: "http://boards.endoftheinter.net/topics/LUE?q=" + info.selectionText
 			});
 		},
@@ -346,16 +343,16 @@ var background = {
 				}
 			}
 			else {
-			  url = url.replace("%extension%", chrome.extension.getURL("/"));
+			  url = url.replace("%extension%", browser.extension.getURL("/"));
 			}
 			
-			chrome.tabs.create({
+			browser.tabs.create({
 				"url": url
 			});			
 		}
 	},
 	
-	getDrama: function(callback) {
+	getDrama: function() {
 		const DRAMALINKS_RAW_URL = 'https://wiki.endoftheinter.net/index.php?title=Dramalinks/current&action=raw&section=0&maxage=30';
 		
 		var xhr = new XMLHttpRequest();
@@ -393,11 +390,7 @@ var background = {
 					console.log('Unexpected HTTP status code in dramalinks XHR: ' + this.status);
 					console.log(this);
 					break;
-			};
-			
-			if (callback) {
-				callback(background.drama);
-			}			
+			}					
 		};
 		
 		xhr.send();
@@ -489,11 +482,11 @@ var background = {
 		
 		var originatingTab = this.notificationData[notificationId].tab;
 		
-		chrome.windows.update(originatingTab.windowId, { focused: true }, () => {
+		browser.windows.update(originatingTab.windowId, { focused: true }, () => {
 			
-			chrome.tabs.update(originatingTab.id, { active: true }, () => {
+			browser.tabs.update(originatingTab.id, { active: true }, () => {
 			
-				chrome.notifications.clear(notificationId, () => {
+				browser.notifications.clear(notificationId, () => {
 					delete this.notificationData[notificationId];
 				});
 				
@@ -509,19 +502,19 @@ var background = {
 	messagePassing: {
 		addListeners: function() {
 			// Add listener to handle incoming connections
-			chrome.runtime.onConnect.addListener(this.connectToTab.bind(this));
+			browser.runtime.onConnect.addListener(this.connectToTab.bind(this));
 			
 			// Handle incoming messages
-			chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+			browser.runtime.onMessage.addListener(this.handleMessage.bind(this));
 			
 			// Update badge with ignorator info for active tab
-			chrome.tabs.onActivated.addListener(this.updateActiveTab.bind(this));
+			browser.tabs.onActivated.addListener(this.updateActiveTab.bind(this));
 			
 			// Delete references to tab after navigating away from ETI
-			chrome.tabs.onUpdated.addListener(this.checkNavigationDest.bind(this));		
+			browser.tabs.onUpdated.addListener(this.checkNavigationDest.bind(this));		
 			
 			// Delete references to tab after closing
-			chrome.tabs.onRemoved.addListener(this.deleteTabRefs.bind(this));						
+			browser.tabs.onRemoved.addListener(this.deleteTabRefs.bind(this));						
 		},
 		
 		connectToTab: function(port) {
@@ -541,7 +534,7 @@ var background = {
 						action: 'ignorator_update'
 					});
 				
-				} catch(e) {
+				} catch(e) {				
 					// Attempting to use a disconnected port object - remove any references to this tab
 					this.deleteTabRefs(tab.tabId);
 				}
@@ -563,55 +556,59 @@ var background = {
 			}	
 		},
 		
-		handleMessage: function(request, sender, sendResponse) {
+		handleMessage: function(request, sender) {
 			switch(request.need) {
-				
-				case "xhr":		
+				case "xhr":
 					return ajax(request);
 				
 				case "config":
-					// page script needs extension config.
 					background.config = JSON.parse(localStorage['ChromeLL-Config']);
+					
 					if (request.sub) {
-						sendResponse({"data": background.config[request.sub]});
-					} else if (request.tcs) {
+						return Promise.resolve({"data": background.config[request.sub]});
+					} 
+					
+					else if (request.tcs) {
 						var tcs = JSON.parse(localStorage['ChromeLL-TCs']);
-						sendResponse({"data": background.config, "tcs": tcs});
-					} else {
-						sendResponse({"data": background.config});
+						return Promise.resolve({"data": background.config, "tcs": tcs});
+					} 
+					
+					else {
+						return Promise.resolve({"data": background.config});
 					}
-					break;
 					
 				case "save":
 					// page script needs config save.
 					if (request.name === "tcs") {
 						localStorage['ChromeLL-TCs'] = JSON.stringify(request.data);
-					} else {
+					} 
+					
+					else {
 						background.config[request.name] = request.data;
 						background.config.last_saved = new Date().getTime();
 						localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
 					}
+					
 					if (background.config.debug) {
 						console.log('saving ', request.name, request.data);
 					}
+					
 					break;
 					
 				case "notify":
 					// Generate unique ID for each tab so we can perform tab-specific actions later
 					var id = "notify_" + sender.tab.id;
 					
-					background.notificationData[id] = {
-						tab: sender.tab
-					};
+					background.notificationData[id] = { tab: sender.tab };
 					
-					chrome.notifications.create(id, {
+					var options = {
 						type: "basic",
 						title: request.title,
 						message: request.message,
-						iconUrl: "src/images/lueshi_48.png"
-					},
+						iconUrl: "src/images/lueshi_48.png"						
+					};
 					
-					(id) => {
+					browser.notifications.create(id, options).then(id	=> {
 						
 						if (!background.config.clear_notify) {
 							this.config.clear_notify = "5";
@@ -622,8 +619,10 @@ var background = {
 						}
 						
 						setTimeout(() => {
-							chrome.notifications.clear(id, null);
+							
+							browser.notifications.clear(id, null);
 							delete background.notificationData[id];
+							
 						}, parseInt(background.config.clear_notify, 10) * 1000);
 						
 					});
@@ -653,12 +652,13 @@ var background = {
 					var time = parseInt(new Date().getTime());
 					
 					if (background.drama.time && (time < background.drama.time)) {
-						sendResponse({"data": background.drama.txt});
+						return Promise.resolve({"data": background.drama.txt});
 					} 
 					
 					else {
-						sendResponse({"data": background.drama.txt});
+						// Wait for getDrama() to finish in background; meanwhile return existing value.						
 						background.getDrama();
+						return Promise.resolve({"data": background.drama.txt});
 					}
 					
 					break;
@@ -667,33 +667,29 @@ var background = {
 					if (background.config.debug) {
 						console.log('inserting css ', request.file);
 					}
-					chrome.tabs.insertCSS(sender.tab.id, {file: request.file});
+					browser.tabs.insertCSS(sender.tab.id, {file: request.file});
 					break;
 					
 				case "opentab":
 					if (background.config.debug) {
 						console.log('opening tab ', request.url);
 					}
-					chrome.tabs.create({url: request.url});
+					browser.tabs.create({url: request.url});
 					break;
 					
 				case "noIgnores":
-					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-							sendResponse({"noignores": background.noIgnores});										
-					});
-					return true;
+					return Promise.resolve({"noignores": background.noIgnores});
 					
 				case "getIgnored":
-					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-							sendResponse({
+					return browser.tabs.query({active: true, currentWindow: true}).then(tabs => {
+							return Promise.resolve({
 									"ignorator": background.ignoratorInfo[tabs[0].id], 
-									"scope": background.scopeInfo[tabs[0].id]}
-							);
-					});		
-					return true;
+									"scope": background.scopeInfo[tabs[0].id]
+							});
+					});
 					
 				case "showIgnorated":
-					chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+					browser.tabs.query({active: true, currentWindow: true}).then(tabs => {
 							
 							background.tabPorts[tabs[0].id].postMessage({
 									action: 'showIgnorated', 
@@ -701,8 +697,7 @@ var background = {
 									value: request.value
 							});
 					});
-					
-					return true;
+					break;
 					
 				case "options":
 					browser.tabs.query({active: true, currentWindow: true}).then(background.openOptions);
@@ -724,7 +719,7 @@ var background = {
 					
 				case "updateDatabase":
 					// No return value required
-					database.updateFilename(request.data.src, request.data.newFilename);
+					database.updateFilename(request.data.src, request.data.newFilename);					
 					break;
 					
 				case "searchDatabase":
@@ -780,7 +775,7 @@ var background = {
 	},
 	
 	createProgressNotification: function(data) {
-		chrome.notifications.create('progress', {
+		browser.notifications.create('progress', {
 			
 			type: 'progress',
 			title: data.title,
@@ -793,14 +788,14 @@ var background = {
 	},
 	
 	updateProgressNotification: function(update) {
-		chrome.notifications.update('progress', update);
+		browser.notifications.update('progress', update);
 	},
 	
 	clearProgressNotification: function(title) {
-		chrome.notifications.update('progress', { type: 'basic', title: title, contextMessage: '' });
+		browser.notifications.update('progress', { type: 'basic', title: title, contextMessage: '' });
 		
 		setTimeout(() => {
-			chrome.notifications.clear('progress', null);
+			browser.notifications.clear('progress', null);
 		}, 3000);		
 	},	
 	
@@ -814,15 +809,15 @@ var background = {
 				this.ignoratorInfo[tab] = msg.ignorator;
 				this.scopeInfo[tab] = msg.scope;
 				
-				if (msg.ignorator.total_ignored > 0) {				
-					chrome.browserAction.setBadgeBackgroundColor({
+				if (msg.ignorator.total_ignored > 0) {
+					browser.browserAction.setBadgeBackgroundColor({
 						tabId: tab,
 						color: "#ff0000"
 					});
 					
-					chrome.browserAction.setBadgeText({
+					browser.browserAction.setBadgeText({
 						tabId: tab,
-						text: "" + msg.ignorator.total_ignored
+						text: String(msg.ignorator.total_ignored)
 					});
 					
 					this.noIgnores = false;
@@ -939,50 +934,50 @@ var database = (function() {
 	const SEARCH_DB = 'search';
 	const READ_WRITE = 'readwrite';
 	var debouncerId;
-	var db;			
+	var db;	
 	
 	var open = function() {
 		return new Promise((resolve, reject) => {
-		var request = window.indexedDB.open(DB_NAME, DB_VERSION);
-		
-		request.onsuccess = (event) => {
-			db = event.target.result;
+			var request = window.indexedDB.open(DB_NAME, DB_VERSION);
+			
+			request.onsuccess = (event) => {
+				db = event.target.result;
 				resolve();			
-		};
-		
-		// Make sure that object stores are up-to-date
-		request.onupgradeneeded = (event) => {
-			var created = [];
-			db = event.target.result;
+			};
 			
-			if (!db.objectStoreNames.contains(IMAGE_DB)) {
-				var imageStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
-				imageStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
-				created.push(IMAGE_DB);
-			}
-			
-			if (!db.objectStoreNames.contains(SEARCH_DB)) {
-				var imageStore = db.createObjectStore(SEARCH_DB, { keyPath: ["src"] });
-				imageStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
-				created.push(SEARCH_DB);
-			}
-			
-			if (created.length > 0) {
-				console.log('Created new object stores:', created);
-			}
-			
+			// Make sure that object stores are up-to-date
+			request.onupgradeneeded = (event) => {
+				var created = [];
+				db = event.target.result;
+				
+				if (!db.objectStoreNames.contains(IMAGE_DB)) {
+					var imageStore = db.createObjectStore(IMAGE_DB, { keyPath: "src" });
+					imageStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
+					created.push(IMAGE_DB);
+				}
+				
+				if (!db.objectStoreNames.contains(SEARCH_DB)) {
+					var imageStore = db.createObjectStore(SEARCH_DB, { keyPath: ["src"] });
+					imageStore.createIndex("filename", "filename", { unique: false, multiEntry: true });
+					created.push(SEARCH_DB);
+				}
+				
+				if (created.length > 0) {
+					console.log('Created new object stores:', created);
+				}
+				
 				// Todo: is it okay that this promise never resolves?
 				browser.runtime.reload();
-		};
+			};
 		});
 	};
 	
 	var clear = function() {
 		return new Promise((resolve, reject) => {
 			open().then(() => {
-			var transaction = db.transaction([IMAGE_DB, SEARCH_DB], READ_WRITE)
-			transaction.objectStore(IMAGE_DB).clear();
-			transaction.objectStore(SEARCH_DB).clear();
+				var transaction = db.transaction([IMAGE_DB, SEARCH_DB], READ_WRITE)
+				transaction.objectStore(IMAGE_DB).clear();
+				transaction.objectStore(SEARCH_DB).clear();
 				resolve();	
 			});
 		});
@@ -991,99 +986,99 @@ var database = (function() {
 	var getStorageApiCache = function() {
 		return new Promise((resolve, reject) => {
 			browser.storage.local.get("imagemap", (cache) => {
-			if (typeof cache !== "object" || Object.keys(cache.imagemap).length === 0) {
+				if (typeof cache !== "object" || Object.keys(cache.imagemap).length === 0) {
 					resolve();				
-			}
-			
-			else {
+				}
+				
+				else {
 					resolve(cache.imagemap);
-			}				
-		});
+				}				
+			});
 		});
 	};
 	
 	var getSearchObjectStore = function() {
 		return new Promise((resolve, reject) => {
-		var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
+			var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
 			
-		// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
-		if (objectStore.getAll != null) {
-			var request = objectStore.getAll();
-			
-			request.onsuccess = (event) => {
-				// TODO: Need to test what happens if database exists but is empty
+			// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
+			if (objectStore.getAll != null) {
+				var request = objectStore.getAll();
+				
+				request.onsuccess = (event) => {
+					// TODO: Need to test what happens if database exists but is empty
 					resolve(event.target.result);
-			};
-			
-			request.onerror = (event) => {
+				};
+				
+				request.onerror = (event) => {
 					resolve(false);				
-			};
-		}
-		
-		else {				
-			var cache = [];
-			objectStore.openCursor().onsuccess = (event) => {
-				var cursor = event.target.result;
-				if (cursor) {
-					cache.push(cursor.value);
-					cursor.continue();
-				}
-				else {
+				};
+			}
+
+			else {				
+				var cache = [];
+				objectStore.openCursor().onsuccess = (event) => {
+					var cursor = event.target.result;
+					if (cursor) {
+						cache.push(cursor.value);
+						cursor.continue();
+					}
+					else {
 						resolve(cache);
-				}
-			};								
-		}
+					}
+				};								
+			}
 		});
 	};
 	
 	var getPaginatedObjectStore = function(page, type) {
 		return new Promise((resolve, reject) => {
-		var objectStore = db.transaction(type).objectStore(type);
-		var rangeStart = page * 50 - 50;
-		var rangeEnd = page * 50;
-		var results = [];
-		var index = 0;
-		
-		objectStore.openCursor().onsuccess = (event) => {
-			var cursor = event.target.result;
+			var objectStore = db.transaction(type).objectStore(type);
+			var rangeStart = page * 50 - 50;
+			var rangeEnd = page * 50;
+			var results = [];
+			var index = 0;
 			
-			if (cursor && index < rangeEnd) {
+			objectStore.openCursor().onsuccess = (event) => {
+				var cursor = event.target.result;
 				
-				if (index > rangeStart) {
-					results.push(cursor.value);
+				if (cursor && index < rangeEnd) {
+					
+					if (index > rangeStart) {
+						results.push(cursor.value);
+					}
+					
+					index++;				
+					cursor.continue();
 				}
 				
-				index++;				
-				cursor.continue();
-			}
-			
-			else {
+				else {
 					resolve(results);
-			}
-		};
+				}
+			};
 		
 		});
 	};
 	
 	var get = function(src) {
 		return new Promise((resolve, reject) => {
-		var request = db.transaction(IMAGE_DB)
-				.objectStore(IMAGE_DB)
-				.get(src);		
-					
-		request.onsuccess = (event) => {
-			if (event.target.result) {
+			var request = db.transaction(IMAGE_DB)
+					.objectStore(IMAGE_DB)
+					.get(src);		
+						
+			request.onsuccess = (event) => {
+				if (event.target.result) {
 					resolve(event.target.result);
-			}
-			else {				
+				}
+				else {					
 					resolve(false);
-			}
-		};
-		
-		request.onerror = (event) => {
-			// Couldn't find src in database.
+				}
+			};
+			
+			request.onerror = (event) => {
+				// Couldn't find src in database.
 				resolve(false);
-		};
+			};
 			
 		});
 	};
@@ -1110,7 +1105,7 @@ var database = (function() {
 			// Delete base64 thumbnail and fullsize URL and add to SEARCH_DB
 			var trimmedData = data[src];
 			delete trimmedData.data;
-			delete trimmedData.fullsize;			
+			delete trimmedData.fullsize;		
 			searchStore.add(trimmedData);
 		}		
 	};
@@ -1144,53 +1139,53 @@ var database = (function() {
 	
 	var search = function(query) {
 		return new Promise((resolve, reject) => {
-		var results = [];
-		var transaction = db.transaction(SEARCH_DB);
-		var objectStore = transaction.objectStore(SEARCH_DB);							
-		
-		// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
-		var request = objectStore.openCursor();
-		
-		// Check first characters if query length < 3, otherwise look for matches anywhere
-		if (query.length < 3) {
+			var results = [];
+			var transaction = db.transaction(SEARCH_DB);
+			var objectStore = transaction.objectStore(SEARCH_DB);							
 			
-			request.onsuccess = (event) => {
-					var cursor = event.target.result;
-					
-					if (cursor) {
-							// Only check first character
-							if (cursor.value.filename.indexOf(query) === 0) {
-									results.push(cursor.value);
-							}
+			// TODO: Maybe we should open cursor after checking whether index returns any exact matches		
+			var request = objectStore.openCursor();
+			
+			// Check first characters if query length < 3, otherwise look for matches anywhere
+			if (query.length < 3) {
+				
+				request.onsuccess = (event) => {
+						var cursor = event.target.result;
+						
+						if (cursor) {
+								// Only check first character
+								if (cursor.value.filename.indexOf(query) === 0) {
+										results.push(cursor.value);
+								}
 
-							cursor.continue();          
-					}
-					
-					else {
-						// Reached end of db
+								cursor.continue();          
+						}
+						
+						else {
+							// Reached end of db
 							retrieveImageData(results).then(resolve);
-					}
-			};								
-		}
-		
-		else {
-			request.onsuccess = (event) => {
-					var cursor = event.target.result;
-					
-					if (cursor) {			
-							if (cursor.value.filename.indexOf(query) !== -1) {
-									results.push(cursor.value);
-							}
+						}
+				};								
+			}
+			
+			else {
+				request.onsuccess = (event) => {
+						var cursor = event.target.result;
+						
+						if (cursor) {			
+								if (cursor.value.filename.indexOf(query) !== -1) {
+										results.push(cursor.value);
+								}
 
-							cursor.continue();          
-					}
-					
-					else {
-						// Reached end of db
+								cursor.continue();          
+						}
+						
+						else {
+							// Reached end of db
 							retrieveImageData(results).then(resolve);
-					}
-			};			
-		}
+						}
+				};			
+			}
 		});
 	};
 	
@@ -1201,93 +1196,93 @@ var database = (function() {
 	
 	var retrieveImageData = function(results) {
 		return new Promise((resolve, reject) => {
-		var imageData = [];
-		
-		for (let i = 0, len = results.length; i < len; i++) {
-			var result = results[i];
+			var imageData = [];
+			
+			for (let i = 0, len = results.length; i < len; i++) {
+				var result = results[i];
 				
 				get(result.src).then(data => {
-				
-				imageData.push(data);
-				
-				if (imageData.length === results.length) {
+					
+					imageData.push(data);
+					
+					if (imageData.length === results.length) {
 						resolve(imageData);
-				}
-				
-			});
-		}
+					}
+					
+				});
+			}
 		});
 	};
 	
 	var getAll = function() {
 		return new Promise((resolve, reject) => {
-		var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
-		// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
-		if (objectStore.getAll != null) {
-			var request = objectStore.getAll();
-			
-			request.onsuccess = (event) => {
-				// TODO: Need to test what happens if database exists but is empty
+			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
+			// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
+			if (objectStore.getAll != null) {
+				var request = objectStore.getAll();
+				
+				request.onsuccess = (event) => {
+					// TODO: Need to test what happens if database exists but is empty
 					resolve(event.target.result);
-			};
-			
-			request.onerror = (event) => {
+				};
+				
+				request.onerror = (event) => {
 					resolve(false);
-			};
-		}
-		
-		else {				
-			var cache = [];
-			objectStore.openCursor().onsuccess = (event) => {
-				var cursor = event.target.result;
-				if (cursor) {
-					cache.push(cursor.value);
-					cursor.continue();
-				}
-				else {
+				};
+			}
+			
+			else {				
+				var cache = [];
+				objectStore.openCursor().onsuccess = (event) => {
+					var cursor = event.target.result;
+					if (cursor) {
+						cache.push(cursor.value);
+						cursor.continue();
+					}
+					else {
 						resolve(cache);
-				}
-			};								
-		}
+					}
+				};								
+			}
 		});
 	};
 	
 	var getSize = function() {
 		return new Promise((resolve, reject) => {
-		var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
-		var count = objectStore.count();
-		
-		count.onsuccess = () => {
+			var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
+			var count = objectStore.count();
+			
+			count.onsuccess = () => {
 				resolve(count.result);
-		};
+			};
 		});
 	};
 	
 	var getSizeInBytes = function() {	
 		return new Promise((resolve, reject) => {
-		var size = 0;
+			var size = 0;
 
-		var transaction = db.transaction([IMAGE_DB])
-				.objectStore(IMAGE_DB)
-				.openCursor();
+			var transaction = db.transaction([IMAGE_DB])
+					.objectStore(IMAGE_DB)
+					.openCursor();
 
-		transaction.onsuccess = (event) => {
-			var cursor = event.target.result;
-			if (cursor) {
-				var storedObject = cursor.value;
-				var json = JSON.stringify(storedObject);
-				size += json.length;
-				cursor.continue();
-			}
-			else {
+			transaction.onsuccess = (event) => {
+				var cursor = event.target.result;
+				if (cursor) {
+					var storedObject = cursor.value;
+					var json = JSON.stringify(storedObject);
+					size += json.length;
+					cursor.continue();
+				}
+				else {
 					resolve(size);
-			}
-		};
-		
-		transaction.onerror = (err) => {
-			// Callback with value of -1MB (to make it obvious that something went wrong without breaking anything)
+				}
+			};
+			
+			transaction.onerror = (err) => {
+				// Callback with value of -1MB (to make it obvious that something went wrong without breaking anything)
 				resolve(-1048576);
-		};
+			};
 		});
 	};
 	
@@ -1314,35 +1309,35 @@ var ajax = function(request) {
 	
   return new Promise((resolve, reject) => {
 			
-	// Check xhrCache before creating new XHR.
-	var url = request.url;
-	var currentTime = new Date().getTime();
-	
-	if (!request.ignoreCache && ajaxCache[url]
-			&& currentTime < ajaxCache[url].refreshTime) {
-				
-		// Return cached response
+		// Check xhrCache before creating new XHR.
+		var url = request.url;
+		var currentTime = new Date().getTime();
+		
+		if (!request.ignoreCache && ajaxCache[url]
+				&& currentTime < ajaxCache[url].refreshTime) {
+					
+			// Return cached response
 			resolve(ajaxCache[url].data);
-	}
-	
-	else {
-		var TWENTY_FOUR_HOURS = 86400000; // 24 hours in milliseconds
-		var type = request.type || 'GET';
-		var xhr = new XMLHttpRequest();
-		xhr.requestURL = url;
-		xhr.open(type, request.url, true);
-		
-		if (request.noCache) {
-			xhr.setRequestHeader('Cache-Control', 'no-cache');
-		}
-		if (request.auth) {
-			xhr.setRequestHeader('Authorization', request.auth);
-		}
-		if (request.withCredentials) {
-			xhr.withCredentials = "true";
 		}
 		
-		xhr.onload = function() {
+		else {
+			var TWENTY_FOUR_HOURS = 86400000; // 24 hours in milliseconds
+			var type = request.type || 'GET';
+			var xhr = new XMLHttpRequest();
+			xhr.requestURL = url;
+			xhr.open(type, request.url, true);
+			
+			if (request.noCache) {
+				xhr.setRequestHeader('Cache-Control', 'no-cache');
+			}
+			if (request.auth) {
+				xhr.setRequestHeader('Authorization', request.auth);
+			}
+			if (request.withCredentials) {
+				xhr.withCredentials = "true";
+			}		
+			
+			xhr.onload = function() {
 				if (this.status >= 200 && this.status < 300) {			
 					if (!request.ignoreCache) {
 						// Cache response and check again after 24 hours
@@ -1354,15 +1349,15 @@ var ajax = function(request) {
 					
 					resolve(xhr.responseText);					
 				} 
-					
+				
 				else {				
 					reject({
 						status: this.status,
 						statusText: xhr.statusText
 					});
-			}
-		};
-		
+				}
+			};
+			
 			xhr.onerror = function() {
 				reject({
 					status: this.status,
@@ -1370,8 +1365,8 @@ var ajax = function(request) {
 				});
 			};
 			
-		xhr.send();		
-	}
+			xhr.send();
+		}
 		
 	});
 };

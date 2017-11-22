@@ -12,9 +12,7 @@ function openControl(evt) {
 }
 
 function openOptions() {
-	chrome.runtime.sendMessage({
-		need: "options"
-	});
+	browser.runtime.sendMessage({need: "options"});
 	window.close();
 }
 
@@ -22,7 +20,7 @@ function showHidden(evt, type) {
 	var el = evt.target;
 	var value = el.parentNode.getElementsByClassName('i_data')[0].innerHTML;
 	
-	chrome.runtime.sendMessage({
+	browser.runtime.sendMessage({
 		need: "showIgnorated",
 		type: type,
 		value: value
@@ -67,67 +65,59 @@ function addListeners() {
 	document.getElementById('options').addEventListener('click', openOptions);
 }
 
-function handleIgnorator() {
-	if (cfg.ignorator && cfg.ignorator_list 
-			|| !cfg.ignorator && cfg.ignore_keyword && cfg.ignore_keyword_list) {
-				
-		chrome.runtime.sendMessage({ need: "noIgnores" }, (response) => {
-			
-			// prevents "Cannot read property 'data' of undefined" error if no users are currently being ignored
-			if (!response.noIgnores) {
-				
-				chrome.runtime.sendMessage({ need: "getIgnored" }, (response) => {
-					
-					ignoratorData = response.ignorator.data;
-					
-					if (response.ignorator.data.users) {
-						
-						for (var i in response.ignorator.data.users) {
-							
-							var insert = document.createElement('div');
-							insert.className = 'user_ignore';
-							
-							var show = document.createElement('span');
-							show.title = 'show topics by ' + i + ' on this page';
-							show.className = 'show_hidden';
-							show.innerHTML = 'x';
-							
-							show.addEventListener('click', (evt) => {								
-								showHidden(evt, 'user');
-							});
-							
-							insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.users[i].total + '</span><span class="i_data">' + i + '</span>';
-							insert.insertBefore(show, null);
-							document.getElementById('js_insert').insertBefore(insert, null);
-						}
-					}
-					
-					if (response.ignorator.data.keywords) {
-						
-						for (var i in response.ignorator.data.keywords) {
-							
-							var insert = document.createElement('div');
-							insert.className = 'keyword_ignore';
-							insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.keywords[i].total + '</span>' + '<span class="i_data">' + i + '</span>';
-							
-							var show = document.createElement('span');
-							show.title = 'show topics containing ' + i + ' on this page';
-							show.className = 'show_hidden';
-							show.innerHTML = 'x';
+function handleError(error) {
+  console.log(error);
+}
 
-							show.addEventListener('click', (evt) => {
-								showHidden(evt, 'keyword');
-							});							
-							
-							insert.insertBefore(show, null);
-							document.getElementById('js_insert').insertBefore(insert, null);
-						}
-					}
-					
-				});
-			}
+function handleNoIgnores(response) {
+	if (!response.noIgnores) {		
+		var getIgnores = browser.runtime.sendMessage({ need: "getIgnored" });
+		getIgnores.then(updateWithIgnoredContent, handleError);
+	}
+}
+
+function updateWithIgnoredContent(response) {
+	if (response.ignorator.data.users) {
+		for (var i in response.ignorator.data.users) {
 			
-		});
+			var insert = document.createElement('div');
+			insert.className = 'user_ignore';
+			
+			var show = document.createElement('span');
+			show.title = 'show topics by ' + i + ' on this page';
+			show.className = 'show_hidden';
+			show.innerHTML = 'x';
+			
+			show.addEventListener('click', (evt) => {								
+				showHidden(evt, 'user');
+			});
+			
+			insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.users[i].total + '</span><span class="i_data">' + i + '</span>';
+			insert.insertBefore(show, null);
+			document.getElementById('js_insert').insertBefore(insert, null);
+		}
+	}
+
+	if (response.ignorator.data.keywords) {
+		
+		for (var i in response.ignorator.data.keywords) {
+			
+			var insert = document.createElement('div');
+			insert.className = 'keyword_ignore';
+			insert.innerHTML = '<span class="rm_num">' + response.ignorator.data.keywords[i].total + '</span>' + '<span class="i_data">' + i + '</span>';
+			
+			var show = document.createElement('span');
+			show.title = 'show topics containing ' + i + ' on this page';
+			show.className = 'show_hidden';
+			show.innerHTML = 'x';
+
+			show.addEventListener('click', (evt) => {
+				showHidden(evt, 'keyword');
+			});							
+			
+			insert.insertBefore(show, null);
+			document.getElementById('js_insert').insertBefore(insert, null);
+		}
 	}
 }
 
@@ -136,8 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 	if (cfg.sort_history) {
 		history.href = 'http://boards.endoftheinter.net/history.php?b';
-	}		
+	}
+	
 	populateMenus();
-	handleIgnorator();
+	
+	if (cfg.ignorator && cfg.ignorator_list 
+			|| !cfg.ignorator && cfg.ignore_keyword && cfg.ignore_keyword_list) {
+				
+		browser.runtime.sendMessage({ need: "noIgnores" }).then(handleNoIgnores, handleError);
+	}
+	
 	addListeners();
 });

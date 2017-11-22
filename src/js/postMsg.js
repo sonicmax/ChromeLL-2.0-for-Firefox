@@ -11,6 +11,7 @@ var postMsg = {
 		document.getElementsByTagName('form')[0].insertBefore(ulBox, null);
 		document.getElementsByTagName('form')[0].insertBefore(ulButton, ulBox);
 	},
+	
 	post_before_preview : function() {
 		var post, preview;
 		var m = document.getElementsByTagName('form')[document
@@ -27,6 +28,7 @@ var postMsg = {
 		post.parentNode.removeChild(post);
 		preview.parentNode.insertBefore(post, preview);
 	},
+	
 	quick_imagemap: function() {
 		var inputElements = document.getElementsByTagName('input');
 		var lastButton = inputElements[inputElements.length - 1];
@@ -42,6 +44,7 @@ var postMsg = {
 		lastButton.parentNode.appendChild(divider);
 		lastButton.parentNode.appendChild(search);
 	},
+	
 	create_topic_buttons : function() {
 		if (document.body.innerHTML.indexOf('Create New Topic') == -1 
 		|| document.getElementById('b')) {
@@ -115,6 +118,7 @@ var postMsg = {
 		tokendesc.insertBefore(insB, insI);
 		tokendesc.insertBefore(document.createElement('br'), insB);
 	},
+	
 	quickpost_tag_buttons : function() {
 		if (document.body.innerHTML.indexOf('Create New Topic') > -1) {
 			return;
@@ -252,6 +256,7 @@ var postMsgHelper = {
 			attributes: true
 		});
 	},
+	
 	findCaret : function(ta) {
 		var caret = 0;
 		if (ta.selectionStart || ta.selectionStart == '0') {
@@ -259,6 +264,7 @@ var postMsgHelper = {
 		}
 		return (caret);
 	},
+	
 	snippetHandler : function(ta, caret) {
 		var text = ta.substring(0, caret);
 		var words, word, snippet, temp, index, newCaret;
@@ -295,6 +301,7 @@ var postMsgHelper = {
 			}
 		}
 	},
+	
 	startBatchUpload : function(evt) {
 		var chosen = document.getElementById('batch_uploads');
 		
@@ -309,6 +316,7 @@ var postMsgHelper = {
 			})
 		}
 	},
+	
 	qpTagButton : function(e) {
 		if (e.target.tagName != 'INPUT') {
 			return 0;
@@ -346,7 +354,9 @@ var postMsgHelper = {
 		ta.scrollTop = st;
 		ta.focus();
 	},
+	
 	imagemapDebouncer: '',
+	
 	imagemapHelper: function() {
 		
 		var button = document.getElementById('quick_image');
@@ -369,38 +379,34 @@ var postMsgHelper = {
 			}, 250);	
 			
 		});	
-	},
-	
-	init : function() {
-		chrome.runtime.sendMessage({ need : "config" }, (response) => {
-			config = response.data;
-			
-			var pm = '';
-			
-			if (!window.location.href.match('boards')) {
-				pm = "_pm";
-			}	
-		
-			for (var i in postMsg) {
-				if (config[i + pm]) {
-					try {
-						postMsg[i]();
-					} catch (err) {
-						console.log("error in " + i + ":", err);
-					}
-				}
-			}
-			
-			if (config.create_topic_buttons && !pm) {
-				postMsgHelper.create_topic_observer();
-			}
-			
-			if (config.quick_imagemap && pm) {
-				postMsg.quick_imagemap();
-				postMsgHelper.imagemapHelper();				
-			}
-		});
 	}
 }
 
-postMsgHelper.init();
+browser.runtime.sendMessage({need : "config"}.then(response => {
+	config = response.data;
+	
+	var pm = '';
+	
+	if (!window.location.href.match('boards')) {
+		pm = "_pm";
+	}	
+
+	for (var i in postMsg) {
+		if (config[i + pm]) {
+			try {
+				postMsg[i]();
+			} catch (err) {
+				console.log("error in " + i + ":", err);
+			}
+		}
+	}
+	
+	if (config.create_topic_buttons && !pm) {
+		postMsgHelper.create_topic_observer();
+	}
+	
+	if (config.quick_imagemap && pm) {
+		postMsg.quick_imagemap();
+		postMsgHelper.imagemapHelper();				
+	}
+});

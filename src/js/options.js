@@ -46,7 +46,7 @@ $(document).ready(() => {
 			options.init();
 		});					
 	}
-	
+
 	else {
 		options.init();
 	}
@@ -126,10 +126,10 @@ var options = {
 		}
 		document.getElementById('clear_notify').value = config.clear_notify;		
 		// show version
-		var manifest = chrome.runtime.getManifest();
+		var manifest = browser.runtime.getManifest();
 		document.getElementById('version').innerText = manifest.version;
 		document.getElementById('downloadcfg').href = options.download();
-
+		
 		if (document.readyState == 'loading') {
 			
 			document.addEventListener('DOMContentLoaded', function() {
@@ -375,8 +375,8 @@ var options = {
 			$.confirm({
 					text: "Are you sure you want to reset your settings?",
 					
-					confirm: () => {					
-						options.getDefault(function(defaultCfg) {
+					confirm: () => {			
+						options.getDefault(defaultCfg => {
 							localStorage['ChromeLL-Config'] = defaultCfg;
 							location.reload();
 						});					
@@ -824,7 +824,7 @@ var options = {
 					
 					cacheTimer = setTimeout(() => {
 						
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 							
 							need: 'updateDatabase',
 							data: {
@@ -1015,7 +1015,7 @@ var options = {
 		displayPageFromCache: function(page) {
 			options.ui.clearCacheTable();
 			
-			chrome.runtime.sendMessage({
+			browser.runtime.sendMessage({
 			
 					need: 'getPaginatedObjectStore',
 					page: page,
@@ -1135,6 +1135,7 @@ var options = {
 			document.getElementById(mostRecent.id).className = 'active_like';
 			textarea.value = config.custom_like_data[mostRecent.id].contents;	
 		},
+		
 		switchActive: function(id) {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var type = id.replace(/[0-9]/g, '');
@@ -1150,6 +1151,7 @@ var options = {
 				return;
 			}
 		},
+		
 		addDiv: {
 			userHighlight: function() {
 				var ins = document.getElementById('user_highlight').getElementsByClassName(
@@ -1199,9 +1201,9 @@ var options = {
 			}
 		}
 	},
-			
+	
 	imageCache: {
-			
+
 		open: function() {
 			return browser.runtime.sendMessage({ need: 'openDatabase' });				
 		},
@@ -1304,7 +1306,7 @@ var options = {
 				};
 				
 				browser.runtime.sendMessage(request).then(results => {
-					options.ui.populateCacheTable(results);			
+					options.ui.populateCacheTable(results);
 				});
 			}
 			
@@ -1314,7 +1316,7 @@ var options = {
 		}
 	},
 	getDefault: function(callback) {
-		var defaultURL = chrome.extension.getURL('/src/json/defaultconfig.json');
+		var defaultURL = browser.extension.getURL('/src/json/defaultconfig.json');
 		var temp, defaultConfig;
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", defaultURL, true);

@@ -76,7 +76,7 @@ var topicList = {
 						if (!topicList.ignorated.data.keywords[ignoredKeyword]) {
 							topicList.ignorated.data.keywords[ignoredKeyword] = {};
 							topicList.ignorated.data.keywords[ignoredKeyword].total = 1;
-						} 
+						}
 						
 						else {
 							topicList.ignorated.data.keywords[ignoredKeyword].total++;
@@ -375,19 +375,21 @@ var topicList = {
 			}
 		}
 		
-		chrome.runtime.sendMessage({
+		browser.runtime.sendMessage({
 			need: "save",
 			name: "saved_tags",
 			data: savedTags
 		});
 	},
 	
-	addListeners: function() {
-		const LEFT_CLICK = 0;
-		const MIDDLE_CLICK = 1;
+	addListeners: function() {	
+		var body = document.getElementsByClassName('body')[0];
+		if (!body) {
+			body = document.body;
+		}
 		
-		document.addEventListener('click', (evt) => {
-
+		body.addEventListener('click', (evt) => {
+		
 			if (evt.target.id === 'jumpWindow') {
 				var url = topicList.createPageJumpUrl(evt.target);
 				
@@ -400,7 +402,7 @@ var topicList = {
 		});
 	
 		// Populate href with last page url after user mouses over element
-		document.addEventListener('mouseover', (evt) => {
+		body.addEventListener('mouseover', (evt) => {
 			
 			if (evt.target.id === 'jumpLast' && evt.target.href !== '#') {
 				evt.target.href = topicList.createPageJumpUrl(evt.target);
@@ -530,6 +532,10 @@ var topicList = {
 						
 						break;
 						
+					case 'showOptions':
+						allPages.optionsMenu.show();
+						break;
+						
 					default:
 						break;
 				}
@@ -578,7 +584,7 @@ var topicList = {
 				}
 			}
 		}
-		
+				
 		if (this.config.dramalinks && !window.location.href.match(/[inbox|main].php/)) {
 			var element = document.getElementsByTagName('h1')[0];
 			dramalinks.appendTo(element);
@@ -598,25 +604,26 @@ var topicList = {
 		
 		if (this.config['page_jump_buttons' + pm]) {
 			this.addListeners();
-		}		
-		
-		try {
-			topicList.checkTags();
-		} catch (e) {
-			console.log("Error finding tags");
 		}
 		
 		if (!this.config.hide_ignorator_badge) {
-			// send ignorator data to background script
-			this.globalPort.postMessage({
+			// Send updated ignorator data to background script
+			
+			topicList.globalPort.postMessage({
 				action: 'ignorator_update',
-				ignorator: this.ignorated,
+				ignorator: topicList.ignorated,
 				scope: "topicList"
 			});
 		}				
 		
 		if (this.config.browse_from_date) {	
-		this.createDatePicker();
+			this.createDatePicker();
+		}
+		
+		try {
+			topicList.checkTags();
+		} catch (e) {
+			console.log("Error finding tags");
 		}
 	},
 	
@@ -720,21 +727,25 @@ var topicList = {
 	init: function(config) {
 		this.config = config.data;	
 		this.prepareArrays();
-		this.globalPort = chrome.runtime.connect();
+		this.globalPort = browser.runtime.connect();
 		this.globalPort.onMessage.addListener(this.handle.message);
+		
+		/*browser.runtime.sendMessage({
+			need: "insertcss",
+			file: "src/css/allpages.css"
+		});*/
 		
 		if (window.location.href.match(/topics|history/)) {
 			
 			if (this.config.dramalinks) {
 				
-				chrome.runtime.sendMessage({ need : "dramalinks" }, (response) => {
-					
+				browser.runtime.sendMessage({need : "dramalinks"}).then(response => {
 					dramalinks.html = response.data;
-					dramalinks.config = topicList.config;
-					
+					dramalinks.config = topicList.config;			
 				});
 			}
 		}
+
 		else if (window.location.href.match(/inbox.php/)) {
 			this.pm = "_pm";
 		}
@@ -768,6 +779,8 @@ var topicList = {
 	}
 };
 
-chrome.runtime.sendMessage({ need: "config" }, (config) => {
+browser.runtime.sendMessage({ need: "config" }).then(config => {
 	topicList.init.call(topicList, config);
-});
+}, error => {
+	console.log(error);
+});	

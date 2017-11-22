@@ -7,15 +7,14 @@ var allPages = {
 	 */
 	
 	commonFunctions: {
-		
-		error_check : function() {
+		error_check: function() {
 			if (document.body.style.backgroundImage.indexOf('errorlinks.png') > -1) {
 				var dialog = document.createElement('dialog');
 				dialog.style.border = '1px solid rgba(0, 0, 0, 0.3)';
 				dialog.style.borderRadius = '6px';
 				dialog.style.boxShadow = '0 3px 7px rgba(0, 0, 0, 0.3)';
 				
-				dialog.style.backgroundImage = "url('" + chrome.extension.getURL('/src/images/popup.png') + "')";
+				dialog.style.backgroundImage = "url('" + browser.extension.getURL('/src/images/popup.png') + "')";
 				dialog.style.backgroundColor = 'white';
 				dialog.style.backgroundRepeat = 'no-repeat';
 				dialog.style.backgroundPosition = 'center bottom';
@@ -44,9 +43,9 @@ var allPages = {
 				document.body.appendChild(dialog);
 				
 				dialog.showModal();
-				
-				// Stop callCommonFunctions() from iterating 
-				this = {};
+
+				// Stop execution?
+				allPages.commonFunctions = {};
 			}
 		},
 		
@@ -61,10 +60,10 @@ var allPages = {
 			
 			var observer = new MutationObserver(() => {
 				
-				if (userbar_pms.style.display == 'none' && allPages.config.pms != 0) {
+				if (userbar_pms.style.display == 'none' && allPages.config.pms !== 0) {
 					// clear unread message count from config
 					allPages.config.pms = 0;
-					chrome.runtime.sendMessage({
+					browser.runtime.sendMessage({
 							need : "save",
 							name : "pms",
 							data : allPages.config.pms
@@ -78,7 +77,7 @@ var allPages = {
 					// compare pm_number to last known value for pm_number
 					if (pm_number > allPages.config.pms) {
 						// you have mail
-						if (pm_number == 1) {
+						if (pm_number === 1) {
 							notify_title = 'New PM';
 							notify_msg = 'You have 1 unread private message.';
 						}
@@ -89,15 +88,15 @@ var allPages = {
 						}
 						
 						// notify user and save current pm_number
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 								need: "notify",
 								title: notify_title,
 								message: notify_msg
-						}, null);
+						});
 						
 						allPages.config.pms = pm_number;
 						
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 								need : "save",
 								name : "pms",
 								data : allPages.config.pms
@@ -398,14 +397,14 @@ var allPages = {
 				
 				switch (type) {			
 					case "IGNORATE?":
-						if (!allPages.config.ignorator_list || allPages.config.ignorator_list == '') {
+						if (!allPages.config.ignorator_list || allPages.config.ignorator_list === '') {
 							allPages.config.ignorator_list = allPages.userInfoPopup.username;
 						} 
 						else {
 							allPages.config.ignorator_list += ", " + allPages.userInfoPopup.username;
 						}
 						
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 							need : "save",
 							name : "ignorator_list",
 							data : allPages.config.ignorator_list
@@ -438,7 +437,7 @@ var allPages = {
 						break;
 						
 					case "PM":
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 							need : "opentab",
 							url : "http://endoftheinter.net/postmsg.php?puser=" + allPages.userInfoPopup.userId
 						});
@@ -446,7 +445,7 @@ var allPages = {
 						break;
 						
 					case "GT":
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 							need : "opentab",
 							url : "http://endoftheinter.net/token.php?type=2&user=" + allPages.userInfoPopup.userId
 						});
@@ -454,7 +453,7 @@ var allPages = {
 						break;
 						
 					case "BT":
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 							need : "opentab",
 							url : "http://endoftheinter.net/token.php?type=1&user=" + allPages.userInfoPopup.userId
 						});
@@ -467,7 +466,7 @@ var allPages = {
 								Math.random() * 16777215).toString(16);
 						allPages.config.user_highlight_data[user].color = Math.floor(
 								Math.random() * 16777215).toString(16);
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 							need : "save",
 							name : "user_highlight_data",
 							data : allPages.config.user_highlight_data
@@ -496,7 +495,7 @@ var allPages = {
 					case "UNHIGHLIGHT":
 						delete allPages.config.user_highlight_data[allPages.userInfoPopup.username
 								.toLowerCase()];
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 							need : "save",
 							name : "user_highlight_data",
 							data : allPages.config.user_highlight_data
@@ -547,9 +546,10 @@ var allPages = {
 				}
 		}
 	},
+	
 	optionsMenu: {
 		show: function() {
-			var url = chrome.extension.getURL('options.html');
+			var url = browser.extension.getURL('options.html');
 			var div = document.createElement('div');
 			var iframe = document.createElement('iframe');
 			var width = window.innerWidth;
@@ -581,6 +581,7 @@ var allPages = {
 			
 			this.addListeners();						
 		},
+		
 		addListeners: function() {
 			const ESCAPE_KEY = 27;
 			
@@ -594,6 +595,7 @@ var allPages = {
 			
 			document.body.addEventListener('mousewheel', this.preventScroll);
 		},
+		
 		hide: function() {			
 			var div = document.getElementById('options_div');
 			var bodyClass = document.getElementsByClassName('body')[0];
@@ -603,6 +605,7 @@ var allPages = {
 			document.body.removeEventListener('keyup', allPages.optionsMenu.hide);
 			document.body.removeEventListener('mousewheel', allPages.optionsMenu.preventScroll);
 		},
+		
 		preventScroll: function(event) {
 			event.preventDefault();
 		}
@@ -649,7 +652,7 @@ var allPages = {
 		if (!this.asyncUploadQueue.working) {
 			this.asyncUpload(this.asyncUploadQueue.next(), callback);
 			
-			chrome.runtime.sendMessage({ need: 'progress_notify',
+			browser.runtime.sendMessage({ need: 'progress_notify',
 					data: {
 							title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
 							progress: 0
@@ -678,18 +681,18 @@ var allPages = {
 				if (this.asyncUploadQueue.index >= this.asyncUploadQueue.total) {
 					// No need to show progress anymore - change type to 'basic' and update title
 					if (this.asyncUploadQueue.index > 1) {
-						chrome.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Uploads complete' });
+						browser.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Uploads complete' });
 					}
 					
 					else {
-						chrome.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Upload complete' });
+						browser.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Upload complete' });
 					}
 					
 					this.asyncUploadQueue.clear();
 				}
 				
 				else {
-					chrome.runtime.sendMessage({ need: 'update_progress_notify', 
+					browser.runtime.sendMessage({ need: 'update_progress_notify', 
 							update: {						
 									title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
 									progress: 0
@@ -709,7 +712,7 @@ var allPages = {
 					var percentage = Math.round((evt.loaded / evt.total) * 100);
 					
 					if (percentage === 100) {
-						chrome.runtime.sendMessage({ need: 'update_progress_notify', 
+						browser.runtime.sendMessage({ need: 'update_progress_notify', 
 								update: {
 										title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
 										contextMessage: 'Waiting for response...',
@@ -719,7 +722,7 @@ var allPages = {
 					} 
 					
 					else {
-						chrome.runtime.sendMessage({ need: 'update_progress_notify', 
+						browser.runtime.sendMessage({ need: 'update_progress_notify', 
 								update: {
 										title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
 										contextMessage: '',
@@ -808,17 +811,6 @@ var allPages = {
 	init: function(config) {
 		this.config = config;
 		
-		chrome.runtime.sendMessage({
-			need: "insertcss",
-			file: "src/css/allpages.css"
-		});
-		
-		chrome.runtime.onMessage.addListener((msg) => {
-			if (msg.action == 'showOptions') {
-				allPages.optionsMenu.show();
-			}
-		});		
-		
 		if (document.readyState == 'loading') {
 			// wait for DOMContentLoaded to fire before attempting to modify DOM
 			document.addEventListener('DOMContentLoaded', () => {
@@ -831,12 +823,6 @@ var allPages = {
 		}		
 	}
 };
-
-chrome.runtime.sendMessage({
-	need: "config"
-}, (response) => {
-	allPages.init.call(allPages, response.data);
-});
 
 var getCustomColors = function() {	
 	// (first 'h1' element is either tag name (in topic list), or topic title (in message list)
@@ -882,3 +868,11 @@ var addPopupCSS = function() {
 	// #user-popup-div:after should be same colour as #user-popup-div border
 	styleSheet.addRule('#user-popup-div:after', 'border-bottom-color: ' +   customColors.infobar);
 };
+
+browser.runtime.sendMessage({ need: "config" }).then(response => {
+	
+	allPages.init.call(allPages, response.data);
+	
+}, error => {
+	console.log(error);
+});
