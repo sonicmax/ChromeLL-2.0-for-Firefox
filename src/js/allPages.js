@@ -638,6 +638,10 @@ var allPages = {
 			this.total = 0;
 			this.index = 0;
 			this.working = false;
+		},
+		
+		hasNext: function() {
+			return (this.queue.length > 0);
 		}
 	},
 	
@@ -678,7 +682,7 @@ var allPages = {
 		xhr.onload = () => {
 			if (xhr.status === 200) {
 				
-				if (this.asyncUploadQueue.index >= this.asyncUploadQueue.total) {
+				if (!this.asyncUploadQueue.hasNext()) {
 					// No need to show progress anymore - change type to 'basic' and update title
 					if (this.asyncUploadQueue.index > 1) {
 						browser.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Uploads complete' });
