@@ -6,24 +6,21 @@ var imagemap = function() {
 	/**
 	 *	Called after user clicks Browse Imagemap button
 	 */
-	var init = function() {
-	
-		openDatabase(() => {
-				getImagemap(processResponse);		
-		});
+	var init = function() {		
+		openDatabase().then(getImagemap).then(response => processResponse(response));
 	};
 	
 	/**
 	 *	Opens connection to database in background page.
 	 */
-	var openDatabase = function(callback) {
-		chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);
+	var openDatabase = function() {
+		return browser.runtime.sendMessage({ need: 'openDatabase' });
 	};
 	
 	/**
 	 *	Opens XHR to get current page of imagemap (1 by default)
 	 */
-	var getImagemap = function(callback) {
+	var getImagemap = function() {
 		var page = ''
 		
 		if (currentPage > 1) {
@@ -32,23 +29,21 @@ var imagemap = function() {
 
 		var url = window.location.protocol + '//images.endoftheinter.net/imagemap.php' + page;
 		
-		chrome.runtime.sendMessage({
+		return browser.runtime.sendMessage({
 			
 				need: "xhr",
 				url: url,
 				ignoreCache: true,
 				withCredentials: true
 				
-		}, (response) => {
-				var html = document.createElement('html');
-				html.innerHTML = response;		
-				callback.call(imagemap, html);
-		});			
+		});		
 	};
 		
-	var processResponse = function(imagemap) {
-
-		scrapeImagegrid(imagemap, (imageGrid) => {		
+	var processResponse = function(response) {
+		var imagemap = document.createElement('html');
+		imagemap.innerHTML = response;
+	
+		scrapeImagegrid(imagemap, (imageGrid) => {
 			var infobar = imagemap.getElementsByClassName('infobar')[1];
 			var anchors = infobar.getElementsByTagName('a');
 			
@@ -91,12 +86,12 @@ var imagemap = function() {
 		for (let i = 0, len = imgs.length; i < len; i++) {
 			let img = imgs[i];
 
-			chrome.runtime.sendMessage({
+			browser.runtime.sendMessage({
 					need: 'queryDb',
 					src: img.src
-			}, (result) => {
+			}).then(result => {
 				
-				if (result.data) {
+				if (result && result.data) {
 					img.dataset.oldsrc = img.src;
 					img.src = result.data;
 				}
@@ -262,7 +257,7 @@ var imagemap = function() {
 		else {
 			cacheData[src] = {"src": src, "filename": filename, "fullsize": fullsize, "data": dataUri};
 
-			chrome.runtime.sendMessage({
+			browser.runtime.sendMessage({
 					need: 'addToDatabase',
 					data: cacheData
 			});			
@@ -328,7 +323,7 @@ var imagemap = function() {
 			};
 			
 			// Pass data to background page so we can copy it to clipboard
-			chrome.runtime.sendMessage(request);
+			browser.runtime.sendMessage(request);
 		}
 		// Always close popup after click event, even if user didn't click on an image
 		closePopup();				
@@ -404,7 +399,7 @@ var imagemap = function() {
 			};
 			
 			openDatabase(() => {
-				chrome.runtime.sendMessage(request, callback);
+				browser.runtime.sendMessage(request).then(callback);
 			});									
 		};
 		
@@ -444,7 +439,7 @@ var imagemap = function() {
 		var createPopup = function(query) {
 			var header = document.createElement('div');
 			var image = document.createElement('img');
-			var imageURL = chrome.extension.getURL('/src/images/loading.png');
+			var imageURL = browser.extension.getURL('/src/images/loading.png');
 			image.id = 'loading_image';
 			image.style.display = 'block';
 			image.style.marginLeft = 'auto';

@@ -728,48 +728,39 @@ var background = {
 				// Database handlers
 					
 				case "openDatabase":
-					database.open(sendResponse);					
-					return true;					
+					return database.open();							
 					
 				case "queryDb":
-					database.get(request.src, sendResponse);
-					return true;
+					return database.get(request.src);					
 					
 				case "clearDatabase":
-					database.clear(sendResponse);
-					return true;
+					return database.clear();					
 					
 				case "addToDatabase":
-					database.add(request.data, sendResponse);
-					return true;
+					return database.add(request.data);					
 					
 				case "updateDatabase":
+					// No return value required
 					database.updateFilename(request.data.src, request.data.newFilename);
-					return true;
+					break;
 					
 				case "searchDatabase":
-					database.search(request.query, sendResponse);
-					return true;
+					return database.search(request.query);					
 					
 				case "getSearchDb":
-					database.getSearchObjectStore(sendResponse);
-					return true;
+					return database.getSearchObjectStore();					
 					
 				case "getAllFromDb":
-					database.getAll(sendResponse);
-					return true;
+					return database.getAll();					
 					
 				case "getDbSize":
-					database.getSize(sendResponse);
-					return true;
+					return database.getSize();					
 				
 				case "getSizeInBytes":
-					database.getSizeInBytes(sendResponse);
-					return true;
+					return database.getSizeInBytes();					
 				
 				case "getPaginatedObjectStore":
-					database.getPaginatedObjectStore(request.page, request.type, sendResponse);
-					return true;
+					return database.getPaginatedObjectStore(request.page, request.type);					
 					
 				default:
 					console.log("Error in request listener - undefined parameter?", request);
@@ -927,6 +918,10 @@ background.getDefaultConfig((config) => {
 	background.init.call(background, config);
 });
 
+/**
+ *  Wraps IndexedDB calls in promises so they can be easily used with the WebExtensions message-passing APIs.
+ */
+
 var database = (function() {
 	const DB_NAME = 'ChromeLL-Imagemap';
 	const DB_VERSION = 2;
@@ -936,12 +931,13 @@ var database = (function() {
 	var debouncerId;
 	var db;			
 	
-	var open = function(callback) {
+	var open = function() {
+		return new Promise((resolve, reject) => {
 		var request = window.indexedDB.open(DB_NAME, DB_VERSION);
 		
 		request.onsuccess = (event) => {
 			db = event.target.result;
-			callback();
+				resolve();			
 		};
 		
 		// Make sure that object stores are up-to-date
@@ -965,76 +961,52 @@ var database = (function() {
 				console.log('Created new object stores:', created);
 			}
 			
-			chrome.runtime.reload();
+				// Todo: is it okay that this promise never resolves?
+				browser.runtime.reload();
 		};
+		});
 	};
 	
-	var clear = function(callback) {
-		
-		this.open(() => {
+	var clear = function() {
+		return new Promise((resolve, reject) => {
+			open().then(() => {
 			var transaction = db.transaction([IMAGE_DB, SEARCH_DB], READ_WRITE)
 			transaction.objectStore(IMAGE_DB).clear();
 			transaction.objectStore(SEARCH_DB).clear();
-			callback();
-			
+				resolve();	
+			});
 		});
 	};	
 	
-	var getStorageApiCache = function(callback) {
-		chrome.storage.local.get("imagemap", (cache) => {
+	var getStorageApiCache = function() {
+		return new Promise((resolve, reject) => {
+			browser.storage.local.get("imagemap", (cache) => {
 			if (typeof cache !== "object" || Object.keys(cache.imagemap).length === 0) {
-				callback();
+					resolve();				
 			}
 			
 			else {
-				callback(cache.imagemap);
+					resolve(cache.imagemap);
 			}				
 		});
-	};
-	
-	
-	/**
-	 *  Creates a new object store (SEARCH_DB) which clones IMAGE_DB, but only includes the 
-	 *  filenames and image src attributes. This greatly increases the performance of the 
-	 *  search() method (up to 5x faster)
-	 */
-	 
-	var populateSearchObjectStore = function() {
-		var transaction = db.transaction([SEARCH_DB], READ_WRITE);
-
-		transaction.onerror = (event) => {
-			console.log(event.target.error.message);
-		};
-		
-		transaction.onsuccess = getAll((imageData) => {
-			var transaction = db.transaction([SEARCH_DB], READ_WRITE);
-			var objectStore = transaction.objectStore(SEARCH_DB);	
-						
-			// Remove thumbnail data, add index and add to SEARCH_DB
-			for (let i = 0, len = imageData.length; i < len; i++) {
-				var data = imageData[i];	
-				delete data.data;
-				delete data.fullsize;
-				var request = objectStore.add(data);
-			}
-			
 		});
-		
 	};
 	
-	var getSearchObjectStore = function(callback) {
+	var getSearchObjectStore = function() {
+		return new Promise((resolve, reject) => {
 		var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
+			
 		// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
 		if (objectStore.getAll != null) {
 			var request = objectStore.getAll();
 			
 			request.onsuccess = (event) => {
 				// TODO: Need to test what happens if database exists but is empty
-				callback(event.target.result);
+					resolve(event.target.result);
 			};
 			
 			request.onerror = (event) => {
-				callback(false);
+					resolve(false);				
 			};
 		}
 		
@@ -1047,13 +1019,15 @@ var database = (function() {
 					cursor.continue();
 				}
 				else {
-					callback(cache);
+						resolve(cache);
 				}
 			};								
 		}
+		});
 	};
 	
-	var getPaginatedObjectStore = function(page, type, callback) {
+	var getPaginatedObjectStore = function(page, type) {
+		return new Promise((resolve, reject) => {
 		var objectStore = db.transaction(type).objectStore(type);
 		var rangeStart = page * 50 - 50;
 		var rangeEnd = page * 50;
@@ -1074,30 +1048,39 @@ var database = (function() {
 			}
 			
 			else {
-				callback(results);
+					resolve(results);
 			}
 		};
+		
+		});
 	};
 	
-	var get = function(src, callback) {
+	var get = function(src) {
+		return new Promise((resolve, reject) => {
 		var request = db.transaction(IMAGE_DB)
 				.objectStore(IMAGE_DB)
 				.get(src);		
 					
 		request.onsuccess = (event) => {
 			if (event.target.result) {
-				callback(event.target.result);
+					resolve(event.target.result);
 			}
 			else {				
-				callback(false);
+					resolve(false);
 			}
 		};
 		
 		request.onerror = (event) => {
 			// Couldn't find src in database.
-			callback(false);
+				resolve(false);
 		};
+			
+		});
 	};
+	
+	/**
+	 *  Note: this method doesn't need to return anything.
+	 */
 	
 	var add = function(data) {
 		var transaction = db.transaction([IMAGE_DB, SEARCH_DB], READ_WRITE);
@@ -1122,6 +1105,10 @@ var database = (function() {
 		}		
 	};
 	
+	/**
+	 *  Note: this method doesn't need to return anything.
+	 */
+	
 	var updateFilename = function(src, newFilename) {
 		var transaction = db.transaction([IMAGE_DB], READ_WRITE);
 		
@@ -1145,7 +1132,8 @@ var database = (function() {
 	 *  Iterates through SEARCH_DB object store and calls back with an array containing any matches.
 	 */ 
 	
-	var search = function(query, callback) {
+	var search = function(query) {
+		return new Promise((resolve, reject) => {
 		var results = [];
 		var transaction = db.transaction(SEARCH_DB);
 		var objectStore = transaction.objectStore(SEARCH_DB);							
@@ -1170,7 +1158,7 @@ var database = (function() {
 					
 					else {
 						// Reached end of db
-						retrieveImageData(results, query, callback);
+							retrieveImageData(results).then(resolve);
 					}
 			};								
 		}
@@ -1189,10 +1177,11 @@ var database = (function() {
 					
 					else {
 						// Reached end of db
-						retrieveImageData(results, query, callback);
+							retrieveImageData(results).then(resolve);
 					}
 			};			
 		}
+		});
 	};
 	
 	
@@ -1200,24 +1189,28 @@ var database = (function() {
 	 *  Returns image data from IMAGE_DB for given search results	 
 	 */
 	
-	var retrieveImageData = function(results, query, callback) {
+	var retrieveImageData = function(results) {
+		return new Promise((resolve, reject) => {
 		var imageData = [];
 		
 		for (let i = 0, len = results.length; i < len; i++) {
 			var result = results[i];
-			get(result.src, (data) => {
+				
+				get(result.src).then(data => {
 				
 				imageData.push(data);
 				
 				if (imageData.length === results.length) {
-					callback(imageData, query);
+						resolve(imageData);
 				}
 				
 			});
 		}
+		});
 	};
 	
-	var getAll = function(callback) {
+	var getAll = function() {
+		return new Promise((resolve, reject) => {
 		var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
 		// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
 		if (objectStore.getAll != null) {
@@ -1225,11 +1218,11 @@ var database = (function() {
 			
 			request.onsuccess = (event) => {
 				// TODO: Need to test what happens if database exists but is empty
-				callback(event.target.result);
+					resolve(event.target.result);
 			};
 			
 			request.onerror = (event) => {
-				callback(false);
+					resolve(false);
 			};
 		}
 		
@@ -1242,22 +1235,26 @@ var database = (function() {
 					cursor.continue();
 				}
 				else {
-					callback(cache);
+						resolve(cache);
 				}
 			};								
 		}
+		});
 	};
 	
-	var getSize = function(callback) {
+	var getSize = function() {
+		return new Promise((resolve, reject) => {
 		var objectStore = db.transaction(SEARCH_DB).objectStore(SEARCH_DB);
 		var count = objectStore.count();
 		
 		count.onsuccess = () => {
-			callback(count.result);
+				resolve(count.result);
 		};
+		});
 	};
 	
-	var getSizeInBytes = function(callback) {
+	var getSizeInBytes = function() {	
+		return new Promise((resolve, reject) => {
 		var size = 0;
 
 		var transaction = db.transaction([IMAGE_DB])
@@ -1273,21 +1270,20 @@ var database = (function() {
 				cursor.continue();
 			}
 			else {
-				callback(size);
+					resolve(size);
 			}
 		};
 		
 		transaction.onerror = (err) => {
 			// Callback with value of -1MB (to make it obvious that something went wrong without breaking anything)
-			callback(-1048576);
+				resolve(-1048576);
 		};
+		});
 	};
 	
 	return {
 		open: open,
 		clear: clear,
-		convertCache: convertCache,
-		populateSearchObjectStore: populateSearchObjectStore,
 		getPaginatedObjectStore: getPaginatedObjectStore,
 		get: get,
 		add: add,

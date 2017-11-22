@@ -463,7 +463,7 @@ var options = {
 				text: "Clear image cache?",
 				
 				confirm: () => {	
-					chrome.runtime.sendMessage({ need: 'clearDatabase' }, () => {
+					browser.runtime.sendMessage({ need: 'clearDatabase' }, () => {
 				// Update UI
 				options.ui.clearCacheTable();
 				options.ui.populateCacheSize();
@@ -753,9 +753,9 @@ var options = {
 				
 				if (evt.target.className === 'cache_url_original') {
 					
-					options.imageCache.open(() => {
+					options.imageCache.open().then(() => {
 						
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 						
 							need: 'queryDb',
 							src: evt.target.id
@@ -770,9 +770,9 @@ var options = {
 				
 				if (evt.target.className === 'cache_url_thumbnail') {
 					
-					options.imageCache.open(() => {
+					options.imageCache.open().then(() => {
 						
-						chrome.runtime.sendMessage({
+						browser.runtime.sendMessage({
 						
 							need: 'queryDb',
 							src: evt.target.id
@@ -913,9 +913,10 @@ var options = {
 		
 		populateCacheSize: function() {
 			
-			options.imageCache.open(function() {
+			options.imageCache.open().then(() => {
 			
-				chrome.runtime.sendMessage({ need: 'getSizeInBytes' }, (bytes) => {
+				browser.runtime.sendMessage({ need: 'getSizeInBytes' }).then((bytes) => {
+					console.log(bytes);
 					// Convert bytes to MB and round to 2 decimal places							
 					var megabytes = Math.round(bytes / 1048576 * 100) / 100;
 					document.getElementById('cache_size').innerHTML =	megabytes;
@@ -953,8 +954,8 @@ var options = {
 			}
 			
 			else {
-				options.imageCache.open(() => {
-					chrome.runtime.sendMessage({ need: 'getDbSize' }, (size) => {
+				options.imageCache.open().then(() => {
+					browser.runtime.sendMessage({ need: 'getDbSize' }, (size) => {
 						
 						var table = document.getElementById('cache_contents');
 						var loadingImage = document.getElementById('loading_img');
@@ -1198,12 +1199,11 @@ var options = {
 			}
 		}
 	},
+			
 	imageCache: {
-
-		open: function(callback) {
 			
-			chrome.runtime.sendMessage({ need: 'openDatabase' }, callback);			
-			
+		open: function() {
+			return browser.runtime.sendMessage({ need: 'openDatabase' });				
 		},
 		
 		sort: function(sortType) {
@@ -1218,7 +1218,7 @@ var options = {
 				var duplicateCheck = {};
 				var filetypes = {};
 				
-				chrome.runtime.sendMessage({ need: 'getAllFromDb' }, function(images) {					
+				browser.runtime.sendMessage({ need: 'getAllFromDb' }, images => {
 				
 					if (sortType === 'filetype') {						
 						filetypes["none"] = [];
@@ -1303,7 +1303,7 @@ var options = {
 						query: query			
 				};
 				
-				chrome.runtime.sendMessage(request, (results) => {
+				browser.runtime.sendMessage(request).then(results => {
 					options.ui.populateCacheTable(results);			
 				});
 			}
