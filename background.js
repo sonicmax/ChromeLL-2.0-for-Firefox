@@ -705,21 +705,7 @@ var background = {
 					return true;
 					
 				case "options":
-					chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-							// check whether bg script can send messages to current tab
-							if (background.tabPorts[tabs[0].id] && !background.config.options_window) {
-								// Open options page in iframe
-								chrome.tabs.sendMessage(tabs[0].id, {
-									action: "showOptions"
-								}, null);
-							}
-							
-							else {
-								// Create new tab
-								chrome.runtime.openOptionsPage();						
-							}
-							
-					});
+					browser.tabs.query({active: true, currentWindow: true}).then(background.openOptions);
 					break;
 					
 				// Database handlers
@@ -764,6 +750,33 @@ var background = {
 					break;
 			}
 		}
+	},
+	
+	handleError: function(error) {
+		console.log(error);
+	},
+	
+	openOptions: function(tabs) {
+		if (background.tabPorts[tabs[0].id] && !background.config.options_window) {
+			// Attempt to open options page in iframe in active page.
+			// Use a try-catch here because Promise.catch() doesn't seem to work with
+			// the errors thrown by postMessage() (eg. if tab port isn't connected)
+			
+			try {				
+				background.tabPorts[tabs[0].id].postMessage({
+						action: "showOptions"
+				});
+				
+			} catch (e) {				
+				browser.runtime.openOptionsPage();
+			}
+		}
+		
+		else {
+			// Create new tab
+			browser.runtime.openOptionsPage();
+		}		
+		
 	},
 	
 	createProgressNotification: function(data) {
