@@ -10,7 +10,7 @@ BUILD_SRC=$(BUILD_DIR)/src
 BUILD_JS=$(BUILD_SRC)/js
 SRC_JS=src/js
 
-all: copy_files allBg.js allPages.js backtotopic.js boardList.js dramalinks.js imagemap.js messageList.js options.js popup.js postMsg.js profile.js search.js tokenhelper.js topicList.js topicPostTemplate.js transloader.js
+all: copy_files allBg.js allPages.js backtotopic.js dramalinks.js imagemap.js messageList.js options.js popup.js postMsg.js profile.js search.js tokenhelper.js topicList.js topicPostTemplate.js transloader.js
 	
 copy_files:
 	-mkdir build
@@ -35,10 +35,7 @@ allPages.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/allPages.js $(SRC_JS)/allPages.js
 	
 backtotopic.js:
-	$(CC) $(CFLAGS) $(BUILD_JS)/backtotopic.js $(SRC_JS)/backtotopic.js	
-	
-boardList.js:
-	$(CC) $(CFLAGS) $(BUILD_JS)/boardList.js $(SRC_JS)/boardList.js
+	$(CC) $(CFLAGS) $(BUILD_JS)/backtotopic.js $(SRC_JS)/backtotopic.js
 
 imagemap.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/imagemap.js $(SRC_JS)/imagemap.js
