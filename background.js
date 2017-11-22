@@ -141,35 +141,46 @@ var background = {
 				&& localStorage['ChromeLL-Version'] != undefined 
 				&& this.config.sys_notifications) {
 					
-			browser.notifications.create('popup', {
+			// Firefox doesn't support notifications with buttons, so for now
+			// we just have to instruct user to click the notification itself.
 				
+			var options = {				
 					type: "basic",
 					iconUrl: "src/images/lueshi_48.png",
-					title: "ChromeLL has been updated",
-					message: "Old: " + localStorage['ChromeLL-Version'] + ", New: " + manifest.version,
-					buttons: [{ title: "Click for more info" }]
+					title: "ChromeLL has been updated to version " + manifest.version,
+					message: "\n [click for more info]"				
+			};
 					
-				}, (id) => {
-					
-					browser.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+			browser.notifications.create('popup', options).then(id => {
 						
-						if (notifId === id && btnIdx === 0) {
-							// link user to topic containing changelog and other info
-							window.open("http://boards.endoftheinter.net/showmessages.php?topic=9458231");
-							browser.notifications.clear(id, null);
-						}
+				var clickHandler = (id) => {
+					// Link user to topic containing changelog and other info.
 						
+					browser.tabs.create({
+							url: "https://boards.endoftheinter.net/showmessages.php?topic=9458231"
+					}).then(() => {
+						clearNotification(id);
 					});
+				};
 					
-					setTimeout(function() {
-						browser.notifications.clear(id, null);
+				browser.notifications.onClicked.addListener(clickHandler);
+				
+				var clearNotification = (id) => {
+					browser.notifications.clear(id);
+					browser.notifications.onClicked.removeListener(clickHandler);						
+				};
+				
+				setTimeout(() => {
+					clearNotification(id);
 					}, 5000);
-				}
-			);
 			
+			});
+			
+			// Don't forget to update local version number
 			localStorage['ChromeLL-Version'] = manifest.version;
 		}
 
+		// First run
 		if (localStorage['ChromeLL-Version'] == undefined) {
 			localStorage['ChromeLL-Version'] = manifest.version;
 		}
