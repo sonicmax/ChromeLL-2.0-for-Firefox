@@ -11,7 +11,7 @@ p {
 }
 
 h1 {
-	-webkit-user-select: none;
+	user-select: none;
 	color: rgb(48, 57, 66);
 	font-size: 18px;
 	font-weight: normal;
@@ -51,7 +51,7 @@ a:active {
 	color: rgb(37, 64, 113);
 }
 h1 {
-	-webkit-user-select: none;
+	user-select: none;
 	color: rgb(48, 57, 66);
 	font-size: 18px;
 	font-weight: normal;
@@ -59,8 +59,8 @@ h1 {
 }
  
 .title {
-	-webkit-margin-before: 18px;
-	-webkit-margin-start: 23px;
+	margin-top: 18px;
+	margin-left: 23px;
 	color: rgb(92, 97, 102);
 }
  
@@ -85,15 +85,15 @@ html.hide-menu #navbar-container {
 }
  
 #navbar-container > ul {
-	-webkit-user-select: none;
+	user-select: none;
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
 }
  
 li.navbar-item {
-	-webkit-border-start: 6px solid white;
-	-webkit-padding-start: 18px;
+	border-left: 6px solid white;
+	padding-left: 18px;
 	color: #999;
 	cursor: pointer;
 	line-height: 17px;
@@ -110,7 +110,7 @@ li.navbar-item:hover {
 }
  
 li.navbar-item-selected {
-	-webkit-border-start-color: rgb(78, 87, 100);
+	border-left-color: rgb(78, 87, 100);
 	color: rgb(70, 78, 90);
 }
  
@@ -162,14 +162,14 @@ section > div:only-of-type {
 }
  
 .overlay .page h1 {
-	background: -webkit-linear-gradient(white, #F8F8F8);
+	background: linear-gradient(white, #F8F8F8);
 	border-bottom: 1px solid rgba(188, 193, 208, .5);
 	font-size: 105%;
 	font-weight: bold;
 	padding: 10px 15px 8px 15px;
 }
 #mainview {
-	-webkit-box-align: stretch;
+	box-align: stretch;
 	padding-inline-start: 150px;
 	margin: 0;
 	position: absolute;
@@ -380,10 +380,12 @@ span.desc {
 /* loading spinner */
 
 .loading {
-	-webkit-animation:spin 2s linear infinite;
+	animation:spin 2s linear infinite;
 }
-@-webkit-keyframes spin { 100% {
-	-webkit-transform:rotate(360deg); 
+
+@keyframes spin { 
+	100% { 
+		transform:rotate(360deg); 
 	}
 }
 
