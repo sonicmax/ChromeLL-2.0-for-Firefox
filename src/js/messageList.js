@@ -648,8 +648,11 @@ var messageList = {
 		drop_batch_uploader: function() {
 			var textarea = document.getElementById('message') || document.getElementsByTagName('textarea')[0];
 			
-			textarea.addEventListener('drop', (evt) => {
+			textarea.addEventListener('dragover', evt => {
+				evt.preventDefault();
+			});
 				
+			textarea.addEventListener('drop', evt => {
 				var reader = new FileReader();
 				
 				for (let i = 0, len = evt.dataTransfer.files.length; i < len; i++) {
