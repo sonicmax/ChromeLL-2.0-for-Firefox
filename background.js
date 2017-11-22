@@ -130,31 +130,8 @@ var background = {
 			delete background.config.tcs;
 		}				
 		
-		/**
-		 *  Version 1 of imagemap cache used chrome.storage API.
-		 *  Version 2 updated the cache to use IndexedDB API.
-		 *  Version 3 added a lightweight version of the database (excluding thumbnails)
-		 *  	to improve performance.
-		 */
-		
-		// Move image cache from chrome.storage API to indexedDB.
-		if (this.config.image_cache_version === 1) {			
-			database.open(database.convertCache);
-			background.config.image_cache_version = 2;
-			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);	
-		}
-				
-		// Create lightweight version of existing database for search purposes
-		if (this.config.image_cache_version === 2) {			
-			database.open(database.populateSearchObjectStore);
-			background.config.image_cache_version = 3;
-			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
-		}				
-		
-		else {		
 			// save the config, in case it was updated
 			localStorage['ChromeLL-Config'] = JSON.stringify(background.config);
-		}
 	},
 	
 	checkVersion: function() {
@@ -754,10 +731,6 @@ var background = {
 					database.open(sendResponse);					
 					return true;					
 					
-				case "convertCacheToDb":
-					database.convertCache(sendResponse);					
-					return true;
-					
 				case "queryDb":
 					database.get(request.src, sendResponse);
 					return true;
@@ -1104,33 +1077,6 @@ var database = (function() {
 				callback(results);
 			}
 		};
-	};
-	
-	
-	/**
-	 *	Converts old cache to new cache which uses IndexedDB API instead of chrome.storage API
-	 */	
-	
-	var convertCache = function(callback) {
-	
-		getStorageApiCache((imagemap) => {
-			
-			if (imagemap && Object.keys(imagemap).length > 0) {
-				var imageObjectStore = db.transaction(IMAGE_DB, READ_WRITE).objectStore(IMAGE_DB);	
-				
-				for (var src in imagemap) {
-					var record = imagemap[src];
-					
-					// We need to manually add src property to object before adding to database
-					record.src = src;
-					imageObjectStore.add(record);
-				}
-															
-				// At this point we can safely clear chrome.storage
-				chrome.storage.local.clear();
-			}
-			
-		});	
 	};
 	
 	var get = function(src, callback) {
