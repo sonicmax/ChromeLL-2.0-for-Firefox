@@ -7,7 +7,7 @@ var imagemap = function() {
 	 *	Called after user clicks Browse Imagemap button
 	 */
 	var init = function() {		
-		openDatabase().then(getImagemap).then(response => processResponse(response));
+		openDatabase().then(getImagemap).then(processResponse);
 	};
 	
 	/**
@@ -287,7 +287,9 @@ var imagemap = function() {
 			else {
 				// Load next page and append to current grid 
 				currentPage++;
-				getImagemap((imagemap) => {
+				openDatabase().then(getImagemap).then((response) => {
+					var imagemap = document.createElement('html');
+					imagemap.innerHTML = response;
 					
 					scrapeImagegrid(imagemap, (newGrid) => {
 						document.getElementsByClassName('image_grid')[0].appendChild(newGrid);
@@ -317,13 +319,13 @@ var imagemap = function() {
 			}
 			
 			// Formulate request with LLML img code string
-			var request = {
+			var copyToClipboard = {
 				need: 'copy',
 				data:  '<img src="' + src.replace('dealtwith.it/i/t', 'endoftheinter.net/i/n') + '" />'
 			};
 			
 			// Pass data to background page so we can copy it to clipboard
-			browser.runtime.sendMessage(request);
+			browser.runtime.sendMessage(copyToClipboard);
 		}
 		// Always close popup after click event, even if user didn't click on an image
 		closePopup();				
@@ -378,7 +380,7 @@ var imagemap = function() {
 					document.getElementById('loading_image').style.display = 'block';							
 				}
 				
-				lookupInDb(query, (results) => {
+				openDatabase().then(() => lookupInDb(query)).then(results => {
 					processResults(results, query);				
 				});
 			}
@@ -392,15 +394,11 @@ var imagemap = function() {
 			
 		};
 		
-		var lookupInDb = function(query, callback) {
-			var request = {
+		var lookupInDb = function(query) {
+			return browser.runtime.sendMessage({
 					need: 'searchDatabase',
 					query: query			
-			};
-			
-			openDatabase(() => {
-				browser.runtime.sendMessage(request).then(callback);
-			});									
+			});
 		};
 		
 		var processResults = function(results, query) {

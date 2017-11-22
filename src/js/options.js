@@ -912,18 +912,11 @@ var options = {
 		},
 		
 		populateCacheSize: function() {
-			
-			options.imageCache.open().then(() => {
-			
-				browser.runtime.sendMessage({ need: 'getSizeInBytes' }).then((bytes) => {
-					console.log(bytes);
-					// Convert bytes to MB and round to 2 decimal places							
-					var megabytes = Math.round(bytes / 1048576 * 100) / 100;
-					document.getElementById('cache_size').innerHTML =	megabytes;
-				});
-			
-			});
-				
+			browser.runtime.sendMessage({ need: 'getSizeInBytes' }).then((bytes) => {
+				// Convert bytes to MB and round to 2 decimal places							
+				var megabytes = Math.round(bytes / 1048576 * 100) / 100;
+				document.getElementById('cache_size').innerHTML =	megabytes;
+			});		
 		},
 		
 		populateCacheTable: function(sortedImages) {
@@ -954,74 +947,72 @@ var options = {
 			}
 			
 			else {
-				options.imageCache.open().then(() => {
-					browser.runtime.sendMessage({ need: 'getDbSize' }, (size) => {
+				browser.runtime.sendMessage({ need: 'getDbSize' }).then(size => {
+					
+					var table = document.getElementById('cache_contents');
+					var loadingImage = document.getElementById('loading_img');
+					var countElement = document.getElementById('cache_count');
+					
+					if (!size || size === 0) {
+						// There was a problem loading database, or it was empty
+						countElement.innerHTML = 0 + ' images';
+						options.ui.clearCacheTable();
 						
-						var table = document.getElementById('cache_contents');
-						var loadingImage = document.getElementById('loading_img');
-						var countElement = document.getElementById('cache_count');
+						var empty = document.createElement('tr');
+						empty.innerHTML = 'Empty';
+						table.appendChild(empty);
 						
-						if (!size || size === 0) {
-							// There was a problem loading database, or it was empty
-							countElement.innerHTML = 0 + ' images';
+						loadingImage.style.display = "none";
+						table.style.display = "block";							
+						
+						return;
+					}
+					
+					else {
+						if (size > 1) {
+							countElement.innerHTML = size + ' images';
+						} else {
+							countElement.innerHTML = size + ' image';
+						}
+						
+						if (sortedImages == 'default') {
+							table.style.display = "none";
+							loadingImage.style.display = "block";								
 							options.ui.clearCacheTable();
-							
-							var empty = document.createElement('tr');
-							empty.innerHTML = 'Empty';
-							table.appendChild(empty);
-							
-							loadingImage.style.display = "none";
-							table.style.display = "block";							
-							
-							return;
 						}
 						
-						else {
-							if (size > 1) {
-								countElement.innerHTML = size + ' images';
-							} else {
-								countElement.innerHTML = size + ' image';
+						options.ui.paginateImageCache(size);
+						
+						options.ui.displayPageFromCache(1);
+						
+						document.getElementById('pagination').addEventListener('click', (evt) => {
+							
+							if (evt.target.className === 'image_cache_page') {
+								
+								document.getElementsByClassName('selected')[0].classList.remove('selected');
+								evt.target.classList.add('selected');
+								options.ui.displayPageFromCache(evt.target.innerHTML);
 							}
 							
-							if (sortedImages == 'default') {
-								table.style.display = "none";
-								loadingImage.style.display = "block";								
-								options.ui.clearCacheTable();
-							}
-							
-							options.ui.paginateImageCache(size);
-							
-							options.ui.displayPageFromCache(1);
-							
-							document.getElementById('pagination').addEventListener('click', (evt) => {
-								
-								if (evt.target.className === 'image_cache_page') {
-									
-									document.getElementsByClassName('selected')[0].classList.remove('selected');
-									evt.target.classList.add('selected');
-									options.ui.displayPageFromCache(evt.target.innerHTML);
-								}
-								
-							});
-							
-							loadingImage.style.display = "none";
-							table.style.display = "block";
-						}
-					});
+						});
+						
+						loadingImage.style.display = "none";
+						table.style.display = "block";
+					}
 				});
 			}
 		},
 		
 		displayPageFromCache: function(page) {
 			options.ui.clearCacheTable();
-			
-			browser.runtime.sendMessage({
-			
+
+			var request = {	
 					need: 'getPaginatedObjectStore',
 					page: page,
 					type: 'search'
-					
-			}, (images) => {
+			};
+			
+			browser.runtime.sendMessage(request).then(images => {
 				
 				for (var i = 0, len = images.length; i < len; i++) {
 					var image = images[i];
@@ -1220,7 +1211,7 @@ var options = {
 				var duplicateCheck = {};
 				var filetypes = {};
 				
-				browser.runtime.sendMessage({ need: 'getAllFromDb' }, images => {
+				browser.runtime.sendMessage({ need: 'getAllFromDb' }).then(images => {
 				
 					if (sortType === 'filetype') {						
 						filetypes["none"] = [];

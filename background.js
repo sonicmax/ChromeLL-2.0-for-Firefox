@@ -729,13 +729,13 @@ var background = {
 					return database.getSearchObjectStore();					
 					
 				case "getAllFromDb":
-					return database.getAll();					
+					return Promise.resolve(database.open().then(database.getAll));
 					
 				case "getDbSize":
-					return database.getSize();					
+					return Promise.resolve(database.open().then(database.getSize));
 				
 				case "getSizeInBytes":
-					return database.getSizeInBytes();					
+					return Promise.resolve(database.open().then(database.getSizeInBytes));
 				
 				case "getPaginatedObjectStore":
 					return database.getPaginatedObjectStore(request.page, request.type);					
@@ -1127,7 +1127,7 @@ var database = (function() {
 		
 		record.onsuccess = () => {
 			var data = record.result;				
-			data.filename = newFilename;				
+			data.filename = newFilename;			
 			var updateTitleRequest = objectStore.put(data);
 		};
 	};
@@ -1217,7 +1217,8 @@ var database = (function() {
 	var getAll = function() {
 		return new Promise((resolve, reject) => {
 			var objectStore = db.transaction(IMAGE_DB).objectStore(IMAGE_DB);
-			// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.
+			
+			// Note: getAll() method isn't part of IndexedDB standard and may disappear in future.			
 			if (objectStore.getAll != null) {
 				var request = objectStore.getAll();
 				
@@ -1231,6 +1232,7 @@ var database = (function() {
 				};
 			}
 			
+			// Manually iterate over cursor to get all entries
 			else {				
 				var cache = [];
 				objectStore.openCursor().onsuccess = (event) => {
