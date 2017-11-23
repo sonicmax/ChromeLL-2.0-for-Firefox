@@ -10,7 +10,7 @@ BUILD_SRC=$(BUILD_DIR)/src
 BUILD_JS=$(BUILD_SRC)/js
 SRC_JS=src/js
 
-all: copy_files allBg.js allPages.js backtotopic.js dramalinks.js imagemap.js messageList.js options.js popup.js postMsg.js profile.js search.js tokenhelper.js topicList.js topicPostTemplate.js transloader.js
+all: copy_files allBg.js allPages.js backtotopic.js dramalinks.js imagemap.js messageList.js options.js popup.js postMsg.js profile.js promptHandler.js search.js tokenhelper.js topicList.js topicPostTemplate.js transloader.js
 	
 copy_files:
 	-mkdir build
@@ -54,6 +54,9 @@ postMsg.js:
 	
 profile.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/profile.js $(SRC_JS)/profile.js
+	
+promptHandler.js:
+	$(CC) $(CFLAGS) $(BUILD_JS)/promptHandler.js $(SRC_JS)/promptHandler.js
 	
 search.js:
 	$(CC) $(CFLAGS) $(BUILD_JS)/search.js $(SRC_JS)/search.js
