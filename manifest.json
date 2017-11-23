@@ -60,7 +60,7 @@
   },
   {
     "matches": ["*://*.endoftheinter.net/postmsg.php*"],
-    "js": ["src/js/postMsg.js", "src/js/imagemap.js"],
+    "js": ["src/js/imagemap.js", "src/js/postMsg.js"],
 		"run_at": "document_end"
   },
 	{

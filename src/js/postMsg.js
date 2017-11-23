@@ -358,7 +358,6 @@ var postMsgHelper = {
 	imagemapDebouncer: '',
 	
 	imagemapHelper: function() {
-		
 		var button = document.getElementById('quick_image');
 		
 		button.addEventListener('click', (evt) => {
@@ -401,12 +400,11 @@ browser.runtime.sendMessage({need : "config"}).then(response => {
 		}
 	}
 	
-	if (config.create_topic_buttons && !pm) {
+	if (config.create_topic_buttons && pm === '') {
 		postMsgHelper.create_topic_observer();
 	}
 	
-	if (config.quick_imagemap && pm) {
-		postMsg.quick_imagemap();
+	if (config.quick_imagemap) {		
 		postMsgHelper.imagemapHelper();				
 	}
 });
