@@ -4,20 +4,49 @@ const UPLOAD_SIZE_LIMIT = 4000000; // 4MB
 
 var imgurNotificationId;
 
-function imageTransloader(info, rename) {
+function transloadImage(info, newFilename) {
 	var url = info.srcUrl;
+	
 	var filename = getFilename(info.srcUrl);
 	
-	if (rename) {
-		var newFilename = handleRename(filename);
-		if (newFilename === false) {
-			return;
-		}
-		else if (newFilename) {
-			filename = newFilename;
-		}
+	if (newFilename === false) {
+		return;
 	}
 	
+	else if (newFilename != null) {
+		filename = newFilename;
+	}
+	
+	fetchAndUpload(url, filename);
+}
+
+function renameAndTransload(info) {
+	// We can pretty much guarantee that request originated from active tab in current window.
+	browser.tabs.query({active: true, currentWindow: true}).then(tabs => {
+				
+		if (!tabs[0]) {
+			console.error('No active tabs in current window.');
+			return;
+		}
+		
+		// We can't use window.prompt() in background script - we have to send message to 
+		// promptHandler to execute the code and then return desired filename from there
+		
+		browser.tabs.sendMessage(tabs[0].id, {
+			
+				action: "openRenamePrompt", 
+				placeholder: getFilename(info.srcUrl) 
+				
+		}).then(filename => {
+				
+			fetchAndUpload(info.srcUrl, filename);
+			
+		});	
+		
+	});
+}
+
+function fetchAndUpload(url, filename) {
 	fetchImage(url, (filesize, mimetype, blob) => {
 		// GIFs larger than UPLOAD_SIZE_LIMIT will not upload to ETI correctly. Use Imgur instead
 		if (filesize > UPLOAD_SIZE_LIMIT && mimetype === 'image/gif') {

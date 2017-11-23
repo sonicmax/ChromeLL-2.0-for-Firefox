@@ -29,6 +29,10 @@
 	
   "content_scripts": [
   {
+    "matches": ["<all_urls>"],
+    "js": ["src/js/promptHandler.js"]
+  },	
+  {
     "matches": ["*://*.endoftheinter.net/*"],
 		"css": ["src/css/allpages.css"],
     "js": ["src/js/allPages.js"],

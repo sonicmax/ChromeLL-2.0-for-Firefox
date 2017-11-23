@@ -251,21 +251,17 @@ var background = {
 	},
 	
 	buildContextMenu: function() {
-		// imageTransloader method is located in transloader.js
+		// transloadImage() and renameAndTransload() are located in transloader.js
 		browser.contextMenus.create({
 			"title": "Transload image",
-			"onclick": (info)  => {
-				imageTransloader(info);
-			},
+			"onclick": transloadImage,
 			"contexts": ["image"]
 		});
 		
 		if (this.config.enable_image_rename) {
 			browser.contextMenus.create({
 				"title": "Rename and transload image",
-				"onclick": (info) => {
-					imageTransloader(info, true);
-				},
+				"onclick": renameAndTransload,
 				"contexts": ["image"]
 			});
 		}		
