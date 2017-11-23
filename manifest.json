@@ -39,7 +39,7 @@
 		"run_at": "document_start"
   },
   {
-    "matches": ["*://*.endoftheinter.net/*],
+    "matches": ["*://*.endoftheinter.net/*"],
     "js": ["lib/jquery-3.2.1.min.js"]
   },
   {
