@@ -187,6 +187,8 @@ function scrapeValue(response) {
 		console.log('Error in spooky HTML regex:', e);
 		
 		try {
+			// Todo: what actually happens here in Firefox?
+			
 			// This method is not ideal as Chrome will try to load these images using the
 			// chrome-extension: protocol, causing multiple network errors. But it's preferable 
 			// to doing nothing
@@ -240,7 +242,7 @@ function uploadToImgur(blob) {
 					update.progress = percentage;
 				}
 				
-				chrome.notifications.update(imgurNotificationId, update);
+				browser.notifications.update(imgurNotificationId, update);
 			}
 		}	
 	});
@@ -251,15 +253,11 @@ function uploadToImgur(blob) {
 }
 
 function showImgurNotification(xhr) {
-	chrome.notifications.create('fail', {
+	browser.notifications.create('fail', {
 		
-		type: 'progress',
+		type: 'basic',
 		title: 'Too big to fail',
-		message: 'This gif is too big (>2MB) - uploading to Imgur...',
-		progress: 0,
-		buttons: [{
-			title: 'Cancel'
-		}],
+		message: 'This gif is too big (>2MB) - uploading to Imgur... \n [click to cancel]',
 		requireInteraction: true,
 		iconUrl: 'src/images/lueshi_48_i.png'
 		
@@ -267,20 +265,23 @@ function showImgurNotification(xhr) {
 		
 		imgurNotificationId = id;
 		
-		chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
-			
-			if (notifId === id && btnIdx === 0) {
-				xhr.abort();
-				chrome.notifications.clear(id, null);
-			}
-			
-		});
+		var abortOnClick = (id) => {
+			xhr.abort();
+			clearNotification(id);
+		};
+		
+		browser.notifications.onClicked.addListener(abortOnClick);
+		
+		var clearNotification = (id) => {
+			browser.notifications.clear(id);
+			browser.notifications.onClicked.removeListener(clickHandler);						
+		};		
 		
 	});
 }
 
 function showErrorNotification(statusCode) {
-	chrome.notifications.create('fail', {
+	browser.notifications.create('fail', {
 		
 		type: 'basic',
 		title: 'Image transloading failed',
@@ -290,7 +291,7 @@ function showErrorNotification(statusCode) {
 	}, (id) => {
 		
 		setTimeout(() => {
-			chrome.notifications.clear(id, null);	
+			browser.notifications.clear(id, null);	
 		}, 3000);
 		
 	});
@@ -303,12 +304,12 @@ function copyToClipboard(text) {
 	document.execCommand('copy');
 
 	if (imgurNotificationId) {
-		chrome.notifications.clear(imgurNotificationId, null);
+		browser.notifications.clear(imgurNotificationId, null);
 		imgurNotificationId = null;
 	}
 	
 	// Notify user
-	chrome.notifications.create('succeed', {
+	browser.notifications.create('succeed', {
 		
 		type: 'basic',
 		title: 'Image transloaded',
@@ -318,7 +319,7 @@ function copyToClipboard(text) {
 	}, (id) => {
 		
 		setTimeout(() => {
-			chrome.notifications.clear(id, null);	
+			browser.notifications.clear(id, null);	
 		}, 3000);
 		
 	});		

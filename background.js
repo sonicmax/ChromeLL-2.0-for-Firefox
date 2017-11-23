@@ -557,6 +557,8 @@ var background = {
 			if (newUrl && newUrl.indexOf('endoftheinter.net') === -1) {
 				this.deleteTabRefs(tabId);
 			}			
+			
+			
 		},
 		
 		deleteTabRefs: function(tabId) {
@@ -607,19 +609,15 @@ var background = {
 					break;
 					
 				case "notify":
-					// Generate unique ID for each tab so we can perform tab-specific actions later
-					var id = "notify_" + sender.tab.id;
+					// Generate unique ID for each tab so we can perform tab-specific actions later.
+					// This also limits the number of notifications to 1 per tab.										
+					var id = "tabId_" + sender.tab.id;
 					
-					background.notificationData[id] = { tab: sender.tab };
+					var notifyData = background.notificationData[id];
 					
-					var options = {
-						type: "basic",
-						title: request.title,
-						message: request.message,
-						iconUrl: "src/images/lueshi_48.png"						
-					};
-					
-					browser.notifications.create(id, options).then(id	=> {
+					if (notifyData) {
+						clearTimeout(notifyData.handle);
+					}
 						
 						if (!background.config.clear_notify) {
 							this.config.clear_notify = "5";
@@ -629,29 +627,28 @@ var background = {
 							return;
 						}
 						
-						setTimeout(() => {
-							
-							browser.notifications.clear(id, null);
+					var handle = setTimeout(() => {
+						browser.notifications.clear(id);				
 							delete background.notificationData[id];
 							
 						}, parseInt(background.config.clear_notify, 10) * 1000);
+						
+					background.notificationData[id] = {
+							tab: sender.tab,
+							handle: handle
+					};					
+					
+					browser.notifications.create(id, {
+						
+						type: "basic",
+						title: request.title,
+						message: request.message,
+						iconUrl: "src/images/lueshi_48.png"	
 						
 					});
 					
 					break;				
 					
-				case "progress_notify":
-					background.createProgressNotification(request.data);
-					break;
-					
-				case "update_progress_notify":
-					background.updateProgressNotification(request.update);
-					break;
-					
-				case "clear_progress_notify":
-					background.clearProgressNotification(request.title);
-					break;
-
 				case "copy":
 					var clipboard = document.getElementById('clipboard');
 					clipboard.value = request.data;
@@ -784,31 +781,6 @@ var background = {
 		}		
 		
 	},
-	
-	createProgressNotification: function(data) {
-		browser.notifications.create('progress', {
-			
-			type: 'progress',
-			title: data.title,
-			message: '',
-			progress: data.progress,						
-			requireInteraction: true,
-			iconUrl: 'src/images/lueshi_48.png'
-			
-		});
-	},
-	
-	updateProgressNotification: function(update) {
-		browser.notifications.update('progress', update);
-	},
-	
-	clearProgressNotification: function(title) {
-		browser.notifications.update('progress', { type: 'basic', title: title, contextMessage: '' });
-		
-		setTimeout(() => {
-			browser.notifications.clear('progress', null);
-		}, 3000);		
-	},	
 	
 	/**
 	 *  Checks whether any users have been ignored on active tab and updates badge text

@@ -656,12 +656,11 @@ var allPages = {
 		if (!this.asyncUploadQueue.working) {
 			this.asyncUpload(this.asyncUploadQueue.next(), callback);
 			
-			browser.runtime.sendMessage({ need: 'progress_notify',
-					data: {
-							title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
-							progress: 0
-					}
-			});			
+			browser.runtime.sendMessage({
+					need: 'notify',								
+					title: 'Uploading: (1/' + this.asyncUploadQueue.total + ')',
+					message: ''
+			});
 		}			
 	},
 	
@@ -685,57 +684,38 @@ var allPages = {
 				if (!this.asyncUploadQueue.hasNext()) {
 					// No need to show progress anymore - change type to 'basic' and update title
 					if (this.asyncUploadQueue.index > 1) {
-						browser.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Uploads complete' });
+						browser.runtime.sendMessage({
+								need: 'notify',								
+								title: 'Uploads complete',
+								message: ''
+						});
 					}
 					
 					else {
-						browser.runtime.sendMessage({ need: 'clear_progress_notify', title: 'Upload complete' });
+						browser.runtime.sendMessage({
+								need: 'notify',								
+								title: 'Upload complete',
+								message: ''
+						});
 					}
 					
 					this.asyncUploadQueue.clear();
 				}
 				
 				else {
-					browser.runtime.sendMessage({ need: 'update_progress_notify', 
-							update: {						
-									title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
-									progress: 0
-							}
-					});												
-					
+					// Start next upload
 					this.asyncUpload(this.asyncUploadQueue.next(), callback);
-				}		
+					
+					browser.runtime.sendMessage({
+							need: 'notify',								
+							title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
+							message: ''
+					});					
+				}
 				
 				this.handleAsyncUploadResponse(xhr.responseText, callback);
 			}						
 		};
-		
-		xhr.upload.addEventListener('progress', (evt) => {
-				
-				if (evt.lengthComputable) {
-					var percentage = Math.round((evt.loaded / evt.total) * 100);
-					
-					if (percentage === 100) {
-						browser.runtime.sendMessage({ need: 'update_progress_notify', 
-								update: {
-										title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
-										contextMessage: 'Waiting for response...',
-										progress: 100
-								}
-						});
-					} 
-					
-					else {
-						browser.runtime.sendMessage({ need: 'update_progress_notify', 
-								update: {
-										title: 'Uploading: (' + this.asyncUploadQueue.index + '/' + this.asyncUploadQueue.total + ')',
-										contextMessage: '',
-										progress: percentage
-								}
-						});						
-					}
-				}
-		});
 				
 		xhr.send(formData);
 	},
