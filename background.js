@@ -803,6 +803,13 @@ var background = {
 				} 
 				
 				else {
+					// Chrome seems to reset the badge text after tab state changes.
+					// In Firefox, we need to explicitly remove the text
+					browser.browserAction.setBadgeText({
+						tabId: tab,
+						text: ""
+					});					
+					
 					this.noIgnores = true;
 				}
 				
