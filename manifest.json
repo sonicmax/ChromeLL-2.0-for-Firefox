@@ -35,13 +35,17 @@
 		"run_at": "document_start"
   },
   {
+    "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
+    "js": ["lib/jquery-3.2.1.min.js"]
+  },
+  {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://*.endoftheinter.net/topics/*", "*://*.endoftheinter.net/history.php*"],
     "js": ["src/js/dramalinks.js"],
 		"run_at": "document_start"
   },	
   {
     "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
-    "js": ["lib/jquery-3.2.1.min.js", "src/js/imagemap.js", "src/js/messageList.js"],
+    "js": ["src/js/imagemap.js", "src/js/messageList.js"],
 		"run_at": "document_start"
   },
   {
