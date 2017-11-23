@@ -382,7 +382,7 @@ var postMsgHelper = {
 	}
 }
 
-browser.runtime.sendMessage({need : "config"}.then(response => {
+browser.runtime.sendMessage({need : "config"}).then(response => {
 	config = response.data;
 	
 	var pm = '';
