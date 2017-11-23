@@ -1383,11 +1383,16 @@ var messageList = {
 				
 				if (link.classList.contains('gfycat')) {
 					messageList.gfycat.checkLink(link);
+					// Archived topics don't have quote element to replace.				
+					if (!messageList.tags.includes('Archived')) {
 					messageList.replaceQuoteOnclick(link.parentNode);
+				}
 				}
 				else if (link.classList.contains('imgur')) {
 					messageList.imgur.checkLink(link);
+					if (!messageList.tags.includes('Archived')) {
 					messageList.replaceQuoteOnclick(link.parentNode);
+				}
 				}
 				else if (link.classList.contains('ignore')) {
 					linksToIgnore.push(link);
