@@ -35,7 +35,7 @@
 		"run_at": "document_start"
   },
   {
-    "matches": ["*://*.endoftheinter.net/showmessages.php*", "*://endoftheinter.net/inboxthread.php*"],
+    "matches": ["*://*.endoftheinter.net/*],
     "js": ["lib/jquery-3.2.1.min.js"]
   },
   {
@@ -66,7 +66,7 @@
 	},
   {
     "matches": ["*://endoftheinter.net/profile.php*"],
-    "js": ["lib/jquery-3.2.1.min.js", "lib/jquery.hoverIntent.min.js", "src/js/profile.js"] 
+    "js": ["lib/jquery.hoverIntent.min.js", "src/js/profile.js"] 
   },
   {
     "matches": ["*://*.endoftheinter.net/search.php*"],
