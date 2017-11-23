@@ -41,11 +41,6 @@ var messageList = {
 			this.globalPort.onDisconnect.addListener(this.handleEvent.onPortDisconnect);
 		}
 		
-		browser.runtime.sendMessage({
-			need: "insertcss",
-			file: "src/css/allpages.css"
-		});
-		
 		if (window.location.pathname === '/inboxthread.php') {
 			this.pm = "_pm";
 		}
