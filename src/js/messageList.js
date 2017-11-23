@@ -118,14 +118,6 @@ var messageList = {
 						else {
 							messageList.ignorated.data.users[ignoredUser].total++;
 						}
-						
-						if (!messageList.config.hide_ignorator_badge) {
-							messageList.globalPort.postMessage({
-								action: 'ignorator_update',
-								ignorator: messageList.ignorated,
-								scope: "messageList"
-							});
-						}
 					}
 				}
 			}
@@ -651,7 +643,7 @@ var messageList = {
 			textarea.addEventListener('dragover', evt => {
 				evt.preventDefault();
 			});
-				
+			
 			textarea.addEventListener('drop', evt => {
 				var reader = new FileReader();
 				
@@ -2549,7 +2541,7 @@ var messageList = {
 	
 	media: {
 		expandThumbnail: function(evt) {
-			if (evt.shiftKey) {
+			if (evt.shiftKey) {				
 				return;
 			}
 			
