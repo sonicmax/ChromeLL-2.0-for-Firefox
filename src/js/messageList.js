@@ -757,8 +757,9 @@ var messageList = {
 			anchor.parentNode.insertBefore(newSpan, anchor);
 			anchor.parentNode.replaceChild(loadingImg, anchor);
 			var ajax = new XMLHttpRequest();
-			ajax.open('GET', window.location.protocol + '//boards.endoftheinter.net/message.php?' + mssgurl, true);
-			ajax.send(null);
+			var url = window.location.protocol + '//boards.endoftheinter.net/message.php?' + mssgurl;
+			ajax.open('GET', url, true);
+			ajax.send();
 			
 			ajax.onload = () => {
 				if (ajax.status == 200) {
@@ -766,7 +767,7 @@ var messageList = {
 					loadingImg.parentNode.removeChild(loadingImg);
 					newSpan.parentNode.removeChild(newSpan);
 				} else {
-					alert("An error occurred loading the message. Fuck shit.");
+					alert("An error occurred loading the message. \nURL: " + url);
 				}
 			};
 			
