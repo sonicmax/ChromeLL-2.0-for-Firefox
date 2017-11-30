@@ -286,7 +286,7 @@ function showImgurNotification(xhr) {
 		
 		type: 'basic',
 		title: 'Too big to fail',
-		message: 'This gif is too big (>2MB) - uploading to Imgur... \n [click to cancel]',
+		message: 'This gif is too big (>4MB) - uploading to Imgur... \n [click to cancel]',
 		requireInteraction: true,
 		iconUrl: 'src/images/lueshi_48_i.png'
 		
