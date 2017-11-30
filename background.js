@@ -187,7 +187,7 @@ var background = {
 	},
 	
 	checkSync: function() {
-		browser.storage.sync.get('config', function(syncData) {
+		browser.storage.sync.get('config').then(syncData => {
 			if (syncData.config && syncData.config.last_saved > background.config.last_saved) {
 				// synced config file is more recent than version on computer
 				for (var keyName in syncData.config) {					
@@ -200,7 +200,8 @@ var background = {
 						bSplit.push(k);
 					}
 				}
-				browser.storage.sync.get(bSplit, function(syncConfig) {
+				
+				browser.storage.sync.get(bSplit).then(syncConfig => {
 					for (var l in syncConfig) {
 						background.config[l] = syncConfig[l];
 					}
