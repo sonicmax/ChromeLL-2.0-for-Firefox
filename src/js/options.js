@@ -1,68 +1,34 @@
-$(document).ready(() => {
-	
-	$('.options_navigation_link')
-		.click(function() {
-			
-			toLink = $(this)
-					.attr('id')
-					.split('_link')[0];
-
-			selectedPage = $('.navbar-item-selected')
-					.attr("id")
-					.split('_link')[0];
-
-			if (toLink == selectedPage) {
-				return true;
-			}
-
-			$('#' + selectedPage + '_link')
-					.removeClass("navbar-item-selected");
-					
-			$('#' + toLink + '_link')
-					.addClass("navbar-item-selected");
-
-			$('#' + selectedPage + '_page')
-					.removeClass("shown")
-					.addClass("hidden");
-					
-			$('#' + toLink + '_page')
-						.removeClass("hidden")
-						.addClass("shown");
-
-			$('body')
-					.css("background-color", "transparent");
-			
-		}
-	);
-	
-	// It's possible (but unlikely) that user opened options before background page finished loading config
-	
-	if (localStorage['ChromeLL-Config'] == ''
-			|| localStorage['ChromeLL-Config'] == undefined) {				
-		console.log("Blank Config. Rebuilding");
-		
-		options.getDefault(function(defaultConfig) {				
-			localStorage['ChromeLL-Config'] = defaultConfig;
-			options.init();
-		});					
-	}
-
-	else {
-		options.init();
-	}
-	
-});
-
-var options = {
+var options = {	
 	init: function() {
-		console.log('loading config');
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
+		
+		if (document.readyState == 'loading') {	
+			document.addEventListener('DOMContentLoaded', function() {
+				options.populateWithConfig(config);
+				options.addNavigationListener();
+			});
+		}
+		
+		else {
+			options.populateWithConfig(config);
+			options.addNavigationListener();
+		}		
+	},
+	
+	populateWithConfig: function(config) {
 		var checkboxes = $(":checkbox");
-		for ( var i in checkboxes) {
+		
+		for (var i in checkboxes) {
 			checkboxes[i].checked = config[checkboxes[i].id];
 		}
+		
 		var textboxes = $(":text");
+		
 		for (var i in textboxes) {
+			
+			// This is pretty ugly and i'm too lazy to fix it. We want to ignore
+			// certain textboxes and set values of others
+			
 			if (textboxes[i].name
 					&& (textboxes[i].name.match('(user|keyword|tag)_highlight_') 
 							|| textboxes[i].name.match('user_book') 
@@ -71,102 +37,128 @@ var options = {
 							|| textboxes[i].name.match('users') 
 							|| textboxes[i].name.match('token') 
 							|| textboxes[i].name.match('post_template'))) {
-				// console.log('found a textbox to ignore: ' + textboxes[i]);
-			} else if (config[textboxes[i].id]) {
+								
+				// Do nothing
+			}
+			
+			else if (config[textboxes[i].id]) {
 				textboxes[i].value = config[textboxes[i].id];
 			}
 		}
-		for ( var j in config.user_highlight_data) {
-			document.getElementsByClassName('user_name')[document
-					.getElementsByClassName('user_name').length - 1].value = j;
-			document.getElementsByClassName('header_bg')[document
-					.getElementsByClassName('header_bg').length - 1].value = config.user_highlight_data[j].bg;
-			document.getElementsByClassName('header_color')[document
-					.getElementsByClassName('header_color').length - 1].value = config.user_highlight_data[j].color;
+		
+		// Iterate over config keys and populate elements with data.
+		
+		for (var i in config.user_highlight_data) {			
+			var index = document.getElementsByClassName('user_name').length - 1;
+			document.getElementsByClassName('user_name')[index].value = i;
+			document.getElementsByClassName('header_bg')[index].value = config.user_highlight_data[i].bg;
+			document.getElementsByClassName('header_color')[index].value = config.user_highlight_data[i].color;
+			
 			options.ui.addDiv.userHighlight();
 		}
-		for ( var j in config.bookmark_data) {
-			document.getElementsByClassName('bookmark_name')[document
-					.getElementsByClassName('bookmark_name').length - 1].value = j;
-			document.getElementsByClassName('bookmark_tag')[document
-					.getElementsByClassName('bookmark_tag').length - 1].value = config.bookmark_data[j];
+		
+		for (var i in config.bookmark_data) {
+			var index = document.getElementsByClassName('bookmark_name').length - 1;
+			document.getElementsByClassName('bookmark_name')[index].value = i;
+			document.getElementsByClassName('bookmark_tag')[index].value = config.bookmark_data[i];
+			
 			options.ui.addDiv.bookmarkName();
 		}
-		for ( var j in config.snippet_data) {
-			document.getElementsByClassName('snippet_name')[document
-					.getElementsByClassName('snippet_name').length - 1].value = j;
-			document.getElementsByClassName('snippet')[document
-					.getElementsByClassName('snippet').length - 1].value = config.snippet_data[j];
+		
+		for (var i in config.snippet_data) {
+			var index = document.getElementsByClassName('snippet_name').length - 1;
+			document.getElementsByClassName('snippet_name')[index].value = i;
+			document.getElementsByClassName('snippet')[index].value = config.snippet_data[i];
+			
 			options.ui.addDiv.snippetName();
 		}
-		for (var j = 0; config.keyword_highlight_data[j]; j++) {
-			document.getElementsByClassName('keyword')[document
-					.getElementsByClassName('keyword').length - 1].value = config.keyword_highlight_data[j].match;
-			document.getElementsByClassName('keyword_bg')[document
-					.getElementsByClassName('keyword_bg').length - 1].value = config.keyword_highlight_data[j].bg;
-			document.getElementsByClassName('keyword_color')[document
-					.getElementsByClassName('keyword_color').length - 1].value = config.keyword_highlight_data[j].color;
+		
+		for (var i = 0; config.keyword_highlight_data[i]; i++) {
+			var index = document.getElementsByClassName('keyword').length - 1;
+			document.getElementsByClassName('keyword')[index].value = config.keyword_highlight_data[i].match;
+			document.getElementsByClassName('keyword_bg')[index].value = config.keyword_highlight_data[i].bg;
+			document.getElementsByClassName('keyword_color')[index].value = config.keyword_highlight_data[i].color;
+			
 			options.ui.addDiv.keywordHighlight();
 		}
-		for (var j = 0; config.tag_highlight_data[j]; j++) {
-			document.getElementsByClassName('tag')[document
-					.getElementsByClassName('tag').length - 1].value = config.tag_highlight_data[j].match;
-			document.getElementsByClassName('tag_bg')[document
-					.getElementsByClassName('tag_bg').length - 1].value = config.tag_highlight_data[j].bg;
-			document.getElementsByClassName('tag_color')[document
-					.getElementsByClassName('tag_color').length - 1].value = config.tag_highlight_data[j].color;
+		
+		for (var i = 0; config.tag_highlight_data[i]; i++) {
+			var index = document.getElementsByClassName('tag').length - 1;
+			document.getElementsByClassName('tag')[index].value = config.tag_highlight_data[i].match;
+			document.getElementsByClassName('tag_bg')[index].value = config.tag_highlight_data[i].bg;
+			document.getElementsByClassName('tag_color')[index].value = config.tag_highlight_data[i].color;
+			
 			options.ui.addDiv.tagHighlight();
 		}
-		for ( var j in config.post_template_data) {
-			document.getElementsByClassName('template_text')[document
-					.getElementsByClassName('template_text').length - 1].value = config.post_template_data[j].text;
-			document.getElementsByClassName('template_title')[document
-					.getElementsByClassName('template_title').length - 1].value = j;
+		
+		for (var i in config.post_template_data) {
+			var index = document.getElementsByClassName('template_text').length - 1;
+			document.getElementsByClassName('template_text')[index].value = config.post_template_data[i].text;
+			document.getElementsByClassName('template_title')[index].value = i;
+			
 			options.ui.addDiv.postTemplate();
 		}
-		document.getElementById('clear_notify').value = config.clear_notify;		
-		// show version
+		
+		document.getElementById('clear_notify').value = config.clear_notify;
+		
+		// Get version from manifest and populate element
 		var manifest = browser.runtime.getManifest();
 		document.getElementById('version').innerText = manifest.version;
+		
+		// Create object URL for config textfile and populate element
 		document.getElementById('downloadcfg').href = options.download();
 		
-		if (document.readyState == 'loading') {
-			
-			document.addEventListener('DOMContentLoaded', function() {
-				options.ui.hideUnusedMenus();
-				options.ui.setColorPicker();
-				
-				options.addListeners.menuVisibility();
-				options.addListeners.click();
-				options.addListeners.change();
-				options.addListeners.keyup();
-				
-				options.ui.populateCacheSize();
-				options.ui.populateCacheTable();	
-				
-				options.ui.displayLBContent();
-				
-				options.save();
-			});
-		} 
+		options.ui.hideUnusedMenus();
+		options.ui.setColorPicker();
 		
-		else {
-			options.ui.hideUnusedMenus();
-			options.ui.setColorPicker();
-			
-			options.addListeners.menuVisibility();
-			options.addListeners.click();
-			options.addListeners.change();
-			options.addListeners.keyup();			
-			
-			options.ui.populateCacheSize();
-			options.ui.populateCacheTable();	
-			
-			options.ui.displayLBContent();
-			
-			options.save();
-		}		
+		options.addListeners.menuVisibility();
+		options.addListeners.click();
+		options.addListeners.change();
+		options.addListeners.keyup();
+		
+		options.ui.populateCacheSize();
+		options.ui.populateCacheTable();
+		
+		options.ui.displayLBContent();
+		
+		options.save();
 	},	
+	
+	addNavigationListener: function() {
+		$('.options_navigation_link').click(function() {
+				
+				toLink = $(this)
+						.attr('id')
+						.split('_link')[0];
+
+				selectedPage = $('.navbar-item-selected')
+						.attr("id")
+						.split('_link')[0];
+
+				if (toLink == selectedPage) {
+					return true;
+				}
+
+				$('#' + selectedPage + '_link')
+						.removeClass("navbar-item-selected");
+						
+				$('#' + toLink + '_link')
+						.addClass("navbar-item-selected");
+
+				$('#' + selectedPage + '_page')
+						.removeClass("shown")
+						.addClass("hidden");
+						
+				$('#' + toLink + '_page')
+							.removeClass("hidden")
+							.addClass("shown");
+
+				$('body')
+						.css("background-color", "transparent");
+				
+		});
+	},
+	
 	utils: {
 		cleanIgnorator: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
@@ -295,6 +287,7 @@ var options = {
 				return hours + minutes + seconds;
 			}
 		},
+		
 		restoreIgnorator: function() {
 			var config = JSON.parse(localStorage['ChromeLL-Config']);
 			var backup = config.ignorator_backup;
@@ -327,31 +320,36 @@ var options = {
 					}
 			});
 		},
+		
 		ignoratorClick: function() {
 			var ignorator = document.getElementById('ignorator');
 			document.getElementById('ignorator_messagelist').checked = ignorator.checked;
 			document.getElementById('ignorator_topiclist').checked = ignorator.checked;
 			options.save();
 		},
+		
 		highlightClick: function() {
 			var highlight = document.getElementById('enable_user_highlight');
 			document.getElementById('userhl_messagelist').checked = highlight.checked;
 			document.getElementById('userhl_topiclist').checked = highlight.checked;
 			options.save();
 		},
+		
 		downloadClick: function() {
 			document.getElementById('downloadcfg').click();
 		},
+		
 		restoreClick: function() {
 			document.getElementById('restorecfg').click();
 		},		
+		
 		showTextarea: function() {
 			document.getElementById('old_cfg_options').style.display = "none";
 			document.getElementsByClassName('old_cfg_options')[0].style.display = "inline";			
 			options.show();
 		},		
+		
 		processConfig: function(textfile) {
-			var base64;
 			try {
 				if (typeof textfile === 'string') {
 					newCfg = JSON.parse(textfile);
@@ -368,6 +366,7 @@ var options = {
 			} catch (e) {
 				console.log('This doesnt look like a config', e);
 			}
+			
 			location.reload();
 		},
 		
@@ -386,75 +385,6 @@ var options = {
 						return;
 					}
 			});
-		},
-		
-		decodeBase64: function() {
-			var Base64 = {
-				_keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
-				decode: function(input) {
-					var output = "";
-					var chr1, chr2, chr3;
-					var enc1, enc2, enc3, enc4;
-					var i = 0;
-
-					input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-
-					while (i < input.length) {
-
-						enc1 = this._keyStr.indexOf(input.charAt(i++));
-						enc2 = this._keyStr.indexOf(input.charAt(i++));
-						enc3 = this._keyStr.indexOf(input.charAt(i++));
-						enc4 = this._keyStr.indexOf(input.charAt(i++));
-
-						chr1 = (enc1 << 2) | (enc2 >> 4);
-						chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-						chr3 = ((enc3 & 3) << 6) | enc4;
-
-						output = output + String.fromCharCode(chr1);
-
-						if (enc3 != 64) {
-							output = output + String.fromCharCode(chr2);
-						}
-						if (enc4 != 64) {
-							output = output + String.fromCharCode(chr3);
-						}
-
-					}
-
-					output = Base64._utf8_decode(output);
-
-					return output;
-
-				},
-				_utf8_decode: function(utftext) {
-					var string = "";
-					var i = 0;
-					var c = c1 = c2 = 0;
-
-					while (i < utftext.length) {
-
-						c = utftext.charCodeAt(i);
-
-						if (c < 128) {
-							string += String.fromCharCode(c);
-							i++;
-						} else if ((c > 191) && (c < 224)) {
-							c2 = utftext.charCodeAt(i + 1);
-							string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
-							i += 2;
-						} else {
-							c2 = utftext.charCodeAt(i + 1);
-							c3 = utftext.charCodeAt(i + 2);
-							string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
-							i += 3;
-						}
-
-					}
-
-					return string;
-				}
-			}
-			return JSON.parse(Base64.decode(config));
 		},
 		
 		emptyCache: function() {
@@ -639,6 +569,7 @@ var options = {
 			}
 		}
 	},
+	
 	addListeners: {
 		keyup: function() {	
 			document.addEventListener('keyup', function(evt) {
@@ -713,6 +644,7 @@ var options = {
 				}
 			});
 		},
+		
 		click: function() {
 			// key-value pairs contain element id and function for event handler
 			var elementsToCheck = {
@@ -804,6 +736,7 @@ var options = {
 				}
 			});
 		},
+		
 		change: function() {
 			var restoreButton = document.getElementById('restorecfg');
 			var cacheTable = document.getElementById('cache_contents');
@@ -860,6 +793,7 @@ var options = {
 				}
 			});			
 		},
+		
 		menuVisibility: function() {
 			var hiddenOptions = ['history_menubar', 'context_menu', 'dramalinks', 'user_info_popup', 'embed_gfycat'];
 			for (var i = 0, len = hiddenOptions.length; i < len; i++) {
@@ -869,6 +803,7 @@ var options = {
 			}
 		}
 	},
+	
 	ui: {
 		hideUnusedMenus: function() {
 			var hiddenOptions = {		
@@ -886,12 +821,14 @@ var options = {
 				box.checked ? menu.style.display = 'initial' : menu.style.display = 'none';
 			}
 		},
+		
 		closeMenu: function() {
 			var menu = document.getElementById('menu_items');
 			if (menu) {
 				menu.remove();
 			}			
 		},		
+		
 		setColorPicker: function() {
 			$('.color').ColorPicker({
 				onChange : function(hsb, hex, rgb, el) {
@@ -1039,8 +976,7 @@ var options = {
 			
 		},
 		
-		createTableRow: function(result) {
-			
+		createTableRow: function(result) {		
 			if (result) {
 				var table = document.getElementById('cache_contents');		
 				var tableRow = document.createElement('tr');			
@@ -1152,6 +1088,7 @@ var options = {
 				document.getElementById('user_highlight').insertBefore(ins, null);
 				options.ui.setColorPicker();
 			},
+			
 			bookmarkName: function() {
 				var ins = document.getElementById('bookmarked_tags').getElementsByClassName(
 						'bookmark_name')[0].parentNode.parentNode.cloneNode(true);
@@ -1159,6 +1096,7 @@ var options = {
 				ins.style.display = "block";
 				document.getElementById('bookmarked_tags').insertBefore(ins, null);		
 			},
+			
 			snippetName: function() {
 				var ins = document.getElementById('snippets').getElementsByClassName(
 						'snippet_name')[0].parentNode.parentNode.cloneNode(true);
@@ -1166,6 +1104,7 @@ var options = {
 				ins.style.display = "block";
 				document.getElementById('snippets').insertBefore(ins, null);		
 			},
+			
 			keywordHighlight: function() {
 				var ins = document.getElementById('keyword_highlight')
 						.getElementsByClassName('keyword')[0].parentNode.parentNode
@@ -1175,6 +1114,7 @@ var options = {
 				document.getElementById('keyword_highlight').insertBefore(ins, null);
 				options.ui.setColorPicker();
 			},
+			
 			tagHighlight: function() {
 				var ins = document.getElementById('tag_highlight').getElementsByClassName(
 						'tag')[0].parentNode.parentNode.cloneNode(true);
@@ -1183,6 +1123,7 @@ var options = {
 				document.getElementById('tag_highlight').insertBefore(ins, null);
 				options.ui.setColorPicker();	
 			},
+			
 			postTemplate: function() {
 				var ins = document.getElementById('post_template').getElementsByClassName(
 						'template_text')[0].parentNode.parentNode.cloneNode(true);
@@ -1194,13 +1135,11 @@ var options = {
 	},
 	
 	imageCache: {
-
 		open: function() {
 			return browser.runtime.sendMessage({ need: 'openDatabase' });				
 		},
 		
-		sort: function(sortType) {
-		
+		sort: function(sortType) {	
 			if (sortType === 'default') {
 				options.ui.populateCacheTable(sortType);
 			}
@@ -1306,6 +1245,7 @@ var options = {
 			}
 		}
 	},
+	
 	getDefault: function(callback) {
 		var defaultURL = browser.extension.getURL('/src/json/defaultconfig.json');
 		var temp, defaultConfig;
@@ -1320,124 +1260,144 @@ var options = {
 		}
 		xhr.send();	
 	},
+	
 	save: function() {
 		var config = JSON.parse(localStorage['ChromeLL-Config']);
-			inputs = $(":checkbox");
-			for (var i in inputs) {
-				config[inputs[i].id] = inputs[i].checked;
+		
+		// Iterate over checkboxes and text inputs and add to config
+		
+		var inputs = $(":checkbox");
+		for (var i in inputs) {
+			config[inputs[i].id] = inputs[i].checked;
+		}
+		
+		var textboxes = $(":text");
+		for (var i in textboxes) {
+			var textbox = textboxes[i];
+			if (textbox.className && textbox.className == ('cache_filenames')) {						
+				// do nothing
 			}
-			var textboxes = $(":text");
-			for (var i in textboxes) {
-				var textbox = textboxes[i];
-				if (textbox.className && textbox.className == ('cache_filenames')) {						
-					// do nothing
-				}
-				else if (textbox.id && textbox.id.match(/imagemap_|script_/)) {						
-					// do nothing
-				}
-				else {
-					config[textbox.id] = textbox.value;
-				}
+			else if (textbox.id && textbox.id.match(/imagemap_|script_/)) {						
+				// do nothing
 			}
-			var userhlData = document.getElementById('user_highlight')
-					.getElementsByClassName('user_highlight_data');
-			var name;
-			config.user_highlight_data = {};
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('user_name')[0].value
-						.toLowerCase();
-				if (name != '') {
-					config.user_highlight_data[name] = {};
-					config.user_highlight_data[name].bg = userhlData[i]
-							.getElementsByClassName('header_bg')[0].value;
-					userhlData[i].getElementsByClassName('user_name')[0].style.background = '#'
-							+ config.user_highlight_data[name].bg;
-					config.user_highlight_data[name].color = userhlData[i]
-							.getElementsByClassName('header_color')[0].value;
-					userhlData[i].getElementsByClassName('user_name')[0].style.color = '#'
-							+ config.user_highlight_data[name].color;
-				}
+			else {
+				config[textbox.id] = textbox.value;
 			}
-			// get bookmark data from option page, save to config
-			var userhlData = document.getElementById('bookmarked_tags')
-					.getElementsByClassName('bookmark_data');
-			config.bookmark_data = {};
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('bookmark_name')[0].value;
-				if (name != '') {
-					config.bookmark_data[name] = userhlData[i]
-							.getElementsByClassName('bookmark_tag')[0].value;
-				}
+		}
+		
+		// Save user highlights
+			
+		config.user_highlight_data = {};
+		
+		var userhlData = document.getElementsByClassName('user_highlight_data');		
+		
+		for (var i = 0; userhlData[i]; i++) {
+			var nameElement = userhlData[i].getElementsByClassName('user_name')[0];
+			var name = nameElement.value.toLowerCase();
+			
+			if (name !== '') {
+				config.user_highlight_data[name] = {};
+				
+				config.user_highlight_data[name].bg = userhlData[i].getElementsByClassName('header_bg')[0].value;				
+				config.user_highlight_data[name].color = userhlData[i].getElementsByClassName('header_color')[0].value;
+				
+				nameElement.style.background = '#' + config.user_highlight_data[name].bg;
+				nameElement.style.color = '#'+ config.user_highlight_data[name].color;
 			}
-			// get snippet data from option page, save to config
-			userhlData = document.getElementById('snippets')
-					.getElementsByClassName('snippet_data');
-			config.snippet_data = {};
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('snippet_name')[0].value;
-				name = name.trim();
-				if (name != '') {
-					config.snippet_data[name] = userhlData[i]
-							.getElementsByClassName('snippet')[0].value;
-				}
+		}
+		
+		// Save bookmarks
+		
+		config.bookmark_data = {};
+		
+		var bookmarkData = document.getElementsByClassName('bookmark_data');
+		
+		for (var i = 0; bookmarkData[i]; i++) {
+			var name = bookmarkData[i].getElementsByClassName('bookmark_name')[0].value;
+			if (name !== '') {
+				config.bookmark_data[name] = bookmarkData[i].getElementsByClassName('bookmark_tag')[0].value;
 			}
-			userhlData = document.getElementById('keyword_highlight')
-					.getElementsByClassName('keyword_highlight_data');
-			config.keyword_highlight_data = {};
-			var j = 0;
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('keyword')[0].value
-						.toLowerCase();
-				if (name != '') {
-					config.keyword_highlight_data[j] = {};
-					config.keyword_highlight_data[j].match = name;
-					config.keyword_highlight_data[j].bg = userhlData[i]
-							.getElementsByClassName('keyword_bg')[0].value;
-					userhlData[i].getElementsByClassName('keyword')[0].style.background = '#'
-							+ config.keyword_highlight_data[j].bg;
-					config.keyword_highlight_data[j].color = userhlData[i]
-							.getElementsByClassName('keyword_color')[0].value;
-					userhlData[i].getElementsByClassName('keyword')[0].style.color = '#'
-							+ config.keyword_highlight_data[j].color;
-					j++;
-				}
+		}
+		
+		// Save snippets
+		
+		config.snippet_data = {};
+		
+		var snippetData = document.getElementsByClassName('snippet_data');
+		
+		for (var i = 0; snippetData[i]; i++) {
+			var name = snippetData[i].getElementsByClassName('snippet_name')[0].value;
+			name = name.trim();
+			if (name !== '') {
+				config.snippet_data[name] = snippetData[i].getElementsByClassName('snippet')[0].value;
 			}
-			userhlData = document.getElementById('tag_highlight')
-					.getElementsByClassName('tag_highlight_data');
-			config.tag_highlight_data = {};
-			var j = 0;
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('tag')[0].value
-						.toLowerCase();
-				if (name != '') {
-					config.tag_highlight_data[j] = {};
-					config.tag_highlight_data[j].match = name;
-					config.tag_highlight_data[j].bg = userhlData[i]
-							.getElementsByClassName('tag_bg')[0].value;
-					userhlData[i].getElementsByClassName('tag')[0].style.background = '#'
-							+ config.tag_highlight_data[j].bg;
-					config.tag_highlight_data[j].color = userhlData[i]
-							.getElementsByClassName('tag_color')[0].value;
-					userhlData[i].getElementsByClassName('tag')[0].style.color = '#'
-							+ config.tag_highlight_data[j].color;
-					j++;
-				}
+		}
+		
+		// Save keyword highlights
+		
+		config.keyword_highlight_data = {};
+		
+		var keywordHighlightData = document.getElementsByClassName('keyword_highlight_data');
+		var j = 0;
+		
+		for (var i = 0; keywordHighlightData[i]; i++) {
+			var name = keywordHighlightData[i].getElementsByClassName('keyword')[0].value.toLowerCase();
+			if (name !== '') {
+				config.keyword_highlight_data[j] = {};
+				
+				config.keyword_highlight_data[j].match = name;
+				config.keyword_highlight_data[j].bg = keywordHighlightData[i].getElementsByClassName('keyword_bg')[0].value;
+				config.keyword_highlight_data[j].color = keywordHighlightData[i].getElementsByClassName('keyword_color')[0].value;
+				
+				keywordHighlightData[i].getElementsByClassName('keyword')[0].style.background = '#' + config.keyword_highlight_data[j].bg;
+				keywordHighlightData[i].getElementsByClassName('keyword')[0].style.color = '#' + config.keyword_highlight_data[j].color;
+				
+				j++;
 			}
-			userhlData = document.getElementById('post_template')
-					.getElementsByClassName('post_template_data');
-			config.post_template_data = {};
-			for (var i = 0; userhlData[i]; i++) {
-				name = userhlData[i].getElementsByClassName('template_title')[0].value;
-				if (name != '') {
-					config.post_template_data[name] = {};
-					config.post_template_data[name].text = userhlData[i]
-							.getElementsByClassName('template_text')[0].value;
-				}
+		}
+		
+		// Save tag highlights
+		
+		config.tag_highlight_data = {};
+		
+		var tagData = document.getElementsByClassName('tag_highlight_data');	
+		var j = 0;
+		
+		for (var i = 0; tagData[i]; i++) {
+			var name = tagData[i].getElementsByClassName('tag')[0].value.toLowerCase();
+			if (name !== '') {
+				config.tag_highlight_data[j] = {};
+				
+				config.tag_highlight_data[j].match = name;
+				config.tag_highlight_data[j].bg = tagData[i].getElementsByClassName('tag_bg')[0].value;
+				config.tag_highlight_data[j].color = tagData[i].getElementsByClassName('tag_color')[0].value;
+				
+				tagData[i].getElementsByClassName('tag')[0].style.background = '#' + config.tag_highlight_data[j].bg;				
+				tagData[i].getElementsByClassName('tag')[0].style.color = '#' + config.tag_highlight_data[j].color;
+				
+				j++;
 			}
-			config.clear_notify = document.getElementById('clear_notify').value;
-			config.last_saved = new Date().getTime();
-			localStorage['ChromeLL-Config'] = JSON.stringify(config);
+		}
+
+		// Save post templates
+		
+		config.post_template_data = {};
+		
+		var postTemplates = document.getElementsByClassName('post_template_data');
+		
+		for (var i = 0; postTemplates[i]; i++) {
+			var name = postTemplates[i].getElementsByClassName('template_title')[0].value;
+			if (name != '') {
+				config.post_template_data[name] = {};
+				config.post_template_data[name].text = postTemplates[i].getElementsByClassName('template_text')[0].value;
+			}
+		}
+		
+		config.clear_notify = document.getElementById('clear_notify').value;
+		config.last_saved = new Date().getTime();
+		localStorage['ChromeLL-Config'] = JSON.stringify(config);
 	},
+	
 	restoreFromText: function(evt) {
 		var file = evt.target.files[0];
 		if (!file.type.match('text.*')) {
@@ -1453,15 +1413,18 @@ var options = {
 			reader.readAsText(file);
 		}
 	},
+	
 	show: function() {
 		document.getElementById('cfg_ta').value = localStorage['ChromeLL-Config'];
 	},
-	download: function(textfile) {
+	
+	download: function(textfile) {		
 		options.save();
 		var config = localStorage['ChromeLL-Config'];
 		var data = new Blob([config], {type: 'text/plain'})
 		var textfile = window.URL.createObjectURL(data);
 		return textfile;	
-	},
-	debouncer: ''
+	}
 };
+
+options.init();
