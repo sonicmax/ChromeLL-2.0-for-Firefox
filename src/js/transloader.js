@@ -6,16 +6,7 @@ var imgurNotificationId;
 
 function transloadImage(info, newFilename) {
 	var url = info.srcUrl;
-	
 	var filename = getFilename(info.srcUrl);
-	
-	if (newFilename === false) {
-		return;
-	}
-	
-	else if (newFilename != null) {
-		filename = newFilename;
-	}
 	
 	fetchAndUpload(url, filename);
 }
