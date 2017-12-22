@@ -4,7 +4,7 @@ const UPLOAD_SIZE_LIMIT = 4000000; // 4MB
 
 var imgurNotificationId;
 
-function transloadImage(info, newFilename) {
+function transloadImage(info) {
 	var url = info.srcUrl;
 	var filename = getFilename(info.srcUrl);
 	
