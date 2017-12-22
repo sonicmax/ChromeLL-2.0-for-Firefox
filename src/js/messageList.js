@@ -3863,7 +3863,12 @@ var messageList = {
 		
 		// Modify existing margin-top value (-39px) of pascal so that it appears above ticker
 		var offset = -39 - document.getElementById('dramalinks_ticker').getBoundingClientRect().height;
-		document.styleSheets[0].insertRule("img[src='//static.endoftheinter.net/pascal.png'] { margin-top: " + offset + "px !important; }", 1);
+		
+		var sheet = document.createElement('style');
+		var selector = 'img[src="//static.endoftheinter.net/pascal.png"]';		
+		var rule = "margin-top: " + offset + "px !important";	
+		sheet.innerHTML = selector + ' { ' + rule + ' }';
+		document.head.appendChild(sheet);
 	},
 	
 	/**
@@ -3929,14 +3934,23 @@ var messageList = {
 			document.getElementsByClassName('message-top')[0].style.marginTop = 0;
 			document.getElementsByClassName('message-top')[0].style.borderTop = '1px solid ' + backgroundColor;					
 			
-			styleSheet.addRule('div.userbar, div.infobar, #u0_2', 'margin: 0px !important');
-			styleSheet.addRule('div.userbar', 'border: 1px solid ' + backgroundColor);
-			styleSheet.addRule('div.userbar', 'border-bottom: 2px solid ' + backgroundColor);									
-			styleSheet.addRule('#u0_2', 'border-bottom: 1px solid ' + backgroundColor);
-			styleSheet.addRule('#u0_3', 'border-top: 2px solid ' + backgroundColor);
-			styleSheet.addRule('#u0_3', 'border-bottom: 1px solid ' + backgroundColor);
-			styleSheet.addRule('#u0_4', 'border-top: 1px solid ' + backgroundColor);
-			styleSheet.addRule('#u0_4', 'border-bottom: 2px solid ' + backgroundColor);
+			var sheet = document.createElement('style');
+			var rules = [];
+			
+			rules.push('div.userbar, div.infobar, #u0_2' + ' {' + 'margin: 0px !important' + '}' + '\n');
+			rules.push('div.userbar' + '{' + 'border: 1px solid ' + backgroundColor + '}' + '\n');
+			rules.push('div.userbar' + '{' + 'border-bottom: 2px solid ' + backgroundColor + '}' + '\n');
+			rules.push('#u0_2' + '{' + 'border-bottom: 1px solid ' + backgroundColor + '}' + '\n');
+			rules.push('#u0_3' + '{' + 'border-top: 2px solid ' + backgroundColor + '}' + '\n');
+			rules.push('#u0_3' + '{' + 'border-bottom: 1px solid ' + backgroundColor + '}' + '\n');
+			rules.push('#u0_4' + '{' + 'border-top: 1px solid ' + backgroundColor + '}' + '\n');
+			rules.push('#u0_4' + '{' + 'border-bottom: 2px solid ' + backgroundColor + '}' + '\n');
+			
+			sheet.innerHTML = rules.join('\n');
+			document.head.appendChild(sheet);
+			
+			// Chrome probably handles this kind of thing automatically, but to be safe we should remove
+			// the animation class when tab is not visible to prevent potential performance issues
 			
 			document.addEventListener('visibilitychange', () => {
 					if (document.hidden) {
