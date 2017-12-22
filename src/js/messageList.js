@@ -1392,17 +1392,10 @@ var messageList = {
 				
 				if (link.classList.contains('gfycat')) {
 					messageList.gfycat.checkLink(link);
-					// Archived topics don't have quote element to replace.				
-					if (!messageList.tags.includes('Archived')) {
-						messageList.replaceQuoteOnclick(link.parentNode);
-					}
 				}
 				
 				else if (link.classList.contains('imgur')) {
 					messageList.imgur.checkLink(link);
-					if (!messageList.tags.includes('Archived')) {
-						messageList.replaceQuoteOnclick(link.parentNode);
-					}
 				}
 				
 				else if (link.classList.contains('twitter')) {
@@ -1476,52 +1469,11 @@ var messageList = {
 				var mediaIndex = Array.prototype.indexOf.call(nodes, element);
 				if (mediaIndex > sigIndex) {
 					// Remove imgur/gfycat classes so that mediaLoader() doesn't attempt to embed this element
-					element.classList.remove('imgur', 'gfycat');
+					element.classList.remove('imgur', 'gfycat', 'twitter');
 					element.classList.add('ignore');
 				}
 				break;
 			}	
-		}				
-	},
-	
-	
-	/**
-	 *  The getLLMLFromMarkup() method in base.js on ETI messes up when quoting embedded media.
-	 *  We should replace the onclick attribute of the "Quote" anchor and handle this ourselves
-	 */
-	
-	replaceQuoteOnclick: function(element) {
-		var container = element.closest('.message-container');
-		var top = container.firstChild;
-		
-		if (!top.classList.contains('checked')) {
-						
-			var newQuote = document.createElement('span');
-			newQuote.innerHTML = 'Quote';
-			newQuote.style.cursor = 'pointer';
-			newQuote.style.textDecoration = 'underline';
-			
-			newQuote.addEventListener('click', (evt) => {
-				var container = evt.target.parentNode.parentNode;
-				var message = container.getElementsByClassName('message')[0];
-				var markup = '<quote msgid="' + message.getAttribute('msgid') + '">' + this.markupBuilder.build(message) + '</quote>';
-				allPages.insertIntoTextarea(markup);
-				
-				if (document.getElementsByClassName('regular quickpost-expanded').length == 0) {
-					// quickpost area is hidden - click nub element to open
-					document.getElementsByClassName('quickpost-nub')[0].click();
-				}				
-			});
-			
-			for (var i = 0, len = top.children.length; i < len; i++) {
-				var child = top.children[i];
-				if (child.innerHTML === 'Quote') {
-					top.replaceChild(newQuote, child);
-					break;
-				}
-			}
-			
-			top.classList.add('checked');
 		}				
 	},
 	
@@ -1635,8 +1587,9 @@ var messageList = {
 				linkSpan.innerHTML = '<br><br>' + url;
 				placeholder.appendChild(linkSpan);
 			}						
-			
-			gfycatElement.parentNode.replaceChild(placeholder, gfycatElement);
+						
+			gfycatElement.parentNode.insertBefore(placeholder, gfycatElement);
+			gfycatElement.style.display = 'none';
 			
 			// check if placeholder is visible (some placeholders will be off screen)
 			var position = placeholder.getBoundingClientRect();
@@ -1673,7 +1626,8 @@ var messageList = {
 				placeholder.appendChild(linkSpan);
 			}
 			
-			gfycatElement.parentNode.replaceChild(placeholder, gfycatElement);
+			gfycatElement.parentNode.insertBefore(placeholder, gfycatElement);
+			gfycatElement.style.display = 'none';
 			
 			// add click listener to replace img with video
 			var img = placeholder.getElementsByTagName('img')[0];
@@ -2011,7 +1965,8 @@ var messageList = {
 			galleryDiv.appendChild(galleryDesc);*/
 			
 			// Replace original Imgur anchor with gallery
-			imgurElement.parentNode.replaceChild(galleryDiv, imgurElement);
+			imgurElement.parentNode.insertBefore(galleryDiv, imgurElement);
+			imgurElement.style.display = 'none';
 			
 			// Add handlers for click events. Defined here so they can access the API data
 			
@@ -2083,7 +2038,8 @@ var messageList = {
 			
 			messageList.media.addDragToResizeListener(thumbnail);
 		
-			imgurElement.parentNode.replaceChild(placeholder, imgurElement);
+			imgurElement.parentNode.insertBefore(placeholder, imgurElement);
+			imgurElement.style.display = 'none';
 			
 			if (data.animated) {
 				// add click listener to replace img with video
@@ -2148,7 +2104,8 @@ var messageList = {
 				placeholder.appendChild(linkSpan);
 			}
 				
-			imgurElement.parentNode.replaceChild(placeholder, imgurElement);
+			imgurElement.parentNode.insertBefore(placeholder, imgurElement);
+			imgurElement.style.display = 'none';
 			
 			// check if placeholder is visible (some placeholders will be off screen)
 			var position = placeholder.getBoundingClientRect();
@@ -3799,8 +3756,7 @@ var messageList = {
 				messageList.sendMessage({
 					need: "notify",
 					title: "New Page Created",
-					message: document.title					
-					
+					message: document.title										
 				});
 			}
 		}
@@ -3922,11 +3878,7 @@ var messageList = {
 
 			document.body.classList.add(christmasClassName);	
 			
-			// Fill gaps between message-list divs (to prevent annoying visual effect 
-			// where snow can be seen in the gaps between other elements as it floats down screen)
-			
-			var styleSheet = document.styleSheets[0];
-			
+			// We need to add some extra styling to prevent snow from being visible in gaps between elements
 			var backgroundColor = window.getComputedStyle(document.body).getPropertyValue('background-color');
 			document.getElementById('u0_1').style.backgroundColor = backgroundColor;
 			
