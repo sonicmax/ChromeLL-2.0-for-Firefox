@@ -2197,7 +2197,7 @@ var messageList = {
 		
 		injectLoadScript: function(id) {
 			var script = document.createElement('script');
-			script.innerHTML = 'twttr.widgets.load(document.getElementById("' + id + '"));';
+			script.innerHTML = 'if (window.twttr) { twttr.widgets.load(document.getElementById("' + id + '")) };';
 			script.onload = function() {
 					this.remove();
 			};
